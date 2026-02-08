@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import type { Document, PreviewInfo, DocumentMetadata, ContentTypeDefinition } from '@/types'
-import { documentsApi, documentPasswordsApi, contentTypeDefinitionsApi } from '@/api/client'
+import { documentsApi, documentPasswordsApi, contentTypeDefinitionsApi, permissionsApi, documentAnnotationsApi } from '@/api/client'
 import VirtualizedPdfViewer from './VirtualizedPdfViewer.vue'
+import AnnotationToolbar from './AnnotationToolbar.vue'
+import SignaturePadModal from './SignaturePadModal.vue'
+import { useAnnotations } from '@/composables/useAnnotations'
 
 // Store validated document passwords in session (documentId -> true)
 const validatedPasswords = new Map<string, boolean>()
@@ -57,6 +60,32 @@ const showMetadataPanel = ref(true)
 const metadata = ref<DocumentMetadata[]>([])
 const contentTypeInfo = ref<ContentTypeDefinition | null>(null)
 const isLoadingMetadata = ref(false)
+
+// Annotation system
+const {
+  isAnnotationMode,
+  activeTool,
+  toolSettings,
+  hasUnsavedChanges: annotationUnsavedChanges,
+  isSaving: isAnnotationSaving,
+  canUndo,
+  canRedo,
+  annotationDataMap,
+  loadAnnotations,
+  saveAnnotations,
+  discardChanges: discardAnnotationChanges,
+  enterAnnotationMode,
+  exitAnnotationMode,
+  deleteSelected,
+  setTool,
+  undo: undoAnnotation,
+  redo: redoAnnotation
+} = useAnnotations()
+
+const hasWritePermission = ref(false)
+const hasAnnotations = ref(false)
+const showSignatureModal = ref(false)
+const annotationReadOnly = ref(false)
 
 // Base PDF page width (A4 at ~96dpi is roughly 794px, we use 700 as comfortable default)
 const BASE_PDF_WIDTH = 700
@@ -126,13 +155,17 @@ function handleKeydown(e: KeyboardEvent) {
       break
     case 'ArrowLeft':
     case 'ArrowUp':
-      e.preventDefault()
-      prevPage()
+      if (!isAnnotationMode.value) {
+        e.preventDefault()
+        prevPage()
+      }
       break
     case 'ArrowRight':
     case 'ArrowDown':
-      e.preventDefault()
-      nextPage()
+      if (!isAnnotationMode.value) {
+        e.preventDefault()
+        nextPage()
+      }
       break
     case 'Home':
       e.preventDefault()
@@ -189,6 +222,11 @@ function cleanup() {
   metadata.value = []
   contentTypeInfo.value = null
   isLoadingMetadata.value = false
+  // Reset annotation state
+  exitAnnotationMode()
+  hasWritePermission.value = false
+  hasAnnotations.value = false
+  annotationReadOnly.value = false
 }
 
 async function loadPreview() {
@@ -258,6 +296,14 @@ async function loadPreviewContent() {
 
     // Load metadata in background (non-blocking)
     loadMetadata()
+
+    // Check annotation permissions and load read-only annotations
+    checkAnnotationPermissions().then(async () => {
+      if (hasAnnotations.value && previewInfo.value?.type === 'Pdf' && props.document) {
+        await loadAnnotations(props.document.id)
+        annotationReadOnly.value = true
+      }
+    })
 
     // Handle text files with content from API
     if (previewInfo.value.type === 'Text' && previewInfo.value.textContent) {
@@ -530,6 +576,89 @@ function getFieldTypeIcon(fieldType: string): string {
 function toggleMetadataPanel() {
   showMetadataPanel.value = !showMetadataPanel.value
 }
+
+// Annotation functions
+async function checkAnnotationPermissions() {
+  if (!props.document) return
+  try {
+    // Check write permission
+    const permResponse = await permissionsApi.checkPermission('Document', props.document.id, 2)
+    hasWritePermission.value = !!permResponse.data
+  } catch {
+    hasWritePermission.value = false
+  }
+
+  try {
+    // Check if annotations exist
+    const countResponse = await documentAnnotationsApi.getCount(props.document.id)
+    hasAnnotations.value = (countResponse.data || 0) > 0
+  } catch {
+    hasAnnotations.value = false
+  }
+}
+
+async function handleEnterAnnotationMode() {
+  if (!props.document) return
+  enterAnnotationMode()
+  annotationReadOnly.value = false
+  await loadAnnotations(props.document.id)
+}
+
+async function handleSaveAnnotations() {
+  if (!props.document) return
+  try {
+    await saveAnnotations()
+    hasAnnotations.value = true
+  } catch {
+    // Error handled in composable
+  }
+}
+
+function handleDiscardAnnotations() {
+  discardAnnotationChanges()
+}
+
+async function handleExitAnnotationMode() {
+  if (annotationUnsavedChanges.value) {
+    if (!confirm('You have unsaved annotation changes. Discard them?')) return
+  }
+  exitAnnotationMode()
+  // Reload annotations for read-only display
+  if (props.document && hasAnnotations.value) {
+    await loadAnnotations(props.document.id)
+    annotationReadOnly.value = true
+  }
+}
+
+function handleAnnotationToolChange(tool: any) {
+  setTool(tool)
+}
+
+function handleToolSettingsChange(settings: any) {
+  Object.assign(toolSettings, settings)
+}
+
+function handleOpenSignature() {
+  showSignatureModal.value = true
+}
+
+function handleSignatureSelect(dataUrl: string) {
+  // Insert onto the current page's annotation layer
+  const pageNum = currentPage.value
+  const layer = pdfViewerRef.value?.getAnnotationLayer(pageNum)
+  if (layer) {
+    layer.placeSignature(dataUrl)
+  }
+  setTool('select')
+}
+
+function handleAnnotationUndo() {
+  undoAnnotation()
+}
+
+function handleAnnotationRedo() {
+  redoAnnotation()
+}
 </script>
 
 <template>
@@ -695,6 +824,16 @@ function toggleMetadataPanel() {
               <span class="material-symbols-outlined">print</span>
             </button>
 
+            <!-- Annotate (PDF only, Write permission required) -->
+            <button
+              v-if="previewInfo?.type === 'Pdf' && hasWritePermission && !isAnnotationMode"
+              @click="handleEnterAnnotationMode"
+              class="p-2 rounded-lg transition-colors text-amber-500 hover:bg-amber-50"
+              title="Annotate PDF"
+            >
+              <span class="material-symbols-outlined">edit_note</span>
+            </button>
+
             <!-- Download -->
             <button
               @click="handleDownload"
@@ -719,6 +858,32 @@ function toggleMetadataPanel() {
 
           </div>
         </header>
+
+        <!-- Annotation Toolbar -->
+        <AnnotationToolbar
+          v-if="isAnnotationMode"
+          :active-tool="activeTool"
+          :tool-settings="toolSettings"
+          :is-saving="isAnnotationSaving"
+          :has-unsaved-changes="annotationUnsavedChanges"
+          :can-undo="canUndo"
+          :can-redo="canRedo"
+          @update:active-tool="handleAnnotationToolChange"
+          @update:tool-settings="handleToolSettingsChange"
+          @save="handleSaveAnnotations"
+          @discard="handleDiscardAnnotations"
+          @close="handleExitAnnotationMode"
+          @undo="handleAnnotationUndo"
+          @redo="handleAnnotationRedo"
+          @delete-selected="deleteSelected"
+          @open-signature="handleOpenSignature"
+        />
+
+        <!-- Signature Pad Modal -->
+        <SignaturePadModal
+          v-model="showSignatureModal"
+          @select-signature="handleSignatureSelect"
+        />
 
         <!-- Main Content -->
         <main class="flex-1 overflow-hidden relative" :class="isDarkMode ? 'bg-slate-800' : 'bg-[#e2e8f0]'">
@@ -892,6 +1057,11 @@ function toggleMetadataPanel() {
                 :zoom="zoom"
                 :rotation="rotation"
                 :is-dark-mode="isDarkMode"
+                :is-annotation-mode="isAnnotationMode"
+                :active-tool="activeTool"
+                :tool-settings="toolSettings"
+                :annotation-data-map="annotationDataMap"
+                :annotation-read-only="annotationReadOnly"
                 @loaded="handlePdfLoaded"
                 @page-change="handlePageChange"
                 @error="handlePdfError"

@@ -81,6 +81,10 @@ public static class DependencyInjection
         services.AddScoped<IDocumentVersionMetadataRepository, DocumentVersionMetadataRepository>();
         services.AddScoped<IDocumentWorkingCopyRepository, DocumentWorkingCopyRepository>();
 
+        // Document Annotations
+        services.AddScoped<IDocumentAnnotationRepository, DocumentAnnotationRepository>();
+        services.AddScoped<ISavedSignatureRepository, SavedSignatureRepository>();
+
         // Enterprise Permission System Repositories
         services.AddScoped<IStructureRepository, StructureRepository>();
         services.AddScoped<IEffectivePermissionRepository, EffectivePermissionRepository>();

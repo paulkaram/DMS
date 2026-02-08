@@ -71,6 +71,10 @@ public static class DependencyInjection
         // Scan Service
         services.AddScoped<IScanService, ScanService>();
 
+        // Document Annotations
+        services.AddScoped<IDocumentAnnotationService, DocumentAnnotationService>();
+        services.AddScoped<ISavedSignatureService, SavedSignatureService>();
+
         return services;
     }
 }

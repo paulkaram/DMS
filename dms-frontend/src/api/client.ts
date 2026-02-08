@@ -958,6 +958,34 @@ export const scanAgentApi = {
     axios.post(`${SCAN_AGENT_URL}/api/scan`, params, { timeout: 120000 })
 }
 
+// =============================================
+// Document Annotations API
+// =============================================
+export const documentAnnotationsApi = {
+  getByDocument: (documentId: string) =>
+    apiClient.get(`/documents/${documentId}/annotations`),
+  save: (documentId: string, data: { pages: { pageNumber: number; annotationData: string }[] }) =>
+    apiClient.post(`/documents/${documentId}/annotations`, data),
+  delete: (documentId: string, annotationId: string) =>
+    apiClient.delete(`/documents/${documentId}/annotations/${annotationId}`),
+  deleteAll: (documentId: string) =>
+    apiClient.delete(`/documents/${documentId}/annotations`),
+  getCount: (documentId: string) =>
+    apiClient.get(`/documents/${documentId}/annotations/count`)
+}
+
+// Saved Signatures API
+export const savedSignaturesApi = {
+  getAll: () =>
+    apiClient.get('/signatures'),
+  create: (data: { name: string; signatureData: string; signatureType: string; isDefault: boolean }) =>
+    apiClient.post('/signatures', data),
+  delete: (id: string) =>
+    apiClient.delete(`/signatures/${id}`),
+  setDefault: (id: string) =>
+    apiClient.put(`/signatures/${id}/set-default`)
+}
+
 // Search Configs API
 export const searchConfigsApi = {
   getAll: (includeInactive = false) =>

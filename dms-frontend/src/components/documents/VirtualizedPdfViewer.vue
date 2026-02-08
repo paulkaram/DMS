@@ -3,6 +3,8 @@ import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import VuePdfEmbed from 'vue-pdf-embed'
 import 'vue-pdf-embed/dist/styles/annotationLayer.css'
 import 'vue-pdf-embed/dist/styles/textLayer.css'
+import PdfPageAnnotationLayer from './PdfPageAnnotationLayer.vue'
+import type { AnnotationTool, AnnotationToolSettings } from '@/types'
 
 const props = defineProps<{
   source: string
@@ -10,6 +12,11 @@ const props = defineProps<{
   zoom?: number
   rotation?: number
   isDarkMode?: boolean
+  isAnnotationMode?: boolean
+  activeTool?: AnnotationTool
+  toolSettings?: AnnotationToolSettings
+  annotationDataMap?: Map<number, string>
+  annotationReadOnly?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -155,11 +162,33 @@ function scrollToPage(pageNum: number) {
   }
 }
 
+// Annotation layer refs
+const annotationLayers = ref<Map<number, InstanceType<typeof PdfPageAnnotationLayer>>>(new Map())
+
+function registerAnnotationLayer(pageNum: number, layer: any) {
+  if (layer) {
+    annotationLayers.value.set(pageNum, layer)
+  }
+}
+
+function getAnnotationLayer(pageNum: number) {
+  return annotationLayers.value.get(pageNum)
+}
+
+// Default tool settings
+const defaultToolSettings: AnnotationToolSettings = {
+  strokeColor: '#000000',
+  strokeWidth: 3,
+  highlightColor: '#FFEB3B',
+  fontSize: 16
+}
+
 // Expose methods
 defineExpose({
   scrollToPage,
   getCurrentPage: () => currentPage.value,
-  getTotalPages: () => totalPages.value
+  getTotalPages: () => totalPages.value,
+  getAnnotationLayer
 })
 
 // Watch for zoom changes - need to re-observe
@@ -286,8 +315,22 @@ onUnmounted(() => {
             </div>
           </div>
 
+          <!-- Annotation Layer -->
+          <PdfPageAnnotationLayer
+            v-if="(isAnnotationMode || (annotationReadOnly && annotationDataMap?.has(pageNum))) && shouldRenderPage(pageNum)"
+            :ref="(el: any) => registerAnnotationLayer(pageNum, el)"
+            :page-number="pageNum"
+            :width="effectiveWidth"
+            :height="getPageHeight(pageNum)"
+            :is-annotation-mode="!!isAnnotationMode"
+            :active-tool="activeTool || 'select'"
+            :tool-settings="toolSettings || defaultToolSettings"
+            :annotation-data="annotationDataMap?.get(pageNum)"
+            :read-only="!!annotationReadOnly && !isAnnotationMode"
+          />
+
           <!-- Page number badge -->
-          <div class="absolute bottom-2 right-2 px-2 py-0.5 bg-black/60 text-white text-xs rounded">
+          <div class="absolute bottom-2 right-2 px-2 py-0.5 bg-black/60 text-white text-xs rounded z-20">
             {{ pageNum }}
           </div>
         </div>

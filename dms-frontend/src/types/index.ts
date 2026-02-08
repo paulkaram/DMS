@@ -1452,6 +1452,56 @@ export interface ScanProcessResult {
   ocrText?: string
 }
 
+// =============================================
+// PDF Annotation Types
+// =============================================
+export interface DocumentAnnotation {
+  id: string
+  documentId: string
+  pageNumber: number
+  annotationData: string // Fabric.js JSON
+  versionNumber: number
+  createdBy: string
+  createdByName?: string
+  createdAt: string
+  modifiedBy?: string
+  modifiedAt?: string
+}
+
+export interface SaveAnnotationsRequest {
+  pages: PageAnnotationData[]
+}
+
+export interface PageAnnotationData {
+  pageNumber: number
+  annotationData: string
+}
+
+export interface SavedSignature {
+  id: string
+  name: string
+  signatureData: string
+  signatureType: 'drawn' | 'typed'
+  isDefault: boolean
+  createdAt: string
+}
+
+export interface CreateSignatureRequest {
+  name: string
+  signatureData: string
+  signatureType: 'drawn' | 'typed'
+  isDefault: boolean
+}
+
+export type AnnotationTool = 'select' | 'freehand' | 'highlight' | 'redaction' | 'signature' | 'text'
+
+export interface AnnotationToolSettings {
+  strokeColor: string
+  strokeWidth: number
+  highlightColor: string
+  fontSize: number
+}
+
 // Scanner Agent types (local TWAIN/WIA agent)
 export interface ScannerDevice {
   id: string
