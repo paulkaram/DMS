@@ -178,6 +178,8 @@ function setupCanvasEvents() {
       if ((currentRect.width ?? 0) < 5 && (currentRect.height ?? 0) < 5) {
         fabricCanvas.remove(currentRect)
       } else {
+        // Update bounding box for hit detection after drawing
+        currentRect.setCoords()
         pushUndoState(props.pageNumber)
       }
       currentRect = null
@@ -206,6 +208,7 @@ function applyTool(tool: AnnotationTool) {
       fabricCanvas.forEachObject(obj => {
         obj.selectable = true
         obj.evented = true
+        obj.setCoords()
       })
       break
 

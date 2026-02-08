@@ -79,7 +79,8 @@ const {
   deleteSelected,
   setTool,
   undo: undoAnnotation,
-  redo: redoAnnotation
+  redo: redoAnnotation,
+  placeSignatureOnPage
 } = useAnnotations()
 
 const hasWritePermission = ref(false)
@@ -643,12 +644,9 @@ function handleOpenSignature() {
 }
 
 function handleSignatureSelect(dataUrl: string) {
-  // Insert onto the current page's annotation layer
+  // Place signature on the current page's canvas directly via composable
   const pageNum = currentPage.value
-  const layer = pdfViewerRef.value?.getAnnotationLayer(pageNum)
-  if (layer) {
-    layer.placeSignature(dataUrl)
-  }
+  placeSignatureOnPage(pageNum, dataUrl)
   setTool('select')
 }
 

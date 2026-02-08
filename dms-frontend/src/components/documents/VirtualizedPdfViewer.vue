@@ -168,6 +168,8 @@ const annotationLayers = ref<Map<number, InstanceType<typeof PdfPageAnnotationLa
 function registerAnnotationLayer(pageNum: number, layer: any) {
   if (layer) {
     annotationLayers.value.set(pageNum, layer)
+  } else {
+    annotationLayers.value.delete(pageNum)
   }
 }
 

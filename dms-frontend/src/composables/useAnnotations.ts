@@ -1,7 +1,7 @@
 import { ref, reactive } from 'vue'
 import type { AnnotationTool, AnnotationToolSettings, DocumentAnnotation } from '@/types'
 import { documentAnnotationsApi } from '@/api/client'
-import type { Canvas } from 'fabric'
+import { type Canvas, FabricImage } from 'fabric'
 
 // Annotation mode state
 const isAnnotationMode = ref(false)
@@ -234,6 +234,32 @@ export function useAnnotations() {
     }
   }
 
+  function placeSignatureOnPage(pageNumber: number, dataUrl: string): boolean {
+    const canvas = canvasInstances.get(pageNumber)
+    if (!canvas) return false
+
+    pushUndoState(pageNumber)
+
+    FabricImage.fromURL(dataUrl).then((img) => {
+      const maxWidth = 200
+      const scale = img.width && img.width > maxWidth ? maxWidth / img.width : 1
+
+      img.set({
+        left: (canvas.getWidth() / 2) - (((img.width ?? 200) * scale) / 2),
+        top: (canvas.getHeight() / 2) - (((img.height ?? 80) * scale) / 2),
+        scaleX: scale,
+        scaleY: scale,
+        selectable: true
+      })
+
+      canvas.add(img)
+      canvas.setActiveObject(img)
+      canvas.renderAll()
+    })
+
+    return true
+  }
+
   function cleanup() {
     isAnnotationMode.value = false
     activeTool.value = 'select'
@@ -278,6 +304,7 @@ export function useAnnotations() {
     undo,
     redo,
     deleteSelected,
+    placeSignatureOnPage,
     cleanup
   }
 }
