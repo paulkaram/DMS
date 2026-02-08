@@ -100,13 +100,13 @@ const cabinetCount = computed(() => recycleBinItems.value.filter(i => i.nodeType
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">Recycle Bin</h1>
-        <p class="text-slate-500 mt-1">Deleted items (auto-purged after 30 days)</p>
+        <h1 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Recycle Bin</h1>
+        <p class="text-zinc-500 mt-1">Deleted items (auto-purged after 30 days)</p>
       </div>
       <div class="flex items-center gap-3">
         <button
           @click="loadRecycleBin"
-          class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-medium text-sm transition-colors border border-slate-200 dark:border-slate-700"
+          class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl font-medium text-sm transition-colors border border-zinc-200 dark:border-zinc-700"
         >
           <span class="material-symbols-outlined text-lg">refresh</span>
           Refresh
@@ -166,8 +166,8 @@ const cabinetCount = computed(() => recycleBinItems.value.filter(i => i.nodeType
     </div>
 
     <!-- Filter Tabs -->
-    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
-      <div class="border-b border-slate-200 dark:border-slate-800">
+    <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+      <div class="border-b border-zinc-200 dark:border-zinc-800">
         <nav class="flex">
           <button
             @click="selectedFilter = null"
@@ -175,7 +175,7 @@ const cabinetCount = computed(() => recycleBinItems.value.filter(i => i.nodeType
               'px-6 py-4 text-sm font-medium border-b-2 transition-colors',
               selectedFilter === null
                 ? 'border-teal text-teal'
-                : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
             ]"
           >
             <span class="flex items-center gap-2">
@@ -192,13 +192,13 @@ const cabinetCount = computed(() => recycleBinItems.value.filter(i => i.nodeType
               'px-6 py-4 text-sm font-medium border-b-2 transition-colors',
               selectedFilter === 3
                 ? 'border-teal text-teal'
-                : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
             ]"
           >
             <span class="flex items-center gap-2">
               <span class="material-symbols-outlined text-lg">description</span>
               Documents
-              <span v-if="documentCount > 0" class="px-2 py-0.5 text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-full">
+              <span v-if="documentCount > 0" class="px-2 py-0.5 text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 rounded-full">
                 {{ documentCount }}
               </span>
             </span>
@@ -209,13 +209,13 @@ const cabinetCount = computed(() => recycleBinItems.value.filter(i => i.nodeType
               'px-6 py-4 text-sm font-medium border-b-2 transition-colors',
               selectedFilter === 2
                 ? 'border-teal text-teal'
-                : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
             ]"
           >
             <span class="flex items-center gap-2">
               <span class="material-symbols-outlined text-lg">folder</span>
               Folders
-              <span v-if="folderCount > 0" class="px-2 py-0.5 text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-full">
+              <span v-if="folderCount > 0" class="px-2 py-0.5 text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 rounded-full">
                 {{ folderCount }}
               </span>
             </span>
@@ -226,13 +226,13 @@ const cabinetCount = computed(() => recycleBinItems.value.filter(i => i.nodeType
               'px-6 py-4 text-sm font-medium border-b-2 transition-colors',
               selectedFilter === 1
                 ? 'border-teal text-teal'
-                : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
             ]"
           >
             <span class="flex items-center gap-2">
               <span class="material-symbols-outlined text-lg">inventory_2</span>
               Cabinets
-              <span v-if="cabinetCount > 0" class="px-2 py-0.5 text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-full">
+              <span v-if="cabinetCount > 0" class="px-2 py-0.5 text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 rounded-full">
                 {{ cabinetCount }}
               </span>
             </span>
@@ -247,11 +247,11 @@ const cabinetCount = computed(() => recycleBinItems.value.filter(i => i.nodeType
 
       <!-- Empty State -->
       <div v-else-if="displayedItems.length === 0" class="text-center py-12">
-        <div class="w-20 h-20 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
-          <span class="material-symbols-outlined text-5xl text-slate-400">delete_outline</span>
+        <div class="w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
+          <span class="material-symbols-outlined text-5xl text-zinc-400">delete_outline</span>
         </div>
-        <h3 class="text-lg font-semibold text-slate-700 dark:text-slate-300">Recycle bin is empty</h3>
-        <p class="text-slate-500 mt-1">Deleted items will appear here</p>
+        <h3 class="text-lg font-semibold text-zinc-700 dark:text-zinc-300">Recycle bin is empty</h3>
+        <p class="text-zinc-500 mt-1">Deleted items will appear here</p>
       </div>
 
       <!-- Recycle Bin Items -->
@@ -260,7 +260,7 @@ const cabinetCount = computed(() => recycleBinItems.value.filter(i => i.nodeType
           <div
             v-for="(item, index) in displayedItems"
             :key="item.id"
-            class="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 hover:border-teal/30 hover:shadow-md transition-all"
+            class="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl border border-zinc-100 dark:border-zinc-700 hover:border-teal/30 hover:shadow-md transition-all"
           >
             <!-- Icon -->
             <DocumentIcon
@@ -278,12 +278,12 @@ const cabinetCount = computed(() => recycleBinItems.value.filter(i => i.nodeType
 
             <!-- Info -->
             <div class="flex-1 min-w-0">
-              <p class="font-medium text-slate-900 dark:text-white truncate">{{ item.nodeName }}</p>
-              <div class="flex items-center gap-3 mt-1 text-sm text-slate-500">
+              <p class="font-medium text-zinc-900 dark:text-white truncate">{{ item.nodeName }}</p>
+              <div class="flex items-center gap-3 mt-1 text-sm text-zinc-500">
                 <span :class="[
                   'px-2 py-0.5 rounded-full text-xs font-medium',
                   item.nodeType === 1 ? 'bg-teal/15 text-teal' :
-                  item.nodeType === 2 ? 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300' :
+                  item.nodeType === 2 ? 'bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300' :
                   'bg-teal/15 text-teal'
                 ]">
                   {{ getNodeTypeName(item.nodeType) }}
@@ -293,9 +293,9 @@ const cabinetCount = computed(() => recycleBinItems.value.filter(i => i.nodeType
             </div>
 
             <!-- Delete Info -->
-            <div class="text-sm text-slate-500 dark:text-slate-400 flex-shrink-0 text-right mr-4">
+            <div class="text-sm text-zinc-500 dark:text-zinc-400 flex-shrink-0 text-right mr-4">
               <div>{{ formatDate(item.deletedAt) }}</div>
-              <div class="text-xs text-slate-400">by {{ item.deletedByUserName || 'Unknown' }}</div>
+              <div class="text-xs text-zinc-400">by {{ item.deletedByUserName || 'Unknown' }}</div>
             </div>
 
             <!-- Expiry Warning -->
@@ -311,22 +311,22 @@ const cabinetCount = computed(() => recycleBinItems.value.filter(i => i.nodeType
               <div class="relative group">
                 <button
                   @click="restoreItem(item)"
-                  class="p-2 text-slate-500 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors"
+                  class="p-2 text-zinc-500 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors"
                 >
                   <span class="material-symbols-outlined text-xl">restore</span>
                 </button>
-                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-800 dark:bg-slate-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-zinc-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                   Restore
                 </span>
               </div>
               <div class="relative group">
                 <button
                   @click="permanentlyDelete(item)"
-                  class="p-2 text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                  class="p-2 text-zinc-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                 >
                   <span class="material-symbols-outlined text-xl">delete_forever</span>
                 </button>
-                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-800 dark:bg-slate-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-zinc-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                   Delete Permanently
                 </span>
               </div>

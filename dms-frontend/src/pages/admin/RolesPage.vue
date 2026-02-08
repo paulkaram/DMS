@@ -34,9 +34,9 @@ const roleForm = ref({
 const avatarColors = [
   'bg-primary',
   'bg-navy',
-  'bg-slate-600',
+  'bg-zinc-600',
   'bg-primary/80',
-  'bg-slate-700'
+  'bg-zinc-700'
 ]
 
 function getAvatarColor(index: number) {
@@ -181,19 +181,19 @@ function getInitials(name: string) {
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">Roles Management</h1>
-        <p class="text-slate-500 mt-1">Define roles and manage memberships</p>
+        <h1 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Roles Management</h1>
+        <p class="text-zinc-500 mt-1">Define roles and manage memberships</p>
       </div>
       <div class="flex items-center gap-3">
         <!-- View Toggle -->
-        <div class="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+        <div class="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-lg p-1">
           <button
             @click="viewMode = 'list'"
             :class="[
               'p-1.5 rounded-md transition-colors',
               viewMode === 'list'
-                ? 'bg-white dark:bg-slate-700 text-primary shadow-sm'
-                : 'text-slate-400 hover:text-slate-600'
+                ? 'bg-white dark:bg-zinc-700 text-primary shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-600'
             ]"
             title="List view"
           >
@@ -204,8 +204,8 @@ function getInitials(name: string) {
             :class="[
               'p-1.5 rounded-md transition-colors',
               viewMode === 'grid'
-                ? 'bg-white dark:bg-slate-700 text-primary shadow-sm'
-                : 'text-slate-400 hover:text-slate-600'
+                ? 'bg-white dark:bg-zinc-700 text-primary shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-600'
             ]"
             title="Grid view"
           >
@@ -214,12 +214,12 @@ function getInitials(name: string) {
         </div>
         <!-- Search -->
         <div class="relative">
-          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-lg">search</span>
           <input
             v-model="searchQuery"
             type="text"
             placeholder="Search roles..."
-            class="w-64 pl-10 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none"
+            class="w-64 pl-10 pr-4 py-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none"
           />
         </div>
         <button
@@ -237,28 +237,28 @@ function getInitials(name: string) {
       <div class="bg-navy/90 px-4 py-3 rounded-xl text-white flex items-center justify-between">
         <div class="flex items-center gap-3">
           <span class="material-symbols-outlined text-primary">shield_person</span>
-          <span class="text-xs font-medium text-slate-300 uppercase tracking-wide">Total Roles</span>
+          <span class="text-xs font-medium text-zinc-300 uppercase tracking-wide">Total Roles</span>
         </div>
         <span class="text-2xl font-bold">{{ roles.length }}</span>
       </div>
-      <div class="bg-slate-800 px-4 py-3 rounded-xl text-white flex items-center justify-between">
+      <div class="bg-zinc-800 px-4 py-3 rounded-xl text-white flex items-center justify-between">
         <div class="flex items-center gap-3">
           <span class="material-symbols-outlined text-primary">check_circle</span>
-          <span class="text-xs font-medium text-slate-300 uppercase tracking-wide">Active</span>
+          <span class="text-xs font-medium text-zinc-300 uppercase tracking-wide">Active</span>
         </div>
         <span class="text-2xl font-bold">{{ roles.filter(r => r.isActive !== false).length }}</span>
       </div>
-      <div class="bg-slate-700 px-4 py-3 rounded-xl text-white flex items-center justify-between">
+      <div class="bg-zinc-700 px-4 py-3 rounded-xl text-white flex items-center justify-between">
         <div class="flex items-center gap-3">
           <span class="material-symbols-outlined text-primary">groups</span>
-          <span class="text-xs font-medium text-slate-300 uppercase tracking-wide">Users</span>
+          <span class="text-xs font-medium text-zinc-300 uppercase tracking-wide">Users</span>
         </div>
         <span class="text-2xl font-bold">{{ users.length }}</span>
       </div>
     </div>
 
     <!-- Content Card -->
-    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+    <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
       <div class="p-6">
       <!-- Messages -->
       <Transition enter-active-class="duration-300 ease-out" enter-from-class="opacity-0 -translate-y-2">
@@ -280,16 +280,16 @@ function getInitials(name: string) {
 
       <!-- Loading -->
       <div v-if="isLoading" class="space-y-3">
-        <div v-for="i in 5" :key="i" class="h-14 bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse"></div>
+        <div v-for="i in 5" :key="i" class="h-14 bg-zinc-100 dark:bg-zinc-800 rounded-xl animate-pulse"></div>
       </div>
 
       <!-- Empty State -->
       <div v-else-if="filteredRoles.length === 0" class="text-center py-16">
-        <div class="w-20 h-20 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
-          <span class="material-symbols-outlined text-5xl text-slate-400">group_off</span>
+        <div class="w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
+          <span class="material-symbols-outlined text-5xl text-zinc-400">group_off</span>
         </div>
-        <h3 class="text-lg font-semibold text-slate-700 dark:text-slate-300">No Roles Found</h3>
-        <p class="text-slate-500 dark:text-slate-400 mt-1">{{ searchQuery ? 'Try a different search term' : 'Create your first role to get started' }}</p>
+        <h3 class="text-lg font-semibold text-zinc-700 dark:text-zinc-300">No Roles Found</h3>
+        <p class="text-zinc-500 dark:text-zinc-400 mt-1">{{ searchQuery ? 'Try a different search term' : 'Create your first role to get started' }}</p>
         <button
           v-if="!searchQuery"
           @click="openCreateModal"
@@ -303,30 +303,30 @@ function getInitials(name: string) {
       <div v-else-if="viewMode === 'list'" class="overflow-x-auto">
         <table class="w-full">
           <thead>
-            <tr class="border-b border-slate-100 dark:border-slate-800">
-              <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Role</th>
-              <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Description</th>
-              <th class="text-center py-3 px-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Members</th>
-              <th class="text-center py-3 px-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Status</th>
-              <th class="text-right py-3 px-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Actions</th>
+            <tr class="border-b border-zinc-100 dark:border-zinc-800">
+              <th class="text-left py-3 px-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Role</th>
+              <th class="text-left py-3 px-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Description</th>
+              <th class="text-center py-3 px-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Members</th>
+              <th class="text-center py-3 px-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Status</th>
+              <th class="text-right py-3 px-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Actions</th>
             </tr>
           </thead>
           <tbody>
             <tr
               v-for="(role, index) in filteredRoles"
               :key="role.id"
-              class="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+              class="border-b border-zinc-50 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
             >
               <td class="py-3 px-4">
                 <div class="flex items-center gap-3">
                   <div :class="[getAvatarColor(index), 'w-9 h-9 rounded-lg flex items-center justify-center']">
                     <span class="material-symbols-outlined text-white text-lg">badge</span>
                   </div>
-                  <span class="font-medium text-slate-900 dark:text-white">{{ role.name }}</span>
+                  <span class="font-medium text-zinc-900 dark:text-white">{{ role.name }}</span>
                 </div>
               </td>
               <td class="py-3 px-4">
-                <span class="text-sm text-slate-500 dark:text-slate-400 line-clamp-1">{{ role.description || 'No description' }}</span>
+                <span class="text-sm text-zinc-500 dark:text-zinc-400 line-clamp-1">{{ role.description || 'No description' }}</span>
               </td>
               <td class="py-3 px-4 text-center">
                 <button
@@ -343,7 +343,7 @@ function getInitials(name: string) {
                     'px-2 py-1 rounded-full text-xs font-medium',
                     role.isActive !== false
                       ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
-                      : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                      : 'bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400'
                   ]"
                 >
                   {{ role.isActive !== false ? 'Active' : 'Inactive' }}
@@ -353,14 +353,14 @@ function getInitials(name: string) {
                 <div class="flex items-center justify-end gap-1">
                   <button
                     @click="openEditModal(role)"
-                    class="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                    class="p-1.5 text-zinc-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                     title="Edit"
                   >
                     <span class="material-symbols-outlined text-lg">edit</span>
                   </button>
                   <button
                     @click="confirmDelete(role)"
-                    class="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                    class="p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                     title="Delete"
                   >
                     <span class="material-symbols-outlined text-lg">delete</span>
@@ -377,7 +377,7 @@ function getInitials(name: string) {
         <div
           v-for="(role, index) in filteredRoles"
           :key="role.id"
-          class="bg-slate-50 dark:bg-slate-800 rounded-xl p-4 border border-slate-100 dark:border-slate-700 hover:border-primary/30 hover:shadow-md transition-all group"
+          class="bg-zinc-50 dark:bg-zinc-800 rounded-xl p-4 border border-zinc-100 dark:border-zinc-700 hover:border-primary/30 hover:shadow-md transition-all group"
         >
           <div class="flex items-start justify-between mb-3">
             <div :class="[getAvatarColor(index), 'w-10 h-10 rounded-lg flex items-center justify-center']">
@@ -386,14 +386,14 @@ function getInitials(name: string) {
             <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
               <button
                 @click="openEditModal(role)"
-                class="p-1 text-slate-400 hover:text-primary hover:bg-white dark:hover:bg-slate-700 rounded transition-colors"
+                class="p-1 text-zinc-400 hover:text-primary hover:bg-white dark:hover:bg-zinc-700 rounded transition-colors"
                 title="Edit"
               >
                 <span class="material-symbols-outlined text-sm">edit</span>
               </button>
               <button
                 @click="confirmDelete(role)"
-                class="p-1 text-slate-400 hover:text-red-500 hover:bg-white dark:hover:bg-slate-700 rounded transition-colors"
+                class="p-1 text-zinc-400 hover:text-red-500 hover:bg-white dark:hover:bg-zinc-700 rounded transition-colors"
                 title="Delete"
               >
                 <span class="material-symbols-outlined text-sm">delete</span>
@@ -401,16 +401,16 @@ function getInitials(name: string) {
             </div>
           </div>
 
-          <h3 class="font-semibold text-slate-900 dark:text-white text-sm mb-1">{{ role.name }}</h3>
-          <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-3">{{ role.description || 'No description' }}</p>
+          <h3 class="font-semibold text-zinc-900 dark:text-white text-sm mb-1">{{ role.name }}</h3>
+          <p class="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2 mb-3">{{ role.description || 'No description' }}</p>
 
-          <div class="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-slate-700">
+          <div class="flex items-center justify-between pt-3 border-t border-zinc-200 dark:border-zinc-700">
             <span
               :class="[
                 'px-2 py-0.5 rounded-full text-xs font-medium',
                 role.isActive !== false
                   ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
-                  : 'bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-400'
+                  : 'bg-zinc-200 dark:bg-zinc-600 text-zinc-600 dark:text-zinc-400'
               ]"
             >
               {{ role.isActive !== false ? 'Active' : 'Inactive' }}
@@ -437,7 +437,7 @@ function getInitials(name: string) {
         leave-to-class="opacity-0"
       >
         <div v-if="showRoleModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+          <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
             <!-- Modal Header -->
             <div class="relative bg-gradient-to-r from-navy via-navy/95 to-primary p-5">
               <div class="flex items-center gap-3">
@@ -465,7 +465,7 @@ function getInitials(name: string) {
                   v-model="roleForm.name"
                   type="text"
                   placeholder="e.g., Administrator"
-                  class="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+                  class="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
                 />
               </div>
               <div>
@@ -474,16 +474,16 @@ function getInitials(name: string) {
                   v-model="roleForm.description"
                   rows="3"
                   placeholder="Describe the role's purpose and permissions..."
-                  class="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-slate-800 text-gray-900 dark:text-white resize-none"
+                  class="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-zinc-800 text-gray-900 dark:text-white resize-none"
                 ></textarea>
               </div>
             </div>
 
             <!-- Modal Footer -->
-            <div class="border-t border-gray-100 dark:border-gray-700 p-4 bg-gray-50 dark:bg-slate-800/50 flex justify-end gap-3">
+            <div class="border-t border-gray-100 dark:border-gray-700 p-4 bg-gray-50 dark:bg-zinc-800/50 flex justify-end gap-3">
               <button
                 @click="showRoleModal = false"
-                class="px-5 py-2.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl font-medium transition-colors"
+                class="px-5 py-2.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-xl font-medium transition-colors"
               >
                 Cancel
               </button>
@@ -510,7 +510,7 @@ function getInitials(name: string) {
         leave-to-class="opacity-0"
       >
         <div v-if="showMembersModal && selectedRole" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+          <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
             <!-- Modal Header -->
             <div class="relative bg-gradient-to-r from-navy via-navy/95 to-primary p-5">
               <div class="flex items-center gap-3">
@@ -545,7 +545,7 @@ function getInitials(name: string) {
                 <div
                   v-for="(member, index) in roleMembers"
                   :key="member.id"
-                  class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-slate-800 rounded-xl"
+                  class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-zinc-800 rounded-xl"
                 >
                   <div :class="[getAvatarColor(index), 'w-10 h-10 rounded-full flex items-center justify-center text-white font-medium']">
                     {{ getInitials(member.displayName || member.username || '') }}
@@ -566,7 +566,7 @@ function getInitials(name: string) {
             </div>
 
             <!-- Modal Footer -->
-            <div class="border-t border-gray-100 dark:border-gray-700 p-4 bg-gray-50 dark:bg-slate-800/50">
+            <div class="border-t border-gray-100 dark:border-gray-700 p-4 bg-gray-50 dark:bg-zinc-800/50">
               <button
                 @click="showMembersModal = false"
                 class="w-full px-5 py-2.5 bg-gradient-to-r from-navy to-primary text-white rounded-xl font-medium hover:shadow-lg transition-all"
@@ -588,7 +588,7 @@ function getInitials(name: string) {
         leave-to-class="opacity-0"
       >
         <div v-if="showDeleteConfirm && selectedRole" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+          <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
             <div class="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
               <span class="material-symbols-outlined text-red-600 dark:text-red-400 text-3xl">warning</span>
             </div>
@@ -599,7 +599,7 @@ function getInitials(name: string) {
             <div class="flex gap-3 mt-6">
               <button
                 @click="showDeleteConfirm = false"
-                class="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+                class="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
               >
                 Cancel
               </button>

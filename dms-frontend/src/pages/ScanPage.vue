@@ -90,23 +90,23 @@ function handleScanUploaded() {
   <div class="space-y-6">
     <!-- Page Header -->
     <div>
-      <h1 class="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+      <h1 class="text-2xl font-bold text-zinc-900 dark:text-white flex items-center gap-3">
         <div class="w-10 h-10 rounded-xl bg-teal/10 flex items-center justify-center">
           <span class="material-symbols-outlined text-teal text-xl">document_scanner</span>
         </div>
         Scan Document
       </h1>
-      <p class="text-slate-500 text-sm mt-2 ml-[52px]">Capture or import images and create a searchable PDF document</p>
+      <p class="text-zinc-500 text-sm mt-2 ml-[52px]">Capture or import images and create a searchable PDF document</p>
     </div>
 
     <!-- Folder Selection -->
-    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-      <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
-        <h2 class="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+    <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm">
+      <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50">
+        <h2 class="font-semibold text-zinc-900 dark:text-white flex items-center gap-2">
           <span class="material-symbols-outlined text-teal text-lg">folder_open</span>
           Select Target Folder
         </h2>
-        <p class="text-xs text-slate-500 mt-1">Choose where the scanned document will be saved</p>
+        <p class="text-xs text-zinc-500 mt-1">Choose where the scanned document will be saved</p>
       </div>
 
       <div class="p-6">
@@ -116,20 +116,20 @@ function handleScanUploaded() {
         </div>
 
         <!-- Tree -->
-        <div v-else class="border border-slate-200 dark:border-slate-700 rounded-xl max-h-[400px] overflow-auto">
+        <div v-else class="border border-zinc-200 dark:border-zinc-700 rounded-xl max-h-[400px] overflow-auto">
           <div class="p-2">
             <div v-for="cabinet in treeNodes" :key="cabinet.id" class="select-none">
               <!-- Cabinet -->
               <div
-                class="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
+                class="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800"
                 @click="toggleNode(cabinet)"
               >
-                <span class="material-symbols-outlined text-sm text-slate-400 transition-transform" :class="{ 'rotate-90': cabinet.isExpanded }">
+                <span class="material-symbols-outlined text-sm text-zinc-400 transition-transform" :class="{ 'rotate-90': cabinet.isExpanded }">
                   chevron_right
                 </span>
                 <span class="material-symbols-outlined text-lg text-amber-500">inventory_2</span>
-                <span class="text-sm font-medium text-slate-700 dark:text-slate-200">{{ cabinet.name }}</span>
-                <span v-if="cabinet.isLoading" class="material-symbols-outlined animate-spin text-sm text-slate-400">progress_activity</span>
+                <span class="text-sm font-medium text-zinc-700 dark:text-zinc-200">{{ cabinet.name }}</span>
+                <span v-if="cabinet.isLoading" class="material-symbols-outlined animate-spin text-sm text-zinc-400">progress_activity</span>
               </div>
 
               <!-- Folders -->
@@ -139,12 +139,12 @@ function handleScanUploaded() {
                     class="flex items-center gap-2 px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
                     :class="selectedFolderId === folder.id
                       ? 'bg-teal/10 text-teal'
-                      : 'hover:bg-slate-50 dark:hover:bg-slate-800'"
+                      : 'hover:bg-zinc-50 dark:hover:bg-zinc-800'"
                     @click="selectFolder(folder.id, folder.name)"
                   >
                     <span
                       v-if="folder.children && folder.children.length > 0"
-                      class="material-symbols-outlined text-sm text-slate-400 cursor-pointer transition-transform"
+                      class="material-symbols-outlined text-sm text-zinc-400 cursor-pointer transition-transform"
                       :class="{ 'rotate-90': folder.isExpanded }"
                       @click.stop="toggleNode(folder)"
                     >chevron_right</span>
@@ -152,7 +152,7 @@ function handleScanUploaded() {
                     <span class="material-symbols-outlined text-lg" :class="selectedFolderId === folder.id ? 'text-teal' : 'text-blue-500'">
                       {{ folder.isExpanded ? 'folder_open' : 'folder' }}
                     </span>
-                    <span class="text-sm" :class="selectedFolderId === folder.id ? 'font-semibold' : 'text-slate-700 dark:text-slate-300'">
+                    <span class="text-sm" :class="selectedFolderId === folder.id ? 'font-semibold' : 'text-zinc-700 dark:text-zinc-300'">
                       {{ folder.name }}
                     </span>
                   </div>
@@ -165,12 +165,12 @@ function handleScanUploaded() {
                       class="flex items-center gap-2 px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
                       :class="selectedFolderId === sub.id
                         ? 'bg-teal/10 text-teal'
-                        : 'hover:bg-slate-50 dark:hover:bg-slate-800'"
+                        : 'hover:bg-zinc-50 dark:hover:bg-zinc-800'"
                       @click="selectFolder(sub.id, sub.name)"
                     >
                       <span class="w-5"></span>
                       <span class="material-symbols-outlined text-lg" :class="selectedFolderId === sub.id ? 'text-teal' : 'text-blue-400'">folder</span>
-                      <span class="text-sm" :class="selectedFolderId === sub.id ? 'font-semibold' : 'text-slate-600 dark:text-slate-400'">
+                      <span class="text-sm" :class="selectedFolderId === sub.id ? 'font-semibold' : 'text-zinc-600 dark:text-zinc-400'">
                         {{ sub.name }}
                       </span>
                     </div>
@@ -179,7 +179,7 @@ function handleScanUploaded() {
               </div>
             </div>
 
-            <div v-if="treeNodes.length === 0 && !isLoading" class="text-center py-8 text-slate-500 text-sm">
+            <div v-if="treeNodes.length === 0 && !isLoading" class="text-center py-8 text-zinc-500 text-sm">
               No cabinets found
             </div>
           </div>
@@ -189,10 +189,10 @@ function handleScanUploaded() {
         <div class="mt-4 flex items-center justify-between">
           <div v-if="selectedFolderId" class="flex items-center gap-2 text-sm">
             <span class="material-symbols-outlined text-teal text-lg">folder</span>
-            <span class="text-slate-600 dark:text-slate-400">Selected:</span>
-            <span class="font-semibold text-slate-900 dark:text-white">{{ selectedFolderName }}</span>
+            <span class="text-zinc-600 dark:text-zinc-400">Selected:</span>
+            <span class="font-semibold text-zinc-900 dark:text-white">{{ selectedFolderName }}</span>
           </div>
-          <div v-else class="text-sm text-slate-400">No folder selected</div>
+          <div v-else class="text-sm text-zinc-400">No folder selected</div>
 
           <button
             @click="startScan"

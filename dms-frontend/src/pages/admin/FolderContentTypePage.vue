@@ -235,7 +235,7 @@ function getCategoryColor(category: string): string {
       <div class="grid grid-cols-12 gap-6">
         <!-- Left Panel: Folder Browser -->
         <div class="col-span-4">
-          <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-4">
+          <div class="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-gray-200 dark:border-zinc-700 p-4">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Select Folder</h2>
 
             <!-- Cabinet Selector -->
@@ -244,7 +244,7 @@ function getCategoryColor(category: string): string {
               <select
                 v-model="selectedCabinetId"
                 @change="onCabinetChange"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+                class="w-full px-3 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
               >
                 <option value="">-- Select Cabinet --</option>
                 <option v-for="cabinet in cabinets" :key="cabinet.id" :value="cabinet.id">
@@ -254,7 +254,7 @@ function getCategoryColor(category: string): string {
             </div>
 
             <!-- Folder Tree -->
-            <div v-if="selectedCabinetId" class="border border-gray-200 dark:border-slate-700 rounded-lg max-h-96 overflow-y-auto">
+            <div v-if="selectedCabinetId" class="border border-gray-200 dark:border-zinc-700 rounded-lg max-h-96 overflow-y-auto">
               <div v-if="folderTree.length === 0" class="p-4 text-center text-gray-500">
                 No folders in this cabinet
               </div>
@@ -262,7 +262,7 @@ function getCategoryColor(category: string): string {
                 <div
                   v-for="{ folder, depth, hasChildren } in flattenedFolders"
                   :key="folder.id"
-                  class="flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-slate-700"
+                  class="flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-zinc-700"
                   :class="{ 'bg-teal/10': selectedFolderId === folder.id }"
                   :style="{ paddingLeft: (depth * 16 + 8) + 'px' }"
                   @click="onFolderSelect(folder.id)"
@@ -294,7 +294,7 @@ function getCategoryColor(category: string): string {
           </div>
 
           <!-- Available Content Types -->
-          <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-4 mt-4">
+          <div class="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-gray-200 dark:border-zinc-700 p-4 mt-4">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Available Content Types</h2>
 
             <div v-if="isLoading" class="text-center py-4 text-gray-500">Loading...</div>
@@ -313,7 +313,7 @@ function getCategoryColor(category: string): string {
                   <div
                     v-for="ct in types"
                     :key="ct.id"
-                    class="flex items-center gap-2 p-2 bg-gray-50 dark:bg-slate-800 rounded text-sm"
+                    class="flex items-center gap-2 p-2 bg-gray-50 dark:bg-zinc-800 rounded text-sm"
                   >
                     <div class="w-6 h-6 rounded flex items-center justify-center text-white text-xs font-bold" :style="{ backgroundColor: ct.color }">
                       {{ ct.name.charAt(0) }}
@@ -329,7 +329,7 @@ function getCategoryColor(category: string): string {
 
         <!-- Right Panel: Folder Assignments -->
         <div class="col-span-8">
-          <div class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6">
+          <div class="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-gray-200 dark:border-zinc-700 p-6">
             <div v-if="!selectedFolderId" class="text-center py-12">
               <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
@@ -363,7 +363,7 @@ function getCategoryColor(category: string): string {
                 Loading assignments...
               </div>
 
-              <div v-else-if="folderAssignments.length === 0" class="text-center py-12 bg-gray-50 dark:bg-slate-800 rounded-lg">
+              <div v-else-if="folderAssignments.length === 0" class="text-center py-12 bg-gray-50 dark:bg-zinc-800 rounded-lg">
                 <svg class="w-12 h-12 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
@@ -375,7 +375,7 @@ function getCategoryColor(category: string): string {
                 <div
                   v-for="assignment in folderAssignments"
                   :key="assignment.id"
-                  class="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700"
+                  class="flex items-center justify-between p-4 bg-gray-50 dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-zinc-700"
                 >
                   <div class="flex items-center gap-4">
                     <div
@@ -420,7 +420,7 @@ function getCategoryColor(category: string): string {
 
     <!-- Assign Modal -->
     <div v-if="showAssignModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
+      <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Assign Content Type</h3>
 
         <div class="space-y-4">
@@ -428,7 +428,7 @@ function getCategoryColor(category: string): string {
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Content Type</label>
             <select
               v-model="assignFormData.contentTypeId"
-              class="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+              class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
             >
               <option value="">-- Select Content Type --</option>
               <optgroup v-for="(types, category) in groupedContentTypes" :key="category" :label="String(category)">
@@ -458,7 +458,7 @@ function getCategoryColor(category: string): string {
         <div class="mt-6 flex justify-end gap-3">
           <button
             @click="showAssignModal = false"
-            class="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800"
+            class="px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-800"
           >
             Cancel
           </button>

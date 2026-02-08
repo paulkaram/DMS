@@ -51,9 +51,9 @@ const structureTypes = ['Ministry', 'Department', 'Division', 'Section', 'Unit']
 const avatarColors = [
   'bg-primary',
   'bg-navy',
-  'bg-slate-600',
+  'bg-zinc-600',
   'bg-primary/80',
-  'bg-slate-700'
+  'bg-zinc-700'
 ]
 
 function getAvatarColor(index: number) {
@@ -326,19 +326,19 @@ function getParentName(parentId: string | undefined) {
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">Organizational Structures</h1>
-        <p class="text-slate-500 mt-1">Manage departments, divisions, and units</p>
+        <h1 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Organizational Structures</h1>
+        <p class="text-zinc-500 mt-1">Manage departments, divisions, and units</p>
       </div>
       <div class="flex items-center gap-3">
         <!-- View Toggle -->
-        <div class="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+        <div class="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-lg p-1">
           <button
             @click="viewMode = 'list'"
             :class="[
               'p-1.5 rounded-md transition-colors',
               viewMode === 'list'
-                ? 'bg-white dark:bg-slate-700 text-primary shadow-sm'
-                : 'text-slate-400 hover:text-slate-600'
+                ? 'bg-white dark:bg-zinc-700 text-primary shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-600'
             ]"
             title="List view"
           >
@@ -349,8 +349,8 @@ function getParentName(parentId: string | undefined) {
             :class="[
               'p-1.5 rounded-md transition-colors',
               viewMode === 'grid'
-                ? 'bg-white dark:bg-slate-700 text-primary shadow-sm'
-                : 'text-slate-400 hover:text-slate-600'
+                ? 'bg-white dark:bg-zinc-700 text-primary shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-600'
             ]"
             title="Grid view"
           >
@@ -359,12 +359,12 @@ function getParentName(parentId: string | undefined) {
         </div>
         <!-- Search -->
         <div class="relative">
-          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+          <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-lg">search</span>
           <input
             v-model="searchQuery"
             type="text"
             placeholder="Search..."
-            class="w-48 pl-10 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none"
+            class="w-48 pl-10 pr-4 py-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none"
           />
         </div>
         <button
@@ -385,7 +385,7 @@ function getParentName(parentId: string | undefined) {
           'px-4 py-3 rounded-xl flex items-center justify-between transition-all',
           selectedTypeFilter === 'All'
             ? 'bg-navy text-white ring-2 ring-primary/50'
-            : 'bg-slate-800 text-white hover:bg-slate-700'
+            : 'bg-zinc-800 text-white hover:bg-zinc-700'
         ]"
       >
         <div class="flex items-center gap-2">
@@ -402,7 +402,7 @@ function getParentName(parentId: string | undefined) {
           'px-4 py-3 rounded-xl flex items-center justify-between transition-all',
           selectedTypeFilter === type
             ? 'bg-navy text-white ring-2 ring-primary/50'
-            : 'bg-slate-700 text-white hover:bg-slate-600'
+            : 'bg-zinc-700 text-white hover:bg-zinc-600'
         ]"
       >
         <div class="flex items-center gap-2">
@@ -414,7 +414,7 @@ function getParentName(parentId: string | undefined) {
     </div>
 
     <!-- Content Card -->
-    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+    <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
       <div class="p-6">
       <!-- Messages -->
       <Transition enter-active-class="duration-300 ease-out" enter-from-class="opacity-0 -translate-y-2">
@@ -436,16 +436,16 @@ function getParentName(parentId: string | undefined) {
 
       <!-- Loading -->
       <div v-if="isLoading" class="space-y-3">
-        <div v-for="i in 5" :key="i" class="h-14 bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse"></div>
+        <div v-for="i in 5" :key="i" class="h-14 bg-zinc-100 dark:bg-zinc-800 rounded-xl animate-pulse"></div>
       </div>
 
       <!-- Empty State -->
       <div v-else-if="filteredStructures.length === 0" class="text-center py-16">
-        <div class="w-20 h-20 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
-          <span class="material-symbols-outlined text-5xl text-slate-400">domain_disabled</span>
+        <div class="w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
+          <span class="material-symbols-outlined text-5xl text-zinc-400">domain_disabled</span>
         </div>
-        <h3 class="text-lg font-semibold text-slate-700 dark:text-slate-300">No Structures Found</h3>
-        <p class="text-slate-500 dark:text-slate-400 mt-1">{{ searchQuery ? 'Try a different search term' : 'Create your first organizational structure' }}</p>
+        <h3 class="text-lg font-semibold text-zinc-700 dark:text-zinc-300">No Structures Found</h3>
+        <p class="text-zinc-500 dark:text-zinc-400 mt-1">{{ searchQuery ? 'Try a different search term' : 'Create your first organizational structure' }}</p>
         <button
           v-if="!searchQuery"
           @click="openCreateModal()"
@@ -459,21 +459,21 @@ function getParentName(parentId: string | undefined) {
       <div v-else-if="viewMode === 'list'" class="overflow-x-auto">
         <table class="w-full">
           <thead>
-            <tr class="border-b border-slate-100 dark:border-slate-800">
-              <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Structure</th>
-              <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Code</th>
-              <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Type</th>
-              <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Parent</th>
-              <th class="text-center py-3 px-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Members</th>
-              <th class="text-center py-3 px-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Status</th>
-              <th class="text-right py-3 px-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Actions</th>
+            <tr class="border-b border-zinc-100 dark:border-zinc-800">
+              <th class="text-left py-3 px-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Structure</th>
+              <th class="text-left py-3 px-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Code</th>
+              <th class="text-left py-3 px-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Type</th>
+              <th class="text-left py-3 px-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Parent</th>
+              <th class="text-center py-3 px-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Members</th>
+              <th class="text-center py-3 px-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Status</th>
+              <th class="text-right py-3 px-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Actions</th>
             </tr>
           </thead>
           <tbody>
             <tr
               v-for="(structure, index) in filteredStructures"
               :key="structure.id"
-              class="border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+              class="border-b border-zinc-50 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
             >
               <td class="py-3 px-4">
                 <div class="flex items-center gap-3">
@@ -481,13 +481,13 @@ function getParentName(parentId: string | undefined) {
                     <span class="material-symbols-outlined text-white text-lg">{{ getTypeIcon(structure.type) }}</span>
                   </div>
                   <div>
-                    <span class="font-medium text-slate-900 dark:text-white">{{ structure.name }}</span>
-                    <p v-if="structure.nameAr" class="text-xs text-slate-400">{{ structure.nameAr }}</p>
+                    <span class="font-medium text-zinc-900 dark:text-white">{{ structure.name }}</span>
+                    <p v-if="structure.nameAr" class="text-xs text-zinc-400">{{ structure.nameAr }}</p>
                   </div>
                 </div>
               </td>
               <td class="py-3 px-4">
-                <code class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs rounded">{{ structure.code }}</code>
+                <code class="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 text-xs rounded">{{ structure.code }}</code>
               </td>
               <td class="py-3 px-4">
                 <span :class="['px-2 py-1 rounded-full text-xs font-medium', getTypeBadgeClass(structure.type)]">
@@ -495,7 +495,7 @@ function getParentName(parentId: string | undefined) {
                 </span>
               </td>
               <td class="py-3 px-4">
-                <span class="text-sm text-slate-500 dark:text-slate-400">{{ getParentName(structure.parentId) || '-' }}</span>
+                <span class="text-sm text-zinc-500 dark:text-zinc-400">{{ getParentName(structure.parentId) || '-' }}</span>
               </td>
               <td class="py-3 px-4 text-center">
                 <button
@@ -512,7 +512,7 @@ function getParentName(parentId: string | undefined) {
                     'px-2 py-1 rounded-full text-xs font-medium',
                     structure.isActive
                       ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
-                      : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                      : 'bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400'
                   ]"
                 >
                   {{ structure.isActive ? 'Active' : 'Inactive' }}
@@ -522,21 +522,21 @@ function getParentName(parentId: string | undefined) {
                 <div class="flex items-center justify-end gap-1">
                   <button
                     @click="openCreateModal(structure.id)"
-                    class="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                    class="p-1.5 text-zinc-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                     title="Add Child"
                   >
                     <span class="material-symbols-outlined text-lg">add</span>
                   </button>
                   <button
                     @click="openEditModal(structure)"
-                    class="p-1.5 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                    class="p-1.5 text-zinc-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                     title="Edit"
                   >
                     <span class="material-symbols-outlined text-lg">edit</span>
                   </button>
                   <button
                     @click="confirmDelete(structure)"
-                    class="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                    class="p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                     title="Delete"
                   >
                     <span class="material-symbols-outlined text-lg">delete</span>
@@ -553,7 +553,7 @@ function getParentName(parentId: string | undefined) {
         <div
           v-for="(structure, index) in filteredStructures"
           :key="structure.id"
-          class="bg-slate-50 dark:bg-slate-800 rounded-xl p-4 border border-slate-100 dark:border-slate-700 hover:border-primary/30 hover:shadow-md transition-all group"
+          class="bg-zinc-50 dark:bg-zinc-800 rounded-xl p-4 border border-zinc-100 dark:border-zinc-700 hover:border-primary/30 hover:shadow-md transition-all group"
         >
           <div class="flex items-start justify-between mb-3">
             <div :class="[getAvatarColor(index), 'w-10 h-10 rounded-lg flex items-center justify-center']">
@@ -562,21 +562,21 @@ function getParentName(parentId: string | undefined) {
             <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
               <button
                 @click="openCreateModal(structure.id)"
-                class="p-1 text-slate-400 hover:text-primary hover:bg-white dark:hover:bg-slate-700 rounded transition-colors"
+                class="p-1 text-zinc-400 hover:text-primary hover:bg-white dark:hover:bg-zinc-700 rounded transition-colors"
                 title="Add Child"
               >
                 <span class="material-symbols-outlined text-sm">add</span>
               </button>
               <button
                 @click="openEditModal(structure)"
-                class="p-1 text-slate-400 hover:text-primary hover:bg-white dark:hover:bg-slate-700 rounded transition-colors"
+                class="p-1 text-zinc-400 hover:text-primary hover:bg-white dark:hover:bg-zinc-700 rounded transition-colors"
                 title="Edit"
               >
                 <span class="material-symbols-outlined text-sm">edit</span>
               </button>
               <button
                 @click="confirmDelete(structure)"
-                class="p-1 text-slate-400 hover:text-red-500 hover:bg-white dark:hover:bg-slate-700 rounded transition-colors"
+                class="p-1 text-zinc-400 hover:text-red-500 hover:bg-white dark:hover:bg-zinc-700 rounded transition-colors"
                 title="Delete"
               >
                 <span class="material-symbols-outlined text-sm">delete</span>
@@ -584,9 +584,9 @@ function getParentName(parentId: string | undefined) {
             </div>
           </div>
 
-          <h3 class="font-semibold text-slate-900 dark:text-white text-sm mb-1">{{ structure.name }}</h3>
-          <p v-if="structure.nameAr" class="text-xs text-slate-400 mb-1">{{ structure.nameAr }}</p>
-          <code class="px-2 py-0.5 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs rounded">{{ structure.code }}</code>
+          <h3 class="font-semibold text-zinc-900 dark:text-white text-sm mb-1">{{ structure.name }}</h3>
+          <p v-if="structure.nameAr" class="text-xs text-zinc-400 mb-1">{{ structure.nameAr }}</p>
+          <code class="px-2 py-0.5 bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 text-xs rounded">{{ structure.code }}</code>
 
           <div class="flex items-center gap-2 mt-3 mb-3">
             <span :class="['px-2 py-0.5 rounded-full text-xs font-medium', getTypeBadgeClass(structure.type)]">
@@ -597,15 +597,15 @@ function getParentName(parentId: string | undefined) {
                 'px-2 py-0.5 rounded-full text-xs font-medium',
                 structure.isActive
                   ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
-                  : 'bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-400'
+                  : 'bg-zinc-200 dark:bg-zinc-600 text-zinc-600 dark:text-zinc-400'
               ]"
             >
               {{ structure.isActive ? 'Active' : 'Inactive' }}
             </span>
           </div>
 
-          <div class="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-slate-700">
-            <div class="flex items-center gap-3 text-xs text-slate-500">
+          <div class="flex items-center justify-between pt-3 border-t border-zinc-200 dark:border-zinc-700">
+            <div class="flex items-center gap-3 text-xs text-zinc-500">
               <span class="flex items-center gap-1">
                 <span class="material-symbols-outlined text-xs">people</span>
                 {{ structure.memberCount || 0 }}
@@ -637,7 +637,7 @@ function getParentName(parentId: string | undefined) {
         leave-to-class="opacity-0"
       >
         <div v-if="showStructureModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+          <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
             <!-- Modal Header -->
             <div class="relative bg-gradient-to-r from-navy via-navy/95 to-primary p-5">
               <div class="flex items-center gap-3">
@@ -666,14 +666,14 @@ function getParentName(parentId: string | undefined) {
                     v-model="structureForm.code"
                     type="text"
                     placeholder="e.g., HR-001"
-                    class="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+                    class="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
                   />
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Type *</label>
                   <select
                     v-model="structureForm.type"
-                    class="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+                    class="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
                   >
                     <option v-for="type in structureTypes" :key="type" :value="type">{{ type }}</option>
                   </select>
@@ -686,7 +686,7 @@ function getParentName(parentId: string | undefined) {
                   v-model="structureForm.name"
                   type="text"
                   placeholder="e.g., Human Resources Department"
-                  class="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+                  class="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
                 />
               </div>
 
@@ -697,7 +697,7 @@ function getParentName(parentId: string | undefined) {
                   type="text"
                   dir="rtl"
                   placeholder="قسم الموارد البشرية"
-                  class="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+                  class="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
                 />
               </div>
 
@@ -705,7 +705,7 @@ function getParentName(parentId: string | undefined) {
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Parent Structure</label>
                 <select
                   v-model="structureForm.parentId"
-                  class="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+                  class="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
                 >
                   <option value="">None (Root Level)</option>
                   <option v-for="s in availableParents" :key="s.id" :value="s.id">
@@ -716,10 +716,10 @@ function getParentName(parentId: string | undefined) {
             </div>
 
             <!-- Modal Footer -->
-            <div class="border-t border-gray-100 dark:border-gray-700 p-4 bg-gray-50 dark:bg-slate-800/50 flex justify-end gap-3">
+            <div class="border-t border-gray-100 dark:border-gray-700 p-4 bg-gray-50 dark:bg-zinc-800/50 flex justify-end gap-3">
               <button
                 @click="showStructureModal = false"
-                class="px-5 py-2.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl font-medium transition-colors"
+                class="px-5 py-2.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-xl font-medium transition-colors"
               >
                 Cancel
               </button>
@@ -746,7 +746,7 @@ function getParentName(parentId: string | undefined) {
         leave-to-class="opacity-0"
       >
         <div v-if="showMembersModal && selectedStructure" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+          <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
             <!-- Modal Header -->
             <div class="relative bg-gradient-to-r from-navy via-navy/95 to-primary p-5">
               <div class="flex items-center gap-3">
@@ -791,7 +791,7 @@ function getParentName(parentId: string | undefined) {
                   <div
                     v-for="(member, index) in structureMembers"
                     :key="member.userId"
-                    class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-slate-800 rounded-xl"
+                    class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-zinc-800 rounded-xl"
                   >
                     <div :class="[getAvatarColor(index), 'w-10 h-10 rounded-full flex items-center justify-center text-white font-medium']">
                       {{ getInitials(member.userDisplayName || member.userName || '') }}
@@ -821,7 +821,7 @@ function getParentName(parentId: string | undefined) {
             </div>
 
             <!-- Modal Footer -->
-            <div class="border-t border-gray-100 dark:border-gray-700 p-4 bg-gray-50 dark:bg-slate-800/50">
+            <div class="border-t border-gray-100 dark:border-gray-700 p-4 bg-gray-50 dark:bg-zinc-800/50">
               <button
                 @click="showMembersModal = false"
                 class="w-full px-5 py-2.5 bg-gradient-to-r from-navy to-primary text-white rounded-xl font-medium hover:shadow-lg transition-all"
@@ -843,7 +843,7 @@ function getParentName(parentId: string | undefined) {
         leave-to-class="opacity-0"
       >
         <div v-if="showAddMemberModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+          <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
             <!-- Modal Header -->
             <div class="relative bg-gradient-to-r from-navy via-navy/95 to-primary p-5">
               <div class="flex items-center gap-3">
@@ -869,7 +869,7 @@ function getParentName(parentId: string | undefined) {
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">User *</label>
                 <select
                   v-model="memberForm.userId"
-                  class="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+                  class="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
                 >
                   <option value="">Select a user...</option>
                   <option v-for="user in availableUsers" :key="user.id" :value="user.id">
@@ -884,7 +884,7 @@ function getParentName(parentId: string | undefined) {
                   v-model="memberForm.position"
                   type="text"
                   placeholder="e.g., Manager, Team Lead"
-                  class="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+                  class="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
                 />
               </div>
 
@@ -893,7 +893,7 @@ function getParentName(parentId: string | undefined) {
                 <input
                   v-model="memberForm.startDate"
                   type="date"
-                  class="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+                  class="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
                 />
               </div>
 
@@ -907,10 +907,10 @@ function getParentName(parentId: string | undefined) {
             </div>
 
             <!-- Modal Footer -->
-            <div class="border-t border-gray-100 dark:border-gray-700 p-4 bg-gray-50 dark:bg-slate-800/50 flex justify-end gap-3">
+            <div class="border-t border-gray-100 dark:border-gray-700 p-4 bg-gray-50 dark:bg-zinc-800/50 flex justify-end gap-3">
               <button
                 @click="showAddMemberModal = false"
-                class="px-5 py-2.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl font-medium transition-colors"
+                class="px-5 py-2.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-xl font-medium transition-colors"
               >
                 Cancel
               </button>
@@ -937,7 +937,7 @@ function getParentName(parentId: string | undefined) {
         leave-to-class="opacity-0"
       >
         <div v-if="showDeleteConfirm && selectedStructure" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+          <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
             <div class="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
               <span class="material-symbols-outlined text-red-600 dark:text-red-400 text-3xl">warning</span>
             </div>
@@ -948,7 +948,7 @@ function getParentName(parentId: string | undefined) {
             <div class="flex gap-3 mt-6">
               <button
                 @click="showDeleteConfirm = false"
-                class="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+                class="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
               >
                 Cancel
               </button>

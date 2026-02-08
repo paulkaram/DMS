@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import type { Document, PreviewInfo, DocumentMetadata, ContentTypeDefinition } from '@/types'
+import type { Document, PreviewInfo, DocumentMetadata, ContentTypeDefinition, PageReorganizeResult } from '@/types'
 import { documentsApi, documentPasswordsApi, contentTypeDefinitionsApi, permissionsApi, documentAnnotationsApi } from '@/api/client'
 import VirtualizedPdfViewer from './VirtualizedPdfViewer.vue'
 import AnnotationToolbar from './AnnotationToolbar.vue'
 import SignaturePadModal from './SignaturePadModal.vue'
+import PageManagementPanel from './PageManagementPanel.vue'
 import { useAnnotations } from '@/composables/useAnnotations'
 
 // Store validated document passwords in session (documentId -> true)
@@ -87,6 +88,7 @@ const hasWritePermission = ref(false)
 const hasAnnotations = ref(false)
 const showSignatureModal = ref(false)
 const annotationReadOnly = ref(false)
+const showPageManagement = ref(false)
 
 // Base PDF page width (A4 at ~96dpi is roughly 794px, we use 700 as comfortable default)
 const BASE_PDF_WIDTH = 700
@@ -228,6 +230,7 @@ function cleanup() {
   hasWritePermission.value = false
   hasAnnotations.value = false
   annotationReadOnly.value = false
+  showPageManagement.value = false
 }
 
 async function loadPreview() {
@@ -445,24 +448,24 @@ function getFileIconBg(type: string): string {
   const colors: Record<string, string> = {
     'Pdf': 'bg-red-100 dark:bg-red-900/30',
     'Image': 'bg-purple-100 dark:bg-purple-900/30',
-    'Text': 'bg-slate-100 dark:bg-slate-700',
+    'Text': 'bg-zinc-100 dark:bg-zinc-700',
     'Video': 'bg-pink-100 dark:bg-pink-900/30',
     'Audio': 'bg-indigo-100 dark:bg-indigo-900/30',
     'Office': 'bg-blue-100 dark:bg-blue-900/30'
   }
-  return colors[type] || 'bg-slate-100 dark:bg-slate-700'
+  return colors[type] || 'bg-zinc-100 dark:bg-zinc-700'
 }
 
 function getFileIconColor(type: string): string {
   const colors: Record<string, string> = {
     'Pdf': 'text-red-600',
     'Image': 'text-purple-600',
-    'Text': 'text-slate-600',
+    'Text': 'text-zinc-600',
     'Video': 'text-pink-600',
     'Audio': 'text-indigo-600',
     'Office': 'text-blue-600'
   }
-  return colors[type] || 'text-slate-500'
+  return colors[type] || 'text-zinc-500'
 }
 
 // Metadata functions
@@ -600,6 +603,7 @@ async function checkAnnotationPermissions() {
 
 async function handleEnterAnnotationMode() {
   if (!props.document) return
+  showPageManagement.value = false // Close page panel when entering annotation mode
   enterAnnotationMode()
   annotationReadOnly.value = false
   await loadAnnotations(props.document.id)
@@ -657,6 +661,13 @@ function handleAnnotationUndo() {
 function handleAnnotationRedo() {
   redoAnnotation()
 }
+
+// Page management
+async function handlePageManagementApplied(result: PageReorganizeResult) {
+  showPageManagement.value = false
+  // Reload the PDF to show the new version
+  await loadPreviewContent()
+}
 </script>
 
 <template>
@@ -673,17 +684,17 @@ function handleAnnotationRedo() {
         v-if="isOpen"
         ref="viewerContainer"
         class="fixed inset-0 z-50 flex flex-col"
-        :class="isDarkMode ? 'bg-slate-900' : 'bg-[#e2e8f0]'"
+        :class="isDarkMode ? 'bg-zinc-900' : 'bg-[#e2e8f0]'"
       >
         <!-- Header Toolbar - Light with Cyan Accents -->
         <header
-          class="flex items-center justify-between px-4 py-2.5 border-b shrink-0 bg-white border-slate-200 shadow-sm"
+          class="flex items-center justify-between px-4 py-2.5 border-b shrink-0 bg-white border-zinc-200 shadow-sm"
         >
           <!-- Left: Back & Document Info -->
           <div class="flex items-center gap-3 min-w-0">
             <button
               @click="isOpen = false"
-              class="p-2 rounded-lg transition-colors text-slate-500 hover:text-teal hover:bg-teal/10"
+              class="p-2 rounded-lg transition-colors text-zinc-500 hover:text-teal hover:bg-teal/10"
             >
               <span class="material-symbols-outlined">close</span>
             </button>
@@ -695,7 +706,7 @@ function handleAnnotationRedo() {
                 </span>
               </div>
               <div class="min-w-0">
-                <h1 class="font-semibold text-sm truncate text-slate-800 flex items-center gap-1.5">
+                <h1 class="font-semibold text-sm truncate text-zinc-800 flex items-center gap-1.5">
                   <span class="truncate">{{ document?.name }}{{ document?.extension }}</span>
                   <!-- Password Protected Badge -->
                   <div
@@ -710,7 +721,7 @@ function handleAnnotationRedo() {
                     <span class="text-[8px] font-semibold text-violet-600 uppercase tracking-wide pr-0.5">Secured</span>
                   </div>
                 </h1>
-                <p class="text-xs text-slate-400">
+                <p class="text-xs text-zinc-400">
                   {{ formatFileSize(previewInfo.fileSize) }}
                   <span v-if="totalPages > 1" class="text-teal font-medium"> · {{ totalPages }} pages</span>
                 </p>
@@ -721,12 +732,12 @@ function handleAnnotationRedo() {
           <!-- Center: Page Navigation (PDF only) -->
           <div
             v-if="previewInfo?.type === 'Pdf' && totalPages > 1"
-            class="flex items-center gap-1 bg-slate-50 rounded-xl px-2 py-1 border border-slate-200"
+            class="flex items-center gap-1 bg-zinc-50 rounded-xl px-2 py-1 border border-zinc-200"
           >
             <button
               @click="prevPage"
               :disabled="currentPage <= 1"
-              class="p-1.5 rounded-lg transition-colors disabled:opacity-30 text-slate-500 hover:text-teal hover:bg-teal/10"
+              class="p-1.5 rounded-lg transition-colors disabled:opacity-30 text-zinc-500 hover:text-teal hover:bg-teal/10"
             >
               <span class="material-symbols-outlined text-xl">chevron_left</span>
             </button>
@@ -738,16 +749,16 @@ function handleAnnotationRedo() {
                 min="1"
                 :max="totalPages"
                 @change="goToPage(currentPage)"
-                class="w-12 px-2 py-1 text-center text-sm rounded-lg border border-slate-200 bg-white text-slate-800 font-medium focus:border-teal focus:ring-1 focus:ring-teal/20 outline-none"
+                class="w-12 px-2 py-1 text-center text-sm rounded-lg border border-zinc-200 bg-white text-zinc-800 font-medium focus:border-teal focus:ring-1 focus:ring-teal/20 outline-none"
               />
-              <span class="text-slate-400">/</span>
-              <span class="text-slate-600 font-medium">{{ totalPages }}</span>
+              <span class="text-zinc-400">/</span>
+              <span class="text-zinc-600 font-medium">{{ totalPages }}</span>
             </div>
 
             <button
               @click="nextPage"
               :disabled="currentPage >= totalPages"
-              class="p-1.5 rounded-lg transition-colors disabled:opacity-30 text-slate-500 hover:text-teal hover:bg-teal/10"
+              class="p-1.5 rounded-lg transition-colors disabled:opacity-30 text-zinc-500 hover:text-teal hover:bg-teal/10"
             >
               <span class="material-symbols-outlined text-xl">chevron_right</span>
             </button>
@@ -758,12 +769,12 @@ function handleAnnotationRedo() {
             <!-- Zoom Controls -->
             <div
               v-if="previewInfo?.type === 'Pdf' || previewInfo?.type === 'Image'"
-              class="flex items-center gap-0.5 px-1.5 py-1 rounded-xl mr-2 bg-slate-50 border border-slate-200"
+              class="flex items-center gap-0.5 px-1.5 py-1 rounded-xl mr-2 bg-zinc-50 border border-zinc-200"
             >
               <button
                 @click="zoomOut"
                 :disabled="zoom <= 50"
-                class="p-1 rounded-lg transition-colors disabled:opacity-30 text-slate-500 hover:text-teal hover:bg-teal/10"
+                class="p-1 rounded-lg transition-colors disabled:opacity-30 text-zinc-500 hover:text-teal hover:bg-teal/10"
               >
                 <span class="material-symbols-outlined text-lg">remove</span>
               </button>
@@ -775,7 +786,7 @@ function handleAnnotationRedo() {
               <button
                 @click="zoomIn"
                 :disabled="zoom >= 300"
-                class="p-1 rounded-lg transition-colors disabled:opacity-30 text-slate-500 hover:text-teal hover:bg-teal/10"
+                class="p-1 rounded-lg transition-colors disabled:opacity-30 text-zinc-500 hover:text-teal hover:bg-teal/10"
               >
                 <span class="material-symbols-outlined text-lg">add</span>
               </button>
@@ -785,18 +796,18 @@ function handleAnnotationRedo() {
             <button
               v-if="previewInfo?.type === 'Image'"
               @click="rotate"
-              class="p-2 rounded-lg transition-colors text-slate-500 hover:text-teal hover:bg-teal/10"
+              class="p-2 rounded-lg transition-colors text-zinc-500 hover:text-teal hover:bg-teal/10"
               title="Rotate"
             >
               <span class="material-symbols-outlined">rotate_right</span>
             </button>
 
-            <div class="w-px h-6 mx-1 bg-slate-200"></div>
+            <div class="w-px h-6 mx-1 bg-zinc-200"></div>
 
             <!-- Theme Toggle -->
             <button
               @click="isDarkMode = !isDarkMode"
-              class="p-2 rounded-lg transition-colors text-slate-500 hover:text-teal hover:bg-teal/10"
+              class="p-2 rounded-lg transition-colors text-zinc-500 hover:text-teal hover:bg-teal/10"
               title="Toggle theme"
             >
               <span class="material-symbols-outlined">{{ isDarkMode ? 'light_mode' : 'dark_mode' }}</span>
@@ -805,18 +816,18 @@ function handleAnnotationRedo() {
             <!-- Fullscreen -->
             <button
               @click="toggleFullscreen"
-              class="p-2 rounded-lg transition-colors text-slate-500 hover:text-teal hover:bg-teal/10"
+              class="p-2 rounded-lg transition-colors text-zinc-500 hover:text-teal hover:bg-teal/10"
               title="Fullscreen"
             >
               <span class="material-symbols-outlined">{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</span>
             </button>
 
-            <div class="w-px h-6 mx-1 bg-slate-200"></div>
+            <div class="w-px h-6 mx-1 bg-zinc-200"></div>
 
             <!-- Print -->
             <button
               @click="handlePrint"
-              class="p-2 rounded-lg transition-colors text-slate-500 hover:text-teal hover:bg-teal/10"
+              class="p-2 rounded-lg transition-colors text-zinc-500 hover:text-teal hover:bg-teal/10"
               title="Print"
             >
               <span class="material-symbols-outlined">print</span>
@@ -832,6 +843,17 @@ function handleAnnotationRedo() {
               <span class="material-symbols-outlined">edit_note</span>
             </button>
 
+            <!-- Page Management (PDF only, Write permission required, not in annotation mode) -->
+            <button
+              v-if="previewInfo?.type === 'Pdf' && hasWritePermission && !isAnnotationMode"
+              @click="showPageManagement = !showPageManagement"
+              class="p-2 rounded-lg transition-colors"
+              :class="showPageManagement ? 'text-teal bg-teal/10' : 'text-zinc-500 hover:text-teal hover:bg-teal/10'"
+              title="Manage pages"
+            >
+              <span class="material-symbols-outlined">auto_stories</span>
+            </button>
+
             <!-- Download -->
             <button
               @click="handleDownload"
@@ -841,14 +863,14 @@ function handleAnnotationRedo() {
               <span class="material-symbols-outlined">download</span>
             </button>
 
-            <div class="w-px h-6 mx-1 bg-slate-200"></div>
+            <div class="w-px h-6 mx-1 bg-zinc-200"></div>
 
             <!-- Metadata Panel Toggle -->
             <button
               v-if="hasMetadata"
               @click="toggleMetadataPanel"
               class="p-2 rounded-lg transition-colors"
-              :class="showMetadataPanel ? 'text-teal bg-teal/10' : 'text-slate-500 hover:text-teal hover:bg-teal/10'"
+              :class="showMetadataPanel ? 'text-teal bg-teal/10' : 'text-zinc-500 hover:text-teal hover:bg-teal/10'"
               title="Toggle metadata panel"
             >
               <span class="material-symbols-outlined">info</span>
@@ -884,11 +906,11 @@ function handleAnnotationRedo() {
         />
 
         <!-- Main Content -->
-        <main class="flex-1 overflow-hidden relative" :class="isDarkMode ? 'bg-slate-800' : 'bg-[#e2e8f0]'">
+        <main class="flex-1 overflow-hidden relative" :class="isDarkMode ? 'bg-zinc-800' : 'bg-[#e2e8f0]'">
           <!-- Password Required -->
           <div v-if="requiresPassword" class="absolute inset-0 flex items-center justify-center p-8">
             <div class="w-full max-w-md">
-              <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl p-8">
+              <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl p-8">
                 <!-- Lock Icon -->
                 <div class="flex justify-center mb-6">
                   <div class="w-20 h-20 rounded-2xl bg-amber-500/10 flex items-center justify-center">
@@ -897,10 +919,10 @@ function handleAnnotationRedo() {
                 </div>
 
                 <!-- Title -->
-                <h2 class="text-xl font-bold text-center text-slate-900 dark:text-white mb-2">
+                <h2 class="text-xl font-bold text-center text-zinc-900 dark:text-white mb-2">
                   Password Protected
                 </h2>
-                <p class="text-sm text-center text-slate-500 dark:text-slate-400 mb-6">
+                <p class="text-sm text-center text-zinc-500 dark:text-zinc-400 mb-6">
                   This document requires a password to view
                 </p>
 
@@ -917,14 +939,14 @@ function handleAnnotationRedo() {
 
                 <!-- Password Input -->
                 <div class="mb-4">
-                  <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+                  <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
                     Enter Password
                   </label>
                   <div class="relative">
                     <input
                       v-model="enteredPassword"
                       :type="showPassword ? 'text' : 'password'"
-                      class="w-full px-4 py-3 pr-12 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal transition-all"
+                      class="w-full px-4 py-3 pr-12 border border-zinc-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal transition-all"
                       placeholder="Enter document password..."
                       @keyup.enter="validateAndLoadPreview"
                       autofocus
@@ -932,7 +954,7 @@ function handleAnnotationRedo() {
                     <button
                       type="button"
                       @click="showPassword = !showPassword"
-                      class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                      class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
                     >
                       <span class="material-symbols-outlined text-xl">{{ showPassword ? 'visibility_off' : 'visibility' }}</span>
                     </button>
@@ -951,7 +973,7 @@ function handleAnnotationRedo() {
                 <div class="flex gap-3">
                   <button
                     @click="isOpen = false"
-                    class="flex-1 py-3 text-slate-600 dark:text-slate-400 font-medium rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                    class="flex-1 py-3 text-zinc-600 dark:text-zinc-400 font-medium rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                   >
                     Cancel
                   </button>
@@ -978,27 +1000,27 @@ function handleAnnotationRedo() {
               <div class="bg-white rounded-lg shadow-xl p-8 space-y-6 animate-pulse">
                 <!-- Title placeholder -->
                 <div class="flex justify-center">
-                  <div class="h-4 bg-slate-200 rounded-full w-3/5"></div>
+                  <div class="h-4 bg-zinc-200 rounded-full w-3/5"></div>
                 </div>
 
                 <!-- Text lines -->
                 <div class="space-y-3">
-                  <div class="h-3 bg-slate-200 rounded-full w-full"></div>
-                  <div class="h-3 bg-slate-200 rounded-full w-11/12"></div>
-                  <div class="h-3 bg-slate-200 rounded-full w-4/5"></div>
+                  <div class="h-3 bg-zinc-200 rounded-full w-full"></div>
+                  <div class="h-3 bg-zinc-200 rounded-full w-11/12"></div>
+                  <div class="h-3 bg-zinc-200 rounded-full w-4/5"></div>
                 </div>
 
                 <!-- Image placeholder -->
                 <div class="flex justify-center py-4">
-                  <div class="w-full h-32 bg-slate-100 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-200">
-                    <span class="material-symbols-outlined text-4xl text-slate-300">image</span>
+                  <div class="w-full h-32 bg-zinc-100 rounded-lg flex items-center justify-center border-2 border-dashed border-zinc-200">
+                    <span class="material-symbols-outlined text-4xl text-zinc-300">image</span>
                   </div>
                 </div>
 
                 <!-- More text lines -->
                 <div class="space-y-3">
-                  <div class="h-3 bg-slate-200 rounded-full w-full"></div>
-                  <div class="h-3 bg-slate-200 rounded-full w-3/4"></div>
+                  <div class="h-3 bg-zinc-200 rounded-full w-full"></div>
+                  <div class="h-3 bg-zinc-200 rounded-full w-3/4"></div>
                 </div>
 
                 <!-- Bottom spacer -->
@@ -1006,7 +1028,7 @@ function handleAnnotationRedo() {
               </div>
 
               <!-- Loading text -->
-              <p class="text-center mt-6 text-sm" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">
+              <p class="text-center mt-6 text-sm" :class="isDarkMode ? 'text-zinc-400' : 'text-zinc-500'">
                 Loading document...
               </p>
             </div>
@@ -1021,10 +1043,10 @@ function handleAnnotationRedo() {
               >
                 <span class="material-symbols-outlined text-3xl text-red-500">error</span>
               </div>
-              <h2 class="text-lg font-semibold mb-2" :class="isDarkMode ? 'text-white' : 'text-slate-900'">
+              <h2 class="text-lg font-semibold mb-2" :class="isDarkMode ? 'text-white' : 'text-zinc-900'">
                 Unable to preview
               </h2>
-              <p class="text-sm mb-6" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">
+              <p class="text-sm mb-6" :class="isDarkMode ? 'text-zinc-400' : 'text-zinc-500'">
                 {{ error }}
               </p>
               <button
@@ -1046,7 +1068,7 @@ function handleAnnotationRedo() {
               v-if="previewInfo.type === 'Pdf' && pdfSource"
               ref="pdfScrollContainer"
               class="h-full w-full"
-              :class="isDarkMode ? 'bg-slate-800' : 'bg-[#e2e8f0]'"
+              :class="isDarkMode ? 'bg-zinc-800' : 'bg-[#e2e8f0]'"
             >
               <VirtualizedPdfViewer
                 ref="pdfViewerRef"
@@ -1070,7 +1092,7 @@ function handleAnnotationRedo() {
             <div
               v-else-if="previewInfo.type === 'Image' && blobUrl"
               class="h-full flex items-center justify-center p-8 overflow-auto"
-              :class="isDarkMode ? 'bg-slate-800' : 'bg-[#e2e8f0]'"
+              :class="isDarkMode ? 'bg-zinc-800' : 'bg-[#e2e8f0]'"
             >
               <img
                 :src="blobUrl"
@@ -1086,14 +1108,14 @@ function handleAnnotationRedo() {
             <div
               v-else-if="previewInfo.type === 'Text'"
               class="h-full overflow-auto p-6"
-              :class="isDarkMode ? 'bg-slate-800' : 'bg-[#e2e8f0]'"
+              :class="isDarkMode ? 'bg-zinc-800' : 'bg-[#e2e8f0]'"
             >
               <div class="max-w-4xl mx-auto">
                 <pre
                   class="p-6 rounded-xl font-mono text-sm whitespace-pre-wrap leading-relaxed shadow-sm"
                   :class="isDarkMode
-                    ? 'bg-slate-900 text-slate-300 border border-slate-700'
-                    : 'bg-white text-slate-700 border border-slate-200'"
+                    ? 'bg-zinc-900 text-zinc-300 border border-zinc-700'
+                    : 'bg-white text-zinc-700 border border-zinc-200'"
                 >{{ textContent }}</pre>
               </div>
             </div>
@@ -1110,13 +1132,13 @@ function handleAnnotationRedo() {
             <div
               v-else-if="previewInfo.type === 'Audio' && blobUrl"
               class="h-full flex items-center justify-center"
-              :class="isDarkMode ? 'bg-slate-800' : 'bg-[#e2e8f0]'"
+              :class="isDarkMode ? 'bg-zinc-800' : 'bg-[#e2e8f0]'"
             >
               <div class="text-center">
                 <div class="w-28 h-28 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
                   <span class="material-symbols-outlined text-5xl text-white">music_note</span>
                 </div>
-                <h3 class="font-medium mb-4" :class="isDarkMode ? 'text-white' : 'text-slate-900'">
+                <h3 class="font-medium mb-4" :class="isDarkMode ? 'text-white' : 'text-zinc-900'">
                   {{ document?.name }}{{ document?.extension }}
                 </h3>
                 <audio :src="blobUrl" controls class="w-72"></audio>
@@ -1127,7 +1149,7 @@ function handleAnnotationRedo() {
             <div
               v-else
               class="h-full flex items-center justify-center"
-              :class="isDarkMode ? 'bg-slate-800' : 'bg-[#e2e8f0]'"
+              :class="isDarkMode ? 'bg-zinc-800' : 'bg-[#e2e8f0]'"
             >
               <div class="text-center max-w-sm px-4">
                 <div
@@ -1138,10 +1160,10 @@ function handleAnnotationRedo() {
                     {{ getFileIcon(previewInfo.type) }}
                   </span>
                 </div>
-                <h2 class="text-lg font-semibold mb-2" :class="isDarkMode ? 'text-white' : 'text-slate-900'">
+                <h2 class="text-lg font-semibold mb-2" :class="isDarkMode ? 'text-white' : 'text-zinc-900'">
                   Preview not available
                 </h2>
-                <p class="text-sm mb-6" :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'">
+                <p class="text-sm mb-6" :class="isDarkMode ? 'text-zinc-400' : 'text-zinc-500'">
                   This file type cannot be previewed in the browser.
                 </p>
                 <button
@@ -1155,6 +1177,26 @@ function handleAnnotationRedo() {
             </div>
             </div><!-- end Document Content Area -->
 
+          <!-- Page Management Panel -->
+          <Transition
+            enter-active-class="transition-all duration-300 ease-out"
+            enter-from-class="w-0 opacity-0"
+            enter-to-class="opacity-100"
+            leave-active-class="transition-all duration-200 ease-in"
+            leave-from-class="opacity-100"
+            leave-to-class="w-0 opacity-0"
+          >
+            <PageManagementPanel
+              v-if="showPageManagement && previewInfo?.type === 'Pdf' && pdfSource && document"
+              :document-id="document.id"
+              :pdf-source="pdfSource"
+              :total-pages="totalPages"
+              :is-dark-mode="isDarkMode"
+              @close="showPageManagement = false"
+              @applied="handlePageManagementApplied"
+            />
+          </Transition>
+
           <!-- Metadata Panel -->
           <Transition
             enter-active-class="transition-all duration-300 ease-out"
@@ -1167,12 +1209,12 @@ function handleAnnotationRedo() {
           <aside
             v-if="showMetadataPanel && hasMetadata && !isLoading && !requiresPassword && !error"
               class="w-80 lg:w-96 shrink-0 overflow-hidden flex flex-col border-l"
-              :class="isDarkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'"
+              :class="isDarkMode ? 'bg-zinc-900 border-zinc-700' : 'bg-white border-zinc-200'"
             >
               <!-- Panel Header -->
               <div
                 class="px-4 py-3 border-b shrink-0"
-                :class="isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50'"
+                :class="isDarkMode ? 'border-zinc-700 bg-zinc-800' : 'border-zinc-200 bg-zinc-50'"
               >
                 <div class="flex items-center justify-between gap-2">
                   <div class="flex items-center gap-2.5 min-w-0">
@@ -1190,11 +1232,11 @@ function handleAnnotationRedo() {
                     <div class="min-w-0">
                       <h3
                         class="font-semibold text-sm truncate"
-                        :class="isDarkMode ? 'text-white' : 'text-slate-900'"
+                        :class="isDarkMode ? 'text-white' : 'text-zinc-900'"
                       >
                         {{ contentTypeInfo?.name || 'Document Metadata' }}
                       </h3>
-                      <p class="text-xs text-slate-500 truncate">
+                      <p class="text-xs text-zinc-500 truncate">
                         {{ metadata.length }} field{{ metadata.length !== 1 ? 's' : '' }}
                       </p>
                     </div>
@@ -1202,7 +1244,7 @@ function handleAnnotationRedo() {
                   <button
                     @click="toggleMetadataPanel"
                     class="p-1.5 rounded-lg transition-colors shrink-0"
-                    :class="isDarkMode ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-700' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'"
+                    :class="isDarkMode ? 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700' : 'text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100'"
                   >
                     <span class="material-symbols-outlined text-lg">close</span>
                   </button>
@@ -1222,15 +1264,15 @@ function handleAnnotationRedo() {
                     <div
                       v-if="Object.keys(groupedMetadata).length > 1"
                       class="flex items-center gap-2 pb-2 border-b"
-                      :class="isDarkMode ? 'border-slate-700' : 'border-slate-200'"
+                      :class="isDarkMode ? 'border-zinc-700' : 'border-zinc-200'"
                     >
                       <span
                         class="material-symbols-outlined text-sm"
-                        :class="isDarkMode ? 'text-slate-500' : 'text-slate-400'"
+                        :class="isDarkMode ? 'text-zinc-500' : 'text-zinc-400'"
                       >folder</span>
                       <span
                         class="text-xs font-semibold uppercase tracking-wider"
-                        :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'"
+                        :class="isDarkMode ? 'text-zinc-400' : 'text-zinc-500'"
                       >
                         {{ groupName }}
                       </span>
@@ -1246,18 +1288,18 @@ function handleAnnotationRedo() {
                         <div
                           class="p-3 rounded-xl transition-colors"
                           :class="isDarkMode
-                            ? 'bg-slate-800 hover:bg-slate-750 border border-slate-700'
-                            : 'bg-slate-50 hover:bg-slate-100 border border-slate-100'"
+                            ? 'bg-zinc-800 hover:bg-zinc-750 border border-zinc-700'
+                            : 'bg-zinc-50 hover:bg-zinc-100 border border-zinc-100'"
                         >
                           <!-- Field Label -->
                           <div class="flex items-center gap-2 mb-1.5">
                             <span
                               class="material-symbols-outlined text-xs"
-                              :class="isDarkMode ? 'text-slate-500' : 'text-slate-400'"
+                              :class="isDarkMode ? 'text-zinc-500' : 'text-zinc-400'"
                             >{{ getFieldTypeIcon(field.fieldType) }}</span>
                             <span
                               class="text-xs font-medium uppercase tracking-wide"
-                              :class="isDarkMode ? 'text-slate-400' : 'text-slate-500'"
+                              :class="isDarkMode ? 'text-zinc-400' : 'text-zinc-500'"
                             >
                               {{ field.displayName }}
                             </span>
@@ -1268,10 +1310,10 @@ function handleAnnotationRedo() {
                             class="text-sm font-medium pl-5"
                             :class="[
                               field.value === '-'
-                                ? (isDarkMode ? 'text-slate-600' : 'text-slate-300')
-                                : (isDarkMode ? 'text-slate-200' : 'text-slate-700'),
+                                ? (isDarkMode ? 'text-zinc-600' : 'text-zinc-300')
+                                : (isDarkMode ? 'text-zinc-200' : 'text-zinc-700'),
                               field.fieldType === 'Boolean' && field.value === 'Yes' ? 'text-emerald-500' : '',
-                              field.fieldType === 'Boolean' && field.value === 'No' ? 'text-slate-400' : ''
+                              field.fieldType === 'Boolean' && field.value === 'No' ? 'text-zinc-400' : ''
                             ]"
                           >
                             <!-- Boolean with icon -->
@@ -1279,7 +1321,7 @@ function handleAnnotationRedo() {
                               <span class="inline-flex items-center gap-1.5">
                                 <span
                                   class="material-symbols-outlined text-base"
-                                  :class="field.value === 'Yes' ? 'text-emerald-500' : 'text-slate-400'"
+                                  :class="field.value === 'Yes' ? 'text-emerald-500' : 'text-zinc-400'"
                                   style="font-variation-settings: 'FILL' 1;"
                                 >
                                   {{ field.value === 'Yes' ? 'check_circle' : 'cancel' }}
@@ -1292,7 +1334,7 @@ function handleAnnotationRedo() {
                               <span class="inline-flex items-center gap-1.5">
                                 <span
                                   class="material-symbols-outlined text-base"
-                                  :class="isDarkMode ? 'text-slate-500' : 'text-slate-400'"
+                                  :class="isDarkMode ? 'text-zinc-500' : 'text-zinc-400'"
                                 >calendar_today</span>
                                 {{ field.value }}
                               </span>
@@ -1312,7 +1354,7 @@ function handleAnnotationRedo() {
                 <div v-if="isLoadingMetadata" class="flex items-center justify-center py-8">
                   <div class="flex flex-col items-center gap-2">
                     <span class="material-symbols-outlined animate-spin text-2xl text-teal">progress_activity</span>
-                    <span class="text-xs text-slate-500">Loading metadata...</span>
+                    <span class="text-xs text-zinc-500">Loading metadata...</span>
                   </div>
                 </div>
               </div>
@@ -1320,11 +1362,11 @@ function handleAnnotationRedo() {
               <!-- Panel Footer -->
               <div
                 class="px-5 py-3 border-t shrink-0"
-                :class="isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-slate-50'"
+                :class="isDarkMode ? 'border-zinc-700 bg-zinc-800' : 'border-zinc-200 bg-zinc-50'"
               >
                 <div class="flex items-center justify-between">
-                  <span class="text-xs text-slate-500">
-                    Content Type: <span class="font-medium" :class="isDarkMode ? 'text-slate-300' : 'text-slate-700'">{{ contentTypeInfo?.name }}</span>
+                  <span class="text-xs text-zinc-500">
+                    Content Type: <span class="font-medium" :class="isDarkMode ? 'text-zinc-300' : 'text-zinc-700'">{{ contentTypeInfo?.name }}</span>
                   </span>
                   <div
                     class="w-2 h-2 rounded-full"

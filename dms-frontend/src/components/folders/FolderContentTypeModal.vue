@@ -293,7 +293,7 @@ async function handleToggleInherit(assignment: FolderContentTypeAssignment) {
           leave-from-class="opacity-100 scale-100"
           leave-to-class="opacity-0 scale-95"
         >
-          <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col ring-1 ring-black/5 dark:ring-white/10">
+          <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col ring-1 ring-black/5 dark:ring-white/10">
             <!-- Header -->
             <div class="relative bg-gradient-to-r from-navy via-navy/95 to-primary p-5 overflow-hidden">
               <div class="absolute top-0 right-0 w-48 h-48 bg-primary/20 rounded-full -translate-y-1/2 translate-x-1/2"></div>
@@ -363,7 +363,7 @@ async function handleToggleInherit(assignment: FolderContentTypeAssignment) {
                     </button>
                   </div>
 
-                  <div v-if="directAssignments.length === 0" class="text-center py-8 bg-gray-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
+                  <div v-if="directAssignments.length === 0" class="text-center py-8 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
                     <span class="material-symbols-outlined text-4xl text-gray-400 mb-2">category</span>
                     <p class="text-sm text-gray-500">No content types assigned directly</p>
                     <p class="text-xs text-gray-400 mt-1">Click "Add" to assign a content type</p>
@@ -373,7 +373,7 @@ async function handleToggleInherit(assignment: FolderContentTypeAssignment) {
                     <div
                       v-for="assignment in directAssignments"
                       :key="assignment.id"
-                      class="p-3 bg-gray-50 dark:bg-slate-800/50 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-primary/30 transition-colors"
+                      class="p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-primary/30 transition-colors"
                     >
                       <div class="flex items-center gap-3">
                         <div
@@ -493,7 +493,7 @@ async function handleToggleInherit(assignment: FolderContentTypeAssignment) {
 
                 <!-- Empty state when no content types at all -->
                 <div v-if="!hasDirectAssignments && !hasInheritedAssignments" class="text-center py-8">
-                  <div class="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
+                  <div class="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
                     <span class="material-symbols-outlined text-4xl text-gray-400">category</span>
                   </div>
                   <p class="text-sm font-medium text-gray-700 dark:text-gray-300">No Content Types</p>
@@ -512,7 +512,7 @@ async function handleToggleInherit(assignment: FolderContentTypeAssignment) {
               leave-to-class="opacity-0"
             >
               <div v-if="showAssignForm" class="absolute inset-0 bg-black/40 flex items-center justify-center p-6">
-                <div class="bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-md p-5">
+                <div class="bg-white dark:bg-zinc-900 rounded-xl shadow-xl w-full max-w-md p-5">
                   <h4 class="text-base font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                     <span class="material-symbols-outlined text-primary">add_circle</span>
                     Assign Content Type
@@ -552,7 +552,7 @@ async function handleToggleInherit(assignment: FolderContentTypeAssignment) {
                   <div class="flex justify-end gap-3 mt-6">
                     <button
                       @click="showAssignForm = false"
-                      class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                      class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
                     >
                       Cancel
                     </button>
@@ -570,7 +570,7 @@ async function handleToggleInherit(assignment: FolderContentTypeAssignment) {
             </Transition>
 
             <!-- Footer -->
-            <div class="border-t border-gray-200 dark:border-gray-700/50 p-4 bg-gray-50 dark:bg-slate-800/50">
+            <div class="border-t border-gray-200 dark:border-gray-700/50 p-4 bg-gray-50 dark:bg-zinc-800/50">
               <div class="flex justify-end">
                 <button
                   @click="emit('close')"

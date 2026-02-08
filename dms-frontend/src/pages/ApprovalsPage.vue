@@ -103,8 +103,8 @@ function getStatusName(status: number): string {
 <template>
   <div class="space-y-6">
     <div>
-      <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">Approvals</h1>
-      <p class="text-slate-500 mt-1">Document approval requests and workflows</p>
+      <h1 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Approvals</h1>
+      <p class="text-zinc-500 mt-1">Document approval requests and workflows</p>
     </div>
 
     <!-- Tabs -->

@@ -28,7 +28,7 @@ const textSizeClasses = {
 <template>
   <div
     class="flex flex-col items-center justify-center"
-    :class="fullScreen ? 'fixed inset-0 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm z-50' : ''"
+    :class="fullScreen ? 'fixed inset-0 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-sm z-50' : ''"
   >
     <!-- Animated Logo Container -->
     <div class="relative" :class="sizeClasses[size]">
@@ -126,7 +126,7 @@ const textSizeClasses = {
     </p>
 
     <!-- Progress bar (optional subtle animation) -->
-    <div v-if="size !== 'sm'" class="mt-3 w-20 h-1 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+    <div v-if="size !== 'sm'" class="mt-3 w-20 h-1 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
       <div class="h-full bg-gradient-to-r from-navy to-teal rounded-full animate-progress" />
     </div>
   </div>

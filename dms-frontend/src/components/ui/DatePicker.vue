@@ -255,20 +255,20 @@ watch(() => props.modelValue, (newVal) => {
 
 <template>
   <div ref="containerRef" class="relative">
-    <label v-if="label" class="block text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">{{ label }}</label>
+    <label v-if="label" class="block text-xs font-medium text-gray-500 dark:text-zinc-400 uppercase tracking-wider mb-1.5">{{ label }}</label>
 
     <!-- Input Field -->
     <button
       ref="buttonRef"
       type="button"
       :disabled="disabled"
-      class="relative w-full bg-white dark:bg-slate-800 border rounded-xl text-left cursor-pointer
+      class="relative w-full bg-white dark:bg-zinc-800 border rounded-xl text-left cursor-pointer
              transition-all duration-200 flex items-center justify-between gap-2
              focus:outline-none"
       :class="[
         sizeClasses,
-        disabled ? 'bg-gray-50 dark:bg-slate-900 cursor-not-allowed opacity-60' : 'hover:border-teal/50',
-        error ? 'border-red-300' : 'border-gray-300 dark:border-slate-600',
+        disabled ? 'bg-gray-50 dark:bg-zinc-900 cursor-not-allowed opacity-60' : 'hover:border-teal/50',
+        error ? 'border-red-300' : 'border-gray-300 dark:border-zinc-600',
         isOpen ? 'border-teal' : ''
       ]"
       @click="toggle"
@@ -277,7 +277,7 @@ watch(() => props.modelValue, (newVal) => {
         <div class="w-8 h-8 rounded-lg bg-teal/10 flex items-center justify-center flex-shrink-0">
           <span class="material-symbols-outlined text-teal text-lg">calendar_month</span>
         </div>
-        <span :class="displayValue ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-400 dark:text-slate-500'">
+        <span :class="displayValue ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-400 dark:text-zinc-500'">
           {{ displayValue || placeholder }}
         </span>
       </div>
@@ -285,12 +285,12 @@ watch(() => props.modelValue, (newVal) => {
         <button
           v-if="clearable && displayValue"
           type="button"
-          class="p-1 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-full transition-colors"
+          class="p-1 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-full transition-colors"
           @click="clear"
         >
-          <span class="material-symbols-outlined text-gray-400 dark:text-slate-500 text-lg">close</span>
+          <span class="material-symbols-outlined text-gray-400 dark:text-zinc-500 text-lg">close</span>
         </button>
-        <span class="material-symbols-outlined text-gray-400 dark:text-slate-500 text-lg transition-transform duration-200" :class="isOpen ? 'rotate-180' : ''">expand_more</span>
+        <span class="material-symbols-outlined text-gray-400 dark:text-zinc-500 text-lg transition-transform duration-200" :class="isOpen ? 'rotate-180' : ''">expand_more</span>
       </div>
     </button>
 
@@ -310,36 +310,36 @@ watch(() => props.modelValue, (newVal) => {
         <div
           v-if="isOpen"
           ref="dropdownRef"
-          class="fixed z-[9999] bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl shadow-2xl p-5"
+          class="fixed z-[9999] bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-2xl shadow-2xl p-5"
           :style="{ ...dropdownStyle, transformOrigin: openUpward ? 'bottom center' : 'top center' }"
         >
         <!-- Header with Month/Year Navigation -->
         <div class="flex items-center justify-between mb-4">
           <button
             type="button"
-            class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-colors"
+            class="p-2 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-xl transition-colors"
             @click="prevMonth"
           >
-            <span class="material-symbols-outlined text-gray-600 dark:text-slate-300">chevron_left</span>
+            <span class="material-symbols-outlined text-gray-600 dark:text-zinc-300">chevron_left</span>
           </button>
 
           <button
             type="button"
-            class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-colors flex items-center gap-2"
+            class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-xl transition-colors flex items-center gap-2"
             @click="showYearPicker = !showYearPicker"
           >
             <span class="font-semibold text-gray-900 dark:text-white">
               {{ MONTHS[currentMonth.getMonth()] }} {{ currentMonth.getFullYear() }}
             </span>
-            <span class="material-symbols-outlined text-gray-400 dark:text-slate-500 text-sm transition-transform duration-200" :class="showYearPicker ? 'rotate-180' : ''">expand_more</span>
+            <span class="material-symbols-outlined text-gray-400 dark:text-zinc-500 text-sm transition-transform duration-200" :class="showYearPicker ? 'rotate-180' : ''">expand_more</span>
           </button>
 
           <button
             type="button"
-            class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-colors"
+            class="p-2 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-xl transition-colors"
             @click="nextMonth"
           >
-            <span class="material-symbols-outlined text-gray-600 dark:text-slate-300">chevron_right</span>
+            <span class="material-symbols-outlined text-gray-600 dark:text-zinc-300">chevron_right</span>
           </button>
         </div>
 
@@ -352,15 +352,15 @@ watch(() => props.modelValue, (newVal) => {
           leave-from-class="opacity-100 translate-y-0"
           leave-to-class="opacity-0 -translate-y-2"
         >
-          <div v-if="showYearPicker" class="mb-4 p-3 bg-gray-50 dark:bg-slate-900 rounded-xl">
+          <div v-if="showYearPicker" class="mb-4 p-3 bg-gray-50 dark:bg-zinc-900 rounded-xl">
             <!-- Year Navigation -->
             <div class="flex items-center justify-between mb-3">
-              <button type="button" class="p-1 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg" @click="prevYear">
-                <span class="material-symbols-outlined text-gray-500 dark:text-slate-400 text-sm">chevron_left</span>
+              <button type="button" class="p-1 hover:bg-gray-200 dark:hover:bg-zinc-700 rounded-lg" @click="prevYear">
+                <span class="material-symbols-outlined text-gray-500 dark:text-zinc-400 text-sm">chevron_left</span>
               </button>
-              <span class="text-sm font-medium text-gray-600 dark:text-slate-400">{{ yearRange[0] }} - {{ yearRange[yearRange.length - 1] }}</span>
-              <button type="button" class="p-1 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-lg" @click="nextYear">
-                <span class="material-symbols-outlined text-gray-500 dark:text-slate-400 text-sm">chevron_right</span>
+              <span class="text-sm font-medium text-gray-600 dark:text-zinc-400">{{ yearRange[0] }} - {{ yearRange[yearRange.length - 1] }}</span>
+              <button type="button" class="p-1 hover:bg-gray-200 dark:hover:bg-zinc-700 rounded-lg" @click="nextYear">
+                <span class="material-symbols-outlined text-gray-500 dark:text-zinc-400 text-sm">chevron_right</span>
               </button>
             </div>
             <!-- Year Grid -->
@@ -370,7 +370,7 @@ watch(() => props.modelValue, (newVal) => {
                 :key="year"
                 type="button"
                 class="py-1.5 text-sm rounded-lg transition-colors"
-                :class="year === currentMonth.getFullYear() ? 'bg-teal text-white font-semibold' : 'text-gray-700 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-700'"
+                :class="year === currentMonth.getFullYear() ? 'bg-teal text-white font-semibold' : 'text-gray-700 dark:text-zinc-300 hover:bg-gray-200 dark:hover:bg-zinc-700'"
                 @click="selectYear(year)"
               >
                 {{ year }}
@@ -383,7 +383,7 @@ watch(() => props.modelValue, (newVal) => {
                 :key="month"
                 type="button"
                 class="py-1.5 text-sm rounded-lg transition-colors"
-                :class="index === currentMonth.getMonth() ? 'bg-teal text-white font-semibold' : 'text-gray-700 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-700'"
+                :class="index === currentMonth.getMonth() ? 'bg-teal text-white font-semibold' : 'text-gray-700 dark:text-zinc-300 hover:bg-gray-200 dark:hover:bg-zinc-700'"
                 @click="selectMonth(index)"
               >
                 {{ month }}
@@ -397,7 +397,7 @@ watch(() => props.modelValue, (newVal) => {
           <div
             v-for="day in DAYS"
             :key="day"
-            class="text-center text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider py-2"
+            class="text-center text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider py-2"
           >
             {{ day }}
           </div>
@@ -412,9 +412,9 @@ watch(() => props.modelValue, (newVal) => {
             :disabled="day.isDisabled"
             class="aspect-square flex items-center justify-center text-sm rounded-xl transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-teal/50"
             :class="[
-              day.isDisabled ? 'text-gray-300 dark:text-slate-600 cursor-not-allowed' : 'cursor-pointer',
-              !day.isCurrentMonth && !day.isSelected ? 'text-gray-400 dark:text-slate-600' : '',
-              day.isCurrentMonth && !day.isSelected && !day.isToday ? 'text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700' : '',
+              day.isDisabled ? 'text-gray-300 dark:text-zinc-600 cursor-not-allowed' : 'cursor-pointer',
+              !day.isCurrentMonth && !day.isSelected ? 'text-gray-400 dark:text-zinc-600' : '',
+              day.isCurrentMonth && !day.isSelected && !day.isToday ? 'text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-700' : '',
               day.isToday && !day.isSelected ? 'bg-teal/10 text-teal font-bold ring-1 ring-teal/30' : '',
               day.isSelected ? 'bg-teal text-white font-bold shadow-lg shadow-teal/30 hover:bg-teal/90' : ''
             ]"
@@ -425,7 +425,7 @@ watch(() => props.modelValue, (newVal) => {
         </div>
 
         <!-- Footer -->
-        <div class="mt-4 pt-4 border-t border-gray-100 dark:border-slate-700 flex items-center justify-between">
+        <div class="mt-4 pt-4 border-t border-gray-100 dark:border-zinc-700 flex items-center justify-between">
           <button
             type="button"
             class="flex items-center gap-2 px-3 py-2 text-sm text-teal hover:bg-teal/10 font-medium rounded-lg transition-colors"
@@ -436,7 +436,7 @@ watch(() => props.modelValue, (newVal) => {
           </button>
           <button
             type="button"
-            class="px-4 py-2 text-sm text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            class="px-4 py-2 text-sm text-gray-500 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-lg transition-colors"
             @click="isOpen = false"
           >
             Close

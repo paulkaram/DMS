@@ -217,7 +217,7 @@ function close() {
             </div>
 
             <!-- Tabs -->
-            <div class="flex border-b border-slate-200">
+            <div class="flex border-b border-zinc-200">
               <button
                 v-for="tab in [
                   { id: 'draw' as const, label: 'Draw', icon: 'draw' },
@@ -229,7 +229,7 @@ function close() {
                 class="flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors border-b-2"
                 :class="activeTab === tab.id
                   ? 'text-teal border-teal'
-                  : 'text-slate-500 border-transparent hover:text-slate-700'"
+                  : 'text-zinc-500 border-transparent hover:text-zinc-700'"
               >
                 <span class="material-symbols-outlined text-lg">{{ tab.icon }}</span>
                 {{ tab.label }}
@@ -246,13 +246,13 @@ function close() {
             <div class="p-6">
               <!-- Draw Tab -->
               <div v-if="activeTab === 'draw'">
-                <div class="border-2 border-dashed border-slate-200 rounded-xl overflow-hidden mb-4">
+                <div class="border-2 border-dashed border-zinc-200 rounded-xl overflow-hidden mb-4">
                   <canvas ref="drawCanvasRef" class="w-full" />
                 </div>
                 <div class="flex items-center justify-between mb-4">
                   <button
                     @click="clearDrawCanvas"
-                    class="text-xs text-slate-500 hover:text-red-500 flex items-center gap-1 transition-colors"
+                    class="text-xs text-zinc-500 hover:text-red-500 flex items-center gap-1 transition-colors"
                   >
                     <span class="material-symbols-outlined text-sm">delete</span>
                     Clear
@@ -260,21 +260,21 @@ function close() {
                 </div>
 
                 <!-- Save for reuse -->
-                <div class="flex items-center gap-3 mb-4 p-3 bg-slate-50 rounded-xl">
+                <div class="flex items-center gap-3 mb-4 p-3 bg-zinc-50 rounded-xl">
                   <label class="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
                       v-model="saveForReuse"
-                      class="w-4 h-4 text-teal border-slate-300 rounded focus:ring-teal"
+                      class="w-4 h-4 text-teal border-zinc-300 rounded focus:ring-teal"
                     />
-                    <span class="text-xs text-slate-600">Save for reuse</span>
+                    <span class="text-xs text-zinc-600">Save for reuse</span>
                   </label>
                   <input
                     v-if="saveForReuse"
                     v-model="signatureName"
                     type="text"
                     placeholder="Signature name"
-                    class="flex-1 text-xs px-3 py-1.5 border border-slate-200 rounded-lg focus:border-teal focus:ring-1 focus:ring-teal/20 outline-none"
+                    class="flex-1 text-xs px-3 py-1.5 border border-zinc-200 rounded-lg focus:border-teal focus:ring-1 focus:ring-teal/20 outline-none"
                   />
                 </div>
 
@@ -292,7 +292,7 @@ function close() {
                   v-model="typedText"
                   type="text"
                   placeholder="Type your name..."
-                  class="w-full px-4 py-3 border border-slate-200 rounded-xl text-lg focus:border-teal focus:ring-1 focus:ring-teal/20 outline-none mb-4"
+                  class="w-full px-4 py-3 border border-zinc-200 rounded-xl text-lg focus:border-teal focus:ring-1 focus:ring-teal/20 outline-none mb-4"
                 />
 
                 <!-- Font selection -->
@@ -304,16 +304,16 @@ function close() {
                     class="flex-1 py-2 px-3 border rounded-lg text-sm transition-colors"
                     :class="typedFont === font.name
                       ? 'border-teal bg-teal/5 text-teal'
-                      : 'border-slate-200 text-slate-500 hover:border-slate-300'"
+                      : 'border-zinc-200 text-zinc-500 hover:border-zinc-300'"
                   >
                     {{ font.label }}
                   </button>
                 </div>
 
                 <!-- Preview -->
-                <div class="border-2 border-dashed border-slate-200 rounded-xl p-6 mb-4 bg-white text-center">
+                <div class="border-2 border-dashed border-zinc-200 rounded-xl p-6 mb-4 bg-white text-center">
                   <span
-                    class="text-4xl text-slate-800"
+                    class="text-4xl text-zinc-800"
                     :style="{ fontFamily: `'${typedFont}', cursive` }"
                   >
                     {{ typedText || 'Your Name' }}
@@ -321,21 +321,21 @@ function close() {
                 </div>
 
                 <!-- Save for reuse -->
-                <div class="flex items-center gap-3 mb-4 p-3 bg-slate-50 rounded-xl">
+                <div class="flex items-center gap-3 mb-4 p-3 bg-zinc-50 rounded-xl">
                   <label class="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
                       v-model="saveForReuse"
-                      class="w-4 h-4 text-teal border-slate-300 rounded focus:ring-teal"
+                      class="w-4 h-4 text-teal border-zinc-300 rounded focus:ring-teal"
                     />
-                    <span class="text-xs text-slate-600">Save for reuse</span>
+                    <span class="text-xs text-zinc-600">Save for reuse</span>
                   </label>
                   <input
                     v-if="saveForReuse"
                     v-model="signatureName"
                     type="text"
                     placeholder="Signature name"
-                    class="flex-1 text-xs px-3 py-1.5 border border-slate-200 rounded-lg focus:border-teal focus:ring-1 focus:ring-teal/20 outline-none"
+                    class="flex-1 text-xs px-3 py-1.5 border border-zinc-200 rounded-lg focus:border-teal focus:ring-1 focus:ring-teal/20 outline-none"
                   />
                 </div>
 
@@ -355,23 +355,23 @@ function close() {
                 </div>
 
                 <div v-else-if="savedSignatures.length === 0" class="text-center py-8">
-                  <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-slate-100 flex items-center justify-center">
-                    <span class="material-symbols-outlined text-3xl text-slate-300">signature</span>
+                  <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-zinc-100 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-3xl text-zinc-300">signature</span>
                   </div>
-                  <p class="text-sm text-slate-500">No saved signatures yet</p>
-                  <p class="text-xs text-slate-400 mt-1">Draw or type a signature and save it for reuse</p>
+                  <p class="text-sm text-zinc-500">No saved signatures yet</p>
+                  <p class="text-xs text-zinc-400 mt-1">Draw or type a signature and save it for reuse</p>
                 </div>
 
                 <div v-else class="space-y-3 max-h-64 overflow-y-auto">
                   <div
                     v-for="sig in savedSignatures"
                     :key="sig.id"
-                    class="flex items-center gap-3 p-3 border border-slate-200 rounded-xl hover:border-teal/30 hover:bg-teal/5 transition-colors cursor-pointer group"
+                    class="flex items-center gap-3 p-3 border border-zinc-200 rounded-xl hover:border-teal/30 hover:bg-teal/5 transition-colors cursor-pointer group"
                     @click="useSavedSignature(sig)"
                   >
                     <div class="flex-1 min-w-0">
                       <div class="flex items-center gap-2 mb-1">
-                        <span class="text-sm font-medium text-slate-700 truncate">{{ sig.name }}</span>
+                        <span class="text-sm font-medium text-zinc-700 truncate">{{ sig.name }}</span>
                         <span
                           v-if="sig.isDefault"
                           class="px-1.5 py-0.5 bg-teal/10 text-teal text-[9px] font-bold rounded-full uppercase"
@@ -383,7 +383,7 @@ function close() {
                     </div>
                     <button
                       @click.stop="deleteSavedSignature(sig.id)"
-                      class="p-1 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all"
+                      class="p-1 rounded-lg text-zinc-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all"
                     >
                       <span class="material-symbols-outlined text-sm">delete</span>
                     </button>

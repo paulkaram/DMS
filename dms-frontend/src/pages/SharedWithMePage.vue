@@ -160,12 +160,12 @@ function getRelativeTime(dateStr: string): string {
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">Shared With Me</h1>
-        <p class="text-slate-500 mt-1">Documents that others have shared with you</p>
+        <h1 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Shared With Me</h1>
+        <p class="text-zinc-500 mt-1">Documents that others have shared with you</p>
       </div>
       <button
         @click="loadSharedWithMe"
-        class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-medium text-sm transition-colors border border-slate-200 dark:border-slate-700"
+        class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl font-medium text-sm transition-colors border border-zinc-200 dark:border-zinc-700"
       >
         <span class="material-symbols-outlined text-lg">refresh</span>
         Refresh
@@ -176,24 +176,24 @@ function getRelativeTime(dateStr: string): string {
     <div v-if="isLoading" class="flex items-center justify-center py-16">
       <div class="flex flex-col items-center gap-3">
         <div class="w-10 h-10 border-3 border-teal border-t-transparent rounded-full animate-spin"></div>
-        <span class="text-sm text-slate-500 dark:text-slate-400">Loading shared documents...</span>
+        <span class="text-sm text-zinc-500 dark:text-zinc-400">Loading shared documents...</span>
       </div>
     </div>
 
     <!-- Empty State -->
-    <div v-else-if="sharedDocuments.length === 0" class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-16 text-center">
+    <div v-else-if="sharedDocuments.length === 0" class="bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-700 p-16 text-center">
       <div class="w-16 h-16 mx-auto bg-[#1f2937] rounded-xl flex items-center justify-center mb-4">
-        <span class="material-symbols-outlined text-3xl text-slate-500">folder_shared</span>
+        <span class="material-symbols-outlined text-3xl text-zinc-500">folder_shared</span>
       </div>
-      <p class="text-slate-700 dark:text-slate-300 font-medium">No shared documents</p>
-      <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Documents shared with you will appear here</p>
+      <p class="text-zinc-700 dark:text-zinc-300 font-medium">No shared documents</p>
+      <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Documents shared with you will appear here</p>
     </div>
 
     <!-- Shared Documents List -->
-    <div v-else class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+    <div v-else class="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
       <!-- Table Header -->
-      <div class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-3">
-        <div class="grid grid-cols-12 gap-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+      <div class="bg-white dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700 px-4 py-3">
+        <div class="grid grid-cols-12 gap-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
           <div class="col-span-4">Document</div>
           <div class="col-span-2">Shared By</div>
           <div class="col-span-2">Permission</div>
@@ -203,11 +203,11 @@ function getRelativeTime(dateStr: string): string {
       </div>
 
       <!-- Items -->
-      <div class="divide-y divide-slate-100 dark:divide-slate-800">
+      <div class="divide-y divide-zinc-100 dark:divide-zinc-800">
         <div
           v-for="doc in sharedDocuments"
           :key="doc.shareId"
-          class="px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group cursor-pointer"
+          class="px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors group cursor-pointer"
           :class="{ 'opacity-60': isExpired(doc.expiresAt) }"
           @click="viewDocument(doc)"
           @contextmenu="openContextMenu($event, doc)"
@@ -220,7 +220,7 @@ function getRelativeTime(dateStr: string): string {
               </div>
               <div class="min-w-0">
                 <div class="flex items-center gap-2">
-                  <p class="text-sm font-medium text-slate-700 dark:text-slate-200 truncate group-hover:text-teal transition-colors">
+                  <p class="text-sm font-medium text-zinc-700 dark:text-zinc-200 truncate group-hover:text-teal transition-colors">
                     {{ doc.documentName }}
                   </p>
                   <!-- Password Protected Badge -->
@@ -236,16 +236,16 @@ function getRelativeTime(dateStr: string): string {
                     <span class="text-[9px] font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-wide pr-0.5">Secured</span>
                   </div>
                 </div>
-                <p class="text-xs text-slate-400 uppercase">{{ doc.extension?.replace('.', '') || 'File' }}</p>
+                <p class="text-xs text-zinc-400 uppercase">{{ doc.extension?.replace('.', '') || 'File' }}</p>
               </div>
             </div>
 
             <!-- Shared By -->
             <div class="col-span-2 flex items-center gap-2">
-              <div class="w-6 h-6 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center">
-                <span class="material-symbols-outlined text-xs text-slate-500">person</span>
+              <div class="w-6 h-6 bg-zinc-100 dark:bg-zinc-700 rounded-full flex items-center justify-center">
+                <span class="material-symbols-outlined text-xs text-zinc-500">person</span>
               </div>
-              <span class="text-sm text-slate-600 dark:text-slate-300 truncate">{{ doc.sharedByUserName || 'Unknown' }}</span>
+              <span class="text-sm text-zinc-600 dark:text-zinc-300 truncate">{{ doc.sharedByUserName || 'Unknown' }}</span>
             </div>
 
             <!-- Permission -->
@@ -274,7 +274,7 @@ function getRelativeTime(dateStr: string): string {
 
             <!-- Received Date -->
             <div class="col-span-2">
-              <span class="text-sm text-slate-500 dark:text-slate-400">{{ getRelativeTime(doc.sharedAt) }}</span>
+              <span class="text-sm text-zinc-500 dark:text-zinc-400">{{ getRelativeTime(doc.sharedAt) }}</span>
             </div>
 
             <!-- Actions -->
@@ -282,7 +282,7 @@ function getRelativeTime(dateStr: string): string {
               <button
                 @click.stop="previewDocument(doc)"
                 :disabled="isExpired(doc.expiresAt)"
-                class="action-btn p-1.5 rounded text-slate-400 hover:text-teal hover:bg-teal/10 transition-colors disabled:opacity-40"
+                class="action-btn p-1.5 rounded text-zinc-400 hover:text-teal hover:bg-teal/10 transition-colors disabled:opacity-40"
                 data-tooltip="Preview"
               >
                 <span class="material-symbols-outlined text-lg">open_in_new</span>
@@ -290,7 +290,7 @@ function getRelativeTime(dateStr: string): string {
               <button
                 @click.stop="downloadDocument(doc)"
                 :disabled="isExpired(doc.expiresAt)"
-                class="action-btn p-1.5 rounded text-slate-400 hover:text-teal hover:bg-teal/10 transition-colors disabled:opacity-40"
+                class="action-btn p-1.5 rounded text-zinc-400 hover:text-teal hover:bg-teal/10 transition-colors disabled:opacity-40"
                 data-tooltip="Download"
               >
                 <span class="material-symbols-outlined text-lg">download</span>
@@ -299,14 +299,14 @@ function getRelativeTime(dateStr: string): string {
                 v-if="doc.permissionLevel === 2"
                 @click.stop="editDocument(doc)"
                 :disabled="isExpired(doc.expiresAt)"
-                class="action-btn p-1.5 rounded text-slate-400 hover:text-amber-500 hover:bg-amber-500/10 transition-colors disabled:opacity-40"
+                class="action-btn p-1.5 rounded text-zinc-400 hover:text-amber-500 hover:bg-amber-500/10 transition-colors disabled:opacity-40"
                 data-tooltip="Edit"
               >
                 <span class="material-symbols-outlined text-lg">edit</span>
               </button>
               <button
                 @click.stop="openContextMenu($event, doc)"
-                class="action-btn p-1.5 rounded text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                class="action-btn p-1.5 rounded text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
                 data-tooltip="More"
               >
                 <span class="material-symbols-outlined text-lg">more_vert</span>
@@ -317,9 +317,9 @@ function getRelativeTime(dateStr: string): string {
       </div>
 
       <!-- Footer -->
-      <div class="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 px-4 py-2.5 flex items-center justify-between">
-        <span class="text-xs text-slate-500">
-          <span class="font-medium text-slate-700 dark:text-slate-300">{{ sharedDocuments.length }}</span>
+      <div class="bg-white dark:bg-zinc-800 border-t border-zinc-200 dark:border-zinc-700 px-4 py-2.5 flex items-center justify-between">
+        <span class="text-xs text-zinc-500">
+          <span class="font-medium text-zinc-700 dark:text-zinc-300">{{ sharedDocuments.length }}</span>
           shared {{ sharedDocuments.length === 1 ? 'document' : 'documents' }}
         </span>
       </div>
@@ -337,7 +337,7 @@ function getRelativeTime(dateStr: string): string {
       >
         <div
           v-if="showContextMenu && contextMenuDocument"
-          class="fixed z-50 min-w-[180px] bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1.5 overflow-hidden"
+          class="fixed z-50 min-w-[180px] bg-white dark:bg-zinc-800 rounded-xl shadow-xl border border-zinc-200 dark:border-zinc-700 py-1.5 overflow-hidden"
           :style="{ left: contextMenuPosition.x + 'px', top: contextMenuPosition.y + 'px' }"
           @click.stop
         >
@@ -345,7 +345,7 @@ function getRelativeTime(dateStr: string): string {
           <button
             @click="previewDocument(contextMenuDocument); closeContextMenu()"
             :disabled="isExpired(contextMenuDocument.expiresAt)"
-            class="w-full px-4 py-2.5 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-teal/10 hover:text-teal flex items-center gap-3 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            class="w-full px-4 py-2.5 text-left text-sm text-zinc-700 dark:text-zinc-200 hover:bg-teal/10 hover:text-teal flex items-center gap-3 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <span class="material-symbols-outlined text-lg">open_in_new</span>
             Preview
@@ -355,7 +355,7 @@ function getRelativeTime(dateStr: string): string {
           <button
             @click="downloadDocument(contextMenuDocument); closeContextMenu()"
             :disabled="isExpired(contextMenuDocument.expiresAt)"
-            class="w-full px-4 py-2.5 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-teal/10 hover:text-teal flex items-center gap-3 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            class="w-full px-4 py-2.5 text-left text-sm text-zinc-700 dark:text-zinc-200 hover:bg-teal/10 hover:text-teal flex items-center gap-3 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <span class="material-symbols-outlined text-lg">download</span>
             Download
@@ -366,18 +366,18 @@ function getRelativeTime(dateStr: string): string {
             v-if="contextMenuDocument.permissionLevel === 2"
             @click="editDocument(contextMenuDocument); closeContextMenu()"
             :disabled="isExpired(contextMenuDocument.expiresAt)"
-            class="w-full px-4 py-2.5 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-amber-500/10 hover:text-amber-600 flex items-center gap-3 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            class="w-full px-4 py-2.5 text-left text-sm text-zinc-700 dark:text-zinc-200 hover:bg-amber-500/10 hover:text-amber-600 flex items-center gap-3 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <span class="material-symbols-outlined text-lg">edit</span>
             Edit
           </button>
 
-          <div class="my-1.5 border-t border-slate-200 dark:border-slate-700"></div>
+          <div class="my-1.5 border-t border-zinc-200 dark:border-zinc-700"></div>
 
           <!-- View Details -->
           <button
             @click="viewDocument(contextMenuDocument); closeContextMenu()"
-            class="w-full px-4 py-2.5 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-teal/10 hover:text-teal flex items-center gap-3 transition-colors"
+            class="w-full px-4 py-2.5 text-left text-sm text-zinc-700 dark:text-zinc-200 hover:bg-teal/10 hover:text-teal flex items-center gap-3 transition-colors"
           >
             <span class="material-symbols-outlined text-lg">info</span>
             View Details
@@ -443,7 +443,7 @@ function getRelativeTime(dateStr: string): string {
   left: 50%;
   transform: translateX(-50%) translateY(4px);
   padding: 6px 12px;
-  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  background: linear-gradient(135deg, #27272a 0%, #3f3f46 100%);
   color: white;
   font-size: 12px;
   font-weight: 500;
@@ -460,7 +460,7 @@ function getRelativeTime(dateStr: string): string {
   left: 50%;
   transform: translateX(-50%) translateY(4px);
   border: 6px solid transparent;
-  border-top-color: #334155;
+  border-top-color: #3f3f46;
   z-index: 50;
 }
 
@@ -474,13 +474,13 @@ function getRelativeTime(dateStr: string): string {
 
 /* Dark mode tooltip */
 :deep(.dark) .action-btn::before {
-  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-  color: #1e293b;
+  background: linear-gradient(135deg, #f4f4f5 0%, #e4e4e7 100%);
+  color: #27272a;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
 }
 
 :deep(.dark) .action-btn::after {
-  border-top-color: #e2e8f0;
+  border-top-color: #e4e4e7;
 }
 
 /* Disabled tooltip should still show */

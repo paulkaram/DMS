@@ -13,16 +13,16 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="text-center py-16 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-700">
-    <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-slate-100 dark:bg-slate-800 mb-4">
-      <span class="material-symbols-outlined text-4xl text-slate-400">
+  <div class="text-center py-16 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-700">
+    <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-zinc-800 mb-4">
+      <span class="material-symbols-outlined text-4xl text-zinc-400">
         {{ icon || 'folder_off' }}
       </span>
     </div>
-    <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-2">
+    <h3 class="text-lg font-semibold text-zinc-800 dark:text-zinc-200 mb-2">
       {{ title }}
     </h3>
-    <p v-if="description" class="text-slate-500 mb-6">{{ description }}</p>
+    <p v-if="description" class="text-zinc-500 mb-6">{{ description }}</p>
     <button
       v-if="actionLabel"
       @click="emit('action')"

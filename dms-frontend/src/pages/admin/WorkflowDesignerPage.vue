@@ -44,7 +44,7 @@ const nodeTypes = [
   { type: 'condition', label: 'Condition', icon: 'call_split', color: '#f59e0b', bgClass: 'bg-amber-500', shape: 'diamond' },
   { type: 'parallel', label: 'Parallel', icon: 'mediation', color: '#a855f7', bgClass: 'bg-purple-500', shape: 'diamond' },
   { type: 'notification', label: 'Notify', icon: 'notifications', color: '#eab308', bgClass: 'bg-yellow-500', shape: 'rect' },
-  { type: 'timer', label: 'Timer', icon: 'timer', color: '#64748b', bgClass: 'bg-slate-500', shape: 'rect' },
+  { type: 'timer', label: 'Timer', icon: 'timer', color: '#64748b', bgClass: 'bg-zinc-500', shape: 'rect' },
   { type: 'end', label: 'End', icon: 'stop_circle', color: '#ef4444', bgClass: 'bg-red-500', shape: 'circle' }
 ] as const
 
@@ -204,8 +204,8 @@ function getStatusClass(status: string) {
   switch (status) {
     case 'Active': return 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
     case 'Draft': return 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
-    case 'Inactive': return 'bg-slate-500/15 text-slate-500 dark:text-slate-400'
-    default: return 'bg-slate-500/15 text-slate-500'
+    case 'Inactive': return 'bg-zinc-500/15 text-zinc-500 dark:text-zinc-400'
+    default: return 'bg-zinc-500/15 text-zinc-500'
   }
 }
 
@@ -213,8 +213,8 @@ function getStatusDot(status: string) {
   switch (status) {
     case 'Active': return 'bg-emerald-500'
     case 'Draft': return 'bg-amber-500'
-    case 'Inactive': return 'bg-slate-400'
-    default: return 'bg-slate-400'
+    case 'Inactive': return 'bg-zinc-400'
+    default: return 'bg-zinc-400'
   }
 }
 
@@ -524,7 +524,7 @@ function deleteWorkflow(id: string) {
       <div class="flex items-center justify-between mb-6">
         <div>
           <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Workflow Designer</h1>
-          <p class="text-slate-500 mt-1">Design and manage automated document processes</p>
+          <p class="text-zinc-500 mt-1">Design and manage automated document processes</p>
         </div>
         <UiButton @click="openDesigner()">
           <span class="material-symbols-outlined text-lg">add</span>
@@ -585,14 +585,14 @@ function deleteWorkflow(id: string) {
         <!-- Create New Card -->
         <button
           @click="openDesigner()"
-          class="group min-h-[240px] rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-teal dark:hover:border-teal bg-white/50 dark:bg-slate-900/50 flex flex-col items-center justify-center gap-4 transition-all hover:shadow-lg hover:shadow-teal/5"
+          class="group min-h-[240px] rounded-2xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 hover:border-teal dark:hover:border-teal bg-white/50 dark:bg-zinc-900/50 flex flex-col items-center justify-center gap-4 transition-all hover:shadow-lg hover:shadow-teal/5"
         >
           <div class="w-16 h-16 rounded-2xl bg-teal/10 group-hover:bg-teal/20 flex items-center justify-center transition-colors">
             <span class="material-symbols-outlined text-teal text-3xl">add</span>
           </div>
           <div class="text-center">
-            <p class="font-semibold text-slate-700 dark:text-slate-300 group-hover:text-teal transition-colors">Create New Workflow</p>
-            <p class="text-xs text-slate-400 mt-1">Design a new automated process</p>
+            <p class="font-semibold text-zinc-700 dark:text-zinc-300 group-hover:text-teal transition-colors">Create New Workflow</p>
+            <p class="text-xs text-zinc-400 mt-1">Design a new automated process</p>
           </div>
         </button>
 
@@ -600,10 +600,10 @@ function deleteWorkflow(id: string) {
         <div
           v-for="wf in workflows"
           :key="wf.id"
-          class="group bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-teal/40 dark:hover:border-teal/40 shadow-sm hover:shadow-lg hover:shadow-teal/5 transition-all overflow-hidden"
+          class="group bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 hover:border-teal/40 dark:hover:border-teal/40 shadow-sm hover:shadow-lg hover:shadow-teal/5 transition-all overflow-hidden"
         >
           <!-- Card Header - Mini Flow Preview -->
-          <div class="h-28 bg-slate-50 dark:bg-slate-800/50 relative overflow-hidden border-b border-slate-100 dark:border-slate-800">
+          <div class="h-28 bg-zinc-50 dark:bg-zinc-800/50 relative overflow-hidden border-b border-zinc-100 dark:border-zinc-800">
             <svg class="w-full h-full" viewBox="0 0 600 120" preserveAspectRatio="xMidYMid meet">
               <!-- Mini node visualization -->
               <g v-for="(step, i) in wf.steps.slice(0, 6)" :key="step.id">
@@ -655,16 +655,16 @@ function deleteWorkflow(id: string) {
           <!-- Card Body -->
           <div class="p-5">
             <div class="flex items-start justify-between gap-3 mb-3">
-              <h3 class="font-bold text-slate-900 dark:text-white group-hover:text-teal transition-colors line-clamp-1">{{ wf.name }}</h3>
+              <h3 class="font-bold text-zinc-900 dark:text-white group-hover:text-teal transition-colors line-clamp-1">{{ wf.name }}</h3>
               <span :class="['px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full flex items-center gap-1.5 flex-shrink-0', getStatusClass(wf.status)]">
                 <span :class="['w-1.5 h-1.5 rounded-full', getStatusDot(wf.status)]"></span>
                 {{ wf.status }}
               </span>
             </div>
-            <p class="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-4">{{ wf.description }}</p>
+            <p class="text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2 mb-4">{{ wf.description }}</p>
 
             <!-- Meta Row -->
-            <div class="flex items-center gap-4 text-xs text-slate-400 mb-4">
+            <div class="flex items-center gap-4 text-xs text-zinc-400 mb-4">
               <span class="flex items-center gap-1">
                 <span class="material-symbols-outlined text-sm">{{ getTriggerIcon(wf.triggerType) }}</span>
                 {{ getTriggerLabel(wf.triggerType) }}
@@ -680,26 +680,26 @@ function deleteWorkflow(id: string) {
             </div>
 
             <!-- Footer -->
-            <div class="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
-              <span class="text-[10px] text-slate-400 uppercase tracking-wider">{{ formatDate(wf.updatedAt) }}</span>
+            <div class="flex items-center justify-between pt-3 border-t border-zinc-100 dark:border-zinc-800">
+              <span class="text-[10px] text-zinc-400 uppercase tracking-wider">{{ formatDate(wf.updatedAt) }}</span>
               <div class="flex items-center gap-1">
                 <button
                   @click="openDesigner(wf)"
-                  class="p-1.5 rounded-lg text-slate-400 hover:text-teal hover:bg-teal/10 transition-colors"
+                  class="p-1.5 rounded-lg text-zinc-400 hover:text-teal hover:bg-teal/10 transition-colors"
                   title="Edit"
                 >
                   <span class="material-symbols-outlined text-lg">edit</span>
                 </button>
                 <button
                   @click="duplicateWorkflow(wf)"
-                  class="p-1.5 rounded-lg text-slate-400 hover:text-blue-500 hover:bg-blue-500/10 transition-colors"
+                  class="p-1.5 rounded-lg text-zinc-400 hover:text-blue-500 hover:bg-blue-500/10 transition-colors"
                   title="Duplicate"
                 >
                   <span class="material-symbols-outlined text-lg">content_copy</span>
                 </button>
                 <button
                   @click="deleteWorkflow(wf.id)"
-                  class="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                  class="p-1.5 rounded-lg text-zinc-400 hover:text-red-500 hover:bg-red-500/10 transition-colors"
                   title="Delete"
                 >
                   <span class="material-symbols-outlined text-lg">delete</span>
@@ -714,22 +714,22 @@ function deleteWorkflow(id: string) {
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- DESIGNER VIEW                                                  -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <div v-else class="fixed inset-0 z-40 flex flex-col bg-slate-100 dark:bg-slate-950">
+    <div v-else class="fixed inset-0 z-40 flex flex-col bg-zinc-100 dark:bg-zinc-950">
 
       <!-- Top Toolbar -->
-      <div class="flex-shrink-0 h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center px-4 gap-3 shadow-sm z-20">
+      <div class="flex-shrink-0 h-14 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 flex items-center px-4 gap-3 shadow-sm z-20">
         <!-- Back -->
-        <button @click="backToList" class="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+        <button @click="backToList" class="p-2 rounded-lg text-zinc-500 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
           <span class="material-symbols-outlined">arrow_back</span>
         </button>
-        <div class="w-px h-6 bg-slate-200 dark:bg-slate-700"></div>
+        <div class="w-px h-6 bg-zinc-200 dark:bg-zinc-700"></div>
 
         <!-- Workflow Name -->
         <div class="flex items-center gap-2 flex-1 min-w-0">
           <span class="material-symbols-outlined text-teal">account_tree</span>
           <input
             v-model="designerWorkflow.name"
-            class="bg-transparent border-none outline-none text-lg font-bold text-slate-900 dark:text-white placeholder-slate-400 min-w-0 flex-1"
+            class="bg-transparent border-none outline-none text-lg font-bold text-zinc-900 dark:text-white placeholder-zinc-400 min-w-0 flex-1"
             placeholder="Workflow name..."
           />
           <span :class="['px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full', getStatusClass(designerWorkflow.status)]">
@@ -738,20 +738,20 @@ function deleteWorkflow(id: string) {
         </div>
 
         <!-- Zoom Controls -->
-        <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 rounded-lg px-1">
-          <button @click="zoom = Math.max(0.3, zoom - 0.1)" class="p-1.5 text-slate-500 hover:text-slate-700 dark:hover:text-white transition-colors rounded">
+        <div class="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg px-1">
+          <button @click="zoom = Math.max(0.3, zoom - 0.1)" class="p-1.5 text-zinc-500 hover:text-zinc-700 dark:hover:text-white transition-colors rounded">
             <span class="material-symbols-outlined text-lg">remove</span>
           </button>
-          <span class="text-xs font-mono text-slate-500 w-12 text-center">{{ Math.round(zoom * 100) }}%</span>
-          <button @click="zoom = Math.min(2, zoom + 0.1)" class="p-1.5 text-slate-500 hover:text-slate-700 dark:hover:text-white transition-colors rounded">
+          <span class="text-xs font-mono text-zinc-500 w-12 text-center">{{ Math.round(zoom * 100) }}%</span>
+          <button @click="zoom = Math.min(2, zoom + 0.1)" class="p-1.5 text-zinc-500 hover:text-zinc-700 dark:hover:text-white transition-colors rounded">
             <span class="material-symbols-outlined text-lg">add</span>
           </button>
-          <button @click="zoom = 1; canvasOffset.x = 0; canvasOffset.y = 0" class="p-1.5 text-slate-500 hover:text-slate-700 dark:hover:text-white transition-colors rounded" title="Reset view">
+          <button @click="zoom = 1; canvasOffset.x = 0; canvasOffset.y = 0" class="p-1.5 text-zinc-500 hover:text-zinc-700 dark:hover:text-white transition-colors rounded" title="Reset view">
             <span class="material-symbols-outlined text-lg">fit_screen</span>
           </button>
         </div>
 
-        <div class="w-px h-6 bg-slate-200 dark:bg-slate-700"></div>
+        <div class="w-px h-6 bg-zinc-200 dark:bg-zinc-700"></div>
 
         <!-- Save / Publish -->
         <UiButton variant="outline" size="sm" @click="showSaveModal = true">
@@ -766,16 +766,16 @@ function deleteWorkflow(id: string) {
 
       <div class="flex-1 flex overflow-hidden">
         <!-- Left Sidebar - Node Palette -->
-        <div class="flex-shrink-0 w-56 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col z-10">
-          <div class="p-3 border-b border-slate-100 dark:border-slate-800">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Node Palette</p>
+        <div class="flex-shrink-0 w-56 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 flex flex-col z-10">
+          <div class="p-3 border-b border-zinc-100 dark:border-zinc-800">
+            <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Node Palette</p>
           </div>
           <div class="flex-1 overflow-y-auto p-3 space-y-1.5">
             <button
               v-for="nt in nodeTypes"
               :key="nt.type"
               @click="addNode(nt.type)"
-              class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all group"
+              class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all group"
             >
               <div
                 class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110"
@@ -785,7 +785,7 @@ function deleteWorkflow(id: string) {
               </div>
               <div>
                 <span class="block">{{ nt.label }}</span>
-                <span class="block text-[10px] text-slate-400 font-normal">
+                <span class="block text-[10px] text-zinc-400 font-normal">
                   {{ nt.shape === 'circle' ? 'Event' : nt.shape === 'diamond' ? 'Gateway' : 'Task' }}
                 </span>
               </div>
@@ -793,19 +793,19 @@ function deleteWorkflow(id: string) {
           </div>
 
           <!-- Connection Mode Indicator -->
-          <div v-if="isConnecting" class="p-3 border-t border-slate-100 dark:border-slate-800">
+          <div v-if="isConnecting" class="p-3 border-t border-zinc-100 dark:border-zinc-800">
             <div class="bg-teal/10 border border-teal/30 rounded-xl p-3 text-center">
               <p class="text-xs font-semibold text-teal">Connecting...</p>
-              <p class="text-[10px] text-slate-500 mt-1">Click a target node</p>
-              <button @click="cancelConnection" class="mt-2 text-[10px] text-slate-400 hover:text-red-500 transition-colors">Cancel</button>
+              <p class="text-[10px] text-zinc-500 mt-1">Click a target node</p>
+              <button @click="cancelConnection" class="mt-2 text-[10px] text-zinc-400 hover:text-red-500 transition-colors">Cancel</button>
             </div>
           </div>
 
           <!-- Quick Help -->
-          <div class="p-3 border-t border-slate-100 dark:border-slate-800">
-            <div class="bg-slate-50 dark:bg-slate-800 rounded-xl p-3">
-              <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Quick Help</p>
-              <div class="space-y-1.5 text-[10px] text-slate-500">
+          <div class="p-3 border-t border-zinc-100 dark:border-zinc-800">
+            <div class="bg-zinc-50 dark:bg-zinc-800 rounded-xl p-3">
+              <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">Quick Help</p>
+              <div class="space-y-1.5 text-[10px] text-zinc-500">
                 <p class="flex items-center gap-2"><span class="material-symbols-outlined text-xs">mouse</span> Drag nodes to move</p>
                 <p class="flex items-center gap-2"><span class="material-symbols-outlined text-xs">open_with</span> Drag canvas to pan</p>
                 <p class="flex items-center gap-2"><span class="material-symbols-outlined text-xs">unfold_more</span> Scroll to zoom</p>
@@ -826,11 +826,11 @@ function deleteWorkflow(id: string) {
             <defs>
               <pattern id="grid-small" width="20" height="20" patternUnits="userSpaceOnUse"
                 :patternTransform="`translate(${canvasOffset.x % 20},${canvasOffset.y % 20})`">
-                <circle cx="10" cy="10" r="0.5" class="fill-slate-300 dark:fill-slate-700" />
+                <circle cx="10" cy="10" r="0.5" class="fill-zinc-300 dark:fill-zinc-700" />
               </pattern>
               <pattern id="grid-large" width="100" height="100" patternUnits="userSpaceOnUse"
                 :patternTransform="`translate(${canvasOffset.x % 100},${canvasOffset.y % 100})`">
-                <circle cx="50" cy="50" r="1" class="fill-slate-300 dark:fill-slate-600" />
+                <circle cx="50" cy="50" r="1" class="fill-zinc-300 dark:fill-zinc-600" />
               </pattern>
             </defs>
             <rect width="100%" height="100%" fill="url(#grid-small)" />
@@ -872,14 +872,14 @@ function deleteWorkflow(id: string) {
                     :x="getConnectionMidpoint(conn).x - 20"
                     :y="getConnectionMidpoint(conn).y - 10"
                     width="40" height="20" rx="6"
-                    class="fill-white dark:fill-slate-800 stroke-slate-200 dark:stroke-slate-700"
+                    class="fill-white dark:fill-zinc-800 stroke-zinc-200 dark:stroke-zinc-700"
                     stroke-width="1"
                   />
                   <text
                     :x="getConnectionMidpoint(conn).x"
                     :y="getConnectionMidpoint(conn).y + 4"
                     text-anchor="middle"
-                    class="fill-slate-500 dark:fill-slate-400"
+                    class="fill-zinc-500 dark:fill-zinc-400"
                     font-size="10"
                     font-weight="600"
                   >{{ conn.label }}</text>
@@ -905,7 +905,7 @@ function deleteWorkflow(id: string) {
                 v-if="getNodeType(node.type).shape === 'circle'"
                 class="w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all cursor-move"
                 :class="[
-                  selectedNodeId === node.id ? 'ring-2 ring-teal ring-offset-2 ring-offset-slate-100 dark:ring-offset-slate-950 scale-110' : 'hover:scale-105'
+                  selectedNodeId === node.id ? 'ring-2 ring-teal ring-offset-2 ring-offset-zinc-100 dark:ring-offset-zinc-950 scale-110' : 'hover:scale-105'
                 ]"
                 :style="{ backgroundColor: getNodeType(node.type).color }"
               >
@@ -920,7 +920,7 @@ function deleteWorkflow(id: string) {
                 <div
                   class="w-11 h-11 rotate-45 rounded-md shadow-lg transition-all"
                   :class="[
-                    selectedNodeId === node.id ? 'ring-2 ring-teal ring-offset-2 ring-offset-slate-100 dark:ring-offset-slate-950 scale-110' : 'hover:scale-105'
+                    selectedNodeId === node.id ? 'ring-2 ring-teal ring-offset-2 ring-offset-zinc-100 dark:ring-offset-zinc-950 scale-110' : 'hover:scale-105'
                   ]"
                   :style="{ backgroundColor: getNodeType(node.type).color }"
                 >
@@ -933,11 +933,11 @@ function deleteWorkflow(id: string) {
               <!-- Rect shape (Tasks) -->
               <div
                 v-else
-                class="h-14 rounded-xl shadow-lg flex items-center gap-2.5 px-3 transition-all cursor-move bg-white dark:bg-slate-800 border-2"
+                class="h-14 rounded-xl shadow-lg flex items-center gap-2.5 px-3 transition-all cursor-move bg-white dark:bg-zinc-800 border-2"
                 :class="[
                   selectedNodeId === node.id
                     ? 'border-teal shadow-teal/20 shadow-xl scale-105'
-                    : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:scale-[1.02]'
+                    : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 hover:scale-[1.02]'
                 ]"
                 :style="{ width: getNodeWidth(node.type) + 'px' }"
               >
@@ -948,15 +948,15 @@ function deleteWorkflow(id: string) {
                   <span class="material-symbols-outlined text-base" :style="{ color: getNodeType(node.type).color }">{{ getNodeType(node.type).icon }}</span>
                 </div>
                 <div class="flex-1 min-w-0">
-                  <p class="text-xs font-semibold text-slate-800 dark:text-white truncate leading-tight">{{ node.label }}</p>
-                  <p class="text-[9px] text-slate-400 truncate leading-tight mt-0.5" v-if="node.config?.assignee">{{ node.config.assignee }}</p>
+                  <p class="text-xs font-semibold text-zinc-800 dark:text-white truncate leading-tight">{{ node.label }}</p>
+                  <p class="text-[9px] text-zinc-400 truncate leading-tight mt-0.5" v-if="node.config?.assignee">{{ node.config.assignee }}</p>
                 </div>
               </div>
 
               <!-- Node label for circles/diamonds -->
               <p
                 v-if="getNodeType(node.type).shape !== 'rect'"
-                class="text-[10px] font-semibold text-slate-600 dark:text-slate-400 text-center mt-1 whitespace-nowrap"
+                class="text-[10px] font-semibold text-zinc-600 dark:text-zinc-400 text-center mt-1 whitespace-nowrap"
                 :style="{ width: '80px', marginLeft: '-13px' }"
               >{{ node.label }}</p>
 
@@ -975,23 +975,23 @@ function deleteWorkflow(id: string) {
         </div>
 
         <!-- Right Panel - Properties -->
-        <div class="flex-shrink-0 w-72 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 flex flex-col z-10">
+        <div class="flex-shrink-0 w-72 bg-white dark:bg-zinc-900 border-l border-zinc-200 dark:border-zinc-800 flex flex-col z-10">
           <div v-if="selectedNode" class="flex-1 flex flex-col overflow-hidden">
             <!-- Panel Header -->
-            <div class="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <div class="p-4 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
               <div class="flex items-center gap-2.5">
                 <div class="w-8 h-8 rounded-lg flex items-center justify-center" :style="{ backgroundColor: selectedNodeType?.color + '20' }">
                   <span class="material-symbols-outlined text-base" :style="{ color: selectedNodeType?.color }">{{ selectedNodeType?.icon }}</span>
                 </div>
                 <div>
-                  <p class="text-xs font-bold text-slate-900 dark:text-white">{{ selectedNodeType?.label }} Node</p>
-                  <p class="text-[10px] text-slate-400">{{ selectedNode.id }}</p>
+                  <p class="text-xs font-bold text-zinc-900 dark:text-white">{{ selectedNodeType?.label }} Node</p>
+                  <p class="text-[10px] text-zinc-400">{{ selectedNode.id }}</p>
                 </div>
               </div>
               <button
                 v-if="selectedNode.type !== 'start' && selectedNode.type !== 'end'"
                 @click="deleteSelectedNode"
-                class="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                class="p-1.5 rounded-lg text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
               >
                 <span class="material-symbols-outlined text-lg">delete</span>
               </button>
@@ -1000,90 +1000,90 @@ function deleteWorkflow(id: string) {
             <!-- Properties -->
             <div class="flex-1 overflow-y-auto p-4 space-y-4">
               <div>
-                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Label</label>
+                <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Label</label>
                 <input
                   v-model="selectedNode.label"
-                  class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all"
+                  class="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all"
                 />
               </div>
 
               <div>
-                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Description</label>
+                <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Description</label>
                 <textarea
                   v-model="selectedNode.description"
                   rows="2"
-                  class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all resize-none"
+                  class="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all resize-none"
                   placeholder="Describe this step..."
                 ></textarea>
               </div>
 
               <!-- Assignee for approval/review -->
               <div v-if="selectedNode.type === 'approval' || selectedNode.type === 'review'">
-                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Assignee</label>
+                <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Assignee</label>
                 <input
                   v-model="selectedNode.config.assignee"
-                  class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all"
+                  class="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all"
                   placeholder="User or role..."
                 />
               </div>
 
               <!-- Condition for branch nodes -->
               <div v-if="selectedNode.type === 'condition'">
-                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Condition Expression</label>
+                <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Condition Expression</label>
                 <textarea
                   v-model="selectedNode.config.condition"
                   rows="3"
-                  class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-900 dark:text-white font-mono text-xs focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all resize-none"
+                  class="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-white font-mono text-xs focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all resize-none"
                   placeholder="e.g. document.classification == 'Confidential'"
                 ></textarea>
               </div>
 
               <!-- Timeout for approval/review -->
               <div v-if="selectedNode.type === 'approval' || selectedNode.type === 'review' || selectedNode.type === 'timer'">
-                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">
+                <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">
                   {{ selectedNode.type === 'timer' ? 'Duration' : 'Timeout' }}
                 </label>
                 <input
                   v-model="selectedNode.config.timeout"
-                  class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all"
+                  class="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all"
                   placeholder="e.g. 48h, 3d, 1w"
                 />
               </div>
 
               <!-- Notification template -->
               <div v-if="selectedNode.type === 'notification'">
-                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Template</label>
+                <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Template</label>
                 <input
                   v-model="selectedNode.config.template"
-                  class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all"
+                  class="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all"
                   placeholder="Notification template name..."
                 />
-                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 mt-4">Recipients</label>
+                <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5 mt-4">Recipients</label>
                 <input
                   v-model="selectedNode.config.recipients"
-                  class="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all"
+                  class="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all"
                   placeholder="Users, roles, or groups..."
                 />
               </div>
 
               <!-- Position -->
               <div>
-                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Position</label>
+                <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Position</label>
                 <div class="flex gap-2">
                   <div class="flex-1">
-                    <label class="text-[9px] text-slate-400">X</label>
+                    <label class="text-[9px] text-zinc-400">X</label>
                     <input
                       v-model.number="selectedNode.x"
                       type="number"
-                      class="w-full px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white font-mono focus:ring-1 focus:ring-teal/50 outline-none"
+                      class="w-full px-2 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-xs text-zinc-900 dark:text-white font-mono focus:ring-1 focus:ring-teal/50 outline-none"
                     />
                   </div>
                   <div class="flex-1">
-                    <label class="text-[9px] text-slate-400">Y</label>
+                    <label class="text-[9px] text-zinc-400">Y</label>
                     <input
                       v-model.number="selectedNode.y"
                       type="number"
-                      class="w-full px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white font-mono focus:ring-1 focus:ring-teal/50 outline-none"
+                      class="w-full px-2 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-xs text-zinc-900 dark:text-white font-mono focus:ring-1 focus:ring-teal/50 outline-none"
                     />
                   </div>
                 </div>
@@ -1091,21 +1091,21 @@ function deleteWorkflow(id: string) {
 
               <!-- Connections -->
               <div>
-                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Connections</label>
+                <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Connections</label>
                 <div class="space-y-1.5">
                   <div
                     v-for="conn in designerWorkflow.connections.filter(c => c.fromNodeId === selectedNode!.id || c.toNodeId === selectedNode!.id)"
                     :key="conn.id"
-                    class="flex items-center justify-between bg-slate-50 dark:bg-slate-800 rounded-lg px-2.5 py-1.5"
+                    class="flex items-center justify-between bg-zinc-50 dark:bg-zinc-800 rounded-lg px-2.5 py-1.5"
                   >
-                    <span class="text-[10px] text-slate-600 dark:text-slate-400 font-mono">
+                    <span class="text-[10px] text-zinc-600 dark:text-zinc-400 font-mono">
                       {{ conn.fromNodeId === selectedNode!.id ? '→ ' + conn.toNodeId : conn.fromNodeId + ' →' }}
                     </span>
-                    <button @click="deleteConnection(conn.id)" class="text-slate-400 hover:text-red-500 transition-colors">
+                    <button @click="deleteConnection(conn.id)" class="text-zinc-400 hover:text-red-500 transition-colors">
                       <span class="material-symbols-outlined text-xs">close</span>
                     </button>
                   </div>
-                  <p v-if="designerWorkflow.connections.filter(c => c.fromNodeId === selectedNode!.id || c.toNodeId === selectedNode!.id).length === 0" class="text-[10px] text-slate-400 italic">
+                  <p v-if="designerWorkflow.connections.filter(c => c.fromNodeId === selectedNode!.id || c.toNodeId === selectedNode!.id).length === 0" class="text-[10px] text-zinc-400 italic">
                     No connections
                   </p>
                 </div>
@@ -1115,11 +1115,11 @@ function deleteWorkflow(id: string) {
 
           <!-- No Selection -->
           <div v-else class="flex-1 flex flex-col items-center justify-center p-6 text-center">
-            <div class="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
-              <span class="material-symbols-outlined text-3xl text-slate-300 dark:text-slate-600">touch_app</span>
+            <div class="w-16 h-16 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4">
+              <span class="material-symbols-outlined text-3xl text-zinc-300 dark:text-zinc-600">touch_app</span>
             </div>
-            <p class="text-sm font-semibold text-slate-500 dark:text-slate-400">Select a node</p>
-            <p class="text-xs text-slate-400 mt-1">Click a node on the canvas to view and edit its properties</p>
+            <p class="text-sm font-semibold text-zinc-500 dark:text-zinc-400">Select a node</p>
+            <p class="text-xs text-zinc-400 mt-1">Click a node on the canvas to view and edit its properties</p>
           </div>
         </div>
       </div>
@@ -1153,20 +1153,20 @@ function deleteWorkflow(id: string) {
             :options="statusOptions"
           />
         </div>
-        <div class="bg-slate-50 dark:bg-slate-800 rounded-xl p-4">
-          <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Summary</p>
+        <div class="bg-zinc-50 dark:bg-zinc-800 rounded-xl p-4">
+          <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">Summary</p>
           <div class="grid grid-cols-3 gap-4 text-center">
             <div>
-              <p class="text-2xl font-bold text-slate-900 dark:text-white">{{ designerWorkflow.steps.length }}</p>
-              <p class="text-[10px] text-slate-400">Steps</p>
+              <p class="text-2xl font-bold text-zinc-900 dark:text-white">{{ designerWorkflow.steps.length }}</p>
+              <p class="text-[10px] text-zinc-400">Steps</p>
             </div>
             <div>
-              <p class="text-2xl font-bold text-slate-900 dark:text-white">{{ designerWorkflow.connections.length }}</p>
-              <p class="text-[10px] text-slate-400">Connections</p>
+              <p class="text-2xl font-bold text-zinc-900 dark:text-white">{{ designerWorkflow.connections.length }}</p>
+              <p class="text-[10px] text-zinc-400">Connections</p>
             </div>
             <div>
-              <p class="text-2xl font-bold text-slate-900 dark:text-white">v{{ designerWorkflow.version }}</p>
-              <p class="text-[10px] text-slate-400">Version</p>
+              <p class="text-2xl font-bold text-zinc-900 dark:text-white">v{{ designerWorkflow.version }}</p>
+              <p class="text-[10px] text-zinc-400">Version</p>
             </div>
           </div>
         </div>

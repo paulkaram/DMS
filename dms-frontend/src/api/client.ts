@@ -974,6 +974,37 @@ export const documentAnnotationsApi = {
     apiClient.get(`/documents/${documentId}/annotations/count`)
 }
 
+// PDF Page Management API
+export const pdfPagesApi = {
+  getPageCount: (documentId: string) =>
+    apiClient.get(`/documents/${documentId}/pages/count`),
+
+  reorganize: (
+    documentId: string,
+    manifest: {
+      pages: { source: string; originalPage?: number; fileIndex?: number; uploadPageNumber?: number }[]
+      comment?: string
+    },
+    files?: File[],
+    onProgress?: (progress: number) => void
+  ) => {
+    const formData = new FormData()
+    formData.append('manifest', JSON.stringify(manifest))
+    if (files) {
+      files.forEach(file => formData.append('files', file))
+    }
+    return apiClient.post(`/documents/${documentId}/pages/reorganize`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 300000,
+      onUploadProgress: (e) => {
+        if (e.total && onProgress) {
+          onProgress(Math.round((e.loaded * 100) / e.total))
+        }
+      }
+    })
+  }
+}
+
 // Saved Signatures API
 export const savedSignaturesApi = {
   getAll: () =>

@@ -155,7 +155,7 @@ const canSubmit = computed(() => {
 
 <template>
   <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" @click.self="emit('close')">
-    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10 w-full max-w-md mx-4 overflow-hidden">
+    <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10 w-full max-w-md mx-4 overflow-hidden">
       <!-- Header with brand gradient -->
       <div class="relative bg-gradient-to-r from-navy via-navy/95 to-primary px-6 py-5 overflow-hidden">
         <!-- Decorative elements -->
@@ -195,30 +195,30 @@ const canSubmit = computed(() => {
           <div class="text-center py-4">
             <div
               class="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center"
-              :class="hasPassword ? 'bg-teal/10' : 'bg-slate-100 dark:bg-slate-800'"
+              :class="hasPassword ? 'bg-teal/10' : 'bg-zinc-100 dark:bg-zinc-800'"
             >
               <span
                 class="material-symbols-outlined text-3xl"
-                :class="hasPassword ? 'text-teal' : 'text-slate-400'"
+                :class="hasPassword ? 'text-teal' : 'text-zinc-400'"
               >
                 {{ hasPassword ? 'lock' : 'lock_open' }}
               </span>
             </div>
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-1">
+            <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-1">
               {{ hasPassword ? 'Password Protected' : 'Not Protected' }}
             </h3>
-            <p class="text-sm text-slate-500 mb-4">
+            <p class="text-sm text-zinc-500 mb-4">
               {{ hasPassword ? 'This document requires a password to access' : 'Anyone with access can view this document' }}
             </p>
 
             <div v-if="hasPassword" class="text-left bg-teal/5 dark:bg-teal/10 border border-teal/20 rounded-xl p-4 mb-4 space-y-2">
               <div v-if="hint" class="flex items-center justify-between">
-                <span class="text-sm text-slate-500 dark:text-slate-400">Hint:</span>
-                <span class="text-sm text-slate-700 dark:text-slate-300">{{ hint }}</span>
+                <span class="text-sm text-zinc-500 dark:text-zinc-400">Hint:</span>
+                <span class="text-sm text-zinc-700 dark:text-zinc-300">{{ hint }}</span>
               </div>
               <div class="flex items-center justify-between">
-                <span class="text-sm text-slate-500 dark:text-slate-400">Expires:</span>
-                <span class="text-sm text-slate-700 dark:text-slate-300">{{ formatDate(expiresAt) }}</span>
+                <span class="text-sm text-zinc-500 dark:text-zinc-400">Expires:</span>
+                <span class="text-sm text-zinc-700 dark:text-zinc-300">{{ formatDate(expiresAt) }}</span>
               </div>
             </div>
 
@@ -252,18 +252,18 @@ const canSubmit = computed(() => {
         <template v-else-if="mode === 'set'">
           <div class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">New Password</label>
+              <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">New Password</label>
               <div class="relative">
                 <input
                   v-model="newPassword"
                   :type="showPassword ? 'text' : 'password'"
-                  class="w-full px-4 py-2.5 pr-10 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
+                  class="w-full px-4 py-2.5 pr-10 border border-zinc-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
                   placeholder="Enter password..."
                 />
                 <button
                   type="button"
                   @click="showPassword = !showPassword"
-                  class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
                 >
                   <span class="material-symbols-outlined text-lg">{{ showPassword ? 'visibility_off' : 'visibility' }}</span>
                 </button>
@@ -271,11 +271,11 @@ const canSubmit = computed(() => {
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Confirm Password</label>
+              <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Confirm Password</label>
               <input
                 v-model="confirmPassword"
                 :type="showPassword ? 'text' : 'password'"
-                class="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
+                class="w-full px-4 py-2.5 border border-zinc-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
                 :class="{ 'border-red-500': confirmPassword && !passwordMatch }"
                 placeholder="Confirm password..."
               />
@@ -283,11 +283,11 @@ const canSubmit = computed(() => {
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Hint (optional)</label>
+              <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Hint (optional)</label>
               <input
                 v-model="newHint"
                 type="text"
-                class="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
+                class="w-full px-4 py-2.5 border border-zinc-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
                 placeholder="Password hint..."
               />
             </div>
@@ -304,7 +304,7 @@ const canSubmit = computed(() => {
             <div class="flex gap-3 pt-2">
               <button
                 @click="resetForm"
-                class="flex-1 py-2.5 text-slate-600 dark:text-slate-400 font-medium rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                class="flex-1 py-2.5 text-zinc-600 dark:text-zinc-400 font-medium rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
               >
                 Cancel
               </button>
@@ -323,28 +323,28 @@ const canSubmit = computed(() => {
         <template v-else-if="mode === 'change'">
           <div class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Current Password</label>
+              <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Current Password</label>
               <input
                 v-model="currentPassword"
                 :type="showPassword ? 'text' : 'password'"
-                class="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
+                class="w-full px-4 py-2.5 border border-zinc-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
                 placeholder="Enter current password..."
               />
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">New Password</label>
+              <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">New Password</label>
               <div class="relative">
                 <input
                   v-model="newPassword"
                   :type="showPassword ? 'text' : 'password'"
-                  class="w-full px-4 py-2.5 pr-10 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
+                  class="w-full px-4 py-2.5 pr-10 border border-zinc-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
                   placeholder="Enter new password..."
                 />
                 <button
                   type="button"
                   @click="showPassword = !showPassword"
-                  class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
                 >
                   <span class="material-symbols-outlined text-lg">{{ showPassword ? 'visibility_off' : 'visibility' }}</span>
                 </button>
@@ -352,22 +352,22 @@ const canSubmit = computed(() => {
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Confirm New Password</label>
+              <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Confirm New Password</label>
               <input
                 v-model="confirmPassword"
                 :type="showPassword ? 'text' : 'password'"
-                class="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
+                class="w-full px-4 py-2.5 border border-zinc-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
                 :class="{ 'border-red-500': confirmPassword && !passwordMatch }"
                 placeholder="Confirm new password..."
               />
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">New Hint (optional)</label>
+              <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">New Hint (optional)</label>
               <input
                 v-model="newHint"
                 type="text"
-                class="w-full px-4 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
+                class="w-full px-4 py-2.5 border border-zinc-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
                 placeholder="Password hint..."
               />
             </div>
@@ -377,7 +377,7 @@ const canSubmit = computed(() => {
             <div class="flex gap-3 pt-2">
               <button
                 @click="resetForm"
-                class="flex-1 py-2.5 text-slate-600 dark:text-slate-400 font-medium rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                class="flex-1 py-2.5 text-zinc-600 dark:text-zinc-400 font-medium rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
               >
                 Cancel
               </button>

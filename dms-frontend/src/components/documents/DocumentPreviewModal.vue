@@ -156,7 +156,7 @@ function resetZoom() {
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
           </svg>
-          <p class="text-slate-500">Loading preview...</p>
+          <p class="text-zinc-500">Loading preview...</p>
         </div>
       </div>
 
@@ -178,7 +178,7 @@ function resetZoom() {
       <div v-else-if="previewInfo" class="flex-1 flex flex-col">
         <!-- PDF Preview -->
         <template v-if="previewInfo.type === 'Pdf' && blobUrl">
-          <div class="flex-1 bg-slate-100 rounded-lg overflow-hidden">
+          <div class="flex-1 bg-zinc-100 rounded-lg overflow-hidden">
             <iframe
               :src="blobUrl"
               class="w-full h-full min-h-[500px]"
@@ -194,7 +194,7 @@ function resetZoom() {
             <button
               @click="zoomOut"
               :disabled="imageZoom <= 25"
-              class="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50 transition-colors"
+              class="p-2 rounded-lg hover:bg-zinc-100 disabled:opacity-50 transition-colors"
             >
               <span class="material-symbols-outlined">remove</span>
             </button>
@@ -202,19 +202,19 @@ function resetZoom() {
             <button
               @click="zoomIn"
               :disabled="imageZoom >= 200"
-              class="p-2 rounded-lg hover:bg-slate-100 disabled:opacity-50 transition-colors"
+              class="p-2 rounded-lg hover:bg-zinc-100 disabled:opacity-50 transition-colors"
             >
               <span class="material-symbols-outlined">add</span>
             </button>
             <button
               @click="resetZoom"
-              class="p-2 rounded-lg hover:bg-slate-100 transition-colors ml-2"
+              class="p-2 rounded-lg hover:bg-zinc-100 transition-colors ml-2"
               title="Reset zoom"
             >
               <span class="material-symbols-outlined">fit_screen</span>
             </button>
           </div>
-          <div class="flex-1 bg-slate-100 rounded-lg overflow-auto flex items-center justify-center p-4">
+          <div class="flex-1 bg-zinc-100 rounded-lg overflow-auto flex items-center justify-center p-4">
             <img
               :src="blobUrl"
               :alt="document?.name"
@@ -226,8 +226,8 @@ function resetZoom() {
 
         <!-- Text Preview -->
         <template v-else-if="previewInfo.type === 'Text'">
-          <div class="flex-1 bg-slate-900 rounded-lg overflow-auto">
-            <pre class="p-4 text-sm text-slate-300 font-mono whitespace-pre-wrap">{{ textContent }}</pre>
+          <div class="flex-1 bg-zinc-900 rounded-lg overflow-auto">
+            <pre class="p-4 text-sm text-zinc-300 font-mono whitespace-pre-wrap">{{ textContent }}</pre>
           </div>
         </template>
 
@@ -256,11 +256,11 @@ function resetZoom() {
         <template v-else>
           <div class="flex-1 flex items-center justify-center">
             <div class="text-center max-w-md">
-              <span class="material-symbols-outlined text-6xl text-slate-300 mb-4">
+              <span class="material-symbols-outlined text-6xl text-zinc-300 mb-4">
                 {{ getPreviewIcon(previewInfo.type) }}
               </span>
-              <h3 class="text-lg font-semibold text-slate-700 mb-2">Preview not available</h3>
-              <p class="text-slate-500 mb-6">
+              <h3 class="text-lg font-semibold text-zinc-700 mb-2">Preview not available</h3>
+              <p class="text-zinc-500 mb-6">
                 {{ previewInfo.type === 'Office'
                   ? 'Office documents cannot be previewed in the browser. Please download to view.'
                   : 'This file type cannot be previewed. Please download to view.' }}
@@ -281,20 +281,20 @@ function resetZoom() {
     <!-- Footer -->
     <template #footer>
       <div class="flex items-center justify-between w-full">
-        <div v-if="previewInfo" class="text-sm text-slate-500">
+        <div v-if="previewInfo" class="text-sm text-zinc-500">
           {{ previewInfo.fileName }} · {{ formatFileSize(previewInfo.fileSize) }}
         </div>
         <div class="flex items-center gap-3">
           <button
             @click="handleDownload"
-            class="px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors inline-flex items-center gap-2"
+            class="px-4 py-2 border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors inline-flex items-center gap-2"
           >
             <span class="material-symbols-outlined text-[18px]">download</span>
             Download
           </button>
           <button
             @click="isOpen = false"
-            class="px-4 py-2 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
+            class="px-4 py-2 bg-zinc-100 rounded-lg hover:bg-zinc-200 transition-colors"
           >
             Close
           </button>

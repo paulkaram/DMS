@@ -13,8 +13,8 @@ const permissionPresets = [
     label: 'Viewer',
     description: 'Can view content only',
     icon: 'visibility',
-    color: 'bg-slate-500',
-    bgColor: 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700',
+    color: 'bg-zinc-500',
+    bgColor: 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700',
     selectedBg: 'bg-primary/10 dark:bg-primary/20 border-primary ring-2 ring-primary/30',
     level: PermissionLevels.Read
   },
@@ -24,7 +24,7 @@ const permissionPresets = [
     description: 'Can view and edit',
     icon: 'edit_note',
     color: 'bg-primary',
-    bgColor: 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700',
+    bgColor: 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700',
     selectedBg: 'bg-primary/10 dark:bg-primary/20 border-primary ring-2 ring-primary/30',
     level: PermissionLevels.Read | PermissionLevels.Write
   },
@@ -33,8 +33,8 @@ const permissionPresets = [
     label: 'Editor',
     description: 'Can view, edit & delete',
     icon: 'edit_document',
-    color: 'bg-slate-700',
-    bgColor: 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700',
+    color: 'bg-zinc-700',
+    bgColor: 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700',
     selectedBg: 'bg-primary/10 dark:bg-primary/20 border-primary ring-2 ring-primary/30',
     level: PermissionLevels.Read | PermissionLevels.Write | PermissionLevels.Delete
   },
@@ -44,7 +44,7 @@ const permissionPresets = [
     description: 'Full access & manage',
     icon: 'admin_panel_settings',
     color: 'bg-navy',
-    bgColor: 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700',
+    bgColor: 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700',
     selectedBg: 'bg-primary/10 dark:bg-primary/20 border-primary ring-2 ring-primary/30',
     level: PermissionLevels.Read | PermissionLevels.Write | PermissionLevels.Delete | PermissionLevels.Admin
   }
@@ -161,7 +161,7 @@ function showSuccessMessage(message: string) {
 // Permission level helpers - consistent teal/navy theme
 function getPermissionLevelInfo(level: number) {
   if (level >= (PermissionLevels.Read | PermissionLevels.Write | PermissionLevels.Delete | PermissionLevels.Admin)) {
-    return { label: 'Administrator', icon: 'admin_panel_settings', color: 'bg-navy/20 text-navy dark:text-slate-300 border-navy/30' }
+    return { label: 'Administrator', icon: 'admin_panel_settings', color: 'bg-navy/20 text-navy dark:text-zinc-300 border-navy/30' }
   }
   if (level >= (PermissionLevels.Read | PermissionLevels.Write | PermissionLevels.Delete)) {
     return { label: 'Editor', icon: 'edit_document', color: 'bg-teal-600/20 text-teal-700 dark:text-teal-400 border-teal-600/30' }
@@ -169,7 +169,7 @@ function getPermissionLevelInfo(level: number) {
   if (level >= (PermissionLevels.Read | PermissionLevels.Write)) {
     return { label: 'Contributor', icon: 'edit_note', color: 'bg-primary/20 text-primary border-primary/30' }
   }
-  return { label: 'Viewer', icon: 'visibility', color: 'bg-slate-500/20 text-slate-600 dark:text-slate-400 border-slate-500/30' }
+  return { label: 'Viewer', icon: 'visibility', color: 'bg-zinc-500/20 text-zinc-600 dark:text-zinc-400 border-zinc-500/30' }
 }
 
 function getPrincipalIcon(type: string) {
@@ -185,9 +185,9 @@ function getPrincipalIcon(type: string) {
 const avatarColors = [
   'bg-primary',
   'bg-navy',
-  'bg-slate-600',
+  'bg-zinc-600',
   'bg-primary/80',
-  'bg-slate-700'
+  'bg-zinc-700'
 ]
 
 function getAvatarColor(index: number): string {
@@ -374,7 +374,7 @@ const inheritedPermissions = computed(() =>
           leave-from-class="opacity-100 scale-100"
           leave-to-class="opacity-0 scale-95"
         >
-          <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col ring-1 ring-black/5 dark:ring-white/10">
+          <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col ring-1 ring-black/5 dark:ring-white/10">
             <!-- Header - Dark gradient like FolderContentTypeModal -->
             <div class="relative bg-gradient-to-r from-navy via-navy/95 to-primary p-5 overflow-hidden">
               <div class="absolute top-0 right-0 w-48 h-48 bg-primary/20 rounded-full -translate-y-1/2 translate-x-1/2"></div>
@@ -403,7 +403,7 @@ const inheritedPermissions = computed(() =>
             </div>
 
             <!-- Tabs - Styled like FolderContentTypeModal -->
-            <div class="px-5 border-b border-gray-200 dark:border-gray-700/50 flex gap-1 bg-gray-50 dark:bg-slate-800/50">
+            <div class="px-5 border-b border-gray-200 dark:border-gray-700/50 flex gap-1 bg-gray-50 dark:bg-zinc-800/50">
               <button
                 @click="handleTabChange('permissions')"
                 class="px-4 py-3 text-sm font-medium transition-colors relative flex items-center gap-2"
@@ -465,7 +465,7 @@ const inheritedPermissions = computed(() =>
                   v-if="nodeType !== 'Document'"
                   class="p-4 rounded-xl border"
                   :class="nodePermissions?.breakInheritance
-                    ? 'bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700'
+                    ? 'bg-zinc-50 dark:bg-zinc-800/50 border-zinc-200 dark:border-zinc-700'
                     : 'bg-primary/5 dark:bg-primary/10 border-primary/20 dark:border-primary/30'"
                 >
                   <div class="flex items-center justify-between">
@@ -473,21 +473,21 @@ const inheritedPermissions = computed(() =>
                       <div
                         class="w-12 h-12 rounded-xl flex items-center justify-center"
                         :class="nodePermissions?.breakInheritance
-                          ? 'bg-slate-200 dark:bg-slate-700'
+                          ? 'bg-zinc-200 dark:bg-zinc-700'
                           : 'bg-primary/20 dark:bg-primary/30'"
                       >
                         <span
                           class="material-symbols-outlined text-2xl"
-                          :class="nodePermissions?.breakInheritance ? 'text-slate-600 dark:text-slate-400' : 'text-primary'"
+                          :class="nodePermissions?.breakInheritance ? 'text-zinc-600 dark:text-zinc-400' : 'text-primary'"
                         >
                           {{ nodePermissions?.breakInheritance ? 'link_off' : 'link' }}
                         </span>
                       </div>
                       <div>
-                        <div class="font-semibold" :class="nodePermissions?.breakInheritance ? 'text-slate-700 dark:text-slate-300' : 'text-primary'">
+                        <div class="font-semibold" :class="nodePermissions?.breakInheritance ? 'text-zinc-700 dark:text-zinc-300' : 'text-primary'">
                           {{ nodePermissions?.breakInheritance ? 'Inheritance Broken' : 'Inheriting Permissions' }}
                         </div>
-                        <div class="text-sm text-slate-500 dark:text-slate-400">
+                        <div class="text-sm text-zinc-500 dark:text-zinc-400">
                           {{ nodePermissions?.breakInheritance
                             ? 'This node has unique permissions separate from its parent.'
                             : 'Permissions are inherited from the parent node.' }}
@@ -525,13 +525,13 @@ const inheritedPermissions = computed(() =>
                   leave-from-class="opacity-100"
                   leave-to-class="opacity-0"
                 >
-                  <div v-if="showAddForm" class="p-5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 space-y-5">
+                  <div v-if="showAddForm" class="p-5 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-zinc-200 dark:border-zinc-700 space-y-5">
                     <div class="flex items-center justify-between">
                       <h4 class="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                         <span class="material-symbols-outlined text-primary">add_circle</span>
                         Add New Permission
                       </h4>
-                      <button @click="showAddForm = false" class="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors">
+                      <button @click="showAddForm = false" class="p-1.5 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg transition-colors">
                         <span class="material-symbols-outlined text-gray-400">close</span>
                       </button>
                     </div>
@@ -613,7 +613,7 @@ const inheritedPermissions = computed(() =>
                               v-model="grantedReason"
                               type="text"
                               placeholder="Why is this permission being granted?"
-                              class="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+                              class="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
                             />
                           </div>
 
@@ -629,10 +629,10 @@ const inheritedPermissions = computed(() =>
                       </Transition>
                     </div>
 
-                    <div class="flex justify-end gap-3 pt-2 border-t border-slate-200 dark:border-slate-700">
+                    <div class="flex justify-end gap-3 pt-2 border-t border-zinc-200 dark:border-zinc-700">
                       <button
                         @click="showAddForm = false"
-                        class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-colors font-medium"
+                        class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-xl transition-colors font-medium"
                       >
                         Cancel
                       </button>
@@ -656,7 +656,7 @@ const inheritedPermissions = computed(() =>
                     <span class="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full">{{ directPermissions.length }}</span>
                   </h4>
 
-                  <div v-if="directPermissions.length === 0" class="text-center py-8 bg-gray-50 dark:bg-slate-800/50 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
+                  <div v-if="directPermissions.length === 0" class="text-center py-8 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
                     <span class="material-symbols-outlined text-4xl text-gray-400 mb-2">shield</span>
                     <p class="text-sm text-gray-500 dark:text-gray-400">No direct permissions configured</p>
                     <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Click "Add Permission" to grant access</p>
@@ -666,7 +666,7 @@ const inheritedPermissions = computed(() =>
                     <div
                       v-for="(perm, index) in directPermissions"
                       :key="perm.id"
-                      class="p-4 bg-white dark:bg-slate-800 border border-gray-100 dark:border-gray-700 rounded-xl hover:border-primary/30 dark:hover:border-primary/50 transition-all hover:shadow-md"
+                      class="p-4 bg-white dark:bg-zinc-800 border border-gray-100 dark:border-gray-700 rounded-xl hover:border-primary/30 dark:hover:border-primary/50 transition-all hover:shadow-md"
                     >
                       <!-- Edit Mode -->
                       <div v-if="editingPermission?.id === perm.id" class="space-y-4">
@@ -709,7 +709,7 @@ const inheritedPermissions = computed(() =>
                             <input
                               v-model="editGrantedReason"
                               type="text"
-                              class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+                              class="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
                             />
                           </div>
                         </div>
@@ -717,7 +717,7 @@ const inheritedPermissions = computed(() =>
                         <div class="flex justify-end gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
                           <button
                             @click="editingPermission = null"
-                            class="px-3 py-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg text-sm font-medium"
+                            class="px-3 py-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-lg text-sm font-medium"
                           >
                             Cancel
                           </button>
@@ -753,7 +753,7 @@ const inheritedPermissions = computed(() =>
                         <div class="flex items-center gap-1">
                           <button
                             @click="startEditPermission(perm)"
-                            class="p-2 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                            class="p-2 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-lg transition-colors"
                             title="Edit"
                           >
                             <span class="material-symbols-outlined text-gray-400 hover:text-primary">edit</span>
@@ -815,7 +815,7 @@ const inheritedPermissions = computed(() =>
               <!-- Audit Tab -->
               <div v-else-if="activeTab === 'audit'" class="space-y-4">
                 <div v-if="auditLogs.length === 0" class="text-center py-12">
-                  <div class="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
+                  <div class="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
                     <span class="material-symbols-outlined text-4xl text-gray-400">history</span>
                   </div>
                   <p class="text-sm font-medium text-gray-700 dark:text-gray-300">No Audit Records</p>
@@ -826,7 +826,7 @@ const inheritedPermissions = computed(() =>
                   <div
                     v-for="log in auditLogs"
                     :key="log.id"
-                    class="p-4 bg-white dark:bg-slate-800 border border-gray-100 dark:border-gray-700 rounded-xl hover:shadow-md transition-shadow"
+                    class="p-4 bg-white dark:bg-zinc-800 border border-gray-100 dark:border-gray-700 rounded-xl hover:shadow-md transition-shadow"
                   >
                     <div class="flex items-start gap-4">
                       <div
@@ -837,7 +837,7 @@ const inheritedPermissions = computed(() =>
                           'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400': log.action === 'Update',
                           'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400': log.action === 'BreakInheritance',
                           'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400': log.action === 'RestoreInheritance',
-                          'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400': !['Grant', 'Revoke', 'Update', 'BreakInheritance', 'RestoreInheritance'].includes(log.action)
+                          'bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400': !['Grant', 'Revoke', 'Update', 'BreakInheritance', 'RestoreInheritance'].includes(log.action)
                         }"
                       >
                         <span class="material-symbols-outlined">
@@ -876,7 +876,7 @@ const inheritedPermissions = computed(() =>
             </div>
 
             <!-- Footer -->
-            <div class="border-t border-gray-200 dark:border-gray-700/50 p-4 bg-gray-50 dark:bg-slate-800/50">
+            <div class="border-t border-gray-200 dark:border-gray-700/50 p-4 bg-gray-50 dark:bg-zinc-800/50">
               <div class="flex justify-end">
                 <button
                   @click="emit('close')"
@@ -901,7 +901,7 @@ const inheritedPermissions = computed(() =>
       leave-to-class="opacity-0"
     >
       <div v-if="showBreakInheritanceDialog" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4" @click.self="showBreakInheritanceDialog = false">
-        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden ring-1 ring-black/5 dark:ring-white/10">
+        <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden ring-1 ring-black/5 dark:ring-white/10">
           <!-- Header -->
           <div class="p-5 bg-gradient-to-r from-amber-500 to-orange-500">
             <div class="flex items-center gap-3">
@@ -925,7 +925,7 @@ const inheritedPermissions = computed(() =>
               <label class="flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all"
                 :class="copyPermissionsOnBreak
                   ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-700'
-                  : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700 hover:border-gray-300'"
+                  : 'bg-white dark:bg-zinc-800 border-gray-200 dark:border-gray-700 hover:border-gray-300'"
               >
                 <input type="radio" :value="true" v-model="copyPermissionsOnBreak"
                   class="mt-0.5 w-4 h-4 text-emerald-600 focus:ring-emerald-500" />
@@ -943,7 +943,7 @@ const inheritedPermissions = computed(() =>
               <label class="flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all"
                 :class="!copyPermissionsOnBreak
                   ? 'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700'
-                  : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-gray-700 hover:border-gray-300'"
+                  : 'bg-white dark:bg-zinc-800 border-gray-200 dark:border-gray-700 hover:border-gray-300'"
               >
                 <input type="radio" :value="false" v-model="copyPermissionsOnBreak"
                   class="mt-0.5 w-4 h-4 text-red-600 focus:ring-red-500" />
@@ -970,10 +970,10 @@ const inheritedPermissions = computed(() =>
           </div>
 
           <!-- Footer -->
-          <div class="p-4 bg-gray-50 dark:bg-slate-800/50 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
+          <div class="p-4 bg-gray-50 dark:bg-zinc-800/50 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
             <button
               @click="showBreakInheritanceDialog = false"
-              class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-colors"
+              class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-xl transition-colors"
             >
               Cancel
             </button>

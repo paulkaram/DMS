@@ -168,8 +168,8 @@ const categoryOptions = computed(() => [
       <!-- Header -->
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Role Permission Matrix</h1>
-          <p class="text-slate-500 dark:text-slate-400 mt-1">Configure what actions each role can perform</p>
+          <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Role Permission Matrix</h1>
+          <p class="text-zinc-500 dark:text-zinc-400 mt-1">Configure what actions each role can perform</p>
         </div>
         <div class="flex items-center gap-3">
           <!-- Category Filter -->
@@ -184,24 +184,24 @@ const categoryOptions = computed(() => [
       </div>
 
       <!-- Loading -->
-      <div v-if="isLoading" class="bg-white dark:bg-slate-900 rounded-xl p-8 text-center">
+      <div v-if="isLoading" class="bg-white dark:bg-zinc-900 rounded-xl p-8 text-center">
         <span class="material-symbols-outlined animate-spin text-primary text-3xl">progress_activity</span>
-        <p class="text-slate-500 mt-2">Loading permissions...</p>
+        <p class="text-zinc-500 mt-2">Loading permissions...</p>
       </div>
 
       <!-- Permission Matrix -->
-      <div v-else class="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+      <div v-else class="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full">
-            <thead class="bg-slate-50 dark:bg-slate-800/50 sticky top-0 z-10">
+            <thead class="bg-zinc-50 dark:bg-zinc-800/50 sticky top-0 z-10">
               <tr>
-                <th class="text-left py-3 px-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide min-w-[250px] sticky left-0 bg-slate-50 dark:bg-slate-800/50">
+                <th class="text-left py-3 px-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide min-w-[250px] sticky left-0 bg-zinc-50 dark:bg-zinc-800/50">
                   Action
                 </th>
                 <th
                   v-for="role in roles"
                   :key="role.id"
-                  class="text-center py-3 px-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide min-w-[120px]"
+                  class="text-center py-3 px-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide min-w-[120px]"
                 >
                   {{ role.name }}
                 </th>
@@ -210,9 +210,9 @@ const categoryOptions = computed(() => [
             <tbody>
               <template v-for="(categoryActions, category) in groupedActions" :key="category">
                 <!-- Category Header -->
-                <tr class="bg-slate-100 dark:bg-slate-800">
+                <tr class="bg-zinc-100 dark:bg-zinc-800">
                   <td
-                    class="py-2 px-4 font-semibold text-slate-700 dark:text-slate-300 sticky left-0 bg-slate-100 dark:bg-slate-800"
+                    class="py-2 px-4 font-semibold text-zinc-700 dark:text-zinc-300 sticky left-0 bg-zinc-100 dark:bg-zinc-800"
                   >
                     <div class="flex items-center gap-2">
                       <span class="material-symbols-outlined text-primary text-lg">folder</span>
@@ -226,7 +226,7 @@ const categoryOptions = computed(() => [
                   >
                     <button
                       @click="toggleAllForRole(role.id, category)"
-                      class="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                      class="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
                       :title="getCategoryAllSelected(role.id, category) ? 'Deselect all' : 'Select all'"
                     >
                       <span
@@ -239,7 +239,7 @@ const categoryOptions = computed(() => [
                       >indeterminate_check_box</span>
                       <span
                         v-else
-                        class="material-symbols-outlined text-slate-400 text-lg"
+                        class="material-symbols-outlined text-zinc-400 text-lg"
                       >check_box_outline_blank</span>
                     </button>
                   </td>
@@ -248,12 +248,12 @@ const categoryOptions = computed(() => [
                 <tr
                   v-for="action in categoryActions"
                   :key="action.id"
-                  class="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/30"
+                  class="border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/30"
                 >
-                  <td class="py-3 px-4 sticky left-0 bg-white dark:bg-slate-900">
+                  <td class="py-3 px-4 sticky left-0 bg-white dark:bg-zinc-900">
                     <div class="pl-6">
-                      <div class="font-medium text-slate-900 dark:text-white text-sm">{{ action.name }}</div>
-                      <div class="text-xs text-slate-500 dark:text-slate-400">{{ action.code }}</div>
+                      <div class="font-medium text-zinc-900 dark:text-white text-sm">{{ action.name }}</div>
+                      <div class="text-xs text-zinc-500 dark:text-zinc-400">{{ action.code }}</div>
                     </div>
                   </td>
                   <td
@@ -268,7 +268,7 @@ const categoryOptions = computed(() => [
                       :class="[
                         hasPermission(role.id, action.code)
                           ? 'text-primary hover:bg-primary/10'
-                          : 'text-slate-300 dark:text-slate-600 hover:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                          : 'text-zinc-300 dark:text-zinc-600 hover:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
                       ]"
                     >
                       <span
@@ -292,15 +292,15 @@ const categoryOptions = computed(() => [
         </div>
 
         <!-- Legend -->
-        <div class="px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800">
+        <div class="px-4 py-3 bg-zinc-50 dark:bg-zinc-800/50 border-t border-zinc-200 dark:border-zinc-800">
           <div class="flex items-center gap-6 text-sm">
             <div class="flex items-center gap-2">
               <span class="material-symbols-outlined text-primary">check_circle</span>
-              <span class="text-slate-600 dark:text-slate-400">Permission granted</span>
+              <span class="text-zinc-600 dark:text-zinc-400">Permission granted</span>
             </div>
             <div class="flex items-center gap-2">
-              <span class="material-symbols-outlined text-slate-300 dark:text-slate-600">circle</span>
-              <span class="text-slate-600 dark:text-slate-400">Permission denied</span>
+              <span class="material-symbols-outlined text-zinc-300 dark:text-zinc-600">circle</span>
+              <span class="text-zinc-600 dark:text-zinc-400">Permission denied</span>
             </div>
           </div>
         </div>

@@ -324,24 +324,24 @@ function getIconPath(icon: string): string {
 <template>
   <div
     ref="menuRef"
-    class="fixed bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 py-2 z-50 min-w-[220px] max-h-[80vh] overflow-y-auto custom-scrollbar font-display"
+    class="fixed bg-white dark:bg-zinc-800 rounded-xl shadow-2xl border border-zinc-200 dark:border-zinc-700 py-2 z-50 min-w-[220px] max-h-[80vh] overflow-y-auto custom-scrollbar font-display"
     :style="{ left: `${adjustedPosition.x}px`, top: `${adjustedPosition.y}px` }"
   >
     <!-- No permissions message -->
-    <div v-if="!hasAnyPermission" class="px-4 py-3 flex items-center gap-2 text-slate-500">
+    <div v-if="!hasAnyPermission" class="px-4 py-3 flex items-center gap-2 text-zinc-500">
       <span class="material-symbols-outlined text-lg">block</span>
       <span class="text-sm">No permissions</span>
     </div>
 
     <!-- Menu items -->
     <template v-else v-for="item in menuItems" :key="item.id">
-      <div v-if="item.divider" class="border-t border-slate-200 dark:border-slate-700 my-1.5 mx-3"></div>
+      <div v-if="item.divider" class="border-t border-zinc-200 dark:border-zinc-700 my-1.5 mx-3"></div>
       <button
         v-else
         @click="handleSelect(item)"
         :disabled="item.disabled"
         class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-all mx-1 rounded-lg"
-        :class="item.disabled ? 'text-slate-400 cursor-not-allowed' : 'text-slate-700 dark:text-slate-300 hover:bg-teal/10 hover:text-teal'"
+        :class="item.disabled ? 'text-zinc-400 cursor-not-allowed' : 'text-zinc-700 dark:text-zinc-300 hover:bg-teal/10 hover:text-teal'"
         :style="{ width: 'calc(100% - 8px)' }"
       >
         <svg v-if="item.icon" class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

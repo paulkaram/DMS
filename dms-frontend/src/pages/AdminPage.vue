@@ -113,7 +113,7 @@ function getSectionColorClass(color: string) {
     navy: 'bg-[#1e3a5f]/10 text-[#1e3a5f] dark:text-blue-400 border-[#1e3a5f]/20',
     purple: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20',
     blue: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
-    slate: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20'
+    slate: 'bg-zinc-500/10 text-zinc-600 dark:text-zinc-400 border-zinc-500/20'
   }
   return colors[color] || colors.teal
 }
@@ -124,7 +124,7 @@ function getIconBgClass(color: string) {
     navy: 'bg-[#1e3a5f]/10 group-hover:bg-[#1e3a5f]/20',
     purple: 'bg-purple-500/10 group-hover:bg-purple-500/20',
     blue: 'bg-blue-500/10 group-hover:bg-blue-500/20',
-    slate: 'bg-slate-500/10 group-hover:bg-slate-500/20'
+    slate: 'bg-zinc-500/10 group-hover:bg-zinc-500/20'
   }
   return colors[color] || colors.teal
 }
@@ -135,7 +135,7 @@ function getIconTextClass(color: string) {
     navy: 'text-[#1e3a5f] dark:text-blue-400',
     purple: 'text-purple-600 dark:text-purple-400',
     blue: 'text-blue-600 dark:text-blue-400',
-    slate: 'text-slate-600 dark:text-slate-400'
+    slate: 'text-zinc-600 dark:text-zinc-400'
   }
   return colors[color] || colors.teal
 }
@@ -146,18 +146,18 @@ function getIconTextClass(color: string) {
     <!-- Page Header -->
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Administration</h1>
-        <p class="text-slate-500 text-sm mt-1">System configuration and management</p>
+        <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Administration</h1>
+        <p class="text-zinc-500 text-sm mt-1">System configuration and management</p>
       </div>
 
       <!-- Search Bar -->
       <div class="relative w-full lg:w-96">
-        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400">search</span>
         <input
           v-model="searchQuery"
           type="text"
           placeholder="Search settings..."
-          class="w-full pl-12 pr-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-teal/50 focus:border-teal transition-all"
+          class="w-full pl-12 pr-4 py-3 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:ring-2 focus:ring-teal/50 focus:border-teal transition-all"
         />
       </div>
     </div>
@@ -192,12 +192,12 @@ function getIconTextClass(color: string) {
       <div
         v-for="section in filteredSections"
         :key="section.id"
-        class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm"
+        class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm"
       >
         <!-- Section Header -->
         <button
           @click="toggleSection(section.id)"
-          class="w-full px-6 py-4 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+          class="w-full px-6 py-4 flex items-center justify-between hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
         >
           <div class="flex items-center gap-4">
             <div
@@ -207,16 +207,16 @@ function getIconTextClass(color: string) {
               <span class="material-symbols-outlined" :class="getIconTextClass(section.color)">{{ section.icon }}</span>
             </div>
             <div class="text-left">
-              <h2 class="font-bold text-slate-900 dark:text-white">{{ section.title }}</h2>
-              <p class="text-xs text-slate-500">{{ section.items.length }} settings</p>
+              <h2 class="font-bold text-zinc-900 dark:text-white">{{ section.title }}</h2>
+              <p class="text-xs text-zinc-500">{{ section.items.length }} settings</p>
             </div>
           </div>
           <div class="flex items-center gap-3">
-            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden sm:block">
+            <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest hidden sm:block">
               {{ isSectionExpanded(section.id) ? 'Collapse' : 'Expand' }}
             </span>
             <span
-              class="material-symbols-outlined text-slate-400 transition-transform duration-200"
+              class="material-symbols-outlined text-zinc-400 transition-transform duration-200"
               :class="{ 'rotate-180': isSectionExpanded(section.id) }"
             >expand_more</span>
           </div>
@@ -232,7 +232,7 @@ function getIconTextClass(color: string) {
               v-for="item in section.items"
               :key="item.path"
               :to="item.path"
-              class="group p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-teal dark:hover:border-teal bg-slate-50/50 dark:bg-slate-800/30 hover:bg-teal/5 dark:hover:bg-teal/10 transition-all"
+              class="group p-4 rounded-xl border border-zinc-200 dark:border-zinc-700 hover:border-teal dark:hover:border-teal bg-zinc-50/50 dark:bg-zinc-800/30 hover:bg-teal/5 dark:hover:bg-teal/10 transition-all"
             >
               <div class="flex items-start gap-3">
                 <div
@@ -242,12 +242,12 @@ function getIconTextClass(color: string) {
                   <span class="material-symbols-outlined" :class="getIconTextClass(section.color)">{{ item.icon }}</span>
                 </div>
                 <div class="flex-1 min-w-0">
-                  <h3 class="font-semibold text-slate-900 dark:text-white group-hover:text-teal transition-colors text-sm">
+                  <h3 class="font-semibold text-zinc-900 dark:text-white group-hover:text-teal transition-colors text-sm">
                     {{ item.name }}
                   </h3>
-                  <p class="text-xs text-slate-500 mt-1 line-clamp-2">{{ item.description }}</p>
+                  <p class="text-xs text-zinc-500 mt-1 line-clamp-2">{{ item.description }}</p>
                 </div>
-                <span class="material-symbols-outlined text-slate-300 dark:text-slate-600 group-hover:text-teal group-hover:translate-x-1 transition-all text-lg">
+                <span class="material-symbols-outlined text-zinc-300 dark:text-zinc-600 group-hover:text-teal group-hover:translate-x-1 transition-all text-lg">
                   arrow_forward
                 </span>
               </div>
@@ -258,19 +258,19 @@ function getIconTextClass(color: string) {
     </div>
 
     <!-- Footer Help -->
-    <div class="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-700">
+    <div class="bg-gradient-to-r from-zinc-100 to-zinc-50 dark:from-zinc-800 dark:to-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-zinc-700">
       <div class="flex flex-col md:flex-row items-center justify-between gap-4">
         <div class="flex items-center gap-4">
           <div class="w-12 h-12 rounded-full bg-teal/10 flex items-center justify-center">
             <span class="material-symbols-outlined text-teal text-xl">help</span>
           </div>
           <div>
-            <h3 class="font-semibold text-slate-900 dark:text-white">Need Help?</h3>
-            <p class="text-sm text-slate-500">Check our documentation for detailed guides and tutorials.</p>
+            <h3 class="font-semibold text-zinc-900 dark:text-white">Need Help?</h3>
+            <p class="text-sm text-zinc-500">Check our documentation for detailed guides and tutorials.</p>
           </div>
         </div>
         <div class="flex items-center gap-3">
-          <button class="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-teal transition-colors">
+          <button class="px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-teal transition-colors">
             <span class="flex items-center gap-2">
               <span class="material-symbols-outlined text-lg">menu_book</span>
               Documentation

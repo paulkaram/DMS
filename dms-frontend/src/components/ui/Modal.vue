@@ -111,7 +111,7 @@ onUnmounted(() => {
           >
             <div
               v-if="isOpen"
-              class="relative w-full bg-white dark:bg-slate-900 rounded-2xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10"
+              class="relative w-full bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10"
               :class="[sizeClasses, overflowVisible ? 'overflow-visible' : 'overflow-hidden']"
               @click.stop
             >
@@ -157,7 +157,7 @@ onUnmounted(() => {
               <!-- Footer -->
               <div
                 v-if="$slots.footer"
-                class="px-6 py-4 bg-gray-50 dark:bg-slate-800/50 border-t border-gray-200 dark:border-gray-700/50"
+                class="px-6 py-4 bg-gray-50 dark:bg-zinc-800/50 border-t border-gray-200 dark:border-gray-700/50"
               >
                 <slot name="footer" />
               </div>

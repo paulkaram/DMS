@@ -75,6 +75,9 @@ public static class DependencyInjection
         services.AddScoped<IDocumentAnnotationService, DocumentAnnotationService>();
         services.AddScoped<ISavedSignatureService, SavedSignatureService>();
 
+        // PDF Page Management
+        services.AddScoped<IPdfPageService, PdfPageService>();
+
         return services;
     }
 }

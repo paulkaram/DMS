@@ -216,7 +216,7 @@ onUnmounted(() => {
     <!-- Loading State (skeleton while first page loads) -->
     <div v-if="isLoading && totalPages === 0" class="flex justify-center py-4">
       <div
-        class="bg-white shadow-lg border border-slate-200 p-8"
+        class="bg-white shadow-lg border border-zinc-200 p-8"
         :style="{ width: `${effectiveWidth}px`, minHeight: `${estimatedPageHeight}px` }"
       >
         <div class="skeleton-loader h-full">
@@ -228,7 +228,7 @@ onUnmounted(() => {
           <div class="skeleton-line w-4/5 h-3 mb-6"></div>
           <!-- Image placeholder -->
           <div class="skeleton-image w-full h-32 mb-6 flex items-center justify-center">
-            <span class="material-symbols-outlined text-4xl text-slate-200">image</span>
+            <span class="material-symbols-outlined text-4xl text-zinc-200">image</span>
           </div>
           <!-- More text lines -->
           <div class="skeleton-line w-full h-3 mb-2"></div>
@@ -309,7 +309,7 @@ onUnmounted(() => {
               <div class="skeleton-line w-4/5 h-3 mb-6"></div>
               <!-- Image placeholder -->
               <div class="skeleton-image w-full h-32 mb-6 flex items-center justify-center">
-                <span class="material-symbols-outlined text-4xl text-slate-200">image</span>
+                <span class="material-symbols-outlined text-4xl text-zinc-200">image</span>
               </div>
               <!-- More text lines -->
               <div class="skeleton-line w-full h-3 mb-2"></div>

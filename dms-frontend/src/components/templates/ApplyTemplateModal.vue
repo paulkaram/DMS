@@ -99,7 +99,7 @@ function countTotalFolders(nodes: any[]): number {
     class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
     @click.self="emit('close')"
   >
-    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10 w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden">
+    <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10 w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden">
       <!-- Header with brand gradient -->
       <div class="relative bg-gradient-to-r from-navy via-navy/95 to-primary px-6 py-5 overflow-hidden">
         <!-- Decorative elements -->
@@ -133,13 +133,13 @@ function countTotalFolders(nodes: any[]): number {
       <div class="flex-1 overflow-y-auto p-6 space-y-4">
         <!-- Template Selection -->
         <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Select Template</label>
+          <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Select Template</label>
 
-          <div v-if="isLoading" class="text-center py-4 text-slate-500">
+          <div v-if="isLoading" class="text-center py-4 text-zinc-500">
             Loading templates...
           </div>
 
-          <div v-else-if="templates.length === 0" class="text-center py-4 text-slate-500">
+          <div v-else-if="templates.length === 0" class="text-center py-4 text-zinc-500">
             <span class="material-symbols-outlined text-3xl mb-2 opacity-50">folder_off</span>
             <p>No templates available</p>
             <p class="text-sm">Create templates in Admin > Folder Templates</p>
@@ -153,16 +153,16 @@ function countTotalFolders(nodes: any[]): number {
               class="p-3 border rounded-lg cursor-pointer transition-all"
               :class="selectedTemplateId === template.id
                 ? 'border-teal bg-teal/5 ring-1 ring-teal'
-                : 'border-slate-200 dark:border-slate-600 hover:border-slate-300'"
+                : 'border-zinc-200 dark:border-zinc-600 hover:border-zinc-300'"
             >
               <div class="flex items-center gap-3">
-                <span class="material-symbols-outlined text-slate-400">{{ template.icon || 'folder_special' }}</span>
+                <span class="material-symbols-outlined text-zinc-400">{{ template.icon || 'folder_special' }}</span>
                 <div class="flex-1">
-                  <div class="font-medium text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                  <div class="font-medium text-zinc-800 dark:text-zinc-200 flex items-center gap-2">
                     {{ template.name }}
                     <span v-if="template.isDefault" class="text-xs bg-teal/10 text-teal px-1.5 py-0.5 rounded">Default</span>
                   </div>
-                  <div class="text-xs text-slate-500">
+                  <div class="text-xs text-zinc-500">
                     {{ template.category || 'Uncategorized' }}
                     <span class="mx-1">•</span>
                     {{ countTotalFolders(template.nodes || []) }} folders
@@ -181,46 +181,46 @@ function countTotalFolders(nodes: any[]): number {
 
         <!-- Name Prefix (optional) -->
         <div v-if="selectedTemplateId">
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+          <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
             Name Prefix (optional)
           </label>
           <input
             v-model="namePrefix"
             type="text"
-            class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal dark:bg-slate-700 dark:text-white"
+            class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal dark:bg-zinc-700 dark:text-white"
             placeholder="e.g., 2024 Project"
           />
-          <p class="text-xs text-slate-500 mt-1">
+          <p class="text-xs text-zinc-500 mt-1">
             Prefix will be added to all folder names (e.g., "2024 Project - Documents")
           </p>
         </div>
 
         <!-- Preview -->
         <div v-if="previewResult && selectedTemplateId">
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+          <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
             Preview: Folders to Create
           </label>
-          <div class="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3 max-h-48 overflow-y-auto">
+          <div class="bg-zinc-50 dark:bg-zinc-700/50 rounded-lg p-3 max-h-48 overflow-y-auto">
             <div
               v-for="(path, index) in previewResult.createdFolderPaths"
               :key="index"
-              class="flex items-center gap-2 py-1 text-sm text-slate-600 dark:text-slate-300"
+              class="flex items-center gap-2 py-1 text-sm text-zinc-600 dark:text-zinc-300"
             >
               <span class="material-symbols-outlined text-amber-500 text-base">folder</span>
               {{ namePrefix ? `${namePrefix} - ${path}` : path }}
             </div>
           </div>
-          <p class="text-xs text-slate-500 mt-2">
+          <p class="text-xs text-zinc-500 mt-2">
             {{ previewResult.foldersCreated }} folder(s) will be created
           </p>
         </div>
       </div>
 
       <!-- Footer -->
-      <div class="px-6 py-4 bg-gray-50 dark:bg-slate-800/50 border-t border-gray-200 dark:border-gray-700/50 flex items-center justify-end gap-3">
+      <div class="px-6 py-4 bg-gray-50 dark:bg-zinc-800/50 border-t border-gray-200 dark:border-gray-700/50 flex items-center justify-end gap-3">
         <button
           @click="emit('close')"
-          class="px-4 py-2.5 text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 font-medium transition-colors"
+          class="px-4 py-2.5 text-zinc-600 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium transition-colors"
         >
           Cancel
         </button>

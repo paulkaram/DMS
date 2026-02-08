@@ -81,23 +81,23 @@ async function handleLogin() {
             </div>
             <span class="text-2xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-navy to-teal">INTALIO</span>
           </div>
-          <h2 class="text-3xl font-bold text-slate-900 mb-2">Welcome Back</h2>
-          <p class="text-slate-500">Please enter your credentials to access the workspace.</p>
+          <h2 class="text-3xl font-bold text-zinc-900 mb-2">Welcome Back</h2>
+          <p class="text-zinc-500">Please enter your credentials to access the workspace.</p>
         </div>
 
         <!-- Login Form -->
         <form @submit.prevent="handleLogin" class="space-y-6">
           <!-- Username Field -->
           <div>
-            <label for="username" class="block text-sm font-semibold text-slate-700 mb-2">Username</label>
+            <label for="username" class="block text-sm font-semibold text-zinc-700 mb-2">Username</label>
             <div class="relative">
-              <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">person</span>
+              <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-[20px]">person</span>
               <input
                 id="username"
                 v-model="username"
                 type="text"
                 autocomplete="username"
-                class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal/20 focus:border-teal transition-all outline-none"
+                class="w-full pl-10 pr-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-teal/20 focus:border-teal transition-all outline-none"
                 placeholder="Enter your username"
                 required
               />
@@ -107,24 +107,24 @@ async function handleLogin() {
           <!-- Password Field -->
           <div>
             <div class="flex items-center justify-between mb-2">
-              <label for="password" class="block text-sm font-semibold text-slate-700">Password</label>
+              <label for="password" class="block text-sm font-semibold text-zinc-700">Password</label>
               <a href="#" class="text-sm font-medium text-teal hover:text-navy transition-colors">Forgot password?</a>
             </div>
             <div class="relative">
-              <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">lock</span>
+              <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-[20px]">lock</span>
               <input
                 id="password"
                 v-model="password"
                 :type="showPassword ? 'text' : 'password'"
                 autocomplete="current-password"
-                class="w-full pl-10 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal/20 focus:border-teal transition-all outline-none"
+                class="w-full pl-10 pr-12 py-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-teal/20 focus:border-teal transition-all outline-none"
                 placeholder="••••••••"
                 required
               />
               <button
                 type="button"
                 @click="showPassword = !showPassword"
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 transition-colors"
               >
                 <span class="material-symbols-outlined text-[20px]">{{ showPassword ? 'visibility_off' : 'visibility' }}</span>
               </button>
@@ -137,9 +137,9 @@ async function handleLogin() {
               id="remember-me"
               v-model="rememberMe"
               type="checkbox"
-              class="h-4 w-4 text-teal focus:ring-teal border-slate-300 rounded cursor-pointer"
+              class="h-4 w-4 text-teal focus:ring-teal border-zinc-300 rounded cursor-pointer"
             />
-            <label for="remember-me" class="ml-2 block text-sm text-slate-600 cursor-pointer">
+            <label for="remember-me" class="ml-2 block text-sm text-zinc-600 cursor-pointer">
               Remember this device for 30 days
             </label>
           </div>
@@ -173,10 +173,10 @@ async function handleLogin() {
         <div class="mt-10">
           <div class="relative mb-8">
             <div class="absolute inset-0 flex items-center">
-              <div class="w-full border-t border-slate-200"></div>
+              <div class="w-full border-t border-zinc-200"></div>
             </div>
             <div class="relative flex justify-center text-sm">
-              <span class="px-4 bg-white text-slate-500 font-medium">Or continue with</span>
+              <span class="px-4 bg-white text-zinc-500 font-medium">Or continue with</span>
             </div>
           </div>
 
@@ -184,7 +184,7 @@ async function handleLogin() {
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <button
               type="button"
-              class="flex items-center justify-center gap-3 px-4 py-3 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+              class="flex items-center justify-center gap-3 px-4 py-3 border border-zinc-200 rounded-xl text-sm font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors"
             >
               <svg class="w-5 h-5" viewBox="0 0 24 24">
                 <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.909 3.204-1.908 4.212-1.286 1.286-3.303 2.56-6.412 2.56-5.18 0-9.397-4.186-9.397-9.396S6.793 2.138 11.972 2.138c2.805 0 4.936 1.103 6.436 2.522l2.316-2.316C18.663 1.103 15.65 0 11.972 0 5.42 0 0 5.42 0 12s5.42 12 11.972 12c3.57 0 6.26-1.17 8.35-3.348 2.16-2.16 2.84-5.19 2.84-7.59 0-.718-.065-1.403-.185-2.142h-10.51z" fill="currentColor"></path>
@@ -193,7 +193,7 @@ async function handleLogin() {
             </button>
             <button
               type="button"
-              class="flex items-center justify-center gap-3 px-4 py-3 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+              class="flex items-center justify-center gap-3 px-4 py-3 border border-zinc-200 rounded-xl text-sm font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors"
             >
               <svg class="w-5 h-5" viewBox="0 0 23 23">
                 <path d="M11.4 24H0V12.6h11.4V24zM24 24H12.6V12.6H24V24zM11.4 11.4H0V0h11.4v11.4zM24 11.4H12.6V0H24v11.4z" fill="currentColor"></path>
@@ -204,7 +204,7 @@ async function handleLogin() {
         </div>
 
         <!-- Footer -->
-        <p class="mt-10 text-center text-sm text-slate-500">
+        <p class="mt-10 text-center text-sm text-zinc-500">
           New to the platform? <a href="#" class="font-bold text-teal hover:underline">Request access</a>
         </p>
       </div>

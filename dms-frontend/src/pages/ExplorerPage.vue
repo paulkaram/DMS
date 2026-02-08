@@ -1334,10 +1334,10 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
   <div class="-m-6 flex h-[calc(100vh-4rem)]">
     <!-- Sidebar Tree -->
     <div
-      class="flex-shrink-0 bg-white dark:bg-slate-900/50 border-r border-slate-200 dark:border-slate-800 flex flex-col"
+      class="flex-shrink-0 bg-white dark:bg-zinc-900/50 border-r border-zinc-200 dark:border-zinc-800 flex flex-col"
       :style="{ width: `${treePanelWidth}px` }"
     >
-      <div class="px-2 py-2 border-b border-slate-200 dark:border-slate-800">
+      <div class="px-2 py-2 border-b border-zinc-200 dark:border-zinc-800">
         <button
           @click="showNewCabinetModal = true"
           class="w-full py-2 px-3 bg-brand-gradient text-white text-sm rounded-lg font-medium shadow-md shadow-teal/20 flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
@@ -1363,7 +1363,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
     <div
       @mousedown.stop="onSplitterMouseDown"
       class="w-1 flex-shrink-0 cursor-col-resize hover:w-1.5 hover:bg-teal/40 transition-all z-10 relative group"
-      :class="isResizing ? 'w-1.5 bg-teal' : 'bg-slate-200 dark:bg-slate-700'"
+      :class="isResizing ? 'w-1.5 bg-teal' : 'bg-zinc-200 dark:bg-zinc-700'"
     >
       <!-- Grip dots - only visible on hover -->
       <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
@@ -1386,10 +1386,10 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
     <!-- Main Content -->
     <div class="flex-1 flex flex-col overflow-hidden">
       <!-- Header -->
-      <div class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 px-6 py-4">
+      <div class="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700 px-6 py-4">
         <!-- Title Row -->
         <div class="flex items-center justify-between mb-3">
-          <h1 class="text-xl font-bold text-slate-900 dark:text-slate-100">Explorer</h1>
+          <h1 class="text-xl font-bold text-zinc-900 dark:text-zinc-100">Explorer</h1>
           <!-- Clipboard Indicator -->
           <div v-if="clipboard" class="flex items-center gap-2 px-3 py-1.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg">
             <span class="material-symbols-outlined text-amber-600 text-lg">{{ clipboard.action === 'cut' ? 'content_cut' : 'content_copy' }}</span>
@@ -1409,12 +1409,12 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
         <!-- Breadcrumb & Actions Row -->
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <!-- Breadcrumb -->
-          <div class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 min-w-0 flex-wrap">
+          <div class="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400 min-w-0 flex-wrap">
             <button @click="store.currentCabinet = null; store.currentFolder = null; store.folderPath = []" class="hover:text-teal transition-colors flex items-center gap-1 flex-shrink-0">
               <span class="material-symbols-outlined text-lg">home</span>
             </button>
             <template v-for="(item, idx) in breadcrumbs" :key="idx">
-              <span class="material-symbols-outlined text-sm text-slate-400 flex-shrink-0">chevron_right</span>
+              <span class="material-symbols-outlined text-sm text-zinc-400 flex-shrink-0">chevron_right</span>
               <button
                 v-if="idx < breadcrumbs.length - 1"
                 @click="navigateBreadcrumb(item)"
@@ -1423,7 +1423,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
               >{{ item.name }}</button>
               <span
                 v-else
-                class="font-semibold text-slate-900 dark:text-slate-100 truncate max-w-[200px]"
+                class="font-semibold text-zinc-900 dark:text-zinc-100 truncate max-w-[200px]"
                 :title="item.name"
               >{{ item.name }}</span>
             </template>
@@ -1432,7 +1432,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
           <!-- Actions Toolbar -->
           <div class="flex items-center gap-3">
             <!-- Icon Button Group (Delete & Edit) -->
-            <div v-if="store.currentCabinet" class="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+            <div v-if="store.currentCabinet" class="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-lg p-1">
               <!-- Delete Button -->
               <button
                 v-if="!store.currentFolder"
@@ -1440,7 +1440,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
                 class="toolbar-btn group"
                 title="Delete Cabinet"
               >
-                <span class="material-symbols-outlined text-[20px] text-slate-500 group-hover:text-red-500 transition-colors">delete</span>
+                <span class="material-symbols-outlined text-[20px] text-zinc-500 group-hover:text-red-500 transition-colors">delete</span>
               </button>
               <button
                 v-if="store.currentFolder"
@@ -1448,7 +1448,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
                 class="toolbar-btn group"
                 title="Delete Folder"
               >
-                <span class="material-symbols-outlined text-[20px] text-slate-500 group-hover:text-red-500 transition-colors">delete</span>
+                <span class="material-symbols-outlined text-[20px] text-zinc-500 group-hover:text-red-500 transition-colors">delete</span>
               </button>
 
               <!-- Edit Button -->
@@ -1458,7 +1458,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
                 class="toolbar-btn group"
                 title="Edit Properties"
               >
-                <span class="material-symbols-outlined text-[20px] text-slate-500 group-hover:text-teal transition-colors">settings</span>
+                <span class="material-symbols-outlined text-[20px] text-zinc-500 group-hover:text-teal transition-colors">settings</span>
               </button>
               <button
                 v-if="store.currentFolder"
@@ -1466,7 +1466,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
                 class="toolbar-btn group"
                 title="Edit Properties"
               >
-                <span class="material-symbols-outlined text-[20px] text-slate-500 group-hover:text-teal transition-colors">settings</span>
+                <span class="material-symbols-outlined text-[20px] text-zinc-500 group-hover:text-teal transition-colors">settings</span>
               </button>
             </div>
 
@@ -1474,7 +1474,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
             <button
               v-if="store.currentCabinet"
               @click="showNewFolderModal = true"
-              class="flex items-center gap-2 px-3 py-2 text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-600 hover:border-teal hover:text-teal rounded-lg text-sm font-medium transition-colors"
+              class="flex items-center gap-2 px-3 py-2 text-zinc-600 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-600 hover:border-teal hover:text-teal rounded-lg text-sm font-medium transition-colors"
             >
               <span class="material-symbols-outlined text-[20px]">create_new_folder</span>
               <span class="hidden sm:inline">New Folder</span>
@@ -1484,7 +1484,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
             <button
               v-if="store.currentFolder"
               @click="showScanModal = true"
-              class="flex items-center gap-2 px-3 py-2 text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-600 hover:border-teal hover:text-teal rounded-lg text-sm font-medium transition-colors"
+              class="flex items-center gap-2 px-3 py-2 text-zinc-600 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-600 hover:border-teal hover:text-teal rounded-lg text-sm font-medium transition-colors"
             >
               <span class="material-symbols-outlined text-[20px]">document_scanner</span>
               <span class="hidden sm:inline">Scan</span>
@@ -1506,10 +1506,10 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
       <!-- Content Area -->
       <div class="flex-1 overflow-y-auto p-6">
         <!-- Empty state when nothing selected -->
-        <div v-if="!store.currentCabinet && !store.currentFolder" class="flex flex-col items-center justify-center h-full text-slate-500">
-          <span class="material-symbols-outlined text-7xl text-slate-300 mb-4">folder_open</span>
-          <p class="text-lg font-medium text-slate-700 dark:text-slate-300">Select a cabinet or folder to view contents</p>
-          <p class="text-sm text-slate-400 mt-1">Or create a new cabinet to get started</p>
+        <div v-if="!store.currentCabinet && !store.currentFolder" class="flex flex-col items-center justify-center h-full text-zinc-500">
+          <span class="material-symbols-outlined text-7xl text-zinc-300 mb-4">folder_open</span>
+          <p class="text-lg font-medium text-zinc-700 dark:text-zinc-300">Select a cabinet or folder to view contents</p>
+          <p class="text-sm text-zinc-400 mt-1">Or create a new cabinet to get started</p>
         </div>
 
         <!-- Content when cabinet or folder is selected -->
@@ -1519,16 +1519,16 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
             <!-- Subfolders Header -->
             <div class="flex items-center justify-between mb-3">
               <div class="flex items-center gap-2">
-                <span class="material-symbols-outlined text-slate-400">folder</span>
-                <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300">Folders</h3>
-                <span class="text-xs text-slate-400">({{ store.subFolders.length }})</span>
+                <span class="material-symbols-outlined text-zinc-400">folder</span>
+                <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Folders</h3>
+                <span class="text-xs text-zinc-400">({{ store.subFolders.length }})</span>
               </div>
               <!-- View Mode Toggle -->
-              <div class="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5">
+              <div class="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5">
                 <button
                   @click="folderViewMode = 'grid'"
                   class="p-1.5 rounded-md transition-colors"
-                  :class="folderViewMode === 'grid' ? 'bg-white dark:bg-slate-700 shadow-sm text-teal' : 'text-slate-400 hover:text-slate-600'"
+                  :class="folderViewMode === 'grid' ? 'bg-white dark:bg-zinc-700 shadow-sm text-teal' : 'text-zinc-400 hover:text-zinc-600'"
                   title="Grid view"
                 >
                   <span class="material-symbols-outlined text-lg">grid_view</span>
@@ -1536,7 +1536,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
                 <button
                   @click="folderViewMode = 'list'"
                   class="p-1.5 rounded-md transition-colors"
-                  :class="folderViewMode === 'list' ? 'bg-white dark:bg-slate-700 shadow-sm text-teal' : 'text-slate-400 hover:text-slate-600'"
+                  :class="folderViewMode === 'list' ? 'bg-white dark:bg-zinc-700 shadow-sm text-teal' : 'text-zinc-400 hover:text-zinc-600'"
                   title="List view"
                 >
                   <span class="material-symbols-outlined text-lg">view_list</span>
@@ -1560,9 +1560,9 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
           <!-- Documents Section -->
           <div v-if="store.currentFolder">
             <div class="flex items-center gap-2 mb-3" v-if="store.subFolders.length > 0">
-              <span class="material-symbols-outlined text-slate-400">description</span>
-              <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300">Documents</h3>
-              <span class="text-xs text-slate-400">({{ store.documents.length }})</span>
+              <span class="material-symbols-outlined text-zinc-400">description</span>
+              <h3 class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Documents</h3>
+              <span class="text-xs text-zinc-400">({{ store.documents.length }})</span>
             </div>
             <FileList
               :documents="store.documents"
@@ -1574,7 +1574,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
           </div>
 
           <!-- Message when viewing cabinet root (no documents) -->
-          <div v-else-if="!store.currentFolder && store.subFolders.length === 0 && !store.isLoadingSubFolders" class="text-center py-12 text-slate-400">
+          <div v-else-if="!store.currentFolder && store.subFolders.length === 0 && !store.isLoadingSubFolders" class="text-center py-12 text-zinc-400">
             <span class="material-symbols-outlined text-5xl mb-2 opacity-50">folder_off</span>
             <p class="text-sm">This cabinet is empty</p>
             <p class="text-xs mt-1">Create a folder to get started</p>
@@ -1598,7 +1598,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
     <Transition name="slide-up">
       <div
         v-if="selectedFolderIds.length > 0"
-        class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white rounded-2xl shadow-2xl px-6 py-4 flex items-center gap-6 z-50"
+        class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-zinc-900 text-white rounded-2xl shadow-2xl px-6 py-4 flex items-center gap-6 z-50"
       >
         <!-- Selection Count -->
         <div class="flex items-center gap-2">
@@ -1607,7 +1607,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
         </div>
 
         <!-- Divider -->
-        <div class="w-px h-8 bg-slate-700"></div>
+        <div class="w-px h-8 bg-zinc-700"></div>
 
         <!-- Actions -->
         <div class="flex items-center gap-1">
@@ -1624,20 +1624,20 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
         </div>
 
         <!-- Divider -->
-        <div class="w-px h-8 bg-slate-700"></div>
+        <div class="w-px h-8 bg-zinc-700"></div>
 
         <!-- Clear Selection -->
         <button
           @click="clearFolderSelection"
           :disabled="isBulkDeletingFolders"
-          class="p-2 hover:bg-slate-800 rounded-xl transition-colors disabled:opacity-50"
+          class="p-2 hover:bg-zinc-800 rounded-xl transition-colors disabled:opacity-50"
           title="Clear selection"
         >
           <span class="material-symbols-outlined">close</span>
         </button>
 
         <!-- Processing Indicator -->
-        <div v-if="isBulkDeletingFolders" class="absolute inset-0 bg-slate-900/80 rounded-2xl flex items-center justify-center">
+        <div v-if="isBulkDeletingFolders" class="absolute inset-0 bg-zinc-900/80 rounded-2xl flex items-center justify-center">
           <div class="flex items-center gap-3">
             <svg class="animate-spin w-5 h-5 text-teal" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -1699,32 +1699,32 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
 
     <!-- New Cabinet Modal -->
     <div v-if="showNewCabinetModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md mx-4 border border-slate-200 dark:border-slate-800">
+      <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl w-full max-w-md mx-4 border border-zinc-200 dark:border-zinc-800">
         <div class="p-6">
-          <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Create New Cabinet</h3>
+          <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Create New Cabinet</h3>
           <div class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name *</label>
+              <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Name *</label>
               <input
                 v-model="newCabinetName"
                 type="text"
-                class="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                class="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
                 placeholder="Cabinet name"
                 @keyup.enter="handleCreateCabinet"
               />
             </div>
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
+              <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Description</label>
               <textarea
                 v-model="newCabinetDescription"
                 rows="3"
-                class="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                class="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
                 placeholder="Optional description"
               ></textarea>
             </div>
           </div>
           <div class="mt-6 flex justify-end gap-3">
-            <button @click="showNewCabinetModal = false" class="px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300">
+            <button @click="showNewCabinetModal = false" class="px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
               Cancel
             </button>
             <button @click="handleCreateCabinet" class="px-4 py-2 bg-brand-gradient text-white rounded-lg hover:opacity-90">
@@ -1737,29 +1737,29 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
 
     <!-- Edit Cabinet Modal -->
     <div v-if="showEditCabinetModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md mx-4 border border-slate-200 dark:border-slate-800">
+      <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl w-full max-w-md mx-4 border border-zinc-200 dark:border-zinc-800">
         <div class="p-6">
-          <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Edit Cabinet</h3>
+          <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Edit Cabinet</h3>
           <div class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name *</label>
+              <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Name *</label>
               <input
                 v-model="editCabinetData.name"
                 type="text"
-                class="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                class="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
               />
             </div>
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
+              <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Description</label>
               <textarea
                 v-model="editCabinetData.description"
                 rows="3"
-                class="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                class="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
               ></textarea>
             </div>
           </div>
           <div class="mt-6 flex justify-end gap-3">
-            <button @click="showEditCabinetModal = false" class="px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300">
+            <button @click="showEditCabinetModal = false" class="px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
               Cancel
             </button>
             <button @click="handleUpdateCabinet" class="px-4 py-2 bg-brand-gradient text-white rounded-lg hover:opacity-90">
@@ -1772,32 +1772,32 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
 
     <!-- New Folder Modal -->
     <div v-if="showNewFolderModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md mx-4 border border-slate-200 dark:border-slate-800">
+      <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl w-full max-w-md mx-4 border border-zinc-200 dark:border-zinc-800">
         <div class="p-6">
-          <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Create New Folder</h3>
+          <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Create New Folder</h3>
           <div class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name *</label>
+              <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Name *</label>
               <input
                 v-model="newFolderName"
                 type="text"
-                class="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                class="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
                 placeholder="Folder name"
                 @keyup.enter="handleCreateFolder"
               />
             </div>
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
+              <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Description</label>
               <textarea
                 v-model="newFolderDescription"
                 rows="3"
-                class="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                class="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
                 placeholder="Optional description"
               ></textarea>
             </div>
           </div>
           <div class="mt-6 flex justify-end gap-3">
-            <button @click="showNewFolderModal = false" class="px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300">
+            <button @click="showNewFolderModal = false" class="px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
               Cancel
             </button>
             <button @click="handleCreateFolder" class="px-4 py-2 bg-brand-gradient text-white rounded-lg hover:opacity-90">
@@ -1810,29 +1810,29 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
 
     <!-- Edit Folder Modal -->
     <div v-if="showEditFolderModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md mx-4 border border-slate-200 dark:border-slate-800">
+      <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl w-full max-w-md mx-4 border border-zinc-200 dark:border-zinc-800">
         <div class="p-6">
-          <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">Edit Folder</h3>
+          <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Edit Folder</h3>
           <div class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name *</label>
+              <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Name *</label>
               <input
                 v-model="editFolderData.name"
                 type="text"
-                class="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                class="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
               />
             </div>
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
+              <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Description</label>
               <textarea
                 v-model="editFolderData.description"
                 rows="3"
-                class="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                class="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
               ></textarea>
             </div>
           </div>
           <div class="mt-6 flex justify-end gap-3">
-            <button @click="showEditFolderModal = false" class="px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300">
+            <button @click="showEditFolderModal = false" class="px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
               Cancel
             </button>
             <button @click="handleUpdateFolder" class="px-4 py-2 bg-brand-gradient text-white rounded-lg hover:opacity-90">
@@ -1873,19 +1873,19 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
 
     <!-- Delete Confirmation Modal -->
     <div v-if="showDeleteConfirm" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-sm mx-4 border border-slate-200 dark:border-slate-800">
+      <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl w-full max-w-sm mx-4 border border-zinc-200 dark:border-zinc-800">
         <div class="p-6">
           <div class="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 dark:bg-red-900/30 rounded-full mb-4">
             <span class="material-symbols-outlined text-red-600">warning</span>
           </div>
-          <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 text-center mb-2">Delete {{ deleteTarget?.type }}</h3>
-          <p class="text-slate-500 text-center mb-6">
+          <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 text-center mb-2">Delete {{ deleteTarget?.type }}</h3>
+          <p class="text-zinc-500 text-center mb-6">
             Are you sure you want to delete "{{ deleteTarget?.name }}"? This action cannot be undone.
           </p>
           <div class="flex gap-3">
             <button
               @click="showDeleteConfirm = false; deleteTarget = null"
-              class="flex-1 px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300"
+              class="flex-1 px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
             >
               Cancel
             </button>
@@ -2226,7 +2226,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
 }
 
 .toolbar-btn:hover {
-  @apply bg-white dark:bg-slate-700;
+  @apply bg-white dark:bg-zinc-700;
 }
 
 /* Selection Toolbar Transition */

@@ -154,10 +154,10 @@ function getActionColor(actionType: string): string {
     case 'move':
     case 'copied':
     case 'copy':
-      return 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+      return 'bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300'
     case 'deleted':
     case 'delete':
-      return 'bg-slate-300 dark:bg-slate-600 text-slate-700 dark:text-slate-300'
+      return 'bg-zinc-300 dark:bg-zinc-600 text-zinc-700 dark:text-zinc-300'
     case 'viewed':
     case 'view':
     case 'downloaded':
@@ -166,12 +166,12 @@ function getActionColor(actionType: string): string {
     case 'checkout':
     case 'checkedout':
     case 'discardedcheckout':
-      return 'bg-navy/10 dark:bg-slate-700 text-navy dark:text-slate-300'
+      return 'bg-navy/10 dark:bg-zinc-700 text-navy dark:text-zinc-300'
     case 'login':
     case 'logout':
-      return 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+      return 'bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400'
     default:
-      return 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+      return 'bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400'
   }
 }
 
@@ -250,11 +250,11 @@ async function exportPDF() {
     <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
       <div>
-        <h1 class="text-3xl font-bold text-slate-900 dark:text-slate-100">Reports & Analytics</h1>
-        <p class="text-slate-500 mt-1">Real-time enterprise statistics and document activity overview.</p>
+        <h1 class="text-3xl font-bold text-zinc-900 dark:text-zinc-100">Reports & Analytics</h1>
+        <p class="text-zinc-500 mt-1">Real-time enterprise statistics and document activity overview.</p>
       </div>
       <div class="flex items-center gap-3">
-        <button class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-sm">
+        <button class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors shadow-sm">
           <span class="material-symbols-outlined text-lg">calendar_today</span>
           Last {{ selectedPeriod }} Days
         </button>
@@ -354,20 +354,20 @@ async function exportPDF() {
       <!-- Charts Row -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Document Growth Chart -->
-        <div class="lg:col-span-2 bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div class="lg:col-span-2 bg-white dark:bg-zinc-900 p-6 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
           <div class="flex items-center justify-between mb-8">
             <div>
-              <h3 class="font-bold text-slate-900 dark:text-slate-100">Document Growth</h3>
-              <p class="text-xs text-slate-500">Monthly upload volume trends</p>
+              <h3 class="font-bold text-zinc-900 dark:text-zinc-100">Document Growth</h3>
+              <p class="text-xs text-zinc-500">Monthly upload volume trends</p>
             </div>
             <div class="flex items-center gap-4 text-xs">
               <div class="flex items-center gap-1.5">
                 <span class="w-3 h-3 rounded-full bg-teal"></span>
-                <span class="text-slate-600 dark:text-slate-400">Current Year</span>
+                <span class="text-zinc-600 dark:text-zinc-400">Current Year</span>
               </div>
               <div class="flex items-center gap-1.5">
                 <span class="w-3 h-3 rounded-full bg-navy/30"></span>
-                <span class="text-slate-600 dark:text-slate-400">Previous Year</span>
+                <span class="text-zinc-600 dark:text-zinc-400">Previous Year</span>
               </div>
             </div>
           </div>
@@ -376,20 +376,20 @@ async function exportPDF() {
           <div class="h-[280px] w-full flex items-end gap-2 px-4 relative pb-8">
             <!-- Grid Lines with Y-Axis Labels -->
             <div class="absolute inset-x-4 top-0 bottom-12 flex flex-col justify-between pointer-events-none">
-              <div class="border-b border-slate-100 dark:border-slate-800 w-full relative">
-                <span class="absolute -left-2 -top-2 text-[9px] text-slate-400">{{ Math.round(getMaxValue()) }}</span>
+              <div class="border-b border-zinc-100 dark:border-zinc-800 w-full relative">
+                <span class="absolute -left-2 -top-2 text-[9px] text-zinc-400">{{ Math.round(getMaxValue()) }}</span>
               </div>
-              <div class="border-b border-slate-100 dark:border-slate-800 w-full relative">
-                <span class="absolute -left-2 -top-2 text-[9px] text-slate-400">{{ Math.round(getMaxValue() * 0.75) }}</span>
+              <div class="border-b border-zinc-100 dark:border-zinc-800 w-full relative">
+                <span class="absolute -left-2 -top-2 text-[9px] text-zinc-400">{{ Math.round(getMaxValue() * 0.75) }}</span>
               </div>
-              <div class="border-b border-slate-100 dark:border-slate-800 w-full relative">
-                <span class="absolute -left-2 -top-2 text-[9px] text-slate-400">{{ Math.round(getMaxValue() * 0.5) }}</span>
+              <div class="border-b border-zinc-100 dark:border-zinc-800 w-full relative">
+                <span class="absolute -left-2 -top-2 text-[9px] text-zinc-400">{{ Math.round(getMaxValue() * 0.5) }}</span>
               </div>
-              <div class="border-b border-slate-100 dark:border-slate-800 w-full relative">
-                <span class="absolute -left-2 -top-2 text-[9px] text-slate-400">{{ Math.round(getMaxValue() * 0.25) }}</span>
+              <div class="border-b border-zinc-100 dark:border-zinc-800 w-full relative">
+                <span class="absolute -left-2 -top-2 text-[9px] text-zinc-400">{{ Math.round(getMaxValue() * 0.25) }}</span>
               </div>
-              <div class="border-b border-slate-100 dark:border-slate-800 w-full relative">
-                <span class="absolute -left-2 -top-2 text-[9px] text-slate-400">0</span>
+              <div class="border-b border-zinc-100 dark:border-zinc-800 w-full relative">
+                <span class="absolute -left-2 -top-2 text-[9px] text-zinc-400">0</span>
               </div>
             </div>
 
@@ -401,18 +401,18 @@ async function exportPDF() {
               style="max-height: 220px;"
             >
               <!-- Values on hover -->
-              <div class="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-800 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap z-10">
-                <span class="text-teal font-bold">{{ formatNumber(data.currentYear) }}</span> / <span class="text-slate-300">{{ formatNumber(data.previousYear) }}</span>
+              <div class="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-zinc-800 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap z-10">
+                <span class="text-teal font-bold">{{ formatNumber(data.currentYear) }}</span> / <span class="text-zinc-300">{{ formatNumber(data.previousYear) }}</span>
               </div>
 
               <div class="w-full flex gap-1 items-end justify-center" style="height: 180px;">
                 <!-- Previous Year Bar -->
                 <div class="relative flex-1 max-w-[28px]">
                   <div
-                    class="w-full bg-slate-300/50 dark:bg-slate-600/50 rounded-t group-hover:bg-slate-300/70 dark:group-hover:bg-slate-600/70 transition-all"
+                    class="w-full bg-zinc-300/50 dark:bg-zinc-600/50 rounded-t group-hover:bg-zinc-300/70 dark:group-hover:bg-zinc-600/70 transition-all"
                     :style="{ height: getBarHeight(data.previousYear, 160) }"
                   ></div>
-                  <span class="absolute -top-4 left-1/2 -translate-x-1/2 text-[8px] text-slate-400 font-medium opacity-0 group-hover:opacity-100 transition-opacity">{{ data.previousYear > 0 ? formatNumber(data.previousYear) : '' }}</span>
+                  <span class="absolute -top-4 left-1/2 -translate-x-1/2 text-[8px] text-zinc-400 font-medium opacity-0 group-hover:opacity-100 transition-opacity">{{ data.previousYear > 0 ? formatNumber(data.previousYear) : '' }}</span>
                 </div>
                 <!-- Current Year Bar -->
                 <div class="relative flex-1 max-w-[28px]">
@@ -423,21 +423,21 @@ async function exportPDF() {
                   <span class="absolute -top-4 left-1/2 -translate-x-1/2 text-[8px] text-teal font-bold opacity-0 group-hover:opacity-100 transition-opacity">{{ data.currentYear > 0 ? formatNumber(data.currentYear) : '' }}</span>
                 </div>
               </div>
-              <span class="text-[10px] text-center text-slate-500 font-medium absolute -bottom-6">{{ data.month }}</span>
+              <span class="text-[10px] text-center text-zinc-500 font-medium absolute -bottom-6">{{ data.month }}</span>
             </div>
           </div>
         </div>
 
         <!-- Document Types Donut Chart -->
-        <div class="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-          <h3 class="font-bold text-slate-900 dark:text-slate-100">Document Types</h3>
-          <p class="text-xs text-slate-500 mb-8">Storage distribution by extension</p>
+        <div class="bg-white dark:bg-zinc-900 p-6 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+          <h3 class="font-bold text-zinc-900 dark:text-zinc-100">Document Types</h3>
+          <p class="text-xs text-zinc-500 mb-8">Storage distribution by extension</p>
 
           <!-- Donut Chart -->
           <div class="relative flex items-center justify-center h-48 mb-8">
             <svg class="w-40 h-40 transform -rotate-90">
               <circle
-                class="text-slate-100 dark:text-slate-800"
+                class="text-zinc-100 dark:text-zinc-800"
                 cx="80" cy="80" fill="transparent" r="70"
                 stroke="currentColor" stroke-width="20"
               ></circle>
@@ -456,7 +456,7 @@ async function exportPDF() {
                 stroke-dashoffset="-242"
               ></circle>
               <circle
-                class="text-slate-300 dark:text-slate-600"
+                class="text-zinc-300 dark:text-zinc-600"
                 cx="80" cy="80" fill="transparent" r="70"
                 stroke="currentColor" stroke-width="20"
                 stroke-dasharray="88 352"
@@ -464,8 +464,8 @@ async function exportPDF() {
               ></circle>
             </svg>
             <div class="absolute inset-0 flex flex-col items-center justify-center">
-              <span class="text-xl font-bold text-slate-900 dark:text-slate-100">100%</span>
-              <span class="text-[10px] text-slate-400 uppercase tracking-tighter">Verified</span>
+              <span class="text-xl font-bold text-zinc-900 dark:text-zinc-100">100%</span>
+              <span class="text-[10px] text-zinc-400 uppercase tracking-tighter">Verified</span>
             </div>
           </div>
 
@@ -474,32 +474,32 @@ async function exportPDF() {
             <div class="flex items-center justify-between text-sm">
               <div class="flex items-center gap-2">
                 <span class="w-3 h-3 rounded bg-teal"></span>
-                <span class="text-slate-600 dark:text-slate-400 font-medium">PDF Documents</span>
+                <span class="text-zinc-600 dark:text-zinc-400 font-medium">PDF Documents</span>
               </div>
-              <span class="font-bold text-slate-900 dark:text-slate-100">55%</span>
+              <span class="font-bold text-zinc-900 dark:text-zinc-100">55%</span>
             </div>
             <div class="flex items-center justify-between text-sm">
               <div class="flex items-center gap-2">
                 <span class="w-3 h-3 rounded bg-navy"></span>
-                <span class="text-slate-600 dark:text-slate-400 font-medium">Word / Office</span>
+                <span class="text-zinc-600 dark:text-zinc-400 font-medium">Word / Office</span>
               </div>
-              <span class="font-bold text-slate-900 dark:text-slate-100">25%</span>
+              <span class="font-bold text-zinc-900 dark:text-zinc-100">25%</span>
             </div>
             <div class="flex items-center justify-between text-sm">
               <div class="flex items-center gap-2">
-                <span class="w-3 h-3 rounded bg-slate-300 dark:bg-slate-700"></span>
-                <span class="text-slate-600 dark:text-slate-400 font-medium">Media & Other</span>
+                <span class="w-3 h-3 rounded bg-zinc-300 dark:bg-zinc-700"></span>
+                <span class="text-zinc-600 dark:text-zinc-400 font-medium">Media & Other</span>
               </div>
-              <span class="font-bold text-slate-900 dark:text-slate-100">20%</span>
+              <span class="font-bold text-zinc-900 dark:text-zinc-100">20%</span>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Recent Activity Table -->
-      <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
-        <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-          <h3 class="font-bold text-slate-900 dark:text-slate-100">Recent System Activity</h3>
+      <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm">
+        <div class="px-6 py-4 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+          <h3 class="font-bold text-zinc-900 dark:text-zinc-100">Recent System Activity</h3>
           <router-link to="/activity" class="text-teal text-xs font-semibold hover:underline">
             View Full Audit Log
           </router-link>
@@ -507,7 +507,7 @@ async function exportPDF() {
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse">
             <thead>
-              <tr class="bg-slate-50/50 dark:bg-slate-800/50 text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800">
+              <tr class="bg-zinc-50/50 dark:bg-zinc-800/50 text-[11px] font-bold text-zinc-400 uppercase tracking-widest border-b border-zinc-100 dark:border-zinc-800">
                 <th class="px-6 py-4">User</th>
                 <th class="px-6 py-4">Action</th>
                 <th class="px-6 py-4">Target Document / Cabinet</th>
@@ -515,11 +515,11 @@ async function exportPDF() {
                 <th class="px-6 py-4">IP Address</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
               <tr
                 v-for="(activity, index) in recentActivity"
                 :key="activity.id"
-                class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors group"
+                class="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/40 transition-colors group"
               >
                 <td class="px-6 py-4">
                   <div class="flex items-center gap-3">
@@ -529,7 +529,7 @@ async function exportPDF() {
                     >
                       {{ activity.userInitials || getUserInitials(activity.userName) }}
                     </div>
-                    <p class="text-sm font-medium text-slate-900 dark:text-slate-100">{{ activity.userName || 'System' }}</p>
+                    <p class="text-sm font-medium text-zinc-900 dark:text-zinc-100">{{ activity.userName || 'System' }}</p>
                   </div>
                 </td>
                 <td class="px-6 py-4">
@@ -540,13 +540,13 @@ async function exportPDF() {
                     {{ activity.action }}
                   </span>
                 </td>
-                <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">{{ activity.targetName || activity.nodeName || activity.details || '-' }}</td>
-                <td class="px-6 py-4 text-sm text-slate-500">{{ formatActivityDate(activity.createdAt) }}</td>
-                <td class="px-6 py-4 text-xs font-mono text-slate-400">{{ activity.ipAddress || '-' }}</td>
+                <td class="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">{{ activity.targetName || activity.nodeName || activity.details || '-' }}</td>
+                <td class="px-6 py-4 text-sm text-zinc-500">{{ formatActivityDate(activity.createdAt) }}</td>
+                <td class="px-6 py-4 text-xs font-mono text-zinc-400">{{ activity.ipAddress || '-' }}</td>
               </tr>
 
               <tr v-if="recentActivity.length === 0">
-                <td colspan="5" class="px-6 py-12 text-center text-slate-400">
+                <td colspan="5" class="px-6 py-12 text-center text-zinc-400">
                   No recent activity
                 </td>
               </tr>

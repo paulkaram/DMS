@@ -169,12 +169,12 @@ function formatDate(dateStr: string): string {
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">Favorites</h1>
-        <p class="text-slate-500 mt-1">Quick access to your favorite items</p>
+        <h1 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Favorites</h1>
+        <p class="text-zinc-500 mt-1">Quick access to your favorite items</p>
       </div>
       <button
         @click="loadFavorites"
-        class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-medium text-sm transition-colors border border-slate-200 dark:border-slate-700"
+        class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl font-medium text-sm transition-colors border border-zinc-200 dark:border-zinc-700"
       >
         <span class="material-symbols-outlined text-lg">refresh</span>
         Refresh
@@ -197,7 +197,7 @@ function formatDate(dateStr: string): string {
     </div>
 
     <!-- Main Content -->
-    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+    <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
       <!-- Loading State -->
       <div v-if="isLoading" class="flex items-center justify-center py-16">
         <div class="animate-spin w-8 h-8 border-4 border-teal border-t-transparent rounded-full"></div>
@@ -205,11 +205,11 @@ function formatDate(dateStr: string): string {
 
       <!-- Empty State -->
       <div v-else-if="favorites.length === 0" class="text-center py-12">
-        <div class="w-20 h-20 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
-          <span class="material-symbols-outlined text-5xl text-slate-400">star</span>
+        <div class="w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
+          <span class="material-symbols-outlined text-5xl text-zinc-400">star</span>
         </div>
-        <h3 class="text-lg font-semibold text-slate-700 dark:text-slate-300">No favorites yet</h3>
-        <p class="text-slate-500 mt-1">Star items to add them to your favorites</p>
+        <h3 class="text-lg font-semibold text-zinc-700 dark:text-zinc-300">No favorites yet</h3>
+        <p class="text-zinc-500 mt-1">Star items to add them to your favorites</p>
         <router-link
           to="/explorer"
           class="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-teal hover:bg-teal/90 text-white rounded-xl font-medium text-sm transition-colors"
@@ -226,7 +226,7 @@ function formatDate(dateStr: string): string {
           :key="item.id"
           @contextmenu="showContextMenu($event, item)"
           @dblclick="openFile(item)"
-          class="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 hover:border-teal/30 hover:shadow-md transition-all cursor-pointer"
+          class="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl border border-zinc-100 dark:border-zinc-700 hover:border-teal/30 hover:shadow-md transition-all cursor-pointer"
         >
           <!-- Avatar with alternating colors -->
           <DocumentIcon
@@ -244,8 +244,8 @@ function formatDate(dateStr: string): string {
 
           <!-- Info -->
           <div class="flex-1 min-w-0 cursor-pointer" @click="openFile(item)">
-            <p class="font-medium text-slate-900 dark:text-white truncate">{{ item.name }}</p>
-            <div class="flex items-center gap-3 mt-1 text-sm text-slate-500">
+            <p class="font-medium text-zinc-900 dark:text-white truncate">{{ item.name }}</p>
+            <div class="flex items-center gap-3 mt-1 text-sm text-zinc-500">
               <span>{{ getNodeTypeName(item.nodeType) }}</span>
               <span v-if="item.path">•</span>
               <span v-if="item.path" class="truncate">{{ item.path }}</span>
@@ -253,7 +253,7 @@ function formatDate(dateStr: string): string {
           </div>
 
           <!-- Date -->
-          <div class="text-sm text-slate-500 dark:text-slate-400 flex-shrink-0 mr-2 hidden sm:block">
+          <div class="text-sm text-zinc-500 dark:text-zinc-400 flex-shrink-0 mr-2 hidden sm:block">
             {{ formatDate(item.favoritedAt) }}
           </div>
 
@@ -263,11 +263,11 @@ function formatDate(dateStr: string): string {
             <div v-if="item.nodeType === 3" class="relative group">
               <button
                 @click.stop="openPreview(item)"
-                class="p-2 text-slate-500 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors"
+                class="p-2 text-zinc-500 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors"
               >
                 <span class="material-symbols-outlined text-xl">open_in_new</span>
               </button>
-              <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-800 dark:bg-slate-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+              <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-zinc-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                 Preview
               </span>
             </div>
@@ -275,44 +275,44 @@ function formatDate(dateStr: string): string {
             <div class="relative group">
               <button
                 @click.stop="openFile(item)"
-                class="p-2 text-slate-500 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors"
+                class="p-2 text-zinc-500 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors"
               >
                 <span class="material-symbols-outlined text-xl">info</span>
               </button>
-              <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-800 dark:bg-slate-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+              <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-zinc-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                 {{ item.nodeType === 3 ? 'Details' : 'Open' }}
               </span>
             </div>
             <div v-if="item.nodeType !== 1 && (item.parentFolderId || item.cabinetId)" class="relative group">
               <button
                 @click.stop="goToLocation(item)"
-                class="p-2 text-slate-500 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors"
+                class="p-2 text-zinc-500 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors"
               >
                 <span class="material-symbols-outlined text-xl">folder_open</span>
               </button>
-              <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-800 dark:bg-slate-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+              <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-zinc-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                 Go to Location
               </span>
             </div>
             <div v-if="item.nodeType === 3" class="relative group">
               <button
                 @click.stop="downloadFile(item)"
-                class="p-2 text-slate-500 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors"
+                class="p-2 text-zinc-500 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors"
               >
                 <span class="material-symbols-outlined text-xl">download</span>
               </button>
-              <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-800 dark:bg-slate-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+              <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-zinc-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                 Download
               </span>
             </div>
             <div class="relative group">
               <button
                 @click.stop="removeFavorite(item)"
-                class="p-2 text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                class="p-2 text-zinc-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
               >
                 <span class="material-symbols-outlined text-xl">delete</span>
               </button>
-              <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-slate-800 dark:bg-slate-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+              <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-zinc-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                 Remove
               </span>
             </div>
@@ -333,7 +333,7 @@ function formatDate(dateStr: string): string {
       >
         <div
           v-if="contextMenu.show && contextMenu.item"
-          class="fixed z-[9999] bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-200 dark:border-slate-700 py-1.5 min-w-[180px]"
+          class="fixed z-[9999] bg-white dark:bg-zinc-800 rounded-xl shadow-xl border border-gray-200 dark:border-zinc-700 py-1.5 min-w-[180px]"
           :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }"
           @click.stop
         >
@@ -341,7 +341,7 @@ function formatDate(dateStr: string): string {
           <button
             v-if="contextMenu.item!.nodeType === 3"
             @click="openPreview(contextMenu.item!)"
-            class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+            class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors"
           >
             <span class="material-symbols-outlined text-lg text-teal">open_in_new</span>
             Preview
@@ -350,7 +350,7 @@ function formatDate(dateStr: string): string {
           <!-- Open / Details -->
           <button
             @click="openFile(contextMenu.item!)"
-            class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+            class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors"
           >
             <span class="material-symbols-outlined text-lg text-blue-500">info</span>
             {{ contextMenu.item!.nodeType === 3 ? 'View details' : 'Open ' + getNodeTypeName(contextMenu.item!.nodeType).toLowerCase() }}
@@ -360,7 +360,7 @@ function formatDate(dateStr: string): string {
           <button
             v-if="contextMenu.item!.nodeType !== 1 && (contextMenu.item!.parentFolderId || contextMenu.item!.cabinetId)"
             @click="goToLocation(contextMenu.item!)"
-            class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+            class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors"
           >
             <span class="material-symbols-outlined text-lg text-purple-500">folder_open</span>
             Go to location
@@ -370,13 +370,13 @@ function formatDate(dateStr: string): string {
           <button
             v-if="contextMenu.item!.nodeType === 3"
             @click="downloadFile(contextMenu.item!)"
-            class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+            class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors"
           >
             <span class="material-symbols-outlined text-lg text-green-500">download</span>
             Download
           </button>
 
-          <div class="border-t border-gray-100 dark:border-slate-700 my-1"></div>
+          <div class="border-t border-gray-100 dark:border-zinc-700 my-1"></div>
 
           <!-- Remove from favorites -->
           <button

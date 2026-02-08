@@ -149,8 +149,8 @@ function getFileIcon(extension: string): string {
       <!-- Header -->
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">Content Types</h1>
-          <p class="text-slate-500 mt-1">Manage file types and their settings</p>
+          <h1 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Content Types</h1>
+          <p class="text-zinc-500 mt-1">Manage file types and their settings</p>
         </div>
         <button
           @click="openCreateModal"

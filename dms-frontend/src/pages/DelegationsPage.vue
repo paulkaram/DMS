@@ -145,8 +145,8 @@ const roleOptions = computed(() => [
   <div class="space-y-6">
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">Delegations</h1>
-        <p class="text-slate-500 mt-1">Manage your permission delegations</p>
+        <h1 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Delegations</h1>
+        <p class="text-zinc-500 mt-1">Manage your permission delegations</p>
       </div>
       <button
         @click="showCreateModal = true"

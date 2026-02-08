@@ -52,10 +52,10 @@ function goToPage(page: number | string) {
 <template>
   <div class="flex items-center justify-between">
     <!-- Item count -->
-    <p class="text-sm text-slate-600 dark:text-slate-400">
-      Showing <span class="font-semibold text-slate-900 dark:text-slate-100">{{ startItem }}</span>
-      to <span class="font-semibold text-slate-900 dark:text-slate-100">{{ endItem }}</span>
-      of <span class="font-semibold text-slate-900 dark:text-slate-100">{{ totalItems }}</span>
+    <p class="text-sm text-zinc-600 dark:text-zinc-400">
+      Showing <span class="font-semibold text-zinc-900 dark:text-zinc-100">{{ startItem }}</span>
+      to <span class="font-semibold text-zinc-900 dark:text-zinc-100">{{ endItem }}</span>
+      of <span class="font-semibold text-zinc-900 dark:text-zinc-100">{{ totalItems }}</span>
     </p>
 
     <!-- Pagination controls -->
@@ -64,21 +64,21 @@ function goToPage(page: number | string) {
       <button
         @click="goToPage(currentPage - 1)"
         :disabled="currentPage === 1"
-        class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+        class="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
       >
         <span class="material-symbols-outlined text-lg">chevron_left</span>
       </button>
 
       <!-- Page numbers -->
       <template v-for="page in pages" :key="page">
-        <span v-if="page === '...'" class="px-2 text-slate-400">...</span>
+        <span v-if="page === '...'" class="px-2 text-zinc-400">...</span>
         <button
           v-else
           @click="goToPage(page)"
           class="min-w-[36px] h-9 px-3 rounded-lg text-sm font-medium transition-colors"
           :class="page === currentPage
             ? 'bg-gradient-to-r from-navy to-teal text-white shadow-md'
-            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700'"
+            : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700'"
         >
           {{ page }}
         </button>
@@ -88,7 +88,7 @@ function goToPage(page: number | string) {
       <button
         @click="goToPage(currentPage + 1)"
         :disabled="currentPage === totalPages"
-        class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+        class="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
       >
         <span class="material-symbols-outlined text-lg">chevron_right</span>
       </button>

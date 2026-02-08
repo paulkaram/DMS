@@ -11,8 +11,8 @@ export default {
         primary: '#00ae8c',
         navy: '#111318',
         teal: '#00ae8c',
-        'background-light': '#f8fafc',
-        'background-dark': '#0f172a',
+        'background-light': '#fafafa',
+        'background-dark': '#18181b',
         'brand-bg': '#111318',
       },
       fontFamily: {

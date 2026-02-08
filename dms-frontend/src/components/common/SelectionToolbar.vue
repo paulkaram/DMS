@@ -28,7 +28,7 @@ const canDelete = computed(() => authStore.hasPermission('document.delete'))
   <Transition name="slide-up">
     <div
       v-if="isVisible"
-      class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white rounded-2xl shadow-2xl px-6 py-4 flex items-center gap-6 z-50"
+      class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-zinc-900 text-white rounded-2xl shadow-2xl px-6 py-4 flex items-center gap-6 z-50"
     >
       <!-- Selection Count -->
       <div class="flex items-center gap-2.5 flex-shrink-0">
@@ -37,7 +37,7 @@ const canDelete = computed(() => authStore.hasPermission('document.delete'))
       </div>
 
       <!-- Divider -->
-      <div class="w-px h-8 bg-slate-700"></div>
+      <div class="w-px h-8 bg-zinc-700"></div>
 
       <!-- Actions -->
       <div class="flex items-center gap-1">
@@ -46,7 +46,7 @@ const canDelete = computed(() => authStore.hasPermission('document.delete'))
           v-if="canDownload"
           @click="emit('download-selected')"
           :disabled="isProcessing"
-          class="flex items-center gap-2 px-4 py-2 hover:bg-slate-800 rounded-xl transition-colors disabled:opacity-50"
+          class="flex items-center gap-2 px-4 py-2 hover:bg-zinc-800 rounded-xl transition-colors disabled:opacity-50"
           title="Download as ZIP"
         >
           <span class="material-symbols-outlined text-[20px]">download</span>
@@ -58,7 +58,7 @@ const canDelete = computed(() => authStore.hasPermission('document.delete'))
           v-if="canMove"
           @click="emit('move-selected')"
           :disabled="isProcessing"
-          class="flex items-center gap-2 px-4 py-2 hover:bg-slate-800 rounded-xl transition-colors disabled:opacity-50"
+          class="flex items-center gap-2 px-4 py-2 hover:bg-zinc-800 rounded-xl transition-colors disabled:opacity-50"
           title="Move selected"
         >
           <span class="material-symbols-outlined text-[20px]">drive_file_move</span>
@@ -79,20 +79,20 @@ const canDelete = computed(() => authStore.hasPermission('document.delete'))
       </div>
 
       <!-- Divider -->
-      <div class="w-px h-8 bg-slate-700"></div>
+      <div class="w-px h-8 bg-zinc-700"></div>
 
       <!-- Clear Selection -->
       <button
         @click="emit('clear-selection')"
         :disabled="isProcessing"
-        class="p-2 hover:bg-slate-800 rounded-xl transition-colors disabled:opacity-50"
+        class="p-2 hover:bg-zinc-800 rounded-xl transition-colors disabled:opacity-50"
         title="Clear selection"
       >
         <span class="material-symbols-outlined">close</span>
       </button>
 
       <!-- Processing Indicator -->
-      <div v-if="isProcessing" class="absolute inset-0 bg-slate-900/80 rounded-2xl flex items-center justify-center">
+      <div v-if="isProcessing" class="absolute inset-0 bg-zinc-900/80 rounded-2xl flex items-center justify-center">
         <div class="flex items-center gap-3">
           <svg class="animate-spin w-5 h-5 text-teal" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

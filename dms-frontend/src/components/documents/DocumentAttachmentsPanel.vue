@@ -123,12 +123,12 @@ const totalSize = computed(() => {
 </script>
 
 <template>
-  <div class="flex flex-col h-full bg-white dark:bg-slate-900">
+  <div class="flex flex-col h-full bg-white dark:bg-zinc-900">
     <!-- Header -->
-    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800">
       <div>
-        <h2 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Attachments</h2>
-        <p class="text-sm text-slate-500">{{ attachments.length }} files, {{ formatFileSize(totalSize) }} total</p>
+        <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Attachments</h2>
+        <p class="text-sm text-zinc-500">{{ attachments.length }} files, {{ formatFileSize(totalSize) }} total</p>
       </div>
       <div class="flex items-center gap-2">
         <button
@@ -141,7 +141,7 @@ const totalSize = computed(() => {
         </button>
         <button
           @click="emit('close')"
-          class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          class="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
         >
           <span class="material-symbols-outlined">close</span>
         </button>
@@ -149,36 +149,36 @@ const totalSize = computed(() => {
     </div>
 
     <!-- Upload Form -->
-    <div v-if="showUploadForm" class="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+    <div v-if="showUploadForm" class="p-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
       <div class="space-y-3">
         <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">File</label>
+          <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">File</label>
           <input
             ref="fileInput"
             type="file"
             @change="uploadFile"
-            class="w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-teal file:text-white hover:file:bg-teal/90 file:cursor-pointer"
+            class="w-full text-sm text-zinc-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-teal file:text-white hover:file:bg-teal/90 file:cursor-pointer"
             :disabled="isUploading"
           />
         </div>
         <div>
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description (optional)</label>
+          <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Description (optional)</label>
           <input
             v-model="description"
             type="text"
-            class="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
+            class="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
             placeholder="Enter description..."
             :disabled="isUploading"
           />
         </div>
         <div v-if="isUploading" class="flex items-center gap-3">
-          <div class="flex-1 h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+          <div class="flex-1 h-2 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
             <div
               class="h-full bg-teal transition-all duration-300"
               :style="{ width: `${uploadProgress}%` }"
             ></div>
           </div>
-          <span class="text-sm text-slate-500">{{ uploadProgress }}%</span>
+          <span class="text-sm text-zinc-500">{{ uploadProgress }}%</span>
         </div>
       </div>
     </div>
@@ -190,16 +190,16 @@ const totalSize = computed(() => {
       </div>
 
       <div v-else-if="attachments.length === 0" class="text-center py-12">
-        <span class="material-symbols-outlined text-4xl text-slate-300 dark:text-slate-600 mb-2">attach_file</span>
-        <p class="text-slate-500 dark:text-slate-400">No attachments</p>
-        <p class="text-sm text-slate-400 dark:text-slate-500">Add files to attach them to this document</p>
+        <span class="material-symbols-outlined text-4xl text-zinc-300 dark:text-zinc-600 mb-2">attach_file</span>
+        <p class="text-zinc-500 dark:text-zinc-400">No attachments</p>
+        <p class="text-sm text-zinc-400 dark:text-zinc-500">Add files to attach them to this document</p>
       </div>
 
       <div v-else class="space-y-2">
         <div
           v-for="attachment in attachments"
           :key="attachment.id"
-          class="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors group"
+          class="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800/80 transition-colors group"
         >
           <!-- File Icon -->
           <div class="w-10 h-10 rounded-lg bg-teal/10 flex items-center justify-center text-teal flex-shrink-0">
@@ -208,15 +208,15 @@ const totalSize = computed(() => {
 
           <!-- File Info -->
           <div class="flex-1 min-w-0">
-            <p class="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
+            <p class="text-sm font-medium text-zinc-900 dark:text-zinc-100 truncate">
               {{ attachment.fileName }}
             </p>
-            <div class="flex items-center gap-3 text-xs text-slate-500">
+            <div class="flex items-center gap-3 text-xs text-zinc-500">
               <span>{{ formatFileSize(attachment.size) }}</span>
               <span>{{ formatDate(attachment.createdAt) }}</span>
               <span v-if="attachment.createdByName">by {{ attachment.createdByName }}</span>
             </div>
-            <p v-if="attachment.description" class="text-xs text-slate-400 mt-1 truncate">
+            <p v-if="attachment.description" class="text-xs text-zinc-400 mt-1 truncate">
               {{ attachment.description }}
             </p>
           </div>
@@ -225,7 +225,7 @@ const totalSize = computed(() => {
           <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               @click="downloadAttachment(attachment)"
-              class="p-2 text-slate-400 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors"
+              class="p-2 text-zinc-400 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors"
               title="Download"
             >
               <span class="material-symbols-outlined text-lg">download</span>
@@ -233,7 +233,7 @@ const totalSize = computed(() => {
             <button
               v-if="canEdit"
               @click="deleteAttachment(attachment)"
-              class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+              class="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
               title="Delete"
             >
               <span class="material-symbols-outlined text-lg">delete</span>

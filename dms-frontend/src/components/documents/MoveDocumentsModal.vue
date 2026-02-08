@@ -110,7 +110,7 @@ function renderFolderTree(nodes: TreeNode[], level = 0): TreeNode[] {
 <template>
   <Modal v-model="isOpen" title="Move Documents" size="md">
     <div class="min-h-[400px]">
-      <p class="text-slate-600 mb-4">
+      <p class="text-zinc-600 mb-4">
         Select a folder to move {{ documentCount }} document{{ documentCount > 1 ? 's' : '' }} to:
       </p>
 
@@ -123,22 +123,22 @@ function renderFolderTree(nodes: TreeNode[], level = 0): TreeNode[] {
       </div>
 
       <!-- Tree -->
-      <div v-else class="border border-slate-200 rounded-lg max-h-[350px] overflow-auto">
+      <div v-else class="border border-zinc-200 rounded-lg max-h-[350px] overflow-auto">
         <div class="p-2">
           <!-- Cabinets -->
           <div v-for="cabinet in treeNodes" :key="cabinet.id" class="select-none">
             <div
               @click="toggleCabinet(cabinet.id)"
-              class="flex items-center gap-2 py-2 px-2 cursor-pointer rounded-lg hover:bg-slate-100 transition-colors"
+              class="flex items-center gap-2 py-2 px-2 cursor-pointer rounded-lg hover:bg-zinc-100 transition-colors"
             >
               <button class="w-5 h-5 flex items-center justify-center">
                 <span
-                  class="material-symbols-outlined text-[16px] text-slate-400 transition-transform"
+                  class="material-symbols-outlined text-[16px] text-zinc-400 transition-transform"
                   :class="cabinet.isExpanded ? '' : '-rotate-90'"
                 >expand_more</span>
               </button>
               <span class="material-symbols-outlined text-[20px] text-teal">inventory_2</span>
-              <span class="text-sm font-medium text-slate-700">{{ cabinet.name }}</span>
+              <span class="text-sm font-medium text-zinc-700">{{ cabinet.name }}</span>
               <svg v-if="cabinet.isLoading" class="animate-spin w-4 h-4 text-teal ml-auto" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
@@ -153,7 +153,7 @@ function renderFolderTree(nodes: TreeNode[], level = 0): TreeNode[] {
                   class="flex items-center gap-2 py-1.5 px-2 cursor-pointer rounded-lg transition-colors"
                   :class="selectedFolderId === folder.id
                     ? 'bg-teal/10 ring-2 ring-teal'
-                    : 'hover:bg-slate-100'"
+                    : 'hover:bg-zinc-100'"
                 >
                   <button
                     v-if="folder.children && folder.children.length > 0"
@@ -161,7 +161,7 @@ function renderFolderTree(nodes: TreeNode[], level = 0): TreeNode[] {
                     class="w-5 h-5 flex items-center justify-center"
                   >
                     <span
-                      class="material-symbols-outlined text-[16px] text-slate-400 transition-transform"
+                      class="material-symbols-outlined text-[16px] text-zinc-400 transition-transform"
                       :class="folder.isExpanded ? '' : '-rotate-90'"
                     >expand_more</span>
                   </button>
@@ -173,7 +173,7 @@ function renderFolderTree(nodes: TreeNode[], level = 0): TreeNode[] {
                   >{{ folder.isExpanded ? 'folder_open' : 'folder' }}</span>
                   <span
                     class="text-sm"
-                    :class="selectedFolderId === folder.id ? 'font-semibold text-teal' : 'text-slate-600'"
+                    :class="selectedFolderId === folder.id ? 'font-semibold text-teal' : 'text-zinc-600'"
                   >{{ folder.name }}</span>
                 </div>
 
@@ -186,7 +186,7 @@ function renderFolderTree(nodes: TreeNode[], level = 0): TreeNode[] {
                     class="flex items-center gap-2 py-1.5 px-2 cursor-pointer rounded-lg transition-colors"
                     :class="selectedFolderId === subfolder.id
                       ? 'bg-teal/10 ring-2 ring-teal'
-                      : 'hover:bg-slate-100'"
+                      : 'hover:bg-zinc-100'"
                   >
                     <span class="w-5"></span>
                     <span
@@ -196,7 +196,7 @@ function renderFolderTree(nodes: TreeNode[], level = 0): TreeNode[] {
                     >folder</span>
                     <span
                       class="text-sm"
-                      :class="selectedFolderId === subfolder.id ? 'font-semibold text-teal' : 'text-slate-600'"
+                      :class="selectedFolderId === subfolder.id ? 'font-semibold text-teal' : 'text-zinc-600'"
                     >{{ subfolder.name }}</span>
                   </div>
                 </div>
@@ -205,7 +205,7 @@ function renderFolderTree(nodes: TreeNode[], level = 0): TreeNode[] {
           </div>
 
           <!-- Empty state -->
-          <div v-if="treeNodes.length === 0" class="text-center py-8 text-slate-400">
+          <div v-if="treeNodes.length === 0" class="text-center py-8 text-zinc-400">
             <span class="material-symbols-outlined text-3xl mb-2 block">folder_off</span>
             No cabinets available
           </div>
@@ -217,7 +217,7 @@ function renderFolderTree(nodes: TreeNode[], level = 0): TreeNode[] {
       <div class="flex items-center justify-end gap-3">
         <button
           @click="isOpen = false"
-          class="px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+          class="px-4 py-2 border border-zinc-200 rounded-lg hover:bg-zinc-50 transition-colors"
         >
           Cancel
         </button>

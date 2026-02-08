@@ -34,8 +34,8 @@ const isSelected = computed({
   <tr
     @contextmenu="emit('context-menu', $event, document)"
     @dblclick="emit('view', document)"
-    class="transition-all duration-200 group cursor-pointer border-b border-slate-100 dark:border-slate-800 hover:bg-teal/5"
-    :class="selected ? 'bg-teal/10 border-l-2 border-l-teal' : 'bg-white dark:bg-slate-900'"
+    class="transition-all duration-200 group cursor-pointer border-b border-zinc-100 dark:border-zinc-800 hover:bg-teal/5"
+    :class="selected ? 'bg-teal/10 border-l-2 border-l-teal' : 'bg-white dark:bg-zinc-900'"
   >
     <!-- Checkbox -->
     <td v-if="selectable" class="px-5 py-4 w-12" @click.stop>
@@ -55,7 +55,7 @@ const isSelected = computed({
         />
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-2">
-            <p class="text-sm font-medium text-slate-700 dark:text-slate-200 group-hover:text-teal transition-colors truncate">
+            <p class="text-sm font-medium text-zinc-700 dark:text-zinc-200 group-hover:text-teal transition-colors truncate">
               {{ document.name }}
             </p>
             <!-- Favorite Star - inline with name -->
@@ -77,28 +77,28 @@ const isSelected = computed({
               <span class="text-[9px] font-semibold text-teal uppercase tracking-wide pr-0.5">Secured</span>
             </div>
           </div>
-          <span class="text-[10px] text-slate-400 uppercase tracking-wide">{{ document.extension?.replace('.', '') }}</span>
+          <span class="text-[10px] text-zinc-400 uppercase tracking-wide">{{ document.extension?.replace('.', '') }}</span>
         </div>
       </div>
     </td>
 
     <!-- Size -->
     <td class="px-5 py-4">
-      <span class="text-sm text-slate-500 dark:text-slate-400 tabular-nums">
+      <span class="text-sm text-zinc-500 dark:text-zinc-400 tabular-nums">
         {{ formatFileSize(document.size) }}
       </span>
     </td>
 
     <!-- Created By -->
     <td class="px-5 py-4">
-      <span class="text-sm text-slate-500 dark:text-slate-400 truncate max-w-[120px] block">
+      <span class="text-sm text-zinc-500 dark:text-zinc-400 truncate max-w-[120px] block">
         {{ document.createdByName || '-' }}
       </span>
     </td>
 
     <!-- Created -->
     <td class="px-5 py-4">
-      <span class="text-sm text-slate-500 dark:text-slate-400">
+      <span class="text-sm text-zinc-500 dark:text-zinc-400">
         {{ formatRelativeDate(document.createdAt) }}
       </span>
     </td>
@@ -112,7 +112,7 @@ const isSelected = computed({
       >
         {{ document.contentTypeName }}
       </span>
-      <span v-else class="text-sm text-slate-400">-</span>
+      <span v-else class="text-sm text-zinc-400">-</span>
     </td>
 
     <!-- Version -->
@@ -133,21 +133,21 @@ const isSelected = computed({
         <!-- Quick Actions -->
         <button
           @click.stop="emit('preview', document)"
-          class="p-2 text-slate-400 hover:text-teal hover:bg-teal/10 rounded-lg transition-all"
+          class="p-2 text-zinc-400 hover:text-teal hover:bg-teal/10 rounded-lg transition-all"
           title="Preview"
         >
           <span class="material-symbols-outlined text-lg">open_in_new</span>
         </button>
         <button
           @click.stop="emit('view', document)"
-          class="p-2 text-slate-400 hover:text-teal hover:bg-teal/10 rounded-lg transition-all"
+          class="p-2 text-zinc-400 hover:text-teal hover:bg-teal/10 rounded-lg transition-all"
           title="Details"
         >
           <span class="material-symbols-outlined text-lg">info</span>
         </button>
         <button
           @click.stop="emit('download', document)"
-          class="p-2 text-slate-400 hover:text-teal hover:bg-teal/10 rounded-lg transition-all"
+          class="p-2 text-zinc-400 hover:text-teal hover:bg-teal/10 rounded-lg transition-all"
           title="Download"
         >
           <span class="material-symbols-outlined text-lg">download</span>
@@ -155,7 +155,7 @@ const isSelected = computed({
         <!-- More Menu Button -->
         <button
           @click.stop="emit('context-menu', $event, document)"
-          class="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-all"
+          class="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-lg transition-all"
           title="More actions"
         >
           <span class="material-symbols-outlined text-lg">more_vert</span>

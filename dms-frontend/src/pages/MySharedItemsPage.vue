@@ -163,12 +163,12 @@ const minDate = computed(() => {
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">My Shared Items</h1>
-        <p class="text-slate-500 mt-1">Documents you have shared with others</p>
+        <h1 class="text-2xl font-bold text-zinc-900 dark:text-zinc-100">My Shared Items</h1>
+        <p class="text-zinc-500 mt-1">Documents you have shared with others</p>
       </div>
       <button
         @click="loadMySharedItems"
-        class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-medium text-sm transition-colors border border-slate-200 dark:border-slate-700"
+        class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl font-medium text-sm transition-colors border border-zinc-200 dark:border-zinc-700"
       >
         <span class="material-symbols-outlined text-lg">refresh</span>
         Refresh
@@ -179,24 +179,24 @@ const minDate = computed(() => {
     <div v-if="isLoading" class="flex items-center justify-center py-16">
       <div class="flex flex-col items-center gap-3">
         <div class="w-10 h-10 border-3 border-teal border-t-transparent rounded-full animate-spin"></div>
-        <span class="text-sm text-slate-500 dark:text-slate-400">Loading shared items...</span>
+        <span class="text-sm text-zinc-500 dark:text-zinc-400">Loading shared items...</span>
       </div>
     </div>
 
     <!-- Empty State -->
-    <div v-else-if="mySharedItems.length === 0" class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-16 text-center">
+    <div v-else-if="mySharedItems.length === 0" class="bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-700 p-16 text-center">
       <div class="w-16 h-16 mx-auto bg-[#1f2937] rounded-xl flex items-center justify-center mb-4">
-        <span class="material-symbols-outlined text-3xl text-slate-500">share</span>
+        <span class="material-symbols-outlined text-3xl text-zinc-500">share</span>
       </div>
-      <p class="text-slate-700 dark:text-slate-300 font-medium">No shared items</p>
-      <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Documents you share with others will appear here</p>
+      <p class="text-zinc-700 dark:text-zinc-300 font-medium">No shared items</p>
+      <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Documents you share with others will appear here</p>
     </div>
 
     <!-- Shared Items List -->
-    <div v-else class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+    <div v-else class="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
       <!-- Table Header -->
-      <div class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-3">
-        <div class="grid grid-cols-12 gap-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+      <div class="bg-white dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700 px-4 py-3">
+        <div class="grid grid-cols-12 gap-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
           <div class="col-span-4">Document</div>
           <div class="col-span-2">Shared With</div>
           <div class="col-span-2">Permission</div>
@@ -206,11 +206,11 @@ const minDate = computed(() => {
       </div>
 
       <!-- Items -->
-      <div class="divide-y divide-slate-100 dark:divide-slate-800">
+      <div class="divide-y divide-zinc-100 dark:divide-zinc-800">
         <div
           v-for="item in mySharedItems"
           :key="item.shareId"
-          class="px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group"
+          class="px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors group"
         >
           <div class="grid grid-cols-12 gap-4 items-center">
             <!-- Document -->
@@ -218,7 +218,7 @@ const minDate = computed(() => {
               <DocumentIcon :extension="item.extension" size="md" />
               <div class="min-w-0">
                 <div class="flex items-center gap-2">
-                  <p class="text-sm font-medium text-slate-700 dark:text-slate-200 truncate group-hover:text-teal transition-colors">
+                  <p class="text-sm font-medium text-zinc-700 dark:text-zinc-200 truncate group-hover:text-teal transition-colors">
                     {{ item.documentName }}
                   </p>
                   <!-- Password Protected Badge -->
@@ -234,16 +234,16 @@ const minDate = computed(() => {
                     <span class="text-[9px] font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-wide pr-0.5">Secured</span>
                   </div>
                 </div>
-                <p class="text-xs text-slate-400 uppercase">{{ item.extension?.replace('.', '') || 'File' }}</p>
+                <p class="text-xs text-zinc-400 uppercase">{{ item.extension?.replace('.', '') || 'File' }}</p>
               </div>
             </div>
 
             <!-- Shared With -->
             <div class="col-span-2 flex items-center gap-2">
-              <div class="w-6 h-6 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center">
-                <span class="material-symbols-outlined text-xs text-slate-500">person</span>
+              <div class="w-6 h-6 bg-zinc-100 dark:bg-zinc-700 rounded-full flex items-center justify-center">
+                <span class="material-symbols-outlined text-xs text-zinc-500">person</span>
               </div>
-              <span class="text-sm text-slate-600 dark:text-slate-300 truncate">{{ item.sharedWithUserName }}</span>
+              <span class="text-sm text-zinc-600 dark:text-zinc-300 truncate">{{ item.sharedWithUserName }}</span>
             </div>
 
             <!-- Permission -->
@@ -268,49 +268,49 @@ const minDate = computed(() => {
                   ? 'text-red-500'
                   : isExpiringSoon(item.expiresAt)
                     ? 'text-amber-500'
-                    : 'text-slate-500 dark:text-slate-400'
+                    : 'text-zinc-500 dark:text-zinc-400'
               ]">
                 <span class="material-symbols-outlined text-sm">
                   {{ isExpired(item.expiresAt) ? 'error' : 'schedule' }}
                 </span>
                 <span>{{ formatDate(item.expiresAt) }}</span>
               </div>
-              <span v-else class="text-sm text-slate-400">No expiry</span>
+              <span v-else class="text-sm text-zinc-400">No expiry</span>
             </div>
 
             <!-- Actions -->
             <div class="col-span-2 flex items-center justify-end gap-0.5">
               <button
                 @click="previewDocument(item)"
-                class="tooltip-btn p-1.5 rounded text-slate-400 hover:text-teal hover:bg-teal/10 transition-colors"
+                class="tooltip-btn p-1.5 rounded text-zinc-400 hover:text-teal hover:bg-teal/10 transition-colors"
                 data-tooltip="Preview"
               >
                 <span class="material-symbols-outlined text-lg">open_in_new</span>
               </button>
               <button
                 @click="viewDocument(item)"
-                class="tooltip-btn p-1.5 rounded text-slate-400 hover:text-teal hover:bg-teal/10 transition-colors"
+                class="tooltip-btn p-1.5 rounded text-zinc-400 hover:text-teal hover:bg-teal/10 transition-colors"
                 data-tooltip="Details"
               >
                 <span class="material-symbols-outlined text-lg">info</span>
               </button>
               <button
                 @click="copyShareUrl(item)"
-                class="tooltip-btn p-1.5 rounded text-slate-400 hover:text-teal hover:bg-teal/10 transition-colors"
+                class="tooltip-btn p-1.5 rounded text-zinc-400 hover:text-teal hover:bg-teal/10 transition-colors"
                 data-tooltip="Copy Link"
               >
                 <span class="material-symbols-outlined text-lg">link</span>
               </button>
               <button
                 @click="openExtendModal(item)"
-                class="tooltip-btn p-1.5 rounded text-slate-400 hover:text-teal hover:bg-teal/10 transition-colors"
+                class="tooltip-btn p-1.5 rounded text-zinc-400 hover:text-teal hover:bg-teal/10 transition-colors"
                 data-tooltip="Extend"
               >
                 <span class="material-symbols-outlined text-lg">event</span>
               </button>
               <button
                 @click="revokeShare(item)"
-                class="tooltip-btn p-1.5 rounded text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                class="tooltip-btn p-1.5 rounded text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                 data-tooltip="Revoke"
               >
                 <span class="material-symbols-outlined text-lg">link_off</span>
@@ -321,9 +321,9 @@ const minDate = computed(() => {
       </div>
 
       <!-- Footer -->
-      <div class="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 px-4 py-2.5 flex items-center justify-between">
-        <span class="text-xs text-slate-500">
-          <span class="font-medium text-slate-700 dark:text-slate-300">{{ mySharedItems.length }}</span>
+      <div class="bg-white dark:bg-zinc-800 border-t border-zinc-200 dark:border-zinc-700 px-4 py-2.5 flex items-center justify-between">
+        <span class="text-xs text-zinc-500">
+          <span class="font-medium text-zinc-700 dark:text-zinc-300">{{ mySharedItems.length }}</span>
           shared {{ mySharedItems.length === 1 ? 'item' : 'items' }}
         </span>
       </div>
@@ -344,7 +344,7 @@ const minDate = computed(() => {
       </template>
 
       <div class="space-y-5">
-        <p class="text-sm text-gray-600 dark:text-slate-400">
+        <p class="text-sm text-gray-600 dark:text-zinc-400">
           Set a new expiry date for sharing with
           <span class="font-semibold text-gray-900 dark:text-white">{{ selectedItem?.sharedWithUserName }}</span>
         </p>
@@ -357,7 +357,7 @@ const minDate = computed(() => {
           :clearable="true"
         />
 
-        <p class="text-xs text-gray-500 dark:text-slate-500">
+        <p class="text-xs text-gray-500 dark:text-zinc-500">
           Leave empty to remove expiry (share will not expire)
         </p>
       </div>
@@ -366,7 +366,7 @@ const minDate = computed(() => {
         <div class="flex justify-end gap-3">
           <button
             @click="showExtendModal = false"
-            class="px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-xl transition-colors"
+            class="px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-xl transition-colors"
           >
             Cancel
           </button>

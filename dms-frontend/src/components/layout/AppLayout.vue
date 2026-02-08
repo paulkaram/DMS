@@ -20,7 +20,7 @@ function handleLogout() {
 </script>
 
 <template>
-  <div class="min-h-screen bg-background-light dark:bg-background-dark text-slate-700 dark:text-slate-300 flex flex-col">
+  <div class="min-h-screen bg-background-light dark:bg-background-dark text-zinc-700 dark:text-zinc-300 flex flex-col">
     <Sidebar :open="sidebarOpen" @toggle="toggleSidebar" />
     <div
       class="flex-1 flex flex-col transition-all duration-300"

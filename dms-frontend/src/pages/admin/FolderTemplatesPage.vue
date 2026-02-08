@@ -248,8 +248,8 @@ function countNodes(nodes: FolderTemplateNode[]): number {
 
       <div class="flex items-center justify-between mb-6">
         <div>
-          <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100">Folder Templates</h1>
-          <p class="text-sm text-slate-500 mt-1">Create reusable folder structures with content type assignments</p>
+          <h1 class="text-2xl font-semibold text-zinc-800 dark:text-zinc-100">Folder Templates</h1>
+          <p class="text-sm text-zinc-500 mt-1">Create reusable folder structures with content type assignments</p>
         </div>
         <button
           @click="openCreateModal"
@@ -263,39 +263,39 @@ function countNodes(nodes: FolderTemplateNode[]): number {
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Templates List -->
         <div class="lg:col-span-1">
-          <div class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">
-            <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-700">
-              <h2 class="font-medium text-slate-700 dark:text-slate-200">Templates</h2>
+          <div class="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-zinc-200 dark:border-zinc-700">
+            <div class="px-4 py-3 border-b border-zinc-200 dark:border-zinc-700">
+              <h2 class="font-medium text-zinc-700 dark:text-zinc-200">Templates</h2>
             </div>
 
-            <div v-if="isLoading" class="p-8 text-center text-slate-500">
+            <div v-if="isLoading" class="p-8 text-center text-zinc-500">
               Loading templates...
             </div>
 
-            <div v-else-if="templates.length === 0" class="p-8 text-center text-slate-500">
+            <div v-else-if="templates.length === 0" class="p-8 text-center text-zinc-500">
               <span class="material-symbols-outlined text-4xl mb-2 opacity-50">folder_off</span>
               <p>No templates yet</p>
               <p class="text-sm">Create your first template to get started</p>
             </div>
 
-            <div v-else class="divide-y divide-slate-200 dark:divide-slate-700 max-h-[600px] overflow-y-auto">
+            <div v-else class="divide-y divide-zinc-200 dark:divide-zinc-700 max-h-[600px] overflow-y-auto">
               <div
                 v-for="template in templates"
                 :key="template.id"
                 @click="selectTemplate(template)"
-                class="p-4 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+                class="p-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-700/50 transition-colors"
                 :class="{ 'bg-teal/5 border-l-2 border-teal': selectedTemplate?.id === template.id }"
               >
                 <div class="flex items-start justify-between">
                   <div class="flex items-center gap-3">
-                    <span class="material-symbols-outlined text-xl text-slate-400">{{ template.icon || 'folder_special' }}</span>
+                    <span class="material-symbols-outlined text-xl text-zinc-400">{{ template.icon || 'folder_special' }}</span>
                     <div>
-                      <div class="font-medium text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                      <div class="font-medium text-zinc-800 dark:text-zinc-200 flex items-center gap-2">
                         {{ template.name }}
                         <span v-if="template.isDefault" class="text-xs bg-teal/10 text-teal px-1.5 py-0.5 rounded">Default</span>
                         <span v-if="!template.isActive" class="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded">Inactive</span>
                       </div>
-                      <div class="text-xs text-slate-500 mt-0.5">
+                      <div class="text-xs text-zinc-500 mt-0.5">
                         {{ template.category || 'Uncategorized' }}
                         <span class="mx-1">•</span>
                         {{ template.usageCount }} uses
@@ -305,21 +305,21 @@ function countNodes(nodes: FolderTemplateNode[]): number {
                   <div class="flex items-center gap-1">
                     <button
                       @click.stop="duplicateTemplate(template)"
-                      class="p-1 text-slate-400 hover:text-slate-600 rounded"
+                      class="p-1 text-zinc-400 hover:text-zinc-600 rounded"
                       title="Duplicate"
                     >
                       <span class="material-symbols-outlined text-lg">content_copy</span>
                     </button>
                     <button
                       @click.stop="openEditModal(template)"
-                      class="p-1 text-slate-400 hover:text-slate-600 rounded"
+                      class="p-1 text-zinc-400 hover:text-zinc-600 rounded"
                       title="Edit"
                     >
                       <span class="material-symbols-outlined text-lg">edit</span>
                     </button>
                     <button
                       @click.stop="deleteTemplate(template.id)"
-                      class="p-1 text-slate-400 hover:text-red-500 rounded"
+                      class="p-1 text-zinc-400 hover:text-red-500 rounded"
                       title="Delete"
                     >
                       <span class="material-symbols-outlined text-lg">delete</span>
@@ -333,9 +333,9 @@ function countNodes(nodes: FolderTemplateNode[]): number {
 
         <!-- Template Builder -->
         <div class="lg:col-span-2">
-          <div class="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">
-            <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
-              <h2 class="font-medium text-slate-700 dark:text-slate-200">
+          <div class="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-zinc-200 dark:border-zinc-700">
+            <div class="px-4 py-3 border-b border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
+              <h2 class="font-medium text-zinc-700 dark:text-zinc-200">
                 {{ selectedTemplate ? `Template: ${selectedTemplate.name}` : 'Select a Template' }}
               </h2>
               <button
@@ -348,7 +348,7 @@ function countNodes(nodes: FolderTemplateNode[]): number {
               </button>
             </div>
 
-            <div v-if="!selectedTemplate" class="p-12 text-center text-slate-500">
+            <div v-if="!selectedTemplate" class="p-12 text-center text-zinc-500">
               <span class="material-symbols-outlined text-5xl mb-3 opacity-50">account_tree</span>
               <p class="font-medium">Select a template to view and edit its structure</p>
               <p class="text-sm mt-1">Or create a new template to get started</p>
@@ -356,11 +356,11 @@ function countNodes(nodes: FolderTemplateNode[]): number {
 
             <div v-else class="p-4">
               <!-- Template Info -->
-              <div class="mb-4 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg text-sm">
-                <div class="flex items-center gap-4 text-slate-600 dark:text-slate-300">
+              <div class="mb-4 p-3 bg-zinc-50 dark:bg-zinc-700/50 rounded-lg text-sm">
+                <div class="flex items-center gap-4 text-zinc-600 dark:text-zinc-300">
                   <span v-if="selectedTemplate.description">{{ selectedTemplate.description }}</span>
-                  <span v-else class="italic text-slate-400">No description</span>
-                  <span class="ml-auto text-slate-500">
+                  <span v-else class="italic text-zinc-400">No description</span>
+                  <span class="ml-auto text-zinc-500">
                     {{ countNodes(selectedTemplate.nodes || []) }} folders
                   </span>
                 </div>
@@ -380,7 +380,7 @@ function countNodes(nodes: FolderTemplateNode[]): number {
                 </template>
               </div>
 
-              <div v-else class="py-8 text-center text-slate-500">
+              <div v-else class="py-8 text-center text-zinc-500">
                 <span class="material-symbols-outlined text-3xl mb-2 opacity-50">folder_open</span>
                 <p>No folders in this template</p>
                 <p class="text-sm">Click "Add Folder" to start building the structure</p>
@@ -397,40 +397,40 @@ function countNodes(nodes: FolderTemplateNode[]): number {
       class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
       @click.self="showModal = false"
     >
-      <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-md p-6">
-        <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4">
+      <div class="bg-white dark:bg-zinc-800 rounded-lg shadow-xl w-full max-w-md p-6">
+        <h3 class="text-lg font-semibold text-zinc-800 dark:text-zinc-100 mb-4">
           {{ isEditing ? 'Edit Template' : 'New Template' }}
         </h3>
 
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name *</label>
+            <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Name *</label>
             <input
               v-model="formData.name"
               type="text"
-              class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal dark:bg-slate-700 dark:text-white"
+              class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal dark:bg-zinc-700 dark:text-white"
               placeholder="e.g., Project Folder"
             />
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
+            <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Description</label>
             <textarea
               v-model="formData.description"
               rows="2"
-              class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal dark:bg-slate-700 dark:text-white"
+              class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal dark:bg-zinc-700 dark:text-white"
               placeholder="What is this template for?"
             />
           </div>
 
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Category</label>
+              <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Category</label>
               <input
                 v-model="formData.category"
                 type="text"
                 list="categories"
-                class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal dark:bg-slate-700 dark:text-white"
+                class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal dark:bg-zinc-700 dark:text-white"
                 placeholder="e.g., Project"
               />
               <datalist id="categories">
@@ -439,11 +439,11 @@ function countNodes(nodes: FolderTemplateNode[]): number {
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Icon</label>
+              <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Icon</label>
               <input
                 v-model="formData.icon"
                 type="text"
-                class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal dark:bg-slate-700 dark:text-white"
+                class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal dark:bg-zinc-700 dark:text-white"
                 placeholder="folder_special"
               />
             </div>
@@ -458,7 +458,7 @@ function countNodes(nodes: FolderTemplateNode[]): number {
         <div class="flex justify-end gap-3 mt-6">
           <button
             @click="showModal = false"
-            class="px-4 py-2 text-slate-600 hover:text-slate-800 dark:text-slate-400"
+            class="px-4 py-2 text-zinc-600 hover:text-zinc-800 dark:text-zinc-400"
           >
             Cancel
           </button>
@@ -479,28 +479,28 @@ function countNodes(nodes: FolderTemplateNode[]): number {
       class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
       @click.self="showNodeModal = false"
     >
-      <div class="bg-white dark:bg-slate-800 rounded-lg shadow-xl w-full max-w-md p-6">
-        <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4">
+      <div class="bg-white dark:bg-zinc-800 rounded-lg shadow-xl w-full max-w-md p-6">
+        <h3 class="text-lg font-semibold text-zinc-800 dark:text-zinc-100 mb-4">
           {{ editingNode ? 'Edit Folder' : 'Add Folder' }}
         </h3>
 
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Folder Name *</label>
+            <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Folder Name *</label>
             <input
               v-model="nodeFormData.name"
               type="text"
-              class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal dark:bg-slate-700 dark:text-white"
+              class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal dark:bg-zinc-700 dark:text-white"
               placeholder="e.g., Documents"
             />
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
+            <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Description</label>
             <input
               v-model="nodeFormData.description"
               type="text"
-              class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal dark:bg-slate-700 dark:text-white"
+              class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal dark:bg-zinc-700 dark:text-white"
               placeholder="Optional description"
             />
           </div>
@@ -518,11 +518,11 @@ function countNodes(nodes: FolderTemplateNode[]): number {
 
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Sort Order</label>
+              <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Sort Order</label>
               <input
                 v-model.number="nodeFormData.sortOrder"
                 type="number"
-                class="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal dark:bg-slate-700 dark:text-white"
+                class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal dark:bg-zinc-700 dark:text-white"
               />
             </div>
           </div>
@@ -536,7 +536,7 @@ function countNodes(nodes: FolderTemplateNode[]): number {
         <div class="flex justify-end gap-3 mt-6">
           <button
             @click="showNodeModal = false"
-            class="px-4 py-2 text-slate-600 hover:text-slate-800 dark:text-slate-400"
+            class="px-4 py-2 text-zinc-600 hover:text-zinc-800 dark:text-zinc-400"
           >
             Cancel
           </button>

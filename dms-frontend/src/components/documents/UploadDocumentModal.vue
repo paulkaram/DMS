@@ -653,7 +653,7 @@ function getMaterialIcon(iconName?: string): string {
           leave-from-class="opacity-100 scale-100"
           leave-to-class="opacity-0 scale-95"
         >
-          <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col ring-1 ring-black/5 dark:ring-white/10">
+          <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col ring-1 ring-black/5 dark:ring-white/10">
             <!-- Header with brand gradient -->
             <div class="relative bg-gradient-to-r from-navy via-navy/95 to-primary p-6 overflow-hidden">
               <!-- Decorative elements -->
@@ -754,7 +754,7 @@ function getMaterialIcon(iconName?: string): string {
                       <!-- Same for All -->
                       <button
                         @click="selectConfigMode('same')"
-                        class="group relative p-6 bg-white dark:bg-slate-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl text-left hover:border-teal hover:shadow-lg hover:shadow-teal/10 transition-all duration-300"
+                        class="group relative p-6 bg-white dark:bg-zinc-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl text-left hover:border-teal hover:shadow-lg hover:shadow-teal/10 transition-all duration-300"
                       >
                         <div class="absolute top-4 right-4">
                           <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-teal/10 text-teal">
@@ -773,7 +773,7 @@ function getMaterialIcon(iconName?: string): string {
                       <!-- Configure Each -->
                       <button
                         @click="selectConfigMode('individual')"
-                        class="group p-6 bg-white dark:bg-slate-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl text-left hover:border-primary hover:shadow-lg hover:shadow-primary/10 transition-all duration-300"
+                        class="group p-6 bg-white dark:bg-zinc-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl text-left hover:border-primary hover:shadow-lg hover:shadow-primary/10 transition-all duration-300"
                       >
                         <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
                           <span class="material-symbols-outlined text-primary text-2xl">tune</span>
@@ -786,7 +786,7 @@ function getMaterialIcon(iconName?: string): string {
                     </div>
 
                     <!-- File Preview -->
-                    <div class="mt-8 p-4 bg-gray-50 dark:bg-slate-800/50 rounded-xl">
+                    <div class="mt-8 p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-xl">
                       <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
                         <span class="material-symbols-outlined text-sm">folder_open</span>
                         Files to upload:
@@ -795,7 +795,7 @@ function getMaterialIcon(iconName?: string): string {
                         <div
                           v-for="(file, idx) in uploadFiles"
                           :key="idx"
-                          class="inline-flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-700 rounded-lg border border-gray-200 dark:border-gray-600 text-sm"
+                          class="inline-flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-zinc-700 rounded-lg border border-gray-200 dark:border-gray-600 text-sm"
                         >
                           <span class="material-symbols-outlined text-teal text-sm">description</span>
                           <span class="text-gray-700 dark:text-gray-300 truncate max-w-[150px]">{{ file.name }}</span>
@@ -829,7 +829,7 @@ function getMaterialIcon(iconName?: string): string {
                   <div v-if="isWizardMode && currentFile" class="mb-5">
                     <div class="p-4 bg-gradient-to-r from-teal/10 to-primary/10 rounded-xl border border-teal/20">
                       <div class="flex items-center gap-4">
-                        <div class="w-14 h-14 bg-white dark:bg-slate-800 rounded-xl flex items-center justify-center shadow-sm">
+                        <div class="w-14 h-14 bg-white dark:bg-zinc-800 rounded-xl flex items-center justify-center shadow-sm">
                           <span class="material-symbols-outlined text-teal text-3xl">description</span>
                         </div>
                         <div class="flex-1 min-w-0">
@@ -837,7 +837,7 @@ function getMaterialIcon(iconName?: string): string {
                           <p class="text-sm text-gray-500">{{ formatSize(currentFile.size) }}</p>
                         </div>
                         <div class="text-right">
-                          <span class="inline-flex items-center gap-1 px-3 py-1 bg-white dark:bg-slate-800 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 shadow-sm">
+                          <span class="inline-flex items-center gap-1 px-3 py-1 bg-white dark:bg-zinc-800 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 shadow-sm">
                             <span class="material-symbols-outlined text-sm text-teal">check_circle</span>
                             {{ currentFileIndex + 1 }} / {{ totalWizardSteps }}
                           </span>
@@ -865,7 +865,7 @@ function getMaterialIcon(iconName?: string): string {
                       'relative border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-300 group',
                       isDragging
                         ? 'border-teal bg-teal/5 scale-[1.02]'
-                        : 'border-gray-300 dark:border-gray-700 hover:border-teal hover:bg-gray-50 dark:hover:bg-slate-800/50'
+                        : 'border-gray-300 dark:border-gray-700 hover:border-teal hover:bg-gray-50 dark:hover:bg-zinc-800/50'
                     ]"
                   >
                     <div class="flex flex-col items-center">
@@ -873,7 +873,7 @@ function getMaterialIcon(iconName?: string): string {
                         'w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300',
                         isDragging
                           ? 'bg-teal/20 scale-110'
-                          : 'bg-gray-100 dark:bg-slate-800 group-hover:bg-teal/10 group-hover:scale-105'
+                          : 'bg-gray-100 dark:bg-zinc-800 group-hover:bg-teal/10 group-hover:scale-105'
                       ]">
                         <span :class="[
                           'material-symbols-outlined text-4xl transition-colors',
@@ -920,7 +920,7 @@ function getMaterialIcon(iconName?: string): string {
                           <div
                             v-for="(file, index) in uploadFiles"
                             :key="file.name + index"
-                            class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-slate-800/50 rounded-xl border border-gray-100 dark:border-gray-800 group/file hover:border-teal/30 transition-colors"
+                            class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-xl border border-gray-100 dark:border-gray-800 group/file hover:border-teal/30 transition-colors"
                           >
                             <div class="w-10 h-10 rounded-lg bg-teal/10 flex items-center justify-center flex-shrink-0">
                               <span class="material-symbols-outlined text-teal">description</span>
@@ -960,7 +960,7 @@ function getMaterialIcon(iconName?: string): string {
                         <input
                           v-model="basicMetadata.name"
                           type="text"
-                          class="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-teal/20 focus:border-teal transition-all"
+                          class="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-teal/20 focus:border-teal transition-all"
                           placeholder="Uses filename if empty"
                         />
                       </div>
@@ -972,7 +972,7 @@ function getMaterialIcon(iconName?: string): string {
                         <textarea
                           v-model="basicMetadata.description"
                           rows="2"
-                          class="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-teal/20 focus:border-teal transition-all resize-none"
+                          class="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-teal/20 focus:border-teal transition-all resize-none"
                           placeholder="Add a description..."
                         ></textarea>
                       </div>
@@ -1068,7 +1068,7 @@ function getMaterialIcon(iconName?: string): string {
 
                   <!-- No content types message -->
                   <div v-else class="py-12 text-center">
-                    <div class="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
+                    <div class="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
                       <span class="material-symbols-outlined text-4xl text-gray-400">category</span>
                     </div>
                     <p class="text-sm font-medium text-gray-700 dark:text-gray-300">No Content Types Available</p>
@@ -1113,7 +1113,7 @@ function getMaterialIcon(iconName?: string): string {
                                   type="text"
                                   :placeholder="field.description || 'Enter text...'"
                                   :readonly="field.isReadOnly"
-                                  class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                                  class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                                 />
 
                                 <!-- TextArea -->
@@ -1123,7 +1123,7 @@ function getMaterialIcon(iconName?: string): string {
                                   rows="2"
                                   :placeholder="field.description || 'Enter text...'"
                                   :readonly="field.isReadOnly"
-                                  class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none"
+                                  class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none"
                                 ></textarea>
 
                                 <!-- Number -->
@@ -1133,7 +1133,7 @@ function getMaterialIcon(iconName?: string): string {
                                   type="number"
                                   :placeholder="field.description || 'Enter number...'"
                                   :readonly="field.isReadOnly"
-                                  class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                                  class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                                 />
 
                                 <!-- Decimal -->
@@ -1144,7 +1144,7 @@ function getMaterialIcon(iconName?: string): string {
                                   step="0.01"
                                   :placeholder="field.description || 'Enter decimal...'"
                                   :readonly="field.isReadOnly"
-                                  class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                                  class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                                 />
 
                                 <!-- Date -->
@@ -1175,7 +1175,7 @@ function getMaterialIcon(iconName?: string): string {
                                         :disabled="field.isReadOnly"
                                         class="sr-only peer"
                                       />
-                                      <div class="w-10 h-6 bg-gray-200 dark:bg-slate-700 rounded-full peer-checked:bg-primary transition-colors"></div>
+                                      <div class="w-10 h-6 bg-gray-200 dark:bg-zinc-700 rounded-full peer-checked:bg-primary transition-colors"></div>
                                       <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow peer-checked:translate-x-4 transition-transform"></div>
                                     </div>
                                     <span class="text-sm text-gray-600 dark:text-gray-400">{{ field.description || 'Enable' }}</span>
@@ -1198,7 +1198,7 @@ function getMaterialIcon(iconName?: string): string {
                                   v-model="fieldValues[field.fieldName]"
                                   multiple
                                   :disabled="field.isReadOnly"
-                                  class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all h-24"
+                                  class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all h-24"
                                 >
                                   <option v-for="opt in getFieldOptions(field)" :key="opt.value" :value="opt.value">
                                     {{ opt.label }}
@@ -1238,7 +1238,7 @@ function getMaterialIcon(iconName?: string): string {
                                   type="text"
                                   :placeholder="field.description || 'Enter value...'"
                                   :readonly="field.isReadOnly"
-                                  class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-slate-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                                  class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                                 />
 
                                 <p v-if="field.description && !['Boolean', 'Text', 'TextArea'].includes(field.fieldType)" class="text-xs text-gray-500 mt-1">
@@ -1256,7 +1256,7 @@ function getMaterialIcon(iconName?: string): string {
             </div>
 
             <!-- Footer with Upload Progress and Actions -->
-            <div class="border-t border-gray-200 dark:border-gray-700/50 p-6 bg-gray-50 dark:bg-slate-800/50">
+            <div class="border-t border-gray-200 dark:border-gray-700/50 p-6 bg-gray-50 dark:bg-zinc-800/50">
               <!-- Upload Progress -->
               <Transition
                 enter-active-class="duration-300 ease-out"
@@ -1271,7 +1271,7 @@ function getMaterialIcon(iconName?: string): string {
                     </span>
                     <span class="font-semibold text-teal">{{ uploadProgress }}%</span>
                   </div>
-                  <div class="h-2 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                  <div class="h-2 bg-gray-200 dark:bg-zinc-700 rounded-full overflow-hidden">
                     <div
                       class="h-full bg-gradient-to-r from-primary/80 to-primary transition-all duration-300 rounded-full"
                       :style="{ width: uploadProgress + '%' }"
@@ -1320,7 +1320,7 @@ function getMaterialIcon(iconName?: string): string {
                   <template v-if="needsConfigModeSelection">
                     <button
                       @click="emit('close')"
-                      class="px-5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 font-medium transition-all"
+                      class="px-5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 font-medium transition-all"
                     >
                       Cancel
                     </button>
@@ -1331,7 +1331,7 @@ function getMaterialIcon(iconName?: string): string {
                     <button
                       @click="wizardBack"
                       :disabled="currentFileIndex === 0 || isUploading"
-                      class="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 font-medium transition-all disabled:opacity-50 flex items-center gap-1.5"
+                      class="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 font-medium transition-all disabled:opacity-50 flex items-center gap-1.5"
                     >
                       <span class="material-symbols-outlined text-lg">arrow_back</span>
                       Back
@@ -1340,7 +1340,7 @@ function getMaterialIcon(iconName?: string): string {
                     <button
                       @click="wizardSkip"
                       :disabled="isUploading"
-                      class="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 font-medium transition-all disabled:opacity-50"
+                      class="px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 font-medium transition-all disabled:opacity-50"
                     >
                       Skip
                     </button>
@@ -1372,7 +1372,7 @@ function getMaterialIcon(iconName?: string): string {
                     <button
                       @click="emit('close')"
                       :disabled="isUploading"
-                      class="px-5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 font-medium transition-all disabled:opacity-50"
+                      class="px-5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 font-medium transition-all disabled:opacity-50"
                     >
                       Cancel
                     </button>

@@ -743,7 +743,7 @@ const versionSelectOptions = computed(() =>
 <template>
   <div class="space-y-6">
     <!-- Back Button -->
-    <button @click="goBack" class="flex items-center gap-2 text-slate-500 hover:text-teal transition-colors">
+    <button @click="goBack" class="flex items-center gap-2 text-zinc-500 hover:text-teal transition-colors">
       <span class="material-symbols-outlined text-xl">arrow_back</span>
       <span class="text-sm font-medium">Back to Explorer</span>
     </button>
@@ -752,7 +752,7 @@ const versionSelectOptions = computed(() =>
     <div v-if="isLoading" class="flex items-center justify-center py-20">
       <div class="flex flex-col items-center gap-3">
         <div class="w-10 h-10 border-3 border-teal border-t-transparent rounded-full animate-spin"></div>
-        <span class="text-sm text-slate-500">Loading document...</span>
+        <span class="text-sm text-zinc-500">Loading document...</span>
       </div>
     </div>
 
@@ -763,7 +763,7 @@ const versionSelectOptions = computed(() =>
 
     <div v-else-if="document" class="space-y-4">
       <!-- Compact Document Header (Dark) -->
-      <div class="bg-[#0f172a] dark:bg-[#0d1117] rounded-xl px-5 py-4">
+      <div class="bg-[#111318] dark:bg-[#0d1117] rounded-xl px-5 py-4">
         <div class="flex items-center justify-between">
           <!-- Document Info -->
           <div class="flex items-center gap-4">
@@ -787,7 +787,7 @@ const versionSelectOptions = computed(() =>
                   <span class="text-[9px] font-semibold text-violet-200 uppercase tracking-wide">Secured</span>
                 </div>
               </h1>
-              <p class="text-slate-400 text-sm">{{ document.extension?.replace('.', '').toUpperCase() || 'FILE' }} • {{ formatSize(document.size) }}</p>
+              <p class="text-zinc-400 text-sm">{{ document.extension?.replace('.', '').toUpperCase() || 'FILE' }} • {{ formatSize(document.size) }}</p>
             </div>
             <!-- Status Badges -->
             <div class="flex items-center gap-2 ml-4">
@@ -806,7 +806,7 @@ const versionSelectOptions = computed(() =>
                   'bg-purple-500/20 text-purple-400 border-purple-500/30': canAdmin,
                   'bg-red-500/20 text-red-400 border-red-500/30': canDelete && !canAdmin,
                   'bg-teal/20 text-teal border-teal/30': canWrite && !canDelete,
-                  'bg-slate-500/20 text-slate-400 border-slate-500/30': canRead && !canWrite
+                  'bg-zinc-500/20 text-zinc-400 border-zinc-500/30': canRead && !canWrite
                 }"
               >
                 <span class="material-symbols-outlined text-xs">
@@ -823,7 +823,7 @@ const versionSelectOptions = computed(() =>
             <button
               v-if="canWrite && !document.isCheckedOut"
               @click="handleCheckout"
-              class="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium border border-slate-500"
+              class="px-4 py-2 bg-zinc-600 hover:bg-zinc-500 text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium border border-zinc-500"
             >
               <span class="material-symbols-outlined text-lg">lock</span>
               Check Out
@@ -839,7 +839,7 @@ const versionSelectOptions = computed(() =>
             <button
               v-if="canRead"
               @click="showPreview = true"
-              class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium border border-slate-500"
+              class="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium border border-zinc-500"
             >
               <span class="material-symbols-outlined text-lg">open_in_new</span>
               Preview
@@ -859,7 +859,7 @@ const versionSelectOptions = computed(() =>
             <button
               v-if="canDelete && !document.isCheckedOut"
               @click="handleDelete"
-              class="p-2 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+              class="p-2 text-zinc-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
               title="Delete document"
             >
               <span class="material-symbols-outlined text-xl">delete</span>
@@ -869,44 +869,44 @@ const versionSelectOptions = computed(() =>
       </div>
 
       <!-- Stats Row (Light Grey Background) -->
-      <div class="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+      <div class="bg-zinc-50 dark:bg-zinc-800/50 rounded-xl p-4 border border-zinc-200 dark:border-zinc-700">
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <!-- Version Control -->
-          <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Version Control</p>
+          <div class="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 p-4">
+            <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">Version Control</p>
             <div class="flex items-center gap-2">
-              <span class="text-xl font-bold text-slate-800 dark:text-white">V{{ document.currentMajorVersion || 1 }}.{{ document.currentMinorVersion || 0 }}.{{ document.currentVersion }}</span>
+              <span class="text-xl font-bold text-zinc-800 dark:text-white">V{{ document.currentMajorVersion || 1 }}.{{ document.currentMinorVersion || 0 }}.{{ document.currentVersion }}</span>
               <span class="px-1.5 py-0.5 text-[9px] font-bold uppercase rounded bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400">+Latest</span>
             </div>
           </div>
 
           <!-- File Format -->
-          <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">File Format</p>
+          <div class="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 p-4">
+            <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">File Format</p>
             <div class="flex items-center gap-2">
               <span class="material-symbols-outlined text-teal">description</span>
-              <span class="text-lg font-semibold text-slate-800 dark:text-white">{{ document.extension?.replace('.', '').toUpperCase() || 'FILE' }} Document</span>
+              <span class="text-lg font-semibold text-zinc-800 dark:text-white">{{ document.extension?.replace('.', '').toUpperCase() || 'FILE' }} Document</span>
             </div>
           </div>
 
           <!-- Storage Size -->
-          <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Storage Size</p>
-            <p class="text-xl font-bold text-slate-800 dark:text-white">{{ formatSize(document.size) }}</p>
+          <div class="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 p-4">
+            <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">Storage Size</p>
+            <p class="text-xl font-bold text-zinc-800 dark:text-white">{{ formatSize(document.size) }}</p>
           </div>
 
           <!-- Created Date -->
-          <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Created Date</p>
-            <p class="text-lg font-bold text-slate-800 dark:text-white">{{ formatDateShort(document.createdAt) }}</p>
-            <p class="text-xs text-slate-400 mt-0.5">{{ formatTime(document.createdAt) }}</p>
+          <div class="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 p-4">
+            <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">Created Date</p>
+            <p class="text-lg font-bold text-zinc-800 dark:text-white">{{ formatDateShort(document.createdAt) }}</p>
+            <p class="text-xs text-zinc-400 mt-0.5">{{ formatTime(document.createdAt) }}</p>
           </div>
 
           <!-- Last Activity -->
-          <div class="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 p-4">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Last Activity</p>
-            <p class="text-lg font-bold text-slate-800 dark:text-white">{{ document.modifiedAt ? getRelativeTime(document.modifiedAt) : 'No activity' }}</p>
-            <p class="text-xs text-slate-400 mt-0.5">{{ document.modifiedBy || 'System' }}</p>
+          <div class="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 p-4">
+            <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">Last Activity</p>
+            <p class="text-lg font-bold text-zinc-800 dark:text-white">{{ document.modifiedAt ? getRelativeTime(document.modifiedAt) : 'No activity' }}</p>
+            <p class="text-xs text-zinc-400 mt-0.5">{{ document.modifiedBy || 'System' }}</p>
           </div>
         </div>
       </div>
@@ -914,7 +914,7 @@ const versionSelectOptions = computed(() =>
       <!-- Edit Mode Banner (Below Stats) -->
       <div
         v-if="document.isCheckedOut && isMyCheckout"
-        class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 p-4"
+        class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700 p-4"
       >
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
@@ -922,8 +922,8 @@ const versionSelectOptions = computed(() =>
               <span class="material-symbols-outlined text-teal">edit_document</span>
             </div>
             <div>
-              <h3 class="font-semibold text-slate-800 dark:text-white">Edit Mode Active</h3>
-              <p class="text-sm text-slate-500 dark:text-slate-400">
+              <h3 class="font-semibold text-zinc-800 dark:text-white">Edit Mode Active</h3>
+              <p class="text-sm text-zinc-500 dark:text-zinc-400">
                 Document is checked out for editing. Make changes below and save your draft.
                 <span v-if="workingCopy?.hasDraftFile" class="text-teal font-medium">(Draft file uploaded)</span>
               </p>
@@ -948,7 +948,7 @@ const versionSelectOptions = computed(() =>
             </button>
             <button
               @click="handleDiscardCheckout"
-              class="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-sm font-medium flex items-center gap-2"
+              class="px-4 py-2 border border-zinc-300 dark:border-zinc-600 text-zinc-600 dark:text-zinc-400 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-sm font-medium flex items-center gap-2"
             >
               <span class="material-symbols-outlined text-lg">undo</span>
               Discard
@@ -968,7 +968,7 @@ const versionSelectOptions = computed(() =>
       </div>
 
       <!-- Tabs and Actions -->
-      <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-1.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-1.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <!-- Tab Buttons -->
         <div class="flex gap-1">
           <button
@@ -977,7 +977,7 @@ const versionSelectOptions = computed(() =>
               'px-4 py-2.5 rounded-lg font-medium text-sm transition-all',
               activeTab === 'details'
                 ? 'bg-teal text-white shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
             ]"
           >
             <span class="flex items-center gap-2">
@@ -991,13 +991,13 @@ const versionSelectOptions = computed(() =>
               'px-4 py-2.5 rounded-lg font-medium text-sm transition-all',
               activeTab === 'versions'
                 ? 'bg-teal text-white shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
             ]"
           >
             <span class="flex items-center gap-2">
               <span class="material-symbols-outlined text-lg">history</span>
               Versions
-              <span class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">{{ versions.length }}</span>
+              <span class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300">{{ versions.length }}</span>
             </span>
           </button>
           <button
@@ -1007,7 +1007,7 @@ const versionSelectOptions = computed(() =>
               'px-4 py-2.5 rounded-lg font-medium text-sm transition-all',
               activeTab === 'activity'
                 ? 'bg-teal text-white shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'
             ]"
           >
             <span class="flex items-center gap-2">
@@ -1022,7 +1022,7 @@ const versionSelectOptions = computed(() =>
           <button
             v-if="versions.length >= 2"
             @click="openCompareModal"
-            class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors"
+            class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors"
           >
             <span class="material-symbols-outlined text-lg">compare</span>
             <span class="hidden sm:inline">Compare</span>
@@ -1030,7 +1030,7 @@ const versionSelectOptions = computed(() =>
           <button
             v-if="canAdmin"
             @click="openPermissions"
-            class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors"
+            class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors"
           >
             <span class="material-symbols-outlined text-lg">shield_person</span>
             <span class="hidden sm:inline">Permissions</span>
@@ -1044,35 +1044,35 @@ const versionSelectOptions = computed(() =>
         <div class="lg:col-span-2 space-y-6">
 
           <!-- Edit Mode: Modern File Upload Card -->
-          <div v-if="isEditMode" class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
+          <div v-if="isEditMode" class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6">
             <div class="flex items-center gap-3 mb-4">
               <div class="w-10 h-10 rounded-lg bg-teal/10 flex items-center justify-center">
                 <span class="material-symbols-outlined text-teal">upload_file</span>
               </div>
               <div>
-                <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Replace File</h3>
-                <p class="text-xs text-slate-500">Upload a new version of this document</p>
+                <h3 class="text-sm font-bold text-zinc-900 dark:text-white uppercase tracking-wider">Replace File</h3>
+                <p class="text-xs text-zinc-500">Upload a new version of this document</p>
               </div>
             </div>
 
             <!-- Current/Draft file info -->
-            <div class="mb-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
+            <div class="mb-4 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl">
               <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-lg bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
-                  <span class="material-symbols-outlined text-slate-500 dark:text-slate-400 text-2xl">description</span>
+                <div class="w-12 h-12 rounded-lg bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center">
+                  <span class="material-symbols-outlined text-zinc-500 dark:text-zinc-400 text-2xl">description</span>
                 </div>
                 <div class="flex-1 min-w-0">
-                  <p class="text-sm font-medium text-slate-900 dark:text-white truncate">{{ document.name }}{{ document.extension }}</p>
-                  <p class="text-xs text-slate-500">Current • {{ formatSize(document.size) }}</p>
+                  <p class="text-sm font-medium text-zinc-900 dark:text-white truncate">{{ document.name }}{{ document.extension }}</p>
+                  <p class="text-xs text-zinc-500">Current • {{ formatSize(document.size) }}</p>
                 </div>
               </div>
-              <div v-if="workingCopy?.hasDraftFile" class="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 flex items-center gap-3">
+              <div v-if="workingCopy?.hasDraftFile" class="mt-3 pt-3 border-t border-zinc-200 dark:border-zinc-700 flex items-center gap-3">
                 <div class="w-12 h-12 rounded-lg bg-teal/20 flex items-center justify-center">
                   <span class="material-symbols-outlined text-teal text-2xl">draft</span>
                 </div>
                 <div class="flex-1 min-w-0">
                   <p class="text-sm font-medium text-teal truncate">{{ workingCopy.draftFileName }}</p>
-                  <p class="text-xs text-slate-500">Draft • {{ formatSize(workingCopy.draftSize || 0) }}</p>
+                  <p class="text-xs text-zinc-500">Draft • {{ formatSize(workingCopy.draftSize || 0) }}</p>
                 </div>
                 <span class="material-symbols-outlined text-teal text-xl">check_circle</span>
               </div>
@@ -1081,7 +1081,7 @@ const versionSelectOptions = computed(() =>
             <!-- Modern Drag & Drop Upload Area -->
             <div
               class="relative border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer hover:border-teal hover:bg-teal/5"
-              :class="isDragging ? 'border-teal bg-teal/10' : 'border-slate-300 dark:border-slate-600'"
+              :class="isDragging ? 'border-teal bg-teal/10' : 'border-zinc-300 dark:border-zinc-600'"
               @dragenter.prevent="isDragging = true"
               @dragover.prevent="isDragging = true"
               @dragleave.prevent="isDragging = false"
@@ -1095,14 +1095,14 @@ const versionSelectOptions = computed(() =>
                 class="hidden"
               />
               <div class="flex flex-col items-center gap-3">
-                <div class="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                  <span class="material-symbols-outlined text-3xl" :class="isDragging ? 'text-teal' : 'text-slate-400'">cloud_upload</span>
+                <div class="w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                  <span class="material-symbols-outlined text-3xl" :class="isDragging ? 'text-teal' : 'text-zinc-400'">cloud_upload</span>
                 </div>
                 <div>
-                  <p class="text-sm font-medium text-slate-700 dark:text-slate-300">
+                  <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                     <span class="text-teal">Click to upload</span> or drag and drop
                   </p>
-                  <p class="text-xs text-slate-500 mt-1">Any file type supported</p>
+                  <p class="text-xs text-zinc-500 mt-1">Any file type supported</p>
                 </div>
               </div>
             </div>
@@ -1114,12 +1114,12 @@ const versionSelectOptions = computed(() =>
                   <span class="material-symbols-outlined text-teal">insert_drive_file</span>
                 </div>
                 <div class="flex-1 min-w-0">
-                  <p class="text-sm font-medium text-slate-900 dark:text-white truncate">{{ draftFile.name }}</p>
-                  <p class="text-xs text-slate-500">{{ formatSize(draftFile.size) }} • Ready to upload</p>
+                  <p class="text-sm font-medium text-zinc-900 dark:text-white truncate">{{ draftFile.name }}</p>
+                  <p class="text-xs text-zinc-500">{{ formatSize(draftFile.size) }} • Ready to upload</p>
                 </div>
                 <button
                   @click.stop="draftFile = null"
-                  class="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                  class="p-1.5 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                 >
                   <span class="material-symbols-outlined text-lg">close</span>
                 </button>
@@ -1137,23 +1137,23 @@ const versionSelectOptions = computed(() =>
           </div>
 
           <!-- Edit Mode: Name & Description Card -->
-          <div v-if="isEditMode" class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
-            <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-4">Document Properties</h3>
+          <div v-if="isEditMode" class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6">
+            <h3 class="text-sm font-bold text-zinc-900 dark:text-white uppercase tracking-wider mb-4">Document Properties</h3>
             <div class="space-y-4">
               <div>
-                <label class="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Name</label>
+                <label class="block text-xs font-medium text-zinc-500 uppercase tracking-wider mb-2">Name</label>
                 <input
                   v-model="draftName"
                   type="text"
-                  class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                  class="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
                 />
               </div>
               <div>
-                <label class="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Description</label>
+                <label class="block text-xs font-medium text-zinc-500 uppercase tracking-wider mb-2">Description</label>
                 <textarea
                   v-model="draftDescription"
                   rows="3"
-                  class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                  class="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white"
                   placeholder="Enter a description..."
                 ></textarea>
               </div>
@@ -1161,29 +1161,29 @@ const versionSelectOptions = computed(() =>
           </div>
 
           <!-- Read-only Description Card (when not editing) -->
-          <div v-else class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
+          <div v-else class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6">
             <div class="flex items-center gap-3 mb-4">
               <div class="w-10 h-10 rounded-lg bg-teal/10 flex items-center justify-center">
                 <span class="material-symbols-outlined text-teal">notes</span>
               </div>
               <div>
-                <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Notes & Description</h3>
+                <h3 class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Notes & Description</h3>
               </div>
             </div>
-            <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+            <p class="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed">
               {{ document.description || 'No description available for this document.' }}
             </p>
           </div>
 
           <!-- Edit Mode: Metadata Fields -->
-          <div v-if="isEditMode && draftMetadata.length > 0" class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
+          <div v-if="isEditMode && draftMetadata.length > 0" class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6">
             <div class="flex items-center gap-3 mb-5">
               <div class="w-10 h-10 rounded-lg bg-teal/10 flex items-center justify-center">
                 <span class="material-symbols-outlined text-teal">edit_note</span>
               </div>
               <div>
-                <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">{{ contentTypeInfo?.name || 'Metadata' }}</h3>
-                <p class="text-xs text-slate-500">Edit metadata fields below</p>
+                <h3 class="text-sm font-bold text-zinc-900 dark:text-white uppercase tracking-wider">{{ contentTypeInfo?.name || 'Metadata' }}</h3>
+                <p class="text-xs text-zinc-500">Edit metadata fields below</p>
               </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1192,7 +1192,7 @@ const versionSelectOptions = computed(() =>
                 :key="field.fieldId"
                 class="space-y-1"
               >
-                <label class="block text-xs font-medium text-slate-500 uppercase tracking-wider">
+                <label class="block text-xs font-medium text-zinc-500 uppercase tracking-wider">
                   {{ metadataFields.find(f => f.id === field.fieldId)?.displayName || field.fieldName }}
                 </label>
                 <!-- Text input -->
@@ -1200,14 +1200,14 @@ const versionSelectOptions = computed(() =>
                   v-if="isTextFieldType(field.fieldType)"
                   v-model="draftMetadata[index].value"
                   type="text"
-                  class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm"
+                  class="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm"
                 />
                 <!-- Long text / TextArea -->
                 <textarea
                   v-else-if="isTextAreaFieldType(field.fieldType)"
                   v-model="draftMetadata[index].value"
                   rows="2"
-                  class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm"
+                  class="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm"
                 ></textarea>
                 <!-- Number input -->
                 <input
@@ -1215,7 +1215,7 @@ const versionSelectOptions = computed(() =>
                   v-model="draftMetadata[index].value"
                   type="number"
                   step="any"
-                  class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm"
+                  class="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm"
                 />
                 <!-- Modern Date Picker -->
                 <UiDatePicker
@@ -1230,74 +1230,74 @@ const versionSelectOptions = computed(() =>
                   v-else
                   v-model="draftMetadata[index].value"
                   type="text"
-                  class="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm"
+                  class="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm"
                 />
               </div>
             </div>
           </div>
 
           <!-- Read-only Content Type Metadata Section (when not editing) -->
-          <div v-else-if="metadataFields.length > 0" class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
+          <div v-else-if="metadataFields.length > 0" class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6">
             <div class="flex items-center gap-3 mb-5">
               <div class="w-10 h-10 rounded-lg bg-teal/10 flex items-center justify-center">
                 <span class="material-symbols-outlined text-teal">category</span>
               </div>
               <div>
-                <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Metadata Fields</h3>
-                <p class="text-xs text-slate-500 mt-0.5">{{ contentTypeInfo?.name || 'Custom metadata' }}</p>
+                <h3 class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Metadata Fields</h3>
+                <p class="text-xs text-zinc-500 mt-0.5">{{ contentTypeInfo?.name || 'Custom metadata' }}</p>
               </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div
                 v-for="field in metadataFields"
                 :key="field.id"
-                class="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg overflow-hidden"
+                class="p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg overflow-hidden"
               >
-                <dt class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{{ field.displayName }}</dt>
-                <dd class="text-sm font-medium text-slate-900 dark:text-white break-words">{{ field.value || '-' }}</dd>
+                <dt class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1">{{ field.displayName }}</dt>
+                <dd class="text-sm font-medium text-zinc-900 dark:text-white break-words">{{ field.value || '-' }}</dd>
               </div>
             </div>
           </div>
 
           <!-- No metadata message -->
-          <div v-else-if="!isEditMode" class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
+          <div v-else-if="!isEditMode" class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6">
             <div class="flex items-center gap-3 mb-4">
-              <div class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                <span class="material-symbols-outlined text-slate-400">category</span>
+              <div class="w-10 h-10 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                <span class="material-symbols-outlined text-zinc-400">category</span>
               </div>
               <div>
-                <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Metadata Fields</h3>
+                <h3 class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Metadata Fields</h3>
               </div>
             </div>
-            <p class="text-sm text-slate-400">No content type metadata associated with this document.</p>
+            <p class="text-sm text-zinc-400">No content type metadata associated with this document.</p>
           </div>
         </div>
 
         <!-- Right Column - Quick Info -->
         <div class="space-y-6">
           <!-- Document Details Card -->
-          <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
+          <div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6">
             <div class="flex items-center gap-3 mb-4">
               <div class="w-10 h-10 rounded-lg bg-teal/10 flex items-center justify-center">
                 <span class="material-symbols-outlined text-teal">info</span>
               </div>
-              <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Document Details</h3>
+              <h3 class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Document Details</h3>
             </div>
             <dl class="space-y-4">
               <div class="flex items-center justify-between">
-                <dt class="text-xs text-slate-500 uppercase tracking-wider">File Type</dt>
-                <dd class="text-sm font-medium text-slate-900 dark:text-white">{{ document.extension?.replace('.', '').toUpperCase() || '-' }}</dd>
+                <dt class="text-xs text-zinc-500 uppercase tracking-wider">File Type</dt>
+                <dd class="text-sm font-medium text-zinc-900 dark:text-white">{{ document.extension?.replace('.', '').toUpperCase() || '-' }}</dd>
               </div>
               <div class="flex items-center justify-between">
-                <dt class="text-xs text-slate-500 uppercase tracking-wider">Content Type</dt>
-                <dd class="text-sm font-medium text-slate-900 dark:text-white">{{ document.contentType || '-' }}</dd>
+                <dt class="text-xs text-zinc-500 uppercase tracking-wider">Content Type</dt>
+                <dd class="text-sm font-medium text-zinc-900 dark:text-white">{{ document.contentType || '-' }}</dd>
               </div>
               <div class="flex items-center justify-between">
-                <dt class="text-xs text-slate-500 uppercase tracking-wider">File Size</dt>
-                <dd class="text-sm font-medium text-slate-900 dark:text-white">{{ formatSize(document.size) }}</dd>
+                <dt class="text-xs text-zinc-500 uppercase tracking-wider">File Size</dt>
+                <dd class="text-sm font-medium text-zinc-900 dark:text-white">{{ formatSize(document.size) }}</dd>
               </div>
               <div class="flex items-center justify-between">
-                <dt class="text-xs text-slate-500 uppercase tracking-wider">Status</dt>
+                <dt class="text-xs text-zinc-500 uppercase tracking-wider">Status</dt>
                 <dd>
                   <span
                     :class="document.isCheckedOut ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400' : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'"
@@ -1311,25 +1311,25 @@ const versionSelectOptions = computed(() =>
           </div>
 
           <!-- Quick Actions Card -->
-          <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
+          <div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6">
             <div class="flex items-center gap-3 mb-4">
               <div class="w-10 h-10 rounded-lg bg-teal/10 flex items-center justify-center">
                 <span class="material-symbols-outlined text-teal">bolt</span>
               </div>
-              <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Quick Actions</h3>
+              <h3 class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Quick Actions</h3>
             </div>
             <div class="space-y-2">
               <button
                 v-if="canRead"
                 @click="showPreview = true"
-                class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-teal/10 hover:text-teal transition-all"
+                class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-zinc-600 dark:text-zinc-300 hover:bg-teal/10 hover:text-teal transition-all"
               >
                 <span class="material-symbols-outlined text-xl">open_in_new</span>
                 <span class="text-sm font-medium">Preview File</span>
               </button>
               <button
                 @click="handleDownload()"
-                class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-teal/10 hover:text-teal transition-all"
+                class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-zinc-600 dark:text-zinc-300 hover:bg-teal/10 hover:text-teal transition-all"
               >
                 <span class="material-symbols-outlined text-xl">download</span>
                 <span class="text-sm font-medium">Download File</span>
@@ -1337,14 +1337,14 @@ const versionSelectOptions = computed(() =>
               <button
                 v-if="canWrite && !document.isCheckedOut"
                 @click="handleCheckout"
-                class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-teal/10 hover:text-teal transition-all"
+                class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-zinc-600 dark:text-zinc-300 hover:bg-teal/10 hover:text-teal transition-all"
               >
                 <span class="material-symbols-outlined text-xl">lock</span>
                 <span class="text-sm font-medium">Check Out for Editing</span>
               </button>
               <button
                 @click="handleTabChange('versions')"
-                class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-teal/10 hover:text-teal transition-all"
+                class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-zinc-600 dark:text-zinc-300 hover:bg-teal/10 hover:text-teal transition-all"
               >
                 <span class="material-symbols-outlined text-xl">history</span>
                 <span class="text-sm font-medium">View Version History</span>
@@ -1357,25 +1357,25 @@ const versionSelectOptions = computed(() =>
       <!-- Versions Tab -->
       <div v-if="activeTab === 'versions'" class="space-y-4">
         <!-- Version Legend -->
-        <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4">
-          <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Version Types</h4>
+        <div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-4">
+          <h4 class="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-3">Version Types</h4>
           <div class="flex flex-wrap gap-6">
             <div class="flex items-center gap-3">
               <div class="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
                 <span class="material-symbols-outlined text-purple-600 dark:text-purple-400 text-lg">publish</span>
               </div>
               <div>
-                <p class="text-sm font-medium text-slate-900 dark:text-white">Major Version (1.0, 2.0...)</p>
-                <p class="text-xs text-slate-500">Published & finalized versions visible to all users</p>
+                <p class="text-sm font-medium text-zinc-900 dark:text-white">Major Version (1.0, 2.0...)</p>
+                <p class="text-xs text-zinc-500">Published & finalized versions visible to all users</p>
               </div>
             </div>
             <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                <span class="material-symbols-outlined text-slate-500 dark:text-slate-400 text-lg">edit_note</span>
+              <div class="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                <span class="material-symbols-outlined text-zinc-500 dark:text-zinc-400 text-lg">edit_note</span>
               </div>
               <div>
-                <p class="text-sm font-medium text-slate-900 dark:text-white">Minor Version (1.1, 1.2...)</p>
-                <p class="text-xs text-slate-500">Draft versions - work in progress</p>
+                <p class="text-sm font-medium text-zinc-900 dark:text-white">Minor Version (1.1, 1.2...)</p>
+                <p class="text-xs text-zinc-500">Draft versions - work in progress</p>
               </div>
             </div>
           </div>
@@ -1389,14 +1389,14 @@ const versionSelectOptions = computed(() =>
             </div>
             <div>
               <p class="text-xs font-bold text-teal uppercase tracking-wider">Current Version</p>
-              <p class="text-2xl font-bold text-slate-900 dark:text-white">
+              <p class="text-2xl font-bold text-zinc-900 dark:text-white">
                 v{{ document.currentMajorVersion || 1 }}.{{ document.currentMinorVersion || 0 }}
               </p>
             </div>
           </div>
           <div class="text-right">
-            <p class="text-xs text-slate-500">Total Versions</p>
-            <p class="text-xl font-bold text-slate-900 dark:text-white">{{ versions.length }}</p>
+            <p class="text-xs text-zinc-500">Total Versions</p>
+            <p class="text-xl font-bold text-zinc-900 dark:text-white">{{ versions.length }}</p>
           </div>
         </div>
 
@@ -1405,7 +1405,7 @@ const versionSelectOptions = computed(() =>
           <div
             v-for="(version, index) in versions"
             :key="version.id"
-            class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden transition-all hover:shadow-md hover:border-teal/30"
+            class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden transition-all hover:shadow-md hover:border-teal/30"
             :class="{ 'ring-2 ring-teal/50 border-teal': version.versionNumber === document.currentVersion }"
           >
             <!-- Version Header -->
@@ -1417,7 +1417,7 @@ const versionSelectOptions = computed(() =>
                     class="w-14 h-14 rounded-xl flex items-center justify-center"
                     :class="version.versionType === 'Major'
                       ? 'bg-gradient-to-br from-purple-500 to-purple-700'
-                      : 'bg-gradient-to-br from-slate-600 to-slate-800'"
+                      : 'bg-gradient-to-br from-zinc-600 to-zinc-800'"
                   >
                     <span class="text-white font-bold text-lg">{{ getVersionLabel(version) }}</span>
                   </div>
@@ -1433,13 +1433,13 @@ const versionSelectOptions = computed(() =>
                 <!-- Version Info -->
                 <div>
                   <div class="flex items-center gap-2">
-                    <h4 class="text-base font-bold text-slate-900 dark:text-white">
+                    <h4 class="text-base font-bold text-zinc-900 dark:text-white">
                       Version {{ getVersionLabel(version) }}
                     </h4>
                     <span
                       :class="version.versionType === 'Major'
                         ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400'
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'"
+                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400'"
                       class="px-2 py-0.5 rounded text-[10px] font-bold uppercase"
                     >
                       {{ version.versionType || 'Minor' }}
@@ -1451,10 +1451,10 @@ const versionSelectOptions = computed(() =>
                       Current
                     </span>
                   </div>
-                  <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
                     {{ formatDate(version.createdAt) }} <span class="mx-1">•</span> {{ formatSize(version.size) }}
                   </p>
-                  <p v-if="version.comment || version.changeDescription" class="text-sm text-slate-600 dark:text-slate-300 mt-1">
+                  <p v-if="version.comment || version.changeDescription" class="text-sm text-zinc-600 dark:text-zinc-300 mt-1">
                     {{ version.comment || version.changeDescription }}
                   </p>
                 </div>
@@ -1486,7 +1486,7 @@ const versionSelectOptions = computed(() =>
                   <button
                     v-if="version.versionNumber !== document.currentVersion && versions.length > 1"
                     @click="quickCompareWithCurrent(version.id)"
-                    class="p-2.5 text-slate-400 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+                    class="p-2.5 text-zinc-400 hover:text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
                     title="Compare with current version"
                   >
                     <span class="material-symbols-outlined text-lg">compare</span>
@@ -1495,7 +1495,7 @@ const versionSelectOptions = computed(() =>
                   <!-- Download -->
                   <button
                     @click="handleDownload(version.versionNumber)"
-                    class="p-2.5 text-slate-400 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors"
+                    class="p-2.5 text-zinc-400 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors"
                     title="Download this version"
                   >
                     <span class="material-symbols-outlined text-lg">download</span>
@@ -1505,7 +1505,7 @@ const versionSelectOptions = computed(() =>
                   <button
                     v-if="canWrite && !document.isCheckedOut && version.versionNumber !== document.currentVersion"
                     @click="openRestoreModal(version.id)"
-                    class="p-2.5 text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
+                    class="p-2.5 text-zinc-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
                     title="Restore this version"
                   >
                     <span class="material-symbols-outlined text-lg">settings_backup_restore</span>
@@ -1516,12 +1516,12 @@ const versionSelectOptions = computed(() =>
           </div>
 
           <!-- Empty State -->
-          <div v-if="versions.length === 0" class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-12 text-center">
+          <div v-if="versions.length === 0" class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-12 text-center">
             <div class="flex flex-col items-center gap-3">
-              <div class="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center">
-                <span class="material-symbols-outlined text-3xl text-slate-400">history</span>
+              <div class="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center">
+                <span class="material-symbols-outlined text-3xl text-zinc-400">history</span>
               </div>
-              <p class="text-sm text-slate-500">No version history available</p>
+              <p class="text-sm text-zinc-500">No version history available</p>
             </div>
           </div>
         </div>
@@ -1530,7 +1530,7 @@ const versionSelectOptions = computed(() =>
         <div v-if="versions.length > 1" class="flex justify-center mt-4">
           <button
             @click="openCompareModal"
-            class="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg transition-colors text-sm font-medium"
+            class="flex items-center gap-2 px-4 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-lg transition-colors text-sm font-medium"
           >
             <span class="material-symbols-outlined text-lg">compare_arrows</span>
             Compare Any Two Versions
@@ -1539,17 +1539,17 @@ const versionSelectOptions = computed(() =>
       </div>
 
       <!-- Activity Tab - Only shown for Write+ users -->
-      <div v-if="activeTab === 'activity' && canWrite" class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
+      <div v-if="activeTab === 'activity' && canWrite" class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 p-6">
         <div v-if="activities.length === 0" class="text-center py-12">
           <div class="flex flex-col items-center gap-3">
-            <div class="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center">
-              <span class="material-symbols-outlined text-3xl text-slate-400">timeline</span>
+            <div class="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center">
+              <span class="material-symbols-outlined text-3xl text-zinc-400">timeline</span>
             </div>
-            <p class="text-sm text-slate-500">No activity recorded</p>
+            <p class="text-sm text-zinc-500">No activity recorded</p>
           </div>
         </div>
         <div v-else class="space-y-2">
-          <div v-for="activity in activities" :key="activity.id" class="flex items-center gap-4 p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors border border-slate-100 dark:border-slate-800">
+          <div v-for="activity in activities" :key="activity.id" class="flex items-center gap-4 p-4 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors border border-zinc-100 dark:border-zinc-800">
             <!-- Icon -->
             <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
               :class="{
@@ -1570,14 +1570,14 @@ const versionSelectOptions = computed(() =>
             </div>
             <!-- Content -->
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-semibold text-slate-900 dark:text-white">{{ formatActionLabel(activity.action) }}</p>
-              <p class="text-xs text-slate-600 dark:text-slate-400 mt-0.5">{{ activity.userName || 'Unknown user' }}</p>
-              <p v-if="activity.details" class="text-xs text-slate-500 mt-1">{{ activity.details }}</p>
+              <p class="text-sm font-semibold text-zinc-900 dark:text-white">{{ formatActionLabel(activity.action) }}</p>
+              <p class="text-xs text-zinc-600 dark:text-zinc-400 mt-0.5">{{ activity.userName || 'Unknown user' }}</p>
+              <p v-if="activity.details" class="text-xs text-zinc-500 mt-1">{{ activity.details }}</p>
             </div>
             <!-- Time -->
             <div class="text-right flex-shrink-0">
-              <p class="text-xs font-medium text-slate-600 dark:text-slate-400">{{ formatTime(activity.createdAt) }}</p>
-              <p class="text-[10px] text-slate-400 mt-0.5">{{ formatDateShort(activity.createdAt) }}</p>
+              <p class="text-xs font-medium text-zinc-600 dark:text-zinc-400">{{ formatTime(activity.createdAt) }}</p>
+              <p class="text-[10px] text-zinc-400 mt-0.5">{{ formatDateShort(activity.createdAt) }}</p>
             </div>
           </div>
         </div>
@@ -1608,9 +1608,9 @@ const versionSelectOptions = computed(() =>
               leave-from-class="opacity-100 scale-100 translate-y-0"
               leave-to-class="opacity-0 scale-95 translate-y-4"
             >
-              <div v-if="showCheckinModal" class="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden" @click.stop>
+              <div v-if="showCheckinModal" class="relative w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl overflow-hidden" @click.stop>
                 <!-- Header with brand gradient -->
-                <div class="relative bg-gradient-to-r from-[#0f172a] via-[#0f172a]/95 to-teal p-5 overflow-hidden">
+                <div class="relative bg-gradient-to-r from-navy via-navy/95 to-teal p-5 overflow-hidden">
                   <!-- Decorative elements -->
                   <div class="absolute top-0 right-0 w-32 h-32 bg-teal/20 rounded-full -translate-y-1/2 translate-x-1/2"></div>
                   <div class="absolute bottom-0 left-0 w-20 h-20 bg-teal/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
@@ -1639,7 +1639,7 @@ const versionSelectOptions = computed(() =>
                 <div class="px-6 py-4 space-y-4">
                   <!-- Version Type - Compact Radio Style -->
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Version Type</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-2">Version Type</label>
                     <div class="grid grid-cols-3 gap-2">
                       <!-- Minor -->
                       <button
@@ -1649,12 +1649,12 @@ const versionSelectOptions = computed(() =>
                           'p-3 rounded-lg border-2 text-center transition-all',
                           checkinType === CheckInType.Minor
                             ? 'border-teal bg-teal/5'
-                            : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                            : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300'
                         ]"
                       >
-                        <span class="material-symbols-outlined text-xl mb-1" :class="checkinType === CheckInType.Minor ? 'text-teal' : 'text-slate-400'">edit_note</span>
-                        <p class="text-xs font-semibold" :class="checkinType === CheckInType.Minor ? 'text-teal' : 'text-slate-700 dark:text-slate-300'">Draft</p>
-                        <p class="text-[10px] text-slate-400 mt-0.5">v{{ document?.currentMajorVersion || 1 }}.{{ (document?.currentMinorVersion || 0) + 1 }}</p>
+                        <span class="material-symbols-outlined text-xl mb-1" :class="checkinType === CheckInType.Minor ? 'text-teal' : 'text-zinc-400'">edit_note</span>
+                        <p class="text-xs font-semibold" :class="checkinType === CheckInType.Minor ? 'text-teal' : 'text-zinc-700 dark:text-zinc-300'">Draft</p>
+                        <p class="text-[10px] text-zinc-400 mt-0.5">v{{ document?.currentMajorVersion || 1 }}.{{ (document?.currentMinorVersion || 0) + 1 }}</p>
                       </button>
 
                       <!-- Major -->
@@ -1665,12 +1665,12 @@ const versionSelectOptions = computed(() =>
                           'p-3 rounded-lg border-2 text-center transition-all',
                           checkinType === CheckInType.Major
                             ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                            : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                            : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300'
                         ]"
                       >
-                        <span class="material-symbols-outlined text-xl mb-1" :class="checkinType === CheckInType.Major ? 'text-purple-600' : 'text-slate-400'">publish</span>
-                        <p class="text-xs font-semibold" :class="checkinType === CheckInType.Major ? 'text-purple-600' : 'text-slate-700 dark:text-slate-300'">Publish</p>
-                        <p class="text-[10px] text-slate-400 mt-0.5">v{{ (document?.currentMajorVersion || 1) + 1 }}.0</p>
+                        <span class="material-symbols-outlined text-xl mb-1" :class="checkinType === CheckInType.Major ? 'text-purple-600' : 'text-zinc-400'">publish</span>
+                        <p class="text-xs font-semibold" :class="checkinType === CheckInType.Major ? 'text-purple-600' : 'text-zinc-700 dark:text-zinc-300'">Publish</p>
+                        <p class="text-[10px] text-zinc-400 mt-0.5">v{{ (document?.currentMajorVersion || 1) + 1 }}.0</p>
                       </button>
 
                       <!-- Overwrite -->
@@ -1681,47 +1681,47 @@ const versionSelectOptions = computed(() =>
                           'p-3 rounded-lg border-2 text-center transition-all',
                           checkinType === CheckInType.Overwrite
                             ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
-                            : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                            : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300'
                         ]"
                       >
-                        <span class="material-symbols-outlined text-xl mb-1" :class="checkinType === CheckInType.Overwrite ? 'text-amber-600' : 'text-slate-400'">sync</span>
-                        <p class="text-xs font-semibold" :class="checkinType === CheckInType.Overwrite ? 'text-amber-600' : 'text-slate-700 dark:text-slate-300'">Overwrite</p>
-                        <p class="text-[10px] text-slate-400 mt-0.5">Replace</p>
+                        <span class="material-symbols-outlined text-xl mb-1" :class="checkinType === CheckInType.Overwrite ? 'text-amber-600' : 'text-zinc-400'">sync</span>
+                        <p class="text-xs font-semibold" :class="checkinType === CheckInType.Overwrite ? 'text-amber-600' : 'text-zinc-700 dark:text-zinc-300'">Overwrite</p>
+                        <p class="text-[10px] text-zinc-400 mt-0.5">Replace</p>
                       </button>
                     </div>
                   </div>
 
                   <!-- Comment -->
                   <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Version Comment</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1">Version Comment</label>
                     <textarea
                       v-model="checkinComment"
                       rows="2"
-                      class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+                      class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal bg-white dark:bg-zinc-800 text-gray-900 dark:text-white"
                       placeholder="Brief description of changes..."
                     ></textarea>
                   </div>
 
                   <!-- Keep Checked Out -->
-                  <label class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-slate-800 rounded-lg cursor-pointer">
+                  <label class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-zinc-800 rounded-lg cursor-pointer">
                     <input
                       type="checkbox"
                       v-model="keepCheckedOut"
-                      class="w-4 h-4 text-teal rounded focus:ring-teal border-gray-300 dark:border-slate-600"
+                      class="w-4 h-4 text-teal rounded focus:ring-teal border-gray-300 dark:border-zinc-600"
                     />
                     <div>
-                      <span class="text-sm font-medium text-gray-700 dark:text-slate-300">Keep checked out</span>
-                      <p class="text-xs text-gray-500 dark:text-slate-400">Continue editing after check-in</p>
+                      <span class="text-sm font-medium text-gray-700 dark:text-zinc-300">Keep checked out</span>
+                      <p class="text-xs text-gray-500 dark:text-zinc-400">Continue editing after check-in</p>
                     </div>
                   </label>
                 </div>
 
                 <!-- Footer -->
-                <div class="flex justify-end gap-3 px-6 py-4 bg-gray-50 dark:bg-slate-800/50 border-t border-gray-200 dark:border-slate-700/50">
+                <div class="flex justify-end gap-3 px-6 py-4 bg-gray-50 dark:bg-zinc-800/50 border-t border-gray-200 dark:border-zinc-700/50">
                   <button
                     type="button"
                     @click="showCheckinModal = false"
-                    class="px-5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 font-medium transition-all"
+                    class="px-5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 font-medium transition-all"
                   >
                     Cancel
                   </button>
@@ -1729,7 +1729,7 @@ const versionSelectOptions = computed(() =>
                     type="button"
                     @click="handleCheckin"
                     :disabled="isCheckingIn"
-                    class="px-6 py-2.5 bg-gradient-to-r from-[#0f172a] to-teal text-white rounded-xl hover:shadow-lg hover:shadow-teal/25 hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:shadow-none disabled:hover:translate-y-0 font-medium transition-all flex items-center gap-2"
+                    class="px-6 py-2.5 bg-gradient-to-r from-navy to-teal text-white rounded-xl hover:shadow-lg hover:shadow-teal/25 hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:shadow-none disabled:hover:translate-y-0 font-medium transition-all flex items-center gap-2"
                   >
                     <span v-if="isCheckingIn" class="material-symbols-outlined animate-spin text-base">progress_activity</span>
                     <span v-else class="material-symbols-outlined text-base">check_circle</span>
@@ -1759,9 +1759,9 @@ const versionSelectOptions = computed(() =>
 
           <!-- Modal Container -->
           <div class="flex min-h-full items-center justify-center p-4">
-            <div class="relative w-full max-w-4xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden" @click.stop>
+            <div class="relative w-full max-w-4xl bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl overflow-hidden" @click.stop>
               <!-- Header with gradient -->
-              <div class="relative bg-gradient-to-r from-[#0f172a] via-[#1e293b] to-purple-900 p-5 overflow-hidden">
+              <div class="relative bg-gradient-to-r from-navy via-[#1e1e2b] to-purple-900 p-5 overflow-hidden">
                 <div class="absolute top-0 right-0 w-40 h-40 bg-purple-500/20 rounded-full -translate-y-1/2 translate-x-1/2"></div>
                 <div class="absolute bottom-0 left-0 w-24 h-24 bg-teal/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
 
@@ -1791,7 +1791,7 @@ const versionSelectOptions = computed(() =>
                       v-model="compareSourceVersion"
                       class="w-full px-4 py-2.5 bg-white/10 border border-white/20 rounded-xl text-white text-sm focus:ring-2 focus:ring-purple-500/50 focus:border-purple-400"
                     >
-                      <option v-for="v in versions" :key="v.id" :value="v.id" class="text-slate-900">
+                      <option v-for="v in versions" :key="v.id" :value="v.id" class="text-zinc-900">
                         v{{ getVersionLabel(v) }} - {{ formatDateShort(v.createdAt) }}
                       </option>
                     </select>
@@ -1802,7 +1802,7 @@ const versionSelectOptions = computed(() =>
                       v-model="compareTargetVersion"
                       class="w-full px-4 py-2.5 bg-white/10 border border-white/20 rounded-xl text-white text-sm focus:ring-2 focus:ring-purple-500/50 focus:border-purple-400"
                     >
-                      <option v-for="v in versions" :key="v.id" :value="v.id" class="text-slate-900">
+                      <option v-for="v in versions" :key="v.id" :value="v.id" class="text-zinc-900">
                         v{{ getVersionLabel(v) }} - {{ formatDateShort(v.createdAt) }}
                       </option>
                     </select>
@@ -1825,7 +1825,7 @@ const versionSelectOptions = computed(() =>
                 <!-- Loading State -->
                 <div v-if="isComparing" class="p-12 text-center">
                   <div class="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-                  <p class="text-sm text-slate-500 mt-4">Analyzing versions...</p>
+                  <p class="text-sm text-zinc-500 mt-4">Analyzing versions...</p>
                 </div>
 
                 <!-- Results -->
@@ -1833,18 +1833,18 @@ const versionSelectOptions = computed(() =>
                   <!-- Version Cards Side by Side -->
                   <div class="grid grid-cols-2 gap-4">
                     <!-- Source Version -->
-                    <div class="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border-2 border-slate-200 dark:border-slate-700">
+                    <div class="p-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl border-2 border-zinc-200 dark:border-zinc-700">
                       <div class="flex items-center gap-3 mb-3">
-                        <div class="w-10 h-10 rounded-lg bg-slate-600 flex items-center justify-center">
+                        <div class="w-10 h-10 rounded-lg bg-zinc-600 flex items-center justify-center">
                           <span class="text-white font-bold text-sm">{{ versionComparison.sourceVersion.versionLabel }}</span>
                         </div>
                         <div>
-                          <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Source</p>
-                          <p class="text-sm font-semibold text-slate-900 dark:text-white">Version {{ versionComparison.sourceVersion.versionLabel }}</p>
+                          <p class="text-xs font-bold text-zinc-400 uppercase tracking-wider">Source</p>
+                          <p class="text-sm font-semibold text-zinc-900 dark:text-white">Version {{ versionComparison.sourceVersion.versionLabel }}</p>
                         </div>
                       </div>
-                      <p class="text-xs text-slate-500">{{ formatDate(versionComparison.sourceVersion.createdAt) }}</p>
-                      <p class="text-xs text-slate-500 mt-1">{{ formatSize(versionComparison.sourceVersion.size) }}</p>
+                      <p class="text-xs text-zinc-500">{{ formatDate(versionComparison.sourceVersion.createdAt) }}</p>
+                      <p class="text-xs text-zinc-500 mt-1">{{ formatSize(versionComparison.sourceVersion.size) }}</p>
                     </div>
 
                     <!-- Arrow -->
@@ -1862,11 +1862,11 @@ const versionSelectOptions = computed(() =>
                         </div>
                         <div>
                           <p class="text-xs font-bold text-purple-500 uppercase tracking-wider">Target</p>
-                          <p class="text-sm font-semibold text-slate-900 dark:text-white">Version {{ versionComparison.targetVersion.versionLabel }}</p>
+                          <p class="text-sm font-semibold text-zinc-900 dark:text-white">Version {{ versionComparison.targetVersion.versionLabel }}</p>
                         </div>
                       </div>
-                      <p class="text-xs text-slate-500">{{ formatDate(versionComparison.targetVersion.createdAt) }}</p>
-                      <p class="text-xs text-slate-500 mt-1">{{ formatSize(versionComparison.targetVersion.size) }}</p>
+                      <p class="text-xs text-zinc-500">{{ formatDate(versionComparison.targetVersion.createdAt) }}</p>
+                      <p class="text-xs text-zinc-500 mt-1">{{ formatSize(versionComparison.targetVersion.size) }}</p>
                     </div>
                   </div>
 
@@ -1877,19 +1877,19 @@ const versionSelectOptions = computed(() =>
                       class="p-4 rounded-xl border-2 transition-colors"
                       :class="versionComparison.contentChanged
                         ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
-                        : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'"
+                        : 'bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700'"
                     >
                       <div class="flex items-center gap-2 mb-2">
                         <span
                           class="material-symbols-outlined text-lg"
-                          :class="versionComparison.contentChanged ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'"
+                          :class="versionComparison.contentChanged ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-400'"
                         >description</span>
-                        <span class="text-xs font-bold uppercase tracking-wider" :class="versionComparison.contentChanged ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'">Content</span>
+                        <span class="text-xs font-bold uppercase tracking-wider" :class="versionComparison.contentChanged ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-400'">Content</span>
                       </div>
-                      <p class="text-sm font-semibold" :class="versionComparison.contentChanged ? 'text-blue-700 dark:text-blue-300' : 'text-slate-500'">
+                      <p class="text-sm font-semibold" :class="versionComparison.contentChanged ? 'text-blue-700 dark:text-blue-300' : 'text-zinc-500'">
                         {{ versionComparison.contentChanged ? 'Changed' : 'Unchanged' }}
                       </p>
-                      <p v-if="versionComparison.sizeDifference !== 0" class="text-xs text-slate-500 mt-1">
+                      <p v-if="versionComparison.sizeDifference !== 0" class="text-xs text-zinc-500 mt-1">
                         {{ versionComparison.sizeDifference > 0 ? '+' : '' }}{{ formatSize(Math.abs(versionComparison.sizeDifference)) }}
                       </p>
                     </div>
@@ -1899,48 +1899,48 @@ const versionSelectOptions = computed(() =>
                       class="p-4 rounded-xl border-2 transition-colors"
                       :class="versionComparison.metadataChanged
                         ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
-                        : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'"
+                        : 'bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700'"
                     >
                       <div class="flex items-center gap-2 mb-2">
                         <span
                           class="material-symbols-outlined text-lg"
-                          :class="versionComparison.metadataChanged ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'"
+                          :class="versionComparison.metadataChanged ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-400'"
                         >category</span>
-                        <span class="text-xs font-bold uppercase tracking-wider" :class="versionComparison.metadataChanged ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'">Metadata</span>
+                        <span class="text-xs font-bold uppercase tracking-wider" :class="versionComparison.metadataChanged ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-400'">Metadata</span>
                       </div>
-                      <p class="text-sm font-semibold" :class="versionComparison.metadataChanged ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-500'">
+                      <p class="text-sm font-semibold" :class="versionComparison.metadataChanged ? 'text-emerald-700 dark:text-emerald-300' : 'text-zinc-500'">
                         {{ versionComparison.metadataChanged ? 'Changed' : 'Unchanged' }}
                       </p>
-                      <p v-if="versionComparison.metadataDifferences.length > 0" class="text-xs text-slate-500 mt-1">
+                      <p v-if="versionComparison.metadataDifferences.length > 0" class="text-xs text-zinc-500 mt-1">
                         {{ versionComparison.metadataDifferences.length }} field{{ versionComparison.metadataDifferences.length > 1 ? 's' : '' }}
                       </p>
                     </div>
 
                     <!-- Total Changes -->
-                    <div class="p-4 rounded-xl border-2 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700">
+                    <div class="p-4 rounded-xl border-2 bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700">
                       <div class="flex items-center gap-2 mb-2">
-                        <span class="material-symbols-outlined text-lg text-slate-400">analytics</span>
-                        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Summary</span>
+                        <span class="material-symbols-outlined text-lg text-zinc-400">analytics</span>
+                        <span class="text-xs font-bold uppercase tracking-wider text-zinc-400">Summary</span>
                       </div>
-                      <p class="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                      <p class="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
                         {{ (versionComparison.contentChanged ? 1 : 0) + versionComparison.metadataDifferences.length }} change{{ ((versionComparison.contentChanged ? 1 : 0) + versionComparison.metadataDifferences.length) !== 1 ? 's' : '' }}
                       </p>
                     </div>
                   </div>
 
                   <!-- Metadata Differences Table with Highlighting -->
-                  <div v-if="versionComparison.metadataDifferences.length > 0" class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-                    <div class="px-4 py-3 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
-                      <h4 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <div v-if="versionComparison.metadataDifferences.length > 0" class="bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+                    <div class="px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700">
+                      <h4 class="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2">
                         <span class="material-symbols-outlined text-lg text-emerald-500">difference</span>
                         Metadata Differences
                       </h4>
                     </div>
-                    <div class="divide-y divide-slate-100 dark:divide-slate-700">
+                    <div class="divide-y divide-zinc-100 dark:divide-zinc-700">
                       <div
                         v-for="diff in versionComparison.metadataDifferences"
                         :key="diff.fieldId"
-                        class="p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                        class="p-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
                         :class="{
                           'bg-green-50/50 dark:bg-green-900/10': diff.diffType === DiffType.Added,
                           'bg-red-50/50 dark:bg-red-900/10': diff.diffType === DiffType.Removed,
@@ -1950,13 +1950,13 @@ const versionSelectOptions = computed(() =>
                         <div class="flex items-start justify-between gap-4">
                           <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-2 mb-2">
-                              <span class="text-sm font-semibold text-slate-900 dark:text-white">{{ diff.displayName }}</span>
+                              <span class="text-sm font-semibold text-zinc-900 dark:text-white">{{ diff.displayName }}</span>
                               <span
                                 :class="{
                                   'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400': diff.diffType === DiffType.Added,
                                   'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400': diff.diffType === DiffType.Removed,
                                   'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400': diff.diffType === DiffType.Modified,
-                                  'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400': diff.diffType === DiffType.Unchanged
+                                  'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400': diff.diffType === DiffType.Unchanged
                                 }"
                                 class="px-2 py-0.5 rounded text-[10px] font-bold uppercase"
                               >
@@ -1965,16 +1965,16 @@ const versionSelectOptions = computed(() =>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                               <!-- Old Value -->
-                              <div class="p-3 rounded-lg overflow-hidden" :class="diff.diffType === DiffType.Removed || diff.diffType === DiffType.Modified ? 'bg-red-100/70 dark:bg-red-900/20 border border-red-200 dark:border-red-800' : 'bg-slate-100 dark:bg-slate-900'">
-                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Previous</p>
-                                <p class="text-sm break-words" :class="diff.oldValue ? (diff.diffType === DiffType.Removed || diff.diffType === DiffType.Modified ? 'text-red-700 dark:text-red-400 line-through' : 'text-slate-600 dark:text-slate-400') : 'text-slate-400 italic'">
+                              <div class="p-3 rounded-lg overflow-hidden" :class="diff.diffType === DiffType.Removed || diff.diffType === DiffType.Modified ? 'bg-red-100/70 dark:bg-red-900/20 border border-red-200 dark:border-red-800' : 'bg-zinc-100 dark:bg-zinc-900'">
+                                <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Previous</p>
+                                <p class="text-sm break-words" :class="diff.oldValue ? (diff.diffType === DiffType.Removed || diff.diffType === DiffType.Modified ? 'text-red-700 dark:text-red-400 line-through' : 'text-zinc-600 dark:text-zinc-400') : 'text-zinc-400 italic'">
                                   {{ diff.oldValue || '(empty)' }}
                                 </p>
                               </div>
                               <!-- New Value -->
-                              <div class="p-3 rounded-lg overflow-hidden" :class="diff.diffType === DiffType.Added || diff.diffType === DiffType.Modified ? 'bg-green-100/70 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-slate-100 dark:bg-slate-900'">
-                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">New</p>
-                                <p class="text-sm break-words" :class="diff.newValue ? (diff.diffType === DiffType.Added || diff.diffType === DiffType.Modified ? 'text-green-700 dark:text-green-400 font-medium' : 'text-slate-600 dark:text-slate-400') : 'text-slate-400 italic'">
+                              <div class="p-3 rounded-lg overflow-hidden" :class="diff.diffType === DiffType.Added || diff.diffType === DiffType.Modified ? 'bg-green-100/70 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-zinc-100 dark:bg-zinc-900'">
+                                <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">New</p>
+                                <p class="text-sm break-words" :class="diff.newValue ? (diff.diffType === DiffType.Added || diff.diffType === DiffType.Modified ? 'text-green-700 dark:text-green-400 font-medium' : 'text-zinc-600 dark:text-zinc-400') : 'text-zinc-400 italic'">
                                   {{ diff.newValue || '(empty)' }}
                                 </p>
                               </div>
@@ -1987,27 +1987,27 @@ const versionSelectOptions = computed(() =>
 
                   <!-- No differences message -->
                   <div v-else-if="!versionComparison.contentChanged" class="text-center py-8">
-                    <div class="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <span class="material-symbols-outlined text-3xl text-slate-400">check_circle</span>
+                    <div class="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <span class="material-symbols-outlined text-3xl text-zinc-400">check_circle</span>
                     </div>
-                    <p class="text-slate-500">These versions are identical</p>
+                    <p class="text-zinc-500">These versions are identical</p>
                   </div>
                 </div>
 
                 <!-- Empty State -->
                 <div v-else class="p-12 text-center">
-                  <div class="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span class="material-symbols-outlined text-3xl text-slate-400">compare</span>
+                  <div class="w-16 h-16 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="material-symbols-outlined text-3xl text-zinc-400">compare</span>
                   </div>
-                  <p class="text-slate-500">Select versions and click Compare to see differences</p>
+                  <p class="text-zinc-500">Select versions and click Compare to see differences</p>
                 </div>
               </div>
 
               <!-- Footer -->
-              <div class="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700 flex justify-end">
+              <div class="px-6 py-4 bg-zinc-50 dark:bg-zinc-800/50 border-t border-zinc-200 dark:border-zinc-700 flex justify-end">
                 <button
                   @click="showCompareModal = false"
-                  class="px-5 py-2.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 rounded-xl font-medium transition-colors"
+                  class="px-5 py-2.5 bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-700 dark:text-zinc-300 rounded-xl font-medium transition-colors"
                 >
                   Close
                 </button>
@@ -2034,7 +2034,7 @@ const versionSelectOptions = computed(() =>
 
           <!-- Modal Container -->
           <div class="flex min-h-full items-center justify-center p-4">
-            <div class="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden" @click.stop>
+            <div class="relative w-full max-w-2xl bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl overflow-hidden" @click.stop>
               <!-- Header with gradient -->
               <div class="relative bg-gradient-to-r from-amber-600 via-amber-500 to-orange-500 p-5 overflow-hidden">
                 <div class="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
@@ -2069,8 +2069,8 @@ const versionSelectOptions = computed(() =>
                     </div>
                     <div>
                       <p class="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Restoring To</p>
-                      <p class="text-lg font-bold text-slate-900 dark:text-white">Version {{ getVersionLabel(restoreVersionInfo) }}</p>
-                      <p class="text-sm text-slate-500">{{ formatDate(restoreVersionInfo.createdAt) }} • {{ formatSize(restoreVersionInfo.size) }}</p>
+                      <p class="text-lg font-bold text-zinc-900 dark:text-white">Version {{ getVersionLabel(restoreVersionInfo) }}</p>
+                      <p class="text-sm text-zinc-500">{{ formatDate(restoreVersionInfo.createdAt) }} • {{ formatSize(restoreVersionInfo.size) }}</p>
                     </div>
                   </div>
                 </div>
@@ -2078,11 +2078,11 @@ const versionSelectOptions = computed(() =>
                 <!-- Preview of Changes -->
                 <div v-if="isLoadingRestorePreview" class="mb-6 p-8 text-center">
                   <div class="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-                  <p class="text-sm text-slate-500 mt-3">Loading preview...</p>
+                  <p class="text-sm text-zinc-500 mt-3">Loading preview...</p>
                 </div>
 
                 <div v-else-if="restoreComparison" class="mb-6">
-                  <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                  <h4 class="text-sm font-bold text-zinc-900 dark:text-white mb-3 flex items-center gap-2">
                     <span class="material-symbols-outlined text-lg text-amber-500">preview</span>
                     Changes Preview
                   </h4>
@@ -2093,16 +2093,16 @@ const versionSelectOptions = computed(() =>
                       class="p-3 rounded-xl border-2"
                       :class="restoreComparison.contentChanged
                         ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
-                        : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'"
+                        : 'bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700'"
                     >
                       <div class="flex items-center gap-2">
                         <span
                           class="material-symbols-outlined text-lg"
-                          :class="restoreComparison.contentChanged ? 'text-blue-600' : 'text-slate-400'"
+                          :class="restoreComparison.contentChanged ? 'text-blue-600' : 'text-zinc-400'"
                         >description</span>
                         <div>
-                          <p class="text-xs font-bold uppercase tracking-wider" :class="restoreComparison.contentChanged ? 'text-blue-600' : 'text-slate-400'">File Content</p>
-                          <p class="text-sm font-semibold" :class="restoreComparison.contentChanged ? 'text-blue-700 dark:text-blue-300' : 'text-slate-500'">
+                          <p class="text-xs font-bold uppercase tracking-wider" :class="restoreComparison.contentChanged ? 'text-blue-600' : 'text-zinc-400'">File Content</p>
+                          <p class="text-sm font-semibold" :class="restoreComparison.contentChanged ? 'text-blue-700 dark:text-blue-300' : 'text-zinc-500'">
                             {{ restoreComparison.contentChanged ? 'Will be restored' : 'No change' }}
                           </p>
                         </div>
@@ -2113,16 +2113,16 @@ const versionSelectOptions = computed(() =>
                       class="p-3 rounded-xl border-2"
                       :class="restoreComparison.metadataChanged
                         ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
-                        : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700'"
+                        : 'bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700'"
                     >
                       <div class="flex items-center gap-2">
                         <span
                           class="material-symbols-outlined text-lg"
-                          :class="restoreComparison.metadataChanged ? 'text-emerald-600' : 'text-slate-400'"
+                          :class="restoreComparison.metadataChanged ? 'text-emerald-600' : 'text-zinc-400'"
                         >category</span>
                         <div>
-                          <p class="text-xs font-bold uppercase tracking-wider" :class="restoreComparison.metadataChanged ? 'text-emerald-600' : 'text-slate-400'">Metadata</p>
-                          <p class="text-sm font-semibold" :class="restoreComparison.metadataChanged ? 'text-emerald-700 dark:text-emerald-300' : 'text-slate-500'">
+                          <p class="text-xs font-bold uppercase tracking-wider" :class="restoreComparison.metadataChanged ? 'text-emerald-600' : 'text-zinc-400'">Metadata</p>
+                          <p class="text-sm font-semibold" :class="restoreComparison.metadataChanged ? 'text-emerald-700 dark:text-emerald-300' : 'text-zinc-500'">
                             {{ restoreComparison.metadataChanged ? `${restoreComparison.metadataDifferences.length} field(s) will change` : 'No change' }}
                           </p>
                         </div>
@@ -2131,19 +2131,19 @@ const versionSelectOptions = computed(() =>
                   </div>
 
                   <!-- Metadata Changes List -->
-                  <div v-if="restoreComparison.metadataDifferences.length > 0" class="bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-                    <div class="px-4 py-2 bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
-                      <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">Metadata Changes</p>
+                  <div v-if="restoreComparison.metadataDifferences.length > 0" class="bg-zinc-50 dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+                    <div class="px-4 py-2 bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700">
+                      <p class="text-xs font-bold text-zinc-500 uppercase tracking-wider">Metadata Changes</p>
                     </div>
-                    <div class="divide-y divide-slate-200 dark:divide-slate-700 max-h-40 overflow-y-auto">
+                    <div class="divide-y divide-zinc-200 dark:divide-zinc-700 max-h-40 overflow-y-auto">
                       <div
                         v-for="diff in restoreComparison.metadataDifferences"
                         :key="diff.fieldId"
                         class="px-4 py-2.5"
                       >
                         <div class="flex items-center justify-between gap-2 mb-1">
-                          <span class="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">{{ diff.displayName }}</span>
-                          <span class="material-symbols-outlined text-slate-400 text-sm flex-shrink-0">arrow_forward</span>
+                          <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300 truncate">{{ diff.displayName }}</span>
+                          <span class="material-symbols-outlined text-zinc-400 text-sm flex-shrink-0">arrow_forward</span>
                         </div>
                         <div class="grid grid-cols-2 gap-2 text-xs">
                           <span class="text-red-500 line-through break-words">{{ diff.oldValue || '(empty)' }}</span>
@@ -2156,25 +2156,25 @@ const versionSelectOptions = computed(() =>
 
                 <!-- Restore Options -->
                 <div class="space-y-3 mb-6">
-                  <h4 class="text-sm font-bold text-slate-900 dark:text-white">What to Restore</h4>
+                  <h4 class="text-sm font-bold text-zinc-900 dark:text-white">What to Restore</h4>
 
                   <label
                     class="flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all"
                     :class="restoreContent
                       ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700'
-                      : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300'"
+                      : 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300'"
                   >
                     <input
                       type="checkbox"
                       v-model="restoreContent"
-                      class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 border-slate-300"
+                      class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 border-zinc-300"
                     />
                     <div class="flex-1">
                       <div class="flex items-center gap-2">
-                        <span class="material-symbols-outlined text-lg" :class="restoreContent ? 'text-blue-600' : 'text-slate-400'">description</span>
-                        <span class="font-semibold text-slate-900 dark:text-white">File Content</span>
+                        <span class="material-symbols-outlined text-lg" :class="restoreContent ? 'text-blue-600' : 'text-zinc-400'">description</span>
+                        <span class="font-semibold text-zinc-900 dark:text-white">File Content</span>
                       </div>
-                      <p class="text-sm text-slate-500 mt-0.5">Replace current file with the selected version's file</p>
+                      <p class="text-sm text-zinc-500 mt-0.5">Replace current file with the selected version's file</p>
                     </div>
                   </label>
 
@@ -2182,32 +2182,32 @@ const versionSelectOptions = computed(() =>
                     class="flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all"
                     :class="restoreMetadata
                       ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-700'
-                      : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300'"
+                      : 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300'"
                   >
                     <input
                       type="checkbox"
                       v-model="restoreMetadata"
-                      class="w-5 h-5 text-emerald-600 rounded focus:ring-emerald-500 border-slate-300"
+                      class="w-5 h-5 text-emerald-600 rounded focus:ring-emerald-500 border-zinc-300"
                     />
                     <div class="flex-1">
                       <div class="flex items-center gap-2">
-                        <span class="material-symbols-outlined text-lg" :class="restoreMetadata ? 'text-emerald-600' : 'text-slate-400'">category</span>
-                        <span class="font-semibold text-slate-900 dark:text-white">Metadata</span>
+                        <span class="material-symbols-outlined text-lg" :class="restoreMetadata ? 'text-emerald-600' : 'text-zinc-400'">category</span>
+                        <span class="font-semibold text-zinc-900 dark:text-white">Metadata</span>
                       </div>
-                      <p class="text-sm text-slate-500 mt-0.5">Replace current metadata fields with the selected version's values</p>
+                      <p class="text-sm text-zinc-500 mt-0.5">Replace current metadata fields with the selected version's values</p>
                     </div>
                   </label>
                 </div>
 
                 <!-- Comment -->
                 <div>
-                  <label class="block text-sm font-bold text-slate-900 dark:text-white mb-2">
-                    Restore Comment <span class="font-normal text-slate-400">(optional)</span>
+                  <label class="block text-sm font-bold text-zinc-900 dark:text-white mb-2">
+                    Restore Comment <span class="font-normal text-zinc-400">(optional)</span>
                   </label>
                   <textarea
                     v-model="restoreComment"
                     rows="2"
-                    class="w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm resize-none"
+                    class="w-full px-4 py-3 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm resize-none"
                     placeholder="Reason for restoring this version..."
                   ></textarea>
                 </div>
@@ -2222,10 +2222,10 @@ const versionSelectOptions = computed(() =>
               </div>
 
               <!-- Footer -->
-              <div class="flex justify-end gap-3 px-6 py-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-700">
+              <div class="flex justify-end gap-3 px-6 py-4 bg-zinc-50 dark:bg-zinc-800/50 border-t border-zinc-200 dark:border-zinc-700">
                 <button
                   @click="showRestoreModal = false"
-                  class="px-5 py-2.5 border border-slate-300 dark:border-slate-600 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium transition-colors"
+                  class="px-5 py-2.5 border border-zinc-300 dark:border-zinc-600 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 font-medium transition-colors"
                 >
                   Cancel
                 </button>

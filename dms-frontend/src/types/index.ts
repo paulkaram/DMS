@@ -1518,3 +1518,28 @@ export interface ScannedPage {
   data: string // base64
   format: string
 }
+
+// PDF Page Management types
+export interface PageManifestEntry {
+  source: 'existing' | 'upload'
+  originalPage?: number    // 1-based, for source="existing"
+  fileIndex?: number       // 0-based, for source="upload"
+  uploadPageNumber?: number
+}
+
+export interface PageReorganizeResult {
+  documentId: string
+  versionLabel: string
+  pageCount: number
+  fileSize: number
+}
+
+export interface ManagedPage {
+  id: string
+  source: 'existing' | 'upload'
+  originalPage?: number
+  fileIndex?: number
+  uploadPageNumber?: number
+  label: string
+  thumbnailUrl?: string // blob URL for uploaded image previews
+}

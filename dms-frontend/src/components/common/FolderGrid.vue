@@ -62,14 +62,14 @@ defineExpose({ clearSelection, selectedFolders })
   <div>
     <!-- Loading State -->
     <div v-if="isLoading" class="flex items-center justify-center py-8">
-      <div class="flex items-center gap-3 text-slate-500">
+      <div class="flex items-center gap-3 text-zinc-500">
         <div class="w-5 h-5 border-2 border-teal border-t-transparent rounded-full animate-spin"></div>
         <span class="text-sm">Loading folders...</span>
       </div>
     </div>
 
     <!-- Empty State -->
-    <div v-else-if="folders.length === 0" class="text-center py-8 text-slate-400">
+    <div v-else-if="folders.length === 0" class="text-center py-8 text-zinc-400">
       <span class="material-symbols-outlined text-4xl mb-2 opacity-50">folder_off</span>
       <p class="text-sm">No subfolders</p>
     </div>
@@ -207,7 +207,7 @@ defineExpose({ clearSelection, selectedFolders })
     <!-- Selection Summary -->
     <div
       v-if="selectable && selectedFolders.size > 0"
-      class="mt-3 flex items-center gap-2 text-sm text-slate-500"
+      class="mt-3 flex items-center gap-2 text-sm text-zinc-500"
     >
       <span class="font-medium text-teal">{{ selectedFolders.size }}</span>
       folder{{ selectedFolders.size === 1 ? '' : 's' }} selected
