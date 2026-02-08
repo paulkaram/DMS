@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/DMS.Api/DMS.Api.csproj" />
+    <Project Path="src/DMS.BL/DMS.BL.csproj" />
+    <Project Path="src/DMS.DAL/DMS.DAL.csproj" />
+  </Folder>
+</Solution>
