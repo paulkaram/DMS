@@ -105,7 +105,7 @@ async function discardCheckout(doc: Document) {
       </div>
       <button
         @click="loadData"
-        class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl font-medium text-sm transition-colors border border-zinc-200 dark:border-zinc-700"
+        class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-surface-dark hover:bg-zinc-50 dark:hover:bg-border-dark text-zinc-700 dark:text-zinc-300 rounded-xl font-medium text-sm transition-colors border border-zinc-200 dark:border-border-dark"
       >
         <span class="material-symbols-outlined text-lg">refresh</span>
         Refresh
@@ -143,8 +143,8 @@ async function discardCheckout(doc: Document) {
     </div>
 
     <!-- Tabs -->
-    <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-      <div class="border-b border-zinc-200 dark:border-zinc-800">
+    <div class="bg-white dark:bg-background-dark rounded-2xl shadow-sm border border-zinc-200 dark:border-border-dark overflow-hidden">
+      <div class="border-b border-zinc-200 dark:border-border-dark">
         <nav class="flex">
           <button
             @click="activeTab = 'uploads'"
@@ -191,7 +191,7 @@ async function discardCheckout(doc: Document) {
       <!-- Uploads Tab -->
       <div v-else-if="activeTab === 'uploads'" class="p-6">
         <div v-if="myDocuments.length === 0" class="text-center py-12">
-          <div class="w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
+          <div class="w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-surface-dark flex items-center justify-center mx-auto mb-4">
             <span class="material-symbols-outlined text-5xl text-zinc-400">cloud_upload</span>
           </div>
           <h3 class="text-lg font-semibold text-zinc-700 dark:text-zinc-300">No uploads yet</h3>
@@ -209,7 +209,7 @@ async function discardCheckout(doc: Document) {
           <div
             v-for="(doc, index) in myDocuments"
             :key="doc.id"
-            class="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl border border-zinc-100 dark:border-zinc-700 hover:border-teal/30 hover:shadow-md transition-all"
+            class="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-surface-dark rounded-xl border border-zinc-100 dark:border-border-dark hover:border-teal/30 hover:shadow-md transition-all"
           >
             <DocumentIcon :extension="doc.extension" :index="index" size="lg" />
             <div class="flex-1 min-w-0 cursor-pointer" @click="viewDocument(doc)">
@@ -231,7 +231,7 @@ async function discardCheckout(doc: Document) {
                 >
                   <span class="material-symbols-outlined text-xl">open_in_new</span>
                 </button>
-                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-zinc-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-border-dark rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                   Preview
                 </span>
               </div>
@@ -242,7 +242,7 @@ async function discardCheckout(doc: Document) {
                 >
                   <span class="material-symbols-outlined text-xl">info</span>
                 </button>
-                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-zinc-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-border-dark rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                   Details
                 </span>
               </div>
@@ -253,7 +253,7 @@ async function discardCheckout(doc: Document) {
                 >
                   <span class="material-symbols-outlined text-xl">edit</span>
                 </button>
-                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-zinc-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-border-dark rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                   Edit
                 </span>
               </div>
@@ -264,7 +264,7 @@ async function discardCheckout(doc: Document) {
                 >
                   <span class="material-symbols-outlined text-xl">folder_open</span>
                 </button>
-                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-zinc-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-border-dark rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                   Go to Location
                 </span>
               </div>
@@ -275,7 +275,7 @@ async function discardCheckout(doc: Document) {
                 >
                   <span class="material-symbols-outlined text-xl">search</span>
                 </button>
-                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-zinc-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-border-dark rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                   Search
                 </span>
               </div>
@@ -287,7 +287,7 @@ async function discardCheckout(doc: Document) {
       <!-- Checkouts Tab -->
       <div v-else-if="activeTab === 'checkouts'" class="p-6">
         <div v-if="myCheckouts.length === 0" class="text-center py-12">
-          <div class="w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
+          <div class="w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-surface-dark flex items-center justify-center mx-auto mb-4">
             <span class="material-symbols-outlined text-5xl text-zinc-400">check_circle</span>
           </div>
           <h3 class="text-lg font-semibold text-zinc-700 dark:text-zinc-300">No checked out files</h3>
@@ -298,7 +298,7 @@ async function discardCheckout(doc: Document) {
           <div
             v-for="(doc, index) in myCheckouts"
             :key="doc.id"
-            class="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl border border-zinc-100 dark:border-zinc-700 hover:border-teal/30 hover:shadow-md transition-all"
+            class="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-surface-dark rounded-xl border border-zinc-100 dark:border-border-dark hover:border-teal/30 hover:shadow-md transition-all"
           >
             <DocumentIcon :extension="doc.extension" :index="index" size="lg" />
             <div class="flex-1 min-w-0 cursor-pointer" @click="viewDocument(doc)">
@@ -319,7 +319,7 @@ async function discardCheckout(doc: Document) {
                 >
                   <span class="material-symbols-outlined text-xl">open_in_new</span>
                 </button>
-                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-zinc-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-border-dark rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                   Preview
                 </span>
               </div>
@@ -330,7 +330,7 @@ async function discardCheckout(doc: Document) {
                 >
                   <span class="material-symbols-outlined text-xl">info</span>
                 </button>
-                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-zinc-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-border-dark rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                   Details
                 </span>
               </div>
@@ -341,7 +341,7 @@ async function discardCheckout(doc: Document) {
                 >
                   <span class="material-symbols-outlined text-xl">folder_open</span>
                 </button>
-                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-zinc-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-border-dark rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                   Go to Location
                 </span>
               </div>
@@ -352,7 +352,7 @@ async function discardCheckout(doc: Document) {
                 >
                   <span class="material-symbols-outlined text-xl">close</span>
                 </button>
-                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-zinc-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-border-dark rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                   Discard Checkout
                 </span>
               </div>

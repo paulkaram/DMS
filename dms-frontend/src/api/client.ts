@@ -57,9 +57,9 @@ export const foldersApi = {
     apiClient.get(`/folders/tree/${cabinetId}`),
   getById: (id: string) =>
     apiClient.get(`/folders/${id}`),
-  create: (data: { cabinetId: string; parentFolderId?: string; name: string; description?: string }) =>
+  create: (data: { cabinetId: string; parentFolderId?: string; name: string; description?: string; accessMode?: number }) =>
     apiClient.post('/folders', data),
-  update: (id: string, data: { name: string; description?: string; breakInheritance: boolean }) =>
+  update: (id: string, data: { name: string; description?: string; breakInheritance: boolean; accessMode?: number }) =>
     apiClient.put(`/folders/${id}`, data),
   move: (id: string, data: { newParentFolderId?: string; newCabinetId?: string }) =>
     apiClient.post(`/folders/${id}/move`, data),
@@ -246,22 +246,6 @@ export const rolesApi = {
     apiClient.delete(`/roles/${roleId}/members/${userId}`)
 }
 
-// Delegations API
-export const delegationsApi = {
-  getMyDelegations: () =>
-    apiClient.get('/delegations'),
-  getDelegationsToMe: () =>
-    apiClient.get('/delegations/to-me'),
-  getById: (id: string) =>
-    apiClient.get(`/delegations/${id}`),
-  create: (data: { toUserId: string; roleId?: string; startDate: string; endDate?: string }) =>
-    apiClient.post('/delegations', data),
-  update: (id: string, data: { startDate: string; endDate?: string; isActive: boolean }) =>
-    apiClient.put(`/delegations/${id}`, data),
-  delete: (id: string) =>
-    apiClient.delete(`/delegations/${id}`)
-}
-
 // Permissions API - Enterprise Edition
 export const permissionsApi = {
   // Basic operations
@@ -299,23 +283,6 @@ export const permissionsApi = {
     apiClient.post(`/permissions/${nodeType}/${nodeId}/break-inheritance`, null, { params: { copyPermissions } }),
   restoreInheritance: (nodeType: string, nodeId: string) =>
     apiClient.post(`/permissions/${nodeType}/${nodeId}/restore-inheritance`),
-
-  // Delegation operations
-  createDelegation: (data: {
-    delegateId: string
-    nodeType: string
-    nodeId: string
-    permissionLevel: number
-    startDate: string
-    endDate: string
-    reason?: string
-  }) => apiClient.post('/permissions/delegations', data),
-  revokeDelegation: (id: string) =>
-    apiClient.delete(`/permissions/delegations/${id}`),
-  getMyDelegations: () =>
-    apiClient.get('/permissions/delegations/my'),
-  getDelegationsToMe: () =>
-    apiClient.get('/permissions/delegations/to-me'),
 
   // Audit trail
   getNodeAudit: (nodeType: string, nodeId: string, take = 100) =>
@@ -494,26 +461,6 @@ export const recycleBinApi = {
     apiClient.delete('/recyclebin/empty')
 }
 
-// Vacations API
-export const vacationsApi = {
-  getMyVacations: () =>
-    apiClient.get('/vacations'),
-  getActiveVacation: () =>
-    apiClient.get('/vacations/active'),
-  getAllActive: () =>
-    apiClient.get('/vacations/all-active'),
-  getById: (id: string) =>
-    apiClient.get(`/vacations/${id}`),
-  create: (data: { delegateToUserId?: string; startDate: string; endDate: string; message?: string; autoReply: boolean }) =>
-    apiClient.post('/vacations', data),
-  update: (id: string, data: { delegateToUserId?: string; startDate: string; endDate: string; message?: string; autoReply: boolean; isActive: boolean }) =>
-    apiClient.put(`/vacations/${id}`, data),
-  delete: (id: string) =>
-    apiClient.delete(`/vacations/${id}`),
-  cancel: (id: string) =>
-    apiClient.post(`/vacations/${id}/cancel`)
-}
-
 // Approvals API
 export const approvalsApi = {
   // Workflows
@@ -553,6 +500,16 @@ export const contentTypesApi = {
     apiClient.put(`/contenttypes/${id}`, data),
   delete: (id: string) =>
     apiClient.delete(`/contenttypes/${id}`)
+}
+
+// Document Shortcuts API
+export const documentShortcutsApi = {
+  getByDocument: (documentId: string) =>
+    apiClient.get(`/documentshortcuts/by-document/${documentId}`),
+  create: (data: { documentId: string; folderId: string }) =>
+    apiClient.post('/documentshortcuts', data),
+  delete: (id: string) =>
+    apiClient.delete(`/documentshortcuts/${id}`)
 }
 
 // Folder Links API
@@ -743,28 +700,6 @@ export const bookmarksApi = {
     apiClient.put(`/bookmarks/${id}`, data),
   delete: (id: string) =>
     apiClient.delete(`/bookmarks/${id}`)
-}
-
-// Cases API
-export const casesApi = {
-  getAll: (includeInactive = false) =>
-    apiClient.get('/cases', { params: { includeInactive } }),
-  getById: (id: string) =>
-    apiClient.get(`/cases/${id}`),
-  getByCaseNumber: (caseNumber: string) =>
-    apiClient.get(`/cases/number/${caseNumber}`),
-  getByStatus: (status: string) =>
-    apiClient.get(`/cases/status/${status}`),
-  getByAssignee: (userId: string) =>
-    apiClient.get(`/cases/assignee/${userId}`),
-  create: (data: { caseNumber: string; title: string; description?: string; status?: string; priority?: string; assignedToUserId?: string; folderId?: string; dueDate?: string }) =>
-    apiClient.post('/cases', data),
-  update: (id: string, data: { caseNumber: string; title: string; description?: string; status?: string; priority?: string; assignedToUserId?: string; folderId?: string; dueDate?: string; closedDate?: string; isActive: boolean }) =>
-    apiClient.put(`/cases/${id}`, data),
-  updateStatus: (id: string, status: string) =>
-    apiClient.put(`/cases/${id}/status`, { status }),
-  delete: (id: string) =>
-    apiClient.delete(`/cases/${id}`)
 }
 
 // Service Endpoints API
@@ -1062,27 +997,32 @@ export const documentCommentsApi = {
 }
 
 // Document Attachments API
+function passwordHeaders(password?: string) {
+  return password ? { 'X-Document-Password': password } : {}
+}
+
 export const documentAttachmentsApi = {
-  getByDocument: (documentId: string) =>
-    apiClient.get(`/documents/${documentId}/attachments`),
-  getById: (documentId: string, attachmentId: string) =>
-    apiClient.get(`/documents/${documentId}/attachments/${attachmentId}`),
+  getByDocument: (documentId: string, password?: string) =>
+    apiClient.get(`/documents/${documentId}/attachments`, { headers: passwordHeaders(password) }),
+  getById: (documentId: string, attachmentId: string, password?: string) =>
+    apiClient.get(`/documents/${documentId}/attachments/${attachmentId}`, { headers: passwordHeaders(password) }),
   getCount: (documentId: string) =>
     apiClient.get(`/documents/${documentId}/attachments/count`),
-  download: (documentId: string, attachmentId: string) =>
+  download: (documentId: string, attachmentId: string, password?: string) =>
     apiClient.get(`/documents/${documentId}/attachments/${attachmentId}/download`, {
-      responseType: 'blob'
+      responseType: 'blob',
+      headers: passwordHeaders(password)
     }),
-  upload: (documentId: string, file: File, description?: string) => {
+  upload: (documentId: string, file: File, description?: string, password?: string) => {
     const formData = new FormData()
     formData.append('file', file)
     if (description) formData.append('description', description)
     return apiClient.post(`/documents/${documentId}/attachments`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
+      headers: { 'Content-Type': 'multipart/form-data', ...passwordHeaders(password) }
     })
   },
-  delete: (documentId: string, attachmentId: string) =>
-    apiClient.delete(`/documents/${documentId}/attachments/${attachmentId}`)
+  delete: (documentId: string, attachmentId: string, password?: string) =>
+    apiClient.delete(`/documents/${documentId}/attachments/${attachmentId}`, { headers: passwordHeaders(password) })
 }
 
 // Document Links API

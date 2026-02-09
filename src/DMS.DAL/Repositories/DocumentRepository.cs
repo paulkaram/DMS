@@ -42,13 +42,33 @@ public class DocumentRepository : IDocumentRepository
             SELECT d.*,
                    u.DisplayName AS CreatedByName,
                    co.DisplayName AS CheckedOutByName,
-                   ct.Name AS ContentTypeName
+                   ct.Name AS ContentTypeName,
+                   CAST(0 AS BIT) AS IsShortcut,
+                   CAST(NULL AS UNIQUEIDENTIFIER) AS ShortcutId,
+                   (SELECT COUNT(*) FROM DocumentAttachments da WHERE da.DocumentId = d.Id) AS AttachmentCount
             FROM Documents d
             LEFT JOIN Users u ON d.CreatedBy = u.Id
             LEFT JOIN Users co ON d.CheckedOutBy = co.Id
             LEFT JOIN ContentTypeDefinitions ct ON d.ContentTypeId = ct.Id
             WHERE d.FolderId = @FolderId AND d.IsActive = 1
-            ORDER BY d.Name";
+
+            UNION ALL
+
+            SELECT d.*,
+                   u.DisplayName AS CreatedByName,
+                   co.DisplayName AS CheckedOutByName,
+                   ct.Name AS ContentTypeName,
+                   CAST(1 AS BIT) AS IsShortcut,
+                   ds.Id AS ShortcutId,
+                   (SELECT COUNT(*) FROM DocumentAttachments da WHERE da.DocumentId = d.Id) AS AttachmentCount
+            FROM DocumentShortcuts ds
+            INNER JOIN Documents d ON ds.DocumentId = d.Id
+            LEFT JOIN Users u ON d.CreatedBy = u.Id
+            LEFT JOIN Users co ON d.CheckedOutBy = co.Id
+            LEFT JOIN ContentTypeDefinitions ct ON d.ContentTypeId = ct.Id
+            WHERE ds.FolderId = @FolderId AND d.IsActive = 1
+
+            ORDER BY Name";
         return await connection.QueryAsync<DocumentWithNames>(sql, new { FolderId = folderId });
     }
 
@@ -84,7 +104,10 @@ public class DocumentRepository : IDocumentRepository
             SELECT d.*,
                    u.DisplayName AS CreatedByName,
                    co.DisplayName AS CheckedOutByName,
-                   ct.Name AS ContentTypeName
+                   ct.Name AS ContentTypeName,
+                   CAST(0 AS BIT) AS IsShortcut,
+                   CAST(NULL AS UNIQUEIDENTIFIER) AS ShortcutId,
+                   (SELECT COUNT(*) FROM DocumentAttachments da WHERE da.DocumentId = d.Id) AS AttachmentCount
             FROM Documents d
             LEFT JOIN Users u ON d.CreatedBy = u.Id
             LEFT JOIN Users co ON d.CheckedOutBy = co.Id
@@ -100,7 +123,34 @@ public class DocumentRepository : IDocumentRepository
         if (documentTypeId.HasValue)
             sql += " AND d.DocumentTypeId = @DocumentTypeId";
 
-        sql += " ORDER BY d.Name";
+        // Include shortcuts in the folder
+        if (folderId.HasValue)
+        {
+            sql += @"
+            UNION ALL
+            SELECT d.*,
+                   u.DisplayName AS CreatedByName,
+                   co.DisplayName AS CheckedOutByName,
+                   ct.Name AS ContentTypeName,
+                   CAST(1 AS BIT) AS IsShortcut,
+                   ds.Id AS ShortcutId,
+                   (SELECT COUNT(*) FROM DocumentAttachments da WHERE da.DocumentId = d.Id) AS AttachmentCount
+            FROM DocumentShortcuts ds
+            INNER JOIN Documents d ON ds.DocumentId = d.Id
+            LEFT JOIN Users u ON d.CreatedBy = u.Id
+            LEFT JOIN Users co ON d.CheckedOutBy = co.Id
+            LEFT JOIN ContentTypeDefinitions ct ON d.ContentTypeId = ct.Id
+            WHERE ds.FolderId = @FolderId AND d.IsActive = 1";
+
+            if (!string.IsNullOrEmpty(name))
+                sql += " AND d.Name LIKE @Name";
+            if (classificationId.HasValue)
+                sql += " AND d.ClassificationId = @ClassificationId";
+            if (documentTypeId.HasValue)
+                sql += " AND d.DocumentTypeId = @DocumentTypeId";
+        }
+
+        sql += " ORDER BY Name";
 
         return await connection.QueryAsync<DocumentWithNames>(sql, new
         {

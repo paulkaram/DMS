@@ -30,9 +30,9 @@ const emit = defineEmits<{
 const variantClasses = computed(() => {
   const variants = {
     primary: 'bg-teal text-white hover:bg-teal/90 focus:ring-teal/50 shadow-sm',
-    secondary: 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 hover:bg-zinc-200 dark:hover:bg-zinc-700 focus:ring-zinc-500',
-    outline: 'border-2 border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:border-zinc-400 focus:ring-zinc-500',
-    ghost: 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 focus:ring-zinc-500',
+    secondary: 'bg-zinc-100 dark:bg-surface-dark text-zinc-900 dark:text-zinc-100 hover:bg-zinc-200 dark:hover:bg-border-dark focus:ring-zinc-500',
+    outline: 'border-2 border-zinc-300 dark:border-border-dark text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-surface-dark hover:border-zinc-400 focus:ring-zinc-500',
+    ghost: 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-surface-dark focus:ring-zinc-500',
     danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 shadow-sm',
     success: 'bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-500 shadow-sm'
   }

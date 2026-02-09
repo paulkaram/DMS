@@ -20,6 +20,7 @@ interface DocumentLink {
 const props = defineProps<{
   documentId: string
   canEdit?: boolean
+  embedded?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -137,9 +138,9 @@ const totalLinks = computed(() => outgoingLinks.value.length + incomingLinks.val
 </script>
 
 <template>
-  <div class="flex flex-col h-full bg-white dark:bg-zinc-900">
-    <!-- Header -->
-    <div class="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800">
+  <div :class="embedded ? '-mx-6 -my-5' : 'flex flex-col h-full bg-white dark:bg-background-dark'">
+    <!-- Header (hidden when embedded in UiModal) -->
+    <div v-if="!embedded" class="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-border-dark">
       <div>
         <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Document Links</h2>
         <p class="text-sm text-zinc-500">{{ totalLinks }} linked documents</p>
@@ -155,15 +156,28 @@ const totalLinks = computed(() => outgoingLinks.value.length + incomingLinks.val
         </button>
         <button
           @click="emit('close')"
-          class="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          class="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 rounded-lg hover:bg-zinc-100 dark:hover:bg-surface-dark transition-colors"
         >
           <span class="material-symbols-outlined">close</span>
         </button>
       </div>
     </div>
 
+    <!-- Toolbar (shown when embedded in UiModal) -->
+    <div v-if="embedded" class="flex items-center justify-between px-6 py-3 border-b border-zinc-200 dark:border-border-dark bg-zinc-50 dark:bg-surface-dark/30">
+      <p class="text-sm text-zinc-500 dark:text-zinc-400">{{ totalLinks }} linked document{{ totalLinks !== 1 ? 's' : '' }}</p>
+      <button
+        v-if="canEdit"
+        @click="showLinkForm = !showLinkForm"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-teal text-white text-sm font-medium rounded-xl hover:bg-teal/90 transition-colors shadow-sm"
+      >
+        <span class="material-symbols-outlined text-lg">add</span>
+        Add Link
+      </button>
+    </div>
+
     <!-- Link Form -->
-    <div v-if="showLinkForm" class="p-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50">
+    <div v-if="showLinkForm" class="p-4 border-b border-zinc-200 dark:border-border-dark bg-zinc-50 dark:bg-surface-dark/50">
       <div class="space-y-4">
         <!-- Selected Document -->
         <div v-if="selectedDocument" class="flex items-center gap-3 p-3 bg-teal/10 rounded-lg">
@@ -190,18 +204,18 @@ const totalLinks = computed(() => outgoingLinks.value.length + incomingLinks.val
               v-model="searchQuery"
               @input="searchDocuments"
               type="text"
-              class="w-full pl-10 pr-4 py-2 border border-zinc-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
+              class="w-full pl-10 pr-4 py-2 border border-zinc-200 dark:border-border-dark rounded-lg bg-white dark:bg-background-dark text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
               placeholder="Type to search documents..."
             />
           </div>
 
           <!-- Search Results -->
-          <div v-if="searchResults.length > 0" class="absolute z-10 mt-1 w-full bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+          <div v-if="searchResults.length > 0" class="absolute z-10 mt-1 w-full bg-white dark:bg-background-dark border border-zinc-200 dark:border-border-dark rounded-lg shadow-lg max-h-48 overflow-y-auto">
             <button
               v-for="doc in searchResults"
               :key="doc.id"
               @click="selectDocument(doc)"
-              class="w-full flex items-center gap-3 p-3 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-left"
+              class="w-full flex items-center gap-3 p-3 hover:bg-zinc-50 dark:hover:bg-surface-dark text-left"
             >
               <span class="material-symbols-outlined text-zinc-400">description</span>
               <div class="min-w-0">
@@ -211,7 +225,7 @@ const totalLinks = computed(() => outgoingLinks.value.length + incomingLinks.val
             </button>
           </div>
 
-          <div v-if="isSearching" class="absolute z-10 mt-1 w-full p-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg text-center">
+          <div v-if="isSearching" class="absolute z-10 mt-1 w-full p-4 bg-white dark:bg-background-dark border border-zinc-200 dark:border-border-dark rounded-lg shadow-lg text-center">
             <div class="animate-spin w-5 h-5 border-2 border-teal border-t-transparent rounded-full mx-auto"></div>
           </div>
         </div>
@@ -221,7 +235,7 @@ const totalLinks = computed(() => outgoingLinks.value.length + incomingLinks.val
           <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Link Type</label>
           <select
             v-model="linkType"
-            class="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
+            class="w-full px-3 py-2 border border-zinc-200 dark:border-border-dark rounded-lg bg-white dark:bg-background-dark text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
           >
             <option v-for="type in linkTypes" :key="type.value" :value="type.value">
               {{ type.label }}
@@ -235,7 +249,7 @@ const totalLinks = computed(() => outgoingLinks.value.length + incomingLinks.val
           <input
             v-model="linkDescription"
             type="text"
-            class="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
+            class="w-full px-3 py-2 border border-zinc-200 dark:border-border-dark rounded-lg bg-white dark:bg-background-dark text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
             placeholder="Describe the relationship..."
           />
         </div>
@@ -244,7 +258,7 @@ const totalLinks = computed(() => outgoingLinks.value.length + incomingLinks.val
         <div class="flex justify-end gap-2">
           <button
             @click="resetForm"
-            class="px-4 py-2 text-sm text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-lg transition-colors"
+            class="px-4 py-2 text-sm text-zinc-600 hover:bg-zinc-100 dark:hover:bg-border-dark rounded-lg transition-colors"
           >
             Cancel
           </button>
@@ -282,7 +296,7 @@ const totalLinks = computed(() => outgoingLinks.value.length + incomingLinks.val
             <div
               v-for="link in outgoingLinks"
               :key="link.id"
-              class="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800/80 transition-colors group"
+              class="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-surface-dark rounded-xl hover:bg-zinc-100 dark:hover:bg-surface-dark/80 transition-colors group"
             >
               <div class="w-10 h-10 rounded-lg bg-teal/10 flex items-center justify-center text-teal flex-shrink-0">
                 <span class="material-symbols-outlined">{{ getLinkTypeInfo(link.linkType).icon }}</span>
@@ -292,7 +306,7 @@ const totalLinks = computed(() => outgoingLinks.value.length + incomingLinks.val
                   {{ link.targetDocumentName || 'Unknown Document' }}
                 </p>
                 <div class="flex items-center gap-2 text-xs text-zinc-500">
-                  <span class="px-2 py-0.5 bg-zinc-200 dark:bg-zinc-700 rounded">{{ getLinkTypeInfo(link.linkType).label }}</span>
+                  <span class="px-2 py-0.5 bg-zinc-200 dark:bg-border-dark rounded">{{ getLinkTypeInfo(link.linkType).label }}</span>
                   <span>{{ formatDate(link.createdAt) }}</span>
                 </div>
                 <p v-if="link.description" class="text-xs text-zinc-400 mt-1 truncate">{{ link.description }}</p>
@@ -319,7 +333,7 @@ const totalLinks = computed(() => outgoingLinks.value.length + incomingLinks.val
             <div
               v-for="link in incomingLinks"
               :key="link.id"
-              class="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800/80 transition-colors cursor-pointer"
+              class="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-surface-dark rounded-xl hover:bg-zinc-100 dark:hover:bg-surface-dark/80 transition-colors cursor-pointer"
               @click="navigateToDocument(link.sourceDocumentId)"
             >
               <div class="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500 flex-shrink-0">
@@ -330,7 +344,7 @@ const totalLinks = computed(() => outgoingLinks.value.length + incomingLinks.val
                   {{ link.sourceDocumentName || 'Unknown Document' }}
                 </p>
                 <div class="flex items-center gap-2 text-xs text-zinc-500">
-                  <span class="px-2 py-0.5 bg-zinc-200 dark:bg-zinc-700 rounded">{{ getLinkTypeInfo(link.linkType).label }}</span>
+                  <span class="px-2 py-0.5 bg-zinc-200 dark:bg-border-dark rounded">{{ getLinkTypeInfo(link.linkType).label }}</span>
                   <span>{{ formatDate(link.createdAt) }}</span>
                 </div>
               </div>

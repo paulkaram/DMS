@@ -174,7 +174,7 @@ function formatDate(dateStr: string): string {
       </div>
       <button
         @click="loadFavorites"
-        class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl font-medium text-sm transition-colors border border-zinc-200 dark:border-zinc-700"
+        class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-surface-dark hover:bg-zinc-50 dark:hover:bg-border-dark text-zinc-700 dark:text-zinc-300 rounded-xl font-medium text-sm transition-colors border border-zinc-200 dark:border-border-dark"
       >
         <span class="material-symbols-outlined text-lg">refresh</span>
         Refresh
@@ -197,7 +197,7 @@ function formatDate(dateStr: string): string {
     </div>
 
     <!-- Main Content -->
-    <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+    <div class="bg-white dark:bg-background-dark rounded-2xl shadow-sm border border-zinc-200 dark:border-border-dark overflow-hidden">
       <!-- Loading State -->
       <div v-if="isLoading" class="flex items-center justify-center py-16">
         <div class="animate-spin w-8 h-8 border-4 border-teal border-t-transparent rounded-full"></div>
@@ -205,7 +205,7 @@ function formatDate(dateStr: string): string {
 
       <!-- Empty State -->
       <div v-else-if="favorites.length === 0" class="text-center py-12">
-        <div class="w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
+        <div class="w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-surface-dark flex items-center justify-center mx-auto mb-4">
           <span class="material-symbols-outlined text-5xl text-zinc-400">star</span>
         </div>
         <h3 class="text-lg font-semibold text-zinc-700 dark:text-zinc-300">No favorites yet</h3>
@@ -226,7 +226,7 @@ function formatDate(dateStr: string): string {
           :key="item.id"
           @contextmenu="showContextMenu($event, item)"
           @dblclick="openFile(item)"
-          class="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl border border-zinc-100 dark:border-zinc-700 hover:border-teal/30 hover:shadow-md transition-all cursor-pointer"
+          class="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-surface-dark rounded-xl border border-zinc-100 dark:border-border-dark hover:border-teal/30 hover:shadow-md transition-all cursor-pointer"
         >
           <!-- Avatar with alternating colors -->
           <DocumentIcon
@@ -267,7 +267,7 @@ function formatDate(dateStr: string): string {
               >
                 <span class="material-symbols-outlined text-xl">open_in_new</span>
               </button>
-              <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-zinc-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+              <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-border-dark rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                 Preview
               </span>
             </div>
@@ -279,7 +279,7 @@ function formatDate(dateStr: string): string {
               >
                 <span class="material-symbols-outlined text-xl">info</span>
               </button>
-              <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-zinc-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+              <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-border-dark rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                 {{ item.nodeType === 3 ? 'Details' : 'Open' }}
               </span>
             </div>
@@ -290,7 +290,7 @@ function formatDate(dateStr: string): string {
               >
                 <span class="material-symbols-outlined text-xl">folder_open</span>
               </button>
-              <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-zinc-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+              <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-border-dark rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                 Go to Location
               </span>
             </div>
@@ -301,7 +301,7 @@ function formatDate(dateStr: string): string {
               >
                 <span class="material-symbols-outlined text-xl">download</span>
               </button>
-              <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-zinc-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+              <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-border-dark rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                 Download
               </span>
             </div>
@@ -312,7 +312,7 @@ function formatDate(dateStr: string): string {
               >
                 <span class="material-symbols-outlined text-xl">delete</span>
               </button>
-              <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-zinc-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+              <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-border-dark rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                 Remove
               </span>
             </div>
@@ -333,7 +333,7 @@ function formatDate(dateStr: string): string {
       >
         <div
           v-if="contextMenu.show && contextMenu.item"
-          class="fixed z-[9999] bg-white dark:bg-zinc-800 rounded-xl shadow-xl border border-gray-200 dark:border-zinc-700 py-1.5 min-w-[180px]"
+          class="fixed z-[9999] bg-white dark:bg-surface-dark rounded-xl shadow-xl border border-gray-200 dark:border-border-dark py-1.5 min-w-[180px]"
           :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }"
           @click.stop
         >
@@ -341,7 +341,7 @@ function formatDate(dateStr: string): string {
           <button
             v-if="contextMenu.item!.nodeType === 3"
             @click="openPreview(contextMenu.item!)"
-            class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors"
+            class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-border-dark transition-colors"
           >
             <span class="material-symbols-outlined text-lg text-teal">open_in_new</span>
             Preview
@@ -350,7 +350,7 @@ function formatDate(dateStr: string): string {
           <!-- Open / Details -->
           <button
             @click="openFile(contextMenu.item!)"
-            class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors"
+            class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-border-dark transition-colors"
           >
             <span class="material-symbols-outlined text-lg text-blue-500">info</span>
             {{ contextMenu.item!.nodeType === 3 ? 'View details' : 'Open ' + getNodeTypeName(contextMenu.item!.nodeType).toLowerCase() }}
@@ -360,7 +360,7 @@ function formatDate(dateStr: string): string {
           <button
             v-if="contextMenu.item!.nodeType !== 1 && (contextMenu.item!.parentFolderId || contextMenu.item!.cabinetId)"
             @click="goToLocation(contextMenu.item!)"
-            class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors"
+            class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-border-dark transition-colors"
           >
             <span class="material-symbols-outlined text-lg text-purple-500">folder_open</span>
             Go to location
@@ -370,13 +370,13 @@ function formatDate(dateStr: string): string {
           <button
             v-if="contextMenu.item!.nodeType === 3"
             @click="downloadFile(contextMenu.item!)"
-            class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors"
+            class="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-border-dark transition-colors"
           >
             <span class="material-symbols-outlined text-lg text-green-500">download</span>
             Download
           </button>
 
-          <div class="border-t border-gray-100 dark:border-zinc-700 my-1"></div>
+          <div class="border-t border-gray-100 dark:border-border-dark my-1"></div>
 
           <!-- Remove from favorites -->
           <button

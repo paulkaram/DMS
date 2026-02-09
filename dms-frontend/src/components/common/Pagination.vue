@@ -64,7 +64,7 @@ function goToPage(page: number | string) {
       <button
         @click="goToPage(currentPage - 1)"
         :disabled="currentPage === 1"
-        class="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+        class="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg hover:bg-zinc-100 dark:hover:bg-border-dark transition-colors"
       >
         <span class="material-symbols-outlined text-lg">chevron_left</span>
       </button>
@@ -78,7 +78,7 @@ function goToPage(page: number | string) {
           class="min-w-[36px] h-9 px-3 rounded-lg text-sm font-medium transition-colors"
           :class="page === currentPage
             ? 'bg-gradient-to-r from-navy to-teal text-white shadow-md'
-            : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700'"
+            : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-border-dark'"
         >
           {{ page }}
         </button>
@@ -88,7 +88,7 @@ function goToPage(page: number | string) {
       <button
         @click="goToPage(currentPage + 1)"
         :disabled="currentPage === totalPages"
-        class="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+        class="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg hover:bg-zinc-100 dark:hover:bg-border-dark transition-colors"
       >
         <span class="material-symbols-outlined text-lg">chevron_right</span>
       </button>

@@ -453,7 +453,7 @@ const ocrLanguages = [
           leave-from-class="opacity-100 scale-100"
           leave-to-class="opacity-0 scale-95"
         >
-          <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col ring-1 ring-black/5 dark:ring-white/10">
+          <div class="bg-white dark:bg-background-dark rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col ring-1 ring-black/5 dark:ring-white/10">
 
             <!-- ═══════════════════ HEADER ═══════════════════ -->
             <div class="relative bg-gradient-to-r from-[#0d1117] via-[#0d1117]/95 to-teal p-5 overflow-hidden">
@@ -532,11 +532,11 @@ const ocrLanguages = [
               <!-- ──── STEP 1: CAPTURE / IMPORT ──── -->
               <div v-if="currentStep === 1" class="p-6">
                 <!-- Mode Tabs -->
-                <div class="flex gap-1 p-1 bg-zinc-100 dark:bg-zinc-800 rounded-xl mb-5">
+                <div class="flex gap-1 p-1 bg-zinc-100 dark:bg-surface-dark rounded-xl mb-5">
                   <button
                     @click="captureMode = 'file'"
                     class="flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-1.5"
-                    :class="captureMode === 'file' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-700'"
+                    :class="captureMode === 'file' ? 'bg-white dark:bg-border-dark text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-700'"
                   >
                     <span class="material-symbols-outlined text-lg">upload_file</span>
                     Import Files
@@ -544,7 +544,7 @@ const ocrLanguages = [
                   <button
                     @click="captureMode = 'camera'"
                     class="flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-1.5"
-                    :class="captureMode === 'camera' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-700'"
+                    :class="captureMode === 'camera' ? 'bg-white dark:bg-border-dark text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-700'"
                   >
                     <span class="material-symbols-outlined text-lg">photo_camera</span>
                     Camera
@@ -552,7 +552,7 @@ const ocrLanguages = [
                   <button
                     @click="captureMode = 'scanner'; checkScannerAgent()"
                     class="flex-1 px-3 py-2 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-1.5"
-                    :class="captureMode === 'scanner' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-700'"
+                    :class="captureMode === 'scanner' ? 'bg-white dark:bg-border-dark text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-700'"
                   >
                     <span class="material-symbols-outlined text-lg">scanner</span>
                     Scanner
@@ -562,8 +562,8 @@ const ocrLanguages = [
                 <div class="grid grid-cols-1 gap-5" :class="captureMode !== 'scanner' ? 'md:grid-cols-2' : ''">
 
                   <!-- Camera Capture -->
-                  <div v-if="captureMode === 'camera' || captureMode === 'file'" class="border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden" :class="captureMode !== 'camera' ? 'hidden md:block' : ''">
-                    <div class="px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
+                  <div v-if="captureMode === 'camera' || captureMode === 'file'" class="border border-zinc-200 dark:border-border-dark rounded-xl overflow-hidden" :class="captureMode !== 'camera' ? 'hidden md:block' : ''">
+                    <div class="px-4 py-3 bg-zinc-50 dark:bg-surface-dark border-b border-zinc-200 dark:border-border-dark">
                       <div class="flex items-center gap-2">
                         <span class="material-symbols-outlined text-teal text-lg">photo_camera</span>
                         <span class="font-semibold text-sm text-zinc-800 dark:text-white">Camera Capture</span>
@@ -633,8 +633,8 @@ const ocrLanguages = [
                   </div>
 
                   <!-- File Import -->
-                  <div v-if="captureMode === 'file' || captureMode === 'camera'" class="border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden" :class="captureMode !== 'file' ? 'hidden md:block' : ''">
-                    <div class="px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
+                  <div v-if="captureMode === 'file' || captureMode === 'camera'" class="border border-zinc-200 dark:border-border-dark rounded-xl overflow-hidden" :class="captureMode !== 'file' ? 'hidden md:block' : ''">
+                    <div class="px-4 py-3 bg-zinc-50 dark:bg-surface-dark border-b border-zinc-200 dark:border-border-dark">
                       <div class="flex items-center gap-2">
                         <span class="material-symbols-outlined text-teal text-lg">upload_file</span>
                         <span class="font-semibold text-sm text-zinc-800 dark:text-white">Import Files</span>
@@ -645,7 +645,7 @@ const ocrLanguages = [
                       class="aspect-[4/3] flex flex-col items-center justify-center p-6 transition-all cursor-pointer"
                       :class="isDragging
                         ? 'bg-teal/5 border-2 border-dashed border-teal'
-                        : 'bg-zinc-50 dark:bg-zinc-800/50 hover:bg-teal/5'"
+                        : 'bg-zinc-50 dark:bg-surface-dark/50 hover:bg-teal/5'"
                       @dragover="handleDragOver"
                       @dragleave="isDragging = false"
                       @drop="handleDrop"
@@ -660,7 +660,7 @@ const ocrLanguages = [
                         @change="handleFileSelect"
                       />
 
-                      <div class="w-16 h-16 mb-4 rounded-2xl flex items-center justify-center" :class="isDragging ? 'bg-teal/20' : 'bg-zinc-200 dark:bg-zinc-700'">
+                      <div class="w-16 h-16 mb-4 rounded-2xl flex items-center justify-center" :class="isDragging ? 'bg-teal/20' : 'bg-zinc-200 dark:bg-border-dark'">
                         <span class="material-symbols-outlined text-3xl" :class="isDragging ? 'text-teal' : 'text-zinc-400'">
                           {{ isDragging ? 'file_download' : 'add_photo_alternate' }}
                         </span>
@@ -674,8 +674,8 @@ const ocrLanguages = [
                   </div>
 
                   <!-- Scanner -->
-                  <div v-if="captureMode === 'scanner'" class="border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden">
-                    <div class="px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
+                  <div v-if="captureMode === 'scanner'" class="border border-zinc-200 dark:border-border-dark rounded-xl overflow-hidden">
+                    <div class="px-4 py-3 bg-zinc-50 dark:bg-surface-dark border-b border-zinc-200 dark:border-border-dark">
                       <div class="flex items-center gap-2">
                         <span class="material-symbols-outlined text-teal text-lg">scanner</span>
                         <span class="font-semibold text-sm text-zinc-800 dark:text-white">Physical Scanner</span>
@@ -715,7 +715,7 @@ const ocrLanguages = [
                           <select
                             :value="selectedScannerId"
                             @change="onScannerSelected(($event.target as HTMLSelectElement).value)"
-                            class="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm focus:ring-2 focus:ring-teal/30 focus:border-teal outline-none"
+                            class="w-full px-3 py-2 border border-zinc-200 dark:border-border-dark rounded-lg bg-white dark:bg-surface-dark text-zinc-900 dark:text-white text-sm focus:ring-2 focus:ring-teal/30 focus:border-teal outline-none"
                           >
                             <option v-if="scanners.length === 0" value="">No scanners found</option>
                             <option v-for="s in scanners" :key="s.id" :value="s.id">
@@ -728,7 +728,7 @@ const ocrLanguages = [
                         <div class="grid grid-cols-2 gap-3">
                           <div>
                             <label class="block text-xs font-semibold text-zinc-600 dark:text-zinc-400 mb-1">DPI</label>
-                            <select v-model.number="scannerDpi" class="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-sm text-zinc-900 dark:text-white outline-none">
+                            <select v-model.number="scannerDpi" class="w-full px-3 py-2 border border-zinc-200 dark:border-border-dark rounded-lg bg-white dark:bg-surface-dark text-sm text-zinc-900 dark:text-white outline-none">
                               <option :value="150">150 (Draft)</option>
                               <option :value="200">200</option>
                               <option :value="300">300 (Standard)</option>
@@ -737,7 +737,7 @@ const ocrLanguages = [
                           </div>
                           <div>
                             <label class="block text-xs font-semibold text-zinc-600 dark:text-zinc-400 mb-1">Color</label>
-                            <select v-model="scannerColorMode" class="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-sm text-zinc-900 dark:text-white outline-none">
+                            <select v-model="scannerColorMode" class="w-full px-3 py-2 border border-zinc-200 dark:border-border-dark rounded-lg bg-white dark:bg-surface-dark text-sm text-zinc-900 dark:text-white outline-none">
                               <option value="color">Color</option>
                               <option value="grayscale">Grayscale</option>
                               <option value="bw">Black & White</option>
@@ -745,7 +745,7 @@ const ocrLanguages = [
                           </div>
                           <div>
                             <label class="block text-xs font-semibold text-zinc-600 dark:text-zinc-400 mb-1">Page Size</label>
-                            <select v-model="scannerPageSize" class="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-sm text-zinc-900 dark:text-white outline-none">
+                            <select v-model="scannerPageSize" class="w-full px-3 py-2 border border-zinc-200 dark:border-border-dark rounded-lg bg-white dark:bg-surface-dark text-sm text-zinc-900 dark:text-white outline-none">
                               <option value="A4">A4</option>
                               <option value="A3">A3</option>
                               <option value="Letter">Letter</option>
@@ -754,7 +754,7 @@ const ocrLanguages = [
                           </div>
                           <div>
                             <label class="block text-xs font-semibold text-zinc-600 dark:text-zinc-400 mb-1">Source</label>
-                            <select v-model="scannerPaperSource" class="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-sm text-zinc-900 dark:text-white outline-none">
+                            <select v-model="scannerPaperSource" class="w-full px-3 py-2 border border-zinc-200 dark:border-border-dark rounded-lg bg-white dark:bg-surface-dark text-sm text-zinc-900 dark:text-white outline-none">
                               <option value="flatbed">Flatbed</option>
                               <option value="feeder">Document Feeder</option>
                               <option value="auto">Auto</option>
@@ -806,7 +806,7 @@ const ocrLanguages = [
                     <div
                       v-for="(page, index) in pages"
                       :key="page.id"
-                      class="relative w-16 h-20 shrink-0 rounded-lg overflow-hidden border-2 border-zinc-200 dark:border-zinc-600 group"
+                      class="relative w-16 h-20 shrink-0 rounded-lg overflow-hidden border-2 border-zinc-200 dark:border-border-dark group"
                     >
                       <img
                         :src="page.thumbnailUrl"
@@ -856,7 +856,7 @@ const ocrLanguages = [
                     :class="[
                       dragOverIndex === index && draggedIndex !== index
                         ? 'ring-2 ring-teal ring-offset-2 scale-[1.02]'
-                        : 'border-2 border-zinc-200 dark:border-zinc-600 hover:border-teal/50',
+                        : 'border-2 border-zinc-200 dark:border-border-dark hover:border-teal/50',
                       draggedIndex === index ? 'opacity-40 scale-95' : ''
                     ]"
                   >
@@ -905,7 +905,7 @@ const ocrLanguages = [
                   <label class="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1.5">Scan Profile</label>
                   <select
                     v-model="selectedConfigId"
-                    class="w-full px-3 py-2.5 border border-zinc-200 dark:border-zinc-600 rounded-xl bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm focus:ring-2 focus:ring-teal/30 focus:border-teal outline-none transition-all"
+                    class="w-full px-3 py-2.5 border border-zinc-200 dark:border-border-dark rounded-xl bg-white dark:bg-surface-dark text-zinc-900 dark:text-white text-sm focus:ring-2 focus:ring-teal/30 focus:border-teal outline-none transition-all"
                   >
                     <option :value="null">-- Custom Settings --</option>
                     <option v-for="config in scanConfigs" :key="config.id" :value="config.id">
@@ -923,13 +923,13 @@ const ocrLanguages = [
                     <input
                       v-model="documentName"
                       type="text"
-                      class="w-full px-3 py-2.5 border border-zinc-200 dark:border-zinc-600 rounded-xl bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm focus:ring-2 focus:ring-teal/30 focus:border-teal outline-none transition-all"
+                      class="w-full px-3 py-2.5 border border-zinc-200 dark:border-border-dark rounded-xl bg-white dark:bg-surface-dark text-zinc-900 dark:text-white text-sm focus:ring-2 focus:ring-teal/30 focus:border-teal outline-none transition-all"
                       placeholder="Enter document name..."
                     />
                   </div>
                   <div>
                     <label class="block text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-1.5">Target Folder</label>
-                    <div class="px-3 py-2.5 border border-zinc-200 dark:border-zinc-600 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 text-sm text-zinc-600 dark:text-zinc-400 flex items-center gap-2">
+                    <div class="px-3 py-2.5 border border-zinc-200 dark:border-border-dark rounded-xl bg-zinc-50 dark:bg-surface-dark/50 text-sm text-zinc-600 dark:text-zinc-400 flex items-center gap-2">
                       <span class="material-symbols-outlined text-teal text-lg">folder</span>
                       {{ folderName || 'Current folder' }}
                     </div>
@@ -941,14 +941,14 @@ const ocrLanguages = [
                   <textarea
                     v-model="description"
                     rows="2"
-                    class="w-full px-3 py-2.5 border border-zinc-200 dark:border-zinc-600 rounded-xl bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm focus:ring-2 focus:ring-teal/30 focus:border-teal outline-none transition-all resize-none"
+                    class="w-full px-3 py-2.5 border border-zinc-200 dark:border-border-dark rounded-xl bg-white dark:bg-surface-dark text-zinc-900 dark:text-white text-sm focus:ring-2 focus:ring-teal/30 focus:border-teal outline-none transition-all resize-none"
                     placeholder="Optional description..."
                   ></textarea>
                 </div>
 
                 <!-- Processing Options -->
-                <div class="border border-zinc-200 dark:border-zinc-700 rounded-xl overflow-hidden">
-                  <div class="px-4 py-3 bg-zinc-50 dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
+                <div class="border border-zinc-200 dark:border-border-dark rounded-xl overflow-hidden">
+                  <div class="px-4 py-3 bg-zinc-50 dark:bg-surface-dark border-b border-zinc-200 dark:border-border-dark">
                     <span class="font-semibold text-sm text-zinc-700 dark:text-white flex items-center gap-2">
                       <span class="material-symbols-outlined text-teal text-lg">tune</span>
                       Processing Options
@@ -1003,7 +1003,7 @@ const ocrLanguages = [
                         <label class="block text-xs font-semibold text-zinc-600 dark:text-zinc-400 mb-1 uppercase tracking-wide">OCR Language</label>
                         <select
                           v-model="ocrLanguage"
-                          class="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white text-sm focus:ring-2 focus:ring-teal/30 focus:border-teal outline-none transition-all"
+                          class="w-full px-3 py-2 border border-zinc-200 dark:border-border-dark rounded-lg bg-white dark:bg-surface-dark text-zinc-900 dark:text-white text-sm focus:ring-2 focus:ring-teal/30 focus:border-teal outline-none transition-all"
                         >
                           <option v-for="lang in ocrLanguages" :key="lang.value" :value="lang.value">
                             {{ lang.label }}
@@ -1032,7 +1032,7 @@ const ocrLanguages = [
                 </div>
 
                 <!-- Summary -->
-                <div class="bg-zinc-50 dark:bg-zinc-800/50 rounded-xl p-4 flex items-center gap-4">
+                <div class="bg-zinc-50 dark:bg-surface-dark/50 rounded-xl p-4 flex items-center gap-4">
                   <div class="w-10 h-10 rounded-lg bg-teal/10 flex items-center justify-center shrink-0">
                     <span class="material-symbols-outlined text-teal">summarize</span>
                   </div>
@@ -1097,7 +1097,7 @@ const ocrLanguages = [
                     <h4 class="text-xl font-bold text-zinc-900 dark:text-white mb-2">Scan Complete!</h4>
                     <p class="text-sm text-zinc-500 mb-6">Your document has been created successfully</p>
 
-                    <div class="bg-zinc-50 dark:bg-zinc-800 rounded-xl p-5 text-left space-y-3">
+                    <div class="bg-zinc-50 dark:bg-surface-dark rounded-xl p-5 text-left space-y-3">
                       <div class="flex items-center gap-3">
                         <span class="material-symbols-outlined text-red-500 text-xl">picture_as_pdf</span>
                         <div class="flex-1 min-w-0">
@@ -1105,7 +1105,7 @@ const ocrLanguages = [
                           <p class="text-xs text-zinc-500">{{ formatFileSize(processResult.fileSize) }}</p>
                         </div>
                       </div>
-                      <div class="grid grid-cols-3 gap-3 pt-2 border-t border-zinc-200 dark:border-zinc-700">
+                      <div class="grid grid-cols-3 gap-3 pt-2 border-t border-zinc-200 dark:border-border-dark">
                         <div class="text-center">
                           <p class="text-lg font-bold text-zinc-900 dark:text-white">{{ processResult.pageCount }}</p>
                           <p class="text-[10px] text-zinc-500 uppercase">Pages</p>
@@ -1147,7 +1147,7 @@ const ocrLanguages = [
             <!-- ═══════════════════ FOOTER ═══════════════════ -->
             <div
               v-if="currentStep < 4 || processingPhase === 'complete'"
-              class="px-6 py-4 border-t border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 flex items-center justify-between"
+              class="px-6 py-4 border-t border-zinc-200 dark:border-border-dark bg-zinc-50 dark:bg-surface-dark/50 flex items-center justify-between"
             >
               <button
                 @click="emit('close')"
@@ -1160,7 +1160,7 @@ const ocrLanguages = [
                 <button
                   v-if="currentStep > 1 && currentStep < 4"
                   @click="goBack"
-                  class="px-4 py-2.5 text-sm font-medium text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-600 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors inline-flex items-center gap-1.5"
+                  class="px-4 py-2.5 text-sm font-medium text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-border-dark rounded-lg hover:bg-zinc-100 dark:hover:bg-border-dark transition-colors inline-flex items-center gap-1.5"
                 >
                   <span class="material-symbols-outlined text-lg">arrow_back</span>
                   Back

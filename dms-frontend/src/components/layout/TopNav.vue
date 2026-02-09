@@ -42,12 +42,12 @@ function toggleDarkMode() {
 </script>
 
 <template>
-  <header class="h-16 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex items-center justify-between px-6 sticky top-0 z-30">
+  <header class="h-16 border-b border-zinc-200 dark:border-border-dark bg-white dark:bg-background-dark flex items-center justify-between px-6 sticky top-0 z-30">
     <!-- Left side - Mobile menu & Breadcrumb area -->
     <div class="flex items-center gap-4">
       <button
         @click="emit('toggleSidebar')"
-        class="lg:hidden p-2 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+        class="lg:hidden p-2 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-surface-dark rounded-lg transition-colors"
       >
         <span class="material-symbols-outlined">menu</span>
       </button>
@@ -68,11 +68,11 @@ function toggleDarkMode() {
         <input
           v-model="searchQuery"
           @keyup.enter="handleSearch"
-          class="w-full pl-10 pr-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-teal/50 focus:border-teal/50 text-sm transition-all placeholder:text-zinc-400"
+          class="w-full pl-10 pr-4 py-2.5 bg-zinc-50 dark:bg-surface-dark border border-zinc-200 dark:border-border-dark rounded-xl focus:ring-2 focus:ring-teal/50 focus:border-teal/50 text-sm transition-all placeholder:text-zinc-400"
           placeholder="Search documents, folders, or keywords..."
           type="text"
         />
-        <kbd class="absolute right-3 top-1/2 -translate-y-1/2 hidden lg:inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium text-zinc-400 bg-zinc-100 dark:bg-zinc-700 rounded border border-zinc-200 dark:border-zinc-600">
+        <kbd class="absolute right-3 top-1/2 -translate-y-1/2 hidden lg:inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium text-zinc-400 bg-zinc-100 dark:bg-border-dark rounded border border-zinc-200 dark:border-border-dark">
           <span>Ctrl</span>
           <span>K</span>
         </kbd>
@@ -107,13 +107,13 @@ function toggleDarkMode() {
       </button>
 
       <!-- Divider -->
-      <div class="w-px h-8 bg-zinc-200 dark:bg-zinc-700 mx-2"></div>
+      <div class="w-px h-8 bg-zinc-200 dark:bg-border-dark mx-2"></div>
 
       <!-- User menu -->
       <div class="relative">
         <button
           @click="showUserMenu = !showUserMenu"
-          class="flex items-center gap-3 p-1.5 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          class="flex items-center gap-3 p-1.5 rounded-xl hover:bg-zinc-100 dark:hover:bg-surface-dark transition-colors"
         >
           <div class="text-right hidden sm:block">
             <p class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
@@ -142,10 +142,10 @@ function toggleDarkMode() {
         >
           <div
             v-if="showUserMenu"
-            class="absolute right-0 top-14 w-64 bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-zinc-200 dark:border-zinc-800 py-2 overflow-hidden"
+            class="absolute right-0 top-14 w-64 bg-white dark:bg-background-dark rounded-2xl shadow-xl border border-zinc-200 dark:border-border-dark py-2 overflow-hidden"
           >
             <!-- User info header -->
-            <div class="px-4 py-3 border-b border-zinc-100 dark:border-zinc-800">
+            <div class="px-4 py-3 border-b border-zinc-100 dark:border-border-dark">
               <div class="flex items-center gap-3">
                 <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-teal to-navy flex items-center justify-center text-white font-bold shadow-lg">
                   {{ getInitials() }}
@@ -164,23 +164,15 @@ function toggleDarkMode() {
               <router-link
                 to="/profile"
                 @click="closeMenu"
-                class="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                class="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-surface-dark transition-colors"
               >
                 <span class="material-symbols-outlined text-lg text-zinc-400">person</span>
                 My Profile
               </router-link>
               <router-link
-                to="/delegations"
-                @click="closeMenu"
-                class="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
-              >
-                <span class="material-symbols-outlined text-lg text-zinc-400">swap_horiz</span>
-                My Delegations
-              </router-link>
-              <router-link
                 to="/settings"
                 @click="closeMenu"
-                class="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                class="flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-surface-dark transition-colors"
               >
                 <span class="material-symbols-outlined text-lg text-zinc-400">settings</span>
                 Settings
@@ -188,7 +180,7 @@ function toggleDarkMode() {
             </div>
 
             <!-- Logout -->
-            <div class="border-t border-zinc-100 dark:border-zinc-800 pt-2">
+            <div class="border-t border-zinc-100 dark:border-border-dark pt-2">
               <button
                 @click="emit('logout'); closeMenu()"
                 class="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"

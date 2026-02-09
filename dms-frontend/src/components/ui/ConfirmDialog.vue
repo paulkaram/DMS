@@ -153,7 +153,7 @@ onUnmounted(() => {
           >
             <div
               v-if="isOpen"
-              class="relative w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl overflow-hidden"
+              class="relative w-full max-w-md bg-white dark:bg-background-dark rounded-2xl shadow-2xl overflow-hidden"
               @click.stop
             >
               <!-- Content -->
@@ -185,12 +185,12 @@ onUnmounted(() => {
               </div>
 
               <!-- Actions -->
-              <div class="px-6 py-4 bg-zinc-50 dark:bg-zinc-800/50 border-t border-zinc-200 dark:border-zinc-700 flex items-center justify-end gap-3">
+              <div class="px-6 py-4 bg-zinc-50 dark:bg-surface-dark/50 border-t border-zinc-200 dark:border-border-dark flex items-center justify-end gap-3">
                 <button
                   v-if="showCancel"
                   @click="handleCancel"
                   :disabled="loading"
-                  class="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-600 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-white dark:bg-surface-dark border border-zinc-300 dark:border-border-dark rounded-lg hover:bg-zinc-50 dark:hover:bg-border-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {{ cancelText }}
                 </button>

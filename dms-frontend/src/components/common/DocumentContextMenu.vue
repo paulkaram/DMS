@@ -70,7 +70,9 @@ const actionCodeMap: Record<string, string> = {
   'route': 'document.route',
   'audit-trail': 'audit.document',
   'start-workflow': 'document.workflow',
-  'duplicate': 'document.duplicate'
+  'duplicate': 'document.duplicate',
+  'create-shortcut': 'document.shortcut.create',
+  'remove-shortcut': 'document.shortcut.remove'
 }
 
 // Check if user has role-based permission for an action
@@ -178,13 +180,15 @@ const menuItems = computed<MenuItem[]>(() => {
   }
 
   // Download/Delete section
-  const hasFileActions = canPerform('download', p.canExport) || canPerform('delete', p.canDelete)
+  const hasFileActions = canPerform('download', p.canExport) || canPerform('delete', p.canDelete) || (props.document.isShortcut && canPerform('remove-shortcut', p.canWrite))
   if (hasFileActions) {
     if (items.length > 0) items.push({ id: 'divider-file', label: '', divider: true })
     if (canPerform('download', p.canExport)) {
       items.push({ id: 'download', label: 'Download', icon: 'download' })
     }
-    if (canPerform('delete', p.canDelete)) {
+    if (props.document.isShortcut && canPerform('remove-shortcut', p.canWrite)) {
+      items.push({ id: 'remove-shortcut', label: 'Remove shortcut', icon: 'remove-shortcut' })
+    } else if (canPerform('delete', p.canDelete)) {
       items.push({ id: 'delete', label: 'Delete', icon: 'delete' })
     }
   }
@@ -213,6 +217,9 @@ const menuItems = computed<MenuItem[]>(() => {
     }
     if (canPerform('move', p.canWrite)) {
       items.push({ id: 'move', label: 'Move to...', icon: 'move' })
+    }
+    if (!props.document.isShortcut && canPerform('create-shortcut', p.canRead)) {
+      items.push({ id: 'create-shortcut', label: 'Create shortcut', icon: 'shortcut' })
     }
   }
 
@@ -316,6 +323,8 @@ function getIconPath(icon: string): string {
     'workflow': 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
     'duplicate': 'M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2',
     'preview': 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z',
+    'shortcut': 'M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1',
+    'remove-shortcut': 'M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1',
   }
   return icons[icon] || ''
 }
@@ -324,7 +333,7 @@ function getIconPath(icon: string): string {
 <template>
   <div
     ref="menuRef"
-    class="fixed bg-white dark:bg-zinc-800 rounded-xl shadow-2xl border border-zinc-200 dark:border-zinc-700 py-2 z-50 min-w-[220px] max-h-[80vh] overflow-y-auto custom-scrollbar font-display"
+    class="fixed bg-white dark:bg-surface-dark rounded-xl shadow-2xl border border-zinc-200 dark:border-border-dark py-2 z-50 min-w-[220px] max-h-[80vh] overflow-y-auto custom-scrollbar font-display"
     :style="{ left: `${adjustedPosition.x}px`, top: `${adjustedPosition.y}px` }"
   >
     <!-- No permissions message -->
@@ -335,7 +344,7 @@ function getIconPath(icon: string): string {
 
     <!-- Menu items -->
     <template v-else v-for="item in menuItems" :key="item.id">
-      <div v-if="item.divider" class="border-t border-zinc-200 dark:border-zinc-700 my-1.5 mx-3"></div>
+      <div v-if="item.divider" class="border-t border-zinc-200 dark:border-border-dark my-1.5 mx-3"></div>
       <button
         v-else
         @click="handleSelect(item)"

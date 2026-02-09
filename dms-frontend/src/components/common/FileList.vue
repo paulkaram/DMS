@@ -314,7 +314,7 @@ function toggleSelectDocument(docId: string) {
     />
 
     <!-- Documents Table - Light with Charcoal Header -->
-    <div v-else class="bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden shadow-xl border border-zinc-200 dark:border-zinc-700">
+    <div v-else class="bg-white dark:bg-background-dark rounded-2xl overflow-hidden shadow-xl border border-zinc-200 dark:border-border-dark">
       <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
           <thead>
@@ -402,12 +402,12 @@ function toggleSelectDocument(docId: string) {
       </div>
 
       <!-- Footer -->
-      <div class="px-5 py-3 bg-zinc-50 dark:bg-zinc-800 border-t border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
+      <div class="px-5 py-3 bg-zinc-50 dark:bg-surface-dark border-t border-zinc-200 dark:border-border-dark flex items-center justify-between">
         <span class="text-xs text-zinc-500">
           <span class="font-semibold text-teal">{{ documents.length }}</span>
           {{ documents.length === 1 ? 'document' : 'documents' }}
         </span>
-        <div class="flex items-center gap-1 bg-white dark:bg-zinc-700 rounded-lg p-1 shadow-sm border border-zinc-200 dark:border-zinc-600">
+        <div class="flex items-center gap-1 bg-white dark:bg-border-dark rounded-lg p-1 shadow-sm border border-zinc-200 dark:border-border-dark">
           <button class="p-1.5 text-zinc-400 disabled:opacity-30 disabled:cursor-not-allowed rounded-md transition-all hover:text-teal hover:bg-teal/10" disabled>
             <span class="material-symbols-outlined text-base">chevron_left</span>
           </button>

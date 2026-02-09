@@ -15,6 +15,11 @@ public class Folder
     /// </summary>
     public bool BreakContentTypeInheritance { get; set; } = false;
 
+    /// <summary>
+    /// 0 = Normal (all users see all docs), 1 = Private (users only see own docs unless Admin)
+    /// </summary>
+    public int AccessMode { get; set; } = 0;
+
     public bool IsActive { get; set; } = true;
     public Guid? CreatedBy { get; set; }
     public DateTime CreatedAt { get; set; }

@@ -106,7 +106,7 @@ const cabinetCount = computed(() => recycleBinItems.value.filter(i => i.nodeType
       <div class="flex items-center gap-3">
         <button
           @click="loadRecycleBin"
-          class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl font-medium text-sm transition-colors border border-zinc-200 dark:border-zinc-700"
+          class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-surface-dark hover:bg-zinc-50 dark:hover:bg-border-dark text-zinc-700 dark:text-zinc-300 rounded-xl font-medium text-sm transition-colors border border-zinc-200 dark:border-border-dark"
         >
           <span class="material-symbols-outlined text-lg">refresh</span>
           Refresh
@@ -166,8 +166,8 @@ const cabinetCount = computed(() => recycleBinItems.value.filter(i => i.nodeType
     </div>
 
     <!-- Filter Tabs -->
-    <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-      <div class="border-b border-zinc-200 dark:border-zinc-800">
+    <div class="bg-white dark:bg-background-dark rounded-2xl shadow-sm border border-zinc-200 dark:border-border-dark overflow-hidden">
+      <div class="border-b border-zinc-200 dark:border-border-dark">
         <nav class="flex">
           <button
             @click="selectedFilter = null"
@@ -198,7 +198,7 @@ const cabinetCount = computed(() => recycleBinItems.value.filter(i => i.nodeType
             <span class="flex items-center gap-2">
               <span class="material-symbols-outlined text-lg">description</span>
               Documents
-              <span v-if="documentCount > 0" class="px-2 py-0.5 text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 rounded-full">
+              <span v-if="documentCount > 0" class="px-2 py-0.5 text-xs bg-zinc-100 dark:bg-surface-dark text-zinc-600 dark:text-zinc-300 rounded-full">
                 {{ documentCount }}
               </span>
             </span>
@@ -215,7 +215,7 @@ const cabinetCount = computed(() => recycleBinItems.value.filter(i => i.nodeType
             <span class="flex items-center gap-2">
               <span class="material-symbols-outlined text-lg">folder</span>
               Folders
-              <span v-if="folderCount > 0" class="px-2 py-0.5 text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 rounded-full">
+              <span v-if="folderCount > 0" class="px-2 py-0.5 text-xs bg-zinc-100 dark:bg-surface-dark text-zinc-600 dark:text-zinc-300 rounded-full">
                 {{ folderCount }}
               </span>
             </span>
@@ -232,7 +232,7 @@ const cabinetCount = computed(() => recycleBinItems.value.filter(i => i.nodeType
             <span class="flex items-center gap-2">
               <span class="material-symbols-outlined text-lg">inventory_2</span>
               Cabinets
-              <span v-if="cabinetCount > 0" class="px-2 py-0.5 text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 rounded-full">
+              <span v-if="cabinetCount > 0" class="px-2 py-0.5 text-xs bg-zinc-100 dark:bg-surface-dark text-zinc-600 dark:text-zinc-300 rounded-full">
                 {{ cabinetCount }}
               </span>
             </span>
@@ -247,7 +247,7 @@ const cabinetCount = computed(() => recycleBinItems.value.filter(i => i.nodeType
 
       <!-- Empty State -->
       <div v-else-if="displayedItems.length === 0" class="text-center py-12">
-        <div class="w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
+        <div class="w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-surface-dark flex items-center justify-center mx-auto mb-4">
           <span class="material-symbols-outlined text-5xl text-zinc-400">delete_outline</span>
         </div>
         <h3 class="text-lg font-semibold text-zinc-700 dark:text-zinc-300">Recycle bin is empty</h3>
@@ -260,7 +260,7 @@ const cabinetCount = computed(() => recycleBinItems.value.filter(i => i.nodeType
           <div
             v-for="(item, index) in displayedItems"
             :key="item.id"
-            class="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl border border-zinc-100 dark:border-zinc-700 hover:border-teal/30 hover:shadow-md transition-all"
+            class="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-surface-dark rounded-xl border border-zinc-100 dark:border-border-dark hover:border-teal/30 hover:shadow-md transition-all"
           >
             <!-- Icon -->
             <DocumentIcon
@@ -283,7 +283,7 @@ const cabinetCount = computed(() => recycleBinItems.value.filter(i => i.nodeType
                 <span :class="[
                   'px-2 py-0.5 rounded-full text-xs font-medium',
                   item.nodeType === 1 ? 'bg-teal/15 text-teal' :
-                  item.nodeType === 2 ? 'bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300' :
+                  item.nodeType === 2 ? 'bg-zinc-200 dark:bg-border-dark text-zinc-600 dark:text-zinc-300' :
                   'bg-teal/15 text-teal'
                 ]">
                   {{ getNodeTypeName(item.nodeType) }}
@@ -315,7 +315,7 @@ const cabinetCount = computed(() => recycleBinItems.value.filter(i => i.nodeType
                 >
                   <span class="material-symbols-outlined text-xl">restore</span>
                 </button>
-                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-zinc-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-border-dark rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                   Restore
                 </span>
               </div>
@@ -326,7 +326,7 @@ const cabinetCount = computed(() => recycleBinItems.value.filter(i => i.nodeType
                 >
                   <span class="material-symbols-outlined text-xl">delete_forever</span>
                 </button>
-                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-zinc-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-border-dark rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
                   Delete Permanently
                 </span>
               </div>

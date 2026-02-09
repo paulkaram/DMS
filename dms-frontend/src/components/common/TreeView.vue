@@ -54,16 +54,16 @@ function renderFolderNode(node: TreeNode): boolean {
           @contextmenu="handleContextMenu($event, node)"
           class="group flex items-center gap-2.5 py-2 px-2 cursor-pointer rounded-lg transition-all duration-200 mb-0.5 border-l-2"
           :class="selectedId === node.id
-            ? 'bg-gray-100 dark:bg-zinc-800/80 border-teal'
-            : 'border-transparent hover:bg-gray-50 dark:hover:bg-zinc-800/50'"
+            ? 'bg-gray-100 dark:bg-surface-dark/80 border-teal'
+            : 'border-transparent hover:bg-gray-50 dark:hover:bg-surface-dark/50'"
         >
           <!-- Expand Arrow -->
           <button
             @click="handleExpandClick($event, node)"
             class="w-5 h-5 flex items-center justify-center rounded transition-all duration-200 flex-shrink-0"
             :class="selectedId === node.id
-              ? 'hover:bg-gray-200 dark:hover:bg-zinc-700'
-              : 'hover:bg-gray-200 dark:hover:bg-zinc-700'"
+              ? 'hover:bg-gray-200 dark:hover:bg-border-dark'
+              : 'hover:bg-gray-200 dark:hover:bg-border-dark'"
           >
             <svg
               class="w-3.5 h-3.5 transition-transform duration-200"
@@ -95,6 +95,7 @@ function renderFolderNode(node: TreeNode): boolean {
             class="text-sm truncate flex-1 transition-colors"
             :class="selectedId === node.id ? 'font-semibold text-gray-900 dark:text-white' : 'font-medium text-gray-600 dark:text-zinc-400'"
           >{{ node.name }}</span>
+          <span v-if="node.accessMode === 1" class="material-symbols-outlined text-amber-500 flex-shrink-0" style="font-size: 14px;" title="Private folder">lock</span>
 
           <!-- Folder Count Badge -->
           <span
@@ -102,7 +103,7 @@ function renderFolderNode(node: TreeNode): boolean {
             class="text-[10px] min-w-[18px] h-[18px] px-1.5 rounded font-medium flex-shrink-0 flex items-center justify-center"
             :class="selectedId === node.id
               ? 'bg-teal text-white'
-              : 'bg-gray-200 dark:bg-zinc-700 text-gray-500 dark:text-zinc-400'"
+              : 'bg-gray-200 dark:bg-border-dark text-gray-500 dark:text-zinc-400'"
           >{{ node.children.length }}</span>
         </div>
 
@@ -130,14 +131,14 @@ function renderFolderNode(node: TreeNode): boolean {
             @contextmenu="handleContextMenu($event, node)"
             class="group flex items-center gap-2 py-1.5 px-2 cursor-pointer rounded-md transition-all duration-200 mb-0.5 border-l-2"
             :class="selectedId === node.id
-              ? 'bg-gray-100 dark:bg-zinc-800/60 border-teal'
-              : 'border-transparent hover:bg-gray-50 dark:hover:bg-zinc-800/40'"
+              ? 'bg-gray-100 dark:bg-surface-dark/60 border-teal'
+              : 'border-transparent hover:bg-gray-50 dark:hover:bg-surface-dark/40'"
           >
             <!-- Expand Arrow -->
             <button
               v-if="node.children && node.children.length > 0"
               @click="handleExpandClick($event, node)"
-              class="w-4 h-4 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors flex-shrink-0"
+              class="w-4 h-4 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-border-dark transition-colors flex-shrink-0"
             >
               <svg
                 class="w-3 h-3 text-gray-400 dark:text-zinc-500 transition-transform duration-200"
@@ -165,11 +166,12 @@ function renderFolderNode(node: TreeNode): boolean {
                 ? 'font-medium text-gray-900 dark:text-white'
                 : 'text-gray-600 dark:text-zinc-400'"
             >{{ node.name }}</span>
+            <span v-if="node.accessMode === 1" class="material-symbols-outlined text-amber-500 flex-shrink-0" style="font-size: 12px;" title="Private folder">lock</span>
 
             <!-- Subfolder Count -->
             <span
               v-if="node.children && node.children.length > 0 && !node.isExpanded"
-              class="text-[10px] px-1.5 py-0.5 rounded font-medium flex-shrink-0 bg-gray-200 dark:bg-zinc-700 text-gray-500 dark:text-zinc-400"
+              class="text-[10px] px-1.5 py-0.5 rounded font-medium flex-shrink-0 bg-gray-200 dark:bg-border-dark text-gray-500 dark:text-zinc-400"
             >{{ node.children.length }}</span>
           </div>
 
@@ -193,7 +195,7 @@ function renderFolderNode(node: TreeNode): boolean {
 
     <!-- Empty State -->
     <div v-if="nodes.length === 0 && currentLevel === 0 && !isChildLevel" class="px-4 py-12 text-center">
-      <div class="w-14 h-14 mx-auto mb-4 rounded-xl bg-gray-100 dark:bg-zinc-800 flex items-center justify-center">
+      <div class="w-14 h-14 mx-auto mb-4 rounded-xl bg-gray-100 dark:bg-surface-dark flex items-center justify-center">
         <svg class="w-7 h-7 text-gray-300 dark:text-zinc-600" viewBox="0 0 24 24" fill="currentColor">
           <path d="M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm0 2v4h16V6H4zm0 6v6h16v-6H4z"/>
         </svg>

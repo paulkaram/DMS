@@ -18,6 +18,7 @@ interface Comment {
 
 const props = defineProps<{
   documentId: string
+  embedded?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -127,13 +128,13 @@ function isOwner(comment: Comment) {
 </script>
 
 <template>
-  <div class="flex flex-col h-full bg-white dark:bg-zinc-900">
-    <!-- Header -->
-    <div class="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800">
+  <div :class="embedded ? '-mx-6 -my-5' : 'flex flex-col h-full bg-white dark:bg-background-dark'">
+    <!-- Header (hidden when embedded in UiModal) -->
+    <div v-if="!embedded" class="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-border-dark">
       <h2 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Comments</h2>
       <button
         @click="emit('close')"
-        class="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+        class="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 rounded-lg hover:bg-zinc-100 dark:hover:bg-surface-dark transition-colors"
       >
         <span class="material-symbols-outlined">close</span>
       </button>
@@ -155,7 +156,7 @@ function isOwner(comment: Comment) {
         <div
           v-for="comment in comments"
           :key="comment.id"
-          class="bg-zinc-50 dark:bg-zinc-800 rounded-xl p-4"
+          class="bg-zinc-50 dark:bg-surface-dark rounded-xl p-4"
         >
           <!-- Comment Header -->
           <div class="flex items-start justify-between mb-2">
@@ -192,13 +193,13 @@ function isOwner(comment: Comment) {
           <div v-if="editingComment === comment.id" class="mt-2">
             <textarea
               v-model="editContent"
-              class="w-full p-3 border border-zinc-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-sm resize-none focus:ring-2 focus:ring-teal/50 focus:border-teal"
+              class="w-full p-3 border border-zinc-200 dark:border-border-dark rounded-lg bg-white dark:bg-background-dark text-sm resize-none focus:ring-2 focus:ring-teal/50 focus:border-teal"
               rows="3"
             ></textarea>
             <div class="flex justify-end gap-2 mt-2">
               <button
                 @click="cancelEdit"
-                class="px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-lg transition-colors"
+                class="px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-100 dark:hover:bg-border-dark rounded-lg transition-colors"
               >
                 Cancel
               </button>
@@ -215,7 +216,7 @@ function isOwner(comment: Comment) {
           </p>
 
           <!-- Reply Section -->
-          <div class="mt-3 pt-3 border-t border-zinc-200 dark:border-zinc-700">
+          <div class="mt-3 pt-3 border-t border-zinc-200 dark:border-border-dark">
             <button
               v-if="replyingTo !== comment.id"
               @click="replyingTo = comment.id"
@@ -231,13 +232,13 @@ function isOwner(comment: Comment) {
               <textarea
                 v-model="replyContent"
                 placeholder="Write a reply..."
-                class="w-full p-3 border border-zinc-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-900 text-sm resize-none focus:ring-2 focus:ring-teal/50 focus:border-teal"
+                class="w-full p-3 border border-zinc-200 dark:border-border-dark rounded-lg bg-white dark:bg-background-dark text-sm resize-none focus:ring-2 focus:ring-teal/50 focus:border-teal"
                 rows="2"
               ></textarea>
               <div class="flex justify-end gap-2 mt-2">
                 <button
                   @click="replyingTo = null; replyContent = ''"
-                  class="px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-lg transition-colors"
+                  class="px-3 py-1.5 text-sm text-zinc-600 hover:bg-zinc-100 dark:hover:bg-border-dark rounded-lg transition-colors"
                 >
                   Cancel
                 </button>
@@ -261,14 +262,14 @@ function isOwner(comment: Comment) {
             </div>
 
             <!-- Replies List -->
-            <div v-if="comment.replies && comment.replies.length > 0" class="mt-3 pl-4 border-l-2 border-zinc-200 dark:border-zinc-700 space-y-3">
+            <div v-if="comment.replies && comment.replies.length > 0" class="mt-3 pl-4 border-l-2 border-zinc-200 dark:border-border-dark space-y-3">
               <div
                 v-for="reply in comment.replies"
                 :key="reply.id"
-                class="bg-white dark:bg-zinc-900 rounded-lg p-3"
+                class="bg-white dark:bg-background-dark rounded-lg p-3"
               >
                 <div class="flex items-center gap-2 mb-1">
-                  <div class="w-6 h-6 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center text-zinc-600 dark:text-zinc-400 text-xs font-semibold">
+                  <div class="w-6 h-6 rounded-full bg-zinc-200 dark:bg-border-dark flex items-center justify-center text-zinc-600 dark:text-zinc-400 text-xs font-semibold">
                     {{ reply.createdByName?.charAt(0) || '?' }}
                   </div>
                   <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">{{ reply.createdByName }}</span>
@@ -283,7 +284,7 @@ function isOwner(comment: Comment) {
     </div>
 
     <!-- New Comment Form -->
-    <div class="p-6 border-t border-zinc-200 dark:border-zinc-800">
+    <div class="p-6 border-t border-zinc-200 dark:border-border-dark">
       <div class="flex gap-3">
         <div class="w-8 h-8 rounded-full bg-teal flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
           {{ authStore.user?.firstName?.charAt(0) || authStore.user?.username?.charAt(0) || '?' }}
@@ -292,7 +293,7 @@ function isOwner(comment: Comment) {
           <textarea
             v-model="newComment"
             placeholder="Add a comment..."
-            class="w-full p-3 border border-zinc-200 dark:border-zinc-700 rounded-lg bg-zinc-50 dark:bg-zinc-800 text-sm resize-none focus:ring-2 focus:ring-teal/50 focus:border-teal focus:bg-white dark:focus:bg-zinc-900"
+            class="w-full p-3 border border-zinc-200 dark:border-border-dark rounded-lg bg-zinc-50 dark:bg-surface-dark text-sm resize-none focus:ring-2 focus:ring-teal/50 focus:border-teal focus:bg-white dark:focus:bg-zinc-900"
             rows="3"
             @keydown.ctrl.enter="addComment"
           ></textarea>

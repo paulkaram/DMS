@@ -33,9 +33,7 @@ const myFilesMenuItems = [
 ]
 
 const workflowMenuItems = [
-  { name: 'Approvals', path: '/approvals', icon: 'task_alt' },
-  { name: 'Vacation', path: '/vacation', icon: 'flight_takeoff' },
-  { name: 'Delegations', path: '/delegations', icon: 'swap_horiz' }
+  { name: 'Approvals', path: '/approvals', icon: 'task_alt' }
 ]
 
 function isActive(path: string) {

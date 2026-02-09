@@ -15,17 +15,20 @@ public class DocumentsController : ControllerBase
     private readonly IBulkOperationService _bulkOperationService;
     private readonly IPreviewService _previewService;
     private readonly IPermissionService _permissionService;
+    private readonly IFolderService _folderService;
 
     public DocumentsController(
         IDocumentService documentService,
         IBulkOperationService bulkOperationService,
         IPreviewService previewService,
-        IPermissionService permissionService)
+        IPermissionService permissionService,
+        IFolderService folderService)
     {
         _documentService = documentService;
         _bulkOperationService = bulkOperationService;
         _previewService = previewService;
         _permissionService = permissionService;
+        _folderService = folderService;
     }
 
     [HttpGet]
@@ -43,9 +46,24 @@ public class DocumentsController : ControllerBase
         var result = await _documentService.SearchAsync(search, folderId, classificationId, documentTypeId);
         if (!result.Success) return BadRequest(result.Errors);
 
+        var docs = result.Data!;
+
+        // Private folder filtering: non-admin users only see their own documents
+        if (folderId.HasValue)
+        {
+            var folderResult = await _folderService.GetByIdAsync(folderId.Value);
+            if (folderResult.Success && folderResult.Data!.AccessMode == 1)
+            {
+                if (!IsAdmin() && !await HasPermissionAsync(userId, "Folder", folderId.Value, (int)PermissionLevel.Admin))
+                {
+                    docs = docs.Where(d => d.CreatedBy == userId).ToList();
+                }
+            }
+        }
+
         // Filter documents based on user's read permission
         var accessibleDocs = new List<DocumentDto>();
-        foreach (var doc in result.Data!)
+        foreach (var doc in docs)
         {
             if (await HasPermissionAsync(userId, "Document", doc.Id, (int)PermissionLevel.Read))
                 accessibleDocs.Add(doc);

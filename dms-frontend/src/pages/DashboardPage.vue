@@ -194,7 +194,7 @@ function getActivityStyleLight(action: string) {
   }
   if (actionLower.includes('discard')) {
     return {
-      bg: 'bg-zinc-100 dark:bg-zinc-800',
+      bg: 'bg-zinc-100 dark:bg-surface-dark',
       icon: 'text-zinc-500',
       iconName: 'undo',
       text: 'text-zinc-600'
@@ -249,18 +249,30 @@ function getActivityBadgeClass(action: string): string {
     return 'bg-teal/15 text-teal'
   }
   if (actionLower.includes('update') || actionLower.includes('edit')) {
-    return 'bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300'
+    return 'bg-zinc-200 dark:bg-border-dark text-zinc-700 dark:text-zinc-300'
   }
   if (actionLower.includes('delete') || actionLower.includes('remove')) {
     return 'bg-zinc-300 dark:bg-zinc-600 text-zinc-700 dark:text-zinc-300'
   }
   if (actionLower.includes('checkout') || actionLower.includes('discard')) {
-    return 'bg-[#1e3a5f]/20 text-[#1e3a5f] dark:bg-zinc-700 dark:text-zinc-300'
+    return 'bg-[#1e3a5f]/20 text-[#1e3a5f] dark:bg-border-dark dark:text-zinc-300'
   }
   if (actionLower.includes('download') || actionLower.includes('view')) {
     return 'bg-teal/10 text-teal'
   }
-  return 'bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400'
+  return 'bg-zinc-100 dark:bg-border-dark text-zinc-600 dark:text-zinc-400'
+}
+
+function navigateToActivity(activity: ActivityLog) {
+  if (!activity.nodeId) return
+  const type = activity.nodeType?.toLowerCase()
+  if (type === 'document') {
+    router.push(`/documents/${activity.nodeId}`)
+  } else if (type === 'folder' || type === 'cabinet') {
+    router.push(`/explorer?folderId=${activity.nodeId}`)
+  } else {
+    router.push('/activity')
+  }
 }
 </script>
 
@@ -347,8 +359,8 @@ function getActivityBadgeClass(action: string): string {
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- Quick Actions -->
-      <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-        <div class="p-6 border-b border-zinc-100 dark:border-zinc-800">
+      <div class="bg-white dark:bg-background-dark rounded-2xl shadow-sm border border-zinc-200 dark:border-border-dark overflow-hidden">
+        <div class="p-6 border-b border-zinc-100 dark:border-border-dark">
           <h3 class="text-sm font-bold text-zinc-800 dark:text-white uppercase tracking-wider">Quick Actions</h3>
         </div>
         <div class="p-4 space-y-2">
@@ -377,22 +389,22 @@ function getActivityBadgeClass(action: string): string {
       </div>
 
       <!-- Recent Documents -->
-      <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-        <div class="p-6 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center">
+      <div class="bg-white dark:bg-background-dark rounded-2xl shadow-sm border border-zinc-200 dark:border-border-dark overflow-hidden">
+        <div class="p-6 border-b border-zinc-100 dark:border-border-dark flex justify-between items-center">
           <h3 class="text-sm font-bold text-zinc-800 dark:text-white uppercase tracking-wider">Recent Documents</h3>
           <button @click="navigateToExplorer" class="text-[10px] font-bold text-teal uppercase hover:underline tracking-wider">View All</button>
         </div>
         <div v-if="isLoading" class="p-4 space-y-3">
           <div v-for="i in 3" :key="i" class="animate-pulse flex items-center gap-3 p-2">
-            <div class="w-10 h-10 bg-zinc-200 dark:bg-zinc-700 rounded-lg"></div>
+            <div class="w-10 h-10 bg-zinc-200 dark:bg-border-dark rounded-lg"></div>
             <div class="flex-1">
-              <div class="h-4 bg-zinc-200 dark:bg-zinc-700 rounded w-3/4 mb-2"></div>
-              <div class="h-3 bg-zinc-200 dark:bg-zinc-700 rounded w-1/2"></div>
+              <div class="h-4 bg-zinc-200 dark:bg-border-dark rounded w-3/4 mb-2"></div>
+              <div class="h-3 bg-zinc-200 dark:bg-border-dark rounded w-1/2"></div>
             </div>
           </div>
         </div>
         <div v-else-if="recentDocuments.length === 0" class="p-8 text-center">
-          <div class="w-16 h-16 bg-zinc-50 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-3">
+          <div class="w-16 h-16 bg-zinc-50 dark:bg-surface-dark rounded-full flex items-center justify-center mx-auto mb-3">
             <span class="material-symbols-outlined text-3xl text-zinc-300 dark:text-zinc-600">description</span>
           </div>
           <p class="text-zinc-400 font-medium">No recent documents</p>
@@ -403,7 +415,7 @@ function getActivityBadgeClass(action: string): string {
             v-for="(doc, index) in recentDocuments"
             :key="doc.id"
             @click="navigateToDocument(doc.id)"
-            class="p-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer transition-all group flex items-center gap-4"
+            class="p-4 hover:bg-zinc-50 dark:hover:bg-surface-dark/50 cursor-pointer transition-all group flex items-center gap-4"
           >
             <DocumentIcon :extension="doc.extension" :index="index" size="md" />
             <div class="flex-1 min-w-0">
@@ -418,21 +430,21 @@ function getActivityBadgeClass(action: string): string {
       </div>
 
       <!-- My Checkouts -->
-      <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden h-full flex flex-col">
-        <div class="p-6 border-b border-zinc-100 dark:border-zinc-800">
+      <div class="bg-white dark:bg-background-dark rounded-2xl shadow-sm border border-zinc-200 dark:border-border-dark overflow-hidden h-full flex flex-col">
+        <div class="p-6 border-b border-zinc-100 dark:border-border-dark">
           <h3 class="text-sm font-bold text-zinc-800 dark:text-white uppercase tracking-wider">My Checked Out Files</h3>
         </div>
         <div v-if="isLoading" class="p-4 space-y-3 flex-1">
           <div v-for="i in 3" :key="i" class="animate-pulse flex items-center gap-3 p-2">
-            <div class="w-10 h-10 bg-zinc-200 dark:bg-zinc-700 rounded-lg"></div>
+            <div class="w-10 h-10 bg-zinc-200 dark:bg-border-dark rounded-lg"></div>
             <div class="flex-1">
-              <div class="h-4 bg-zinc-200 dark:bg-zinc-700 rounded w-3/4 mb-2"></div>
-              <div class="h-3 bg-zinc-200 dark:bg-zinc-700 rounded w-1/2"></div>
+              <div class="h-4 bg-zinc-200 dark:bg-border-dark rounded w-3/4 mb-2"></div>
+              <div class="h-3 bg-zinc-200 dark:bg-border-dark rounded w-1/2"></div>
             </div>
           </div>
         </div>
         <div v-else-if="myCheckouts.length === 0" class="flex-1 flex flex-col items-center justify-center p-8 text-center">
-          <div class="w-20 h-20 bg-zinc-50 dark:bg-zinc-800 rounded-full flex items-center justify-center mb-4">
+          <div class="w-20 h-20 bg-zinc-50 dark:bg-surface-dark rounded-full flex items-center justify-center mb-4">
             <span class="material-symbols-outlined text-4xl text-zinc-300 dark:text-zinc-700">check_circle</span>
           </div>
           <p class="text-zinc-400 font-medium">No checked out files</p>
@@ -443,7 +455,7 @@ function getActivityBadgeClass(action: string): string {
             v-for="(doc, index) in myCheckouts"
             :key="doc.id"
             @click="navigateToDocument(doc.id)"
-            class="p-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer transition-all group flex items-center gap-4"
+            class="p-4 hover:bg-zinc-50 dark:hover:bg-surface-dark/50 cursor-pointer transition-all group flex items-center gap-4"
           >
             <div class="w-10 h-10 bg-[#1e3a5f] rounded-full flex items-center justify-center flex-shrink-0">
               <span class="material-symbols-outlined text-white">edit_document</span>
@@ -458,24 +470,24 @@ function getActivityBadgeClass(action: string): string {
     </div>
 
     <!-- Recent Activity -->
-    <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-      <div class="p-6 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center">
+    <div class="bg-white dark:bg-background-dark rounded-2xl shadow-sm border border-zinc-200 dark:border-border-dark overflow-hidden">
+      <div class="p-6 border-b border-zinc-100 dark:border-border-dark flex justify-between items-center">
         <h3 class="text-sm font-bold text-zinc-800 dark:text-white uppercase tracking-wider">Recent Activity</h3>
         <button @click="router.push('/activity')" class="text-[10px] font-bold text-teal uppercase hover:underline tracking-wider">View All</button>
       </div>
 
       <div v-if="isLoading" class="p-6 space-y-4">
         <div v-for="i in 5" :key="i" class="animate-pulse flex items-center gap-4">
-          <div class="w-10 h-10 bg-zinc-200 dark:bg-zinc-700 rounded-lg"></div>
+          <div class="w-10 h-10 bg-zinc-200 dark:bg-border-dark rounded-lg"></div>
           <div class="flex-1">
-            <div class="h-4 bg-zinc-200 dark:bg-zinc-700 rounded w-1/2 mb-2"></div>
-            <div class="h-3 bg-zinc-200 dark:bg-zinc-700 rounded w-1/4"></div>
+            <div class="h-4 bg-zinc-200 dark:bg-border-dark rounded w-1/2 mb-2"></div>
+            <div class="h-3 bg-zinc-200 dark:bg-border-dark rounded w-1/4"></div>
           </div>
         </div>
       </div>
 
       <div v-else-if="recentActivity.length === 0" class="p-12 text-center">
-        <div class="w-20 h-20 bg-zinc-50 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-4">
+        <div class="w-20 h-20 bg-zinc-50 dark:bg-surface-dark rounded-full flex items-center justify-center mx-auto mb-4">
           <span class="material-symbols-outlined text-4xl text-zinc-300 dark:text-zinc-700">history</span>
         </div>
         <p class="text-zinc-400 font-medium">No recent activity</p>
@@ -486,7 +498,8 @@ function getActivityBadgeClass(action: string): string {
         <div
           v-for="(activity, index) in recentActivity"
           :key="activity.id"
-          class="px-6 py-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-all cursor-pointer group flex items-center gap-4"
+          class="px-6 py-4 hover:bg-zinc-50 dark:hover:bg-surface-dark/50 transition-all cursor-pointer group flex items-center gap-4"
+          @click="navigateToActivity(activity)"
         >
           <!-- Icon -->
           <DocumentIcon :icon="getActivityIcon(activity.action)" :index="index" size="md" />

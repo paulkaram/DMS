@@ -448,11 +448,11 @@ function getFieldColor(fieldType: string): string {
     </div>
 
     <!-- Main Card Container -->
-    <div class="h-full bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-gray-200 dark:border-zinc-800 overflow-hidden flex flex-col">
+    <div class="h-full bg-white dark:bg-background-dark rounded-xl shadow-sm border border-gray-200 dark:border-border-dark overflow-hidden flex flex-col">
       <!-- Header -->
-      <div class="px-5 py-3 flex items-center justify-between border-b border-gray-100 dark:border-zinc-800">
+      <div class="px-5 py-3 flex items-center justify-between border-b border-gray-100 dark:border-border-dark">
       <div class="flex items-center gap-4">
-        <button @click="router.push('/admin/content-type-builder')" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors">
+        <button @click="router.push('/admin/content-type-builder')" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-surface-dark rounded-lg transition-colors">
           <span class="material-symbols-outlined text-xl">arrow_back</span>
         </button>
         <div class="flex items-center gap-3">
@@ -471,20 +471,20 @@ function getFieldColor(fieldType: string): string {
         <button
           @click="showPreview = true"
           :disabled="fields.length === 0"
-          class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-surface-dark rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <span class="material-symbols-outlined text-lg">visibility</span>
           Preview
         </button>
-        <div class="w-px h-6 bg-gray-200 dark:bg-zinc-700 mx-1"></div>
+        <div class="w-px h-6 bg-gray-200 dark:bg-border-dark mx-1"></div>
         <button
           @click="showSettings = !showSettings"
-          :class="['flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors', showSettings ? 'bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-200' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-zinc-800']"
+          :class="['flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors', showSettings ? 'bg-gray-100 dark:bg-surface-dark text-gray-700 dark:text-gray-200' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-surface-dark']"
         >
           <span class="material-symbols-outlined text-lg">tune</span>
           Settings
         </button>
-        <div class="w-px h-6 bg-gray-200 dark:bg-zinc-700 mx-1"></div>
+        <div class="w-px h-6 bg-gray-200 dark:bg-border-dark mx-1"></div>
         <button
           @click="saveContentType"
           :disabled="isSaving || !contentType?.name"
@@ -502,9 +502,9 @@ function getFieldColor(fieldType: string): string {
 
       <div v-else-if="contentType" class="flex-1 flex overflow-hidden">
         <!-- Left: Field Palette -->
-      <div class="w-56 bg-gray-50/50 dark:bg-zinc-800/50 border-r border-gray-100 dark:border-zinc-800 flex flex-col">
+      <div class="w-56 bg-gray-50/50 dark:bg-surface-dark/50 border-r border-gray-100 dark:border-border-dark flex flex-col">
         <!-- Enhanced Header -->
-        <div class="px-3 py-2.5 border-b border-gray-100 dark:border-zinc-700">
+        <div class="px-3 py-2.5 border-b border-gray-100 dark:border-border-dark">
           <div class="flex items-center gap-2">
             <div class="w-6 h-6 rounded-md bg-gradient-to-br from-teal to-teal/80 flex items-center justify-center">
               <span class="material-symbols-outlined text-white text-sm">dashboard_customize</span>
@@ -534,7 +534,7 @@ function getFieldColor(fieldType: string): string {
                   isNewContentType ? 'opacity-40 cursor-not-allowed' : '',
                   draggedPaletteType === ft.value
                     ? 'bg-teal/10 ring-1 ring-teal/30'
-                    : 'hover:bg-gray-50 dark:hover:bg-zinc-800'
+                    : 'hover:bg-gray-50 dark:hover:bg-surface-dark'
                 ]"
               >
                 <div
@@ -564,7 +564,7 @@ function getFieldColor(fieldType: string): string {
       <!-- Center: Settings + Canvas -->
       <div class="flex-1 flex flex-col overflow-hidden">
         <!-- Settings Panel -->
-        <div v-if="showSettings" class="border-b border-gray-100 dark:border-zinc-800">
+        <div v-if="showSettings" class="border-b border-gray-100 dark:border-border-dark">
           <div class="px-5 py-4">
             <div class="flex items-start gap-8">
               <!-- Name -->
@@ -573,7 +573,7 @@ function getFieldColor(fieldType: string): string {
                 <input
                   v-model="contentType.name"
                   type="text"
-                  class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-teal/30 focus:border-teal transition-all"
+                  class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-border-dark rounded-lg bg-white dark:bg-surface-dark focus:ring-2 focus:ring-teal/30 focus:border-teal transition-all"
                   placeholder="Content type name"
                 />
               </div>
@@ -595,20 +595,20 @@ function getFieldColor(fieldType: string): string {
                 <input
                   v-model="contentType.description"
                   type="text"
-                  class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-zinc-700 rounded-lg bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-teal/30 focus:border-teal transition-all"
+                  class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-border-dark rounded-lg bg-white dark:bg-surface-dark focus:ring-2 focus:ring-teal/30 focus:border-teal transition-all"
                   placeholder="Brief description of this content type"
                 />
               </div>
 
               <!-- Divider -->
-              <div class="w-px h-16 bg-gray-200 dark:bg-zinc-700 self-center"></div>
+              <div class="w-px h-16 bg-gray-200 dark:bg-border-dark self-center"></div>
 
               <!-- Color -->
               <div>
                 <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wide">Color</label>
                 <div class="flex items-center gap-3">
                   <div
-                    class="w-10 h-10 rounded-lg shadow-inner border-2 border-white dark:border-zinc-700 ring-1 ring-gray-200 dark:ring-zinc-600"
+                    class="w-10 h-10 rounded-lg shadow-inner border-2 border-white dark:border-border-dark ring-1 ring-gray-200 dark:ring-zinc-600"
                     :style="{ backgroundColor: contentType.color }"
                   ></div>
                   <div class="grid grid-cols-8 gap-1">
@@ -625,7 +625,7 @@ function getFieldColor(fieldType: string): string {
               </div>
 
               <!-- Divider -->
-              <div class="w-px h-16 bg-gray-200 dark:bg-zinc-700 self-center"></div>
+              <div class="w-px h-16 bg-gray-200 dark:bg-border-dark self-center"></div>
 
               <!-- Apply To -->
               <div>
@@ -667,7 +667,7 @@ function getFieldColor(fieldType: string): string {
 
         <!-- Form Canvas -->
         <div
-          class="flex-1 overflow-y-auto p-4 bg-gray-50/50 dark:bg-zinc-800/30"
+          class="flex-1 overflow-y-auto p-4 bg-gray-50/50 dark:bg-surface-dark/30"
           @dragover="onCanvasDragOver"
           @dragleave="onCanvasDragLeave"
           @drop="onCanvasDrop"
@@ -675,13 +675,13 @@ function getFieldColor(fieldType: string): string {
           <div
             :class="[
               'min-h-full rounded-xl border-2 border-dashed transition-all',
-              isOverCanvas && isDraggingFromPalette ? 'border-teal bg-teal/5' : 'border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900/50',
+              isOverCanvas && isDraggingFromPalette ? 'border-teal bg-teal/5' : 'border-gray-200 dark:border-border-dark bg-white dark:bg-background-dark/50',
               fields.length === 0 ? 'flex items-center justify-center' : 'p-4'
             ]"
           >
             <!-- Empty State -->
             <div v-if="fields.length === 0 && !isOverCanvas" class="text-center py-16">
-              <div class="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gray-100 dark:bg-zinc-800 flex items-center justify-center">
+              <div class="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gray-100 dark:bg-surface-dark flex items-center justify-center">
                 <span class="material-symbols-outlined text-4xl text-gray-300">drag_indicator</span>
               </div>
               <h3 class="text-lg font-medium text-gray-600 dark:text-gray-400 mb-2">No fields yet</h3>
@@ -708,8 +708,8 @@ function getFieldColor(fieldType: string): string {
                 @drop="onFieldDrop($event, index)"
                 :class="[
                   'group flex items-center gap-4 px-4 py-3 rounded-xl border transition-all cursor-grab',
-                  'bg-white dark:bg-zinc-800 hover:shadow-md',
-                  draggedFieldIndex === index ? 'opacity-50 border-teal shadow-lg' : 'border-gray-100 dark:border-zinc-700',
+                  'bg-white dark:bg-surface-dark hover:shadow-md',
+                  draggedFieldIndex === index ? 'opacity-50 border-teal shadow-lg' : 'border-gray-100 dark:border-border-dark',
                   dropTargetIndex === index && draggedFieldIndex !== index ? 'border-t-4 border-t-teal mt-4' : ''
                 ]"
               >
@@ -769,8 +769,8 @@ function getFieldColor(fieldType: string): string {
     <!-- Field Modal -->
     <Teleport to="body">
       <div v-if="showFieldModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" @click.self="showFieldModal = false">
-        <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] overflow-hidden flex flex-col">
-          <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-zinc-800">
+        <div class="bg-white dark:bg-background-dark rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] overflow-hidden flex flex-col">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-border-dark">
             <div class="flex items-center gap-3">
               <div
                 class="w-10 h-10 rounded-xl flex items-center justify-center shadow-sm"
@@ -832,10 +832,10 @@ function getFieldColor(fieldType: string): string {
             />
 
             <!-- Dropdown options -->
-            <div v-if="['Dropdown', 'MultiSelect'].includes(editingField.fieldType || '')" class="bg-gray-50 dark:bg-zinc-800 rounded-xl p-4">
+            <div v-if="['Dropdown', 'MultiSelect'].includes(editingField.fieldType || '')" class="bg-gray-50 dark:bg-surface-dark rounded-xl p-4">
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Options</label>
               <div class="space-y-2 max-h-32 overflow-y-auto mb-3">
-                <div v-for="(opt, idx) in fieldOptions" :key="idx" class="flex items-center gap-3 text-sm bg-white dark:bg-zinc-700 px-3 py-2 rounded-lg">
+                <div v-for="(opt, idx) in fieldOptions" :key="idx" class="flex items-center gap-3 text-sm bg-white dark:bg-border-dark px-3 py-2 rounded-lg">
                   <span class="flex-1 font-medium">{{ opt.label }}</span>
                   <code class="text-xs text-gray-400 bg-gray-100 dark:bg-zinc-600 px-2 py-0.5 rounded">{{ opt.value }}</code>
                   <button @click="removeOption(idx)" class="text-gray-400 hover:text-red-500 transition-colors">
@@ -882,22 +882,22 @@ function getFieldColor(fieldType: string): string {
 
             <!-- Flags -->
             <div class="grid grid-cols-2 gap-4">
-              <div class="bg-gray-50 dark:bg-zinc-800 rounded-xl p-4">
+              <div class="bg-gray-50 dark:bg-surface-dark rounded-xl p-4">
                 <UiCheckbox v-model="editingField.isRequired" label="Required" description="Field must have a value" />
               </div>
-              <div class="bg-gray-50 dark:bg-zinc-800 rounded-xl p-4">
+              <div class="bg-gray-50 dark:bg-surface-dark rounded-xl p-4">
                 <UiCheckbox v-model="editingField.isReadOnly" label="Read Only" description="Cannot be edited" />
               </div>
-              <div class="bg-gray-50 dark:bg-zinc-800 rounded-xl p-4">
+              <div class="bg-gray-50 dark:bg-surface-dark rounded-xl p-4">
                 <UiCheckbox v-model="editingField.showInList" label="Show in List" description="Visible in table view" />
               </div>
-              <div class="bg-gray-50 dark:bg-zinc-800 rounded-xl p-4">
+              <div class="bg-gray-50 dark:bg-surface-dark rounded-xl p-4">
                 <UiCheckbox v-model="editingField.isSearchable" label="Searchable" description="Include in search" />
               </div>
             </div>
           </div>
 
-          <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50">
+          <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 dark:border-border-dark bg-gray-50 dark:bg-surface-dark/50">
             <button @click="showFieldModal = false" class="px-5 py-2.5 text-sm font-medium text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-100 transition-colors">
               Cancel
             </button>
@@ -912,8 +912,8 @@ function getFieldColor(fieldType: string): string {
     <!-- Preview Modal -->
     <Teleport to="body">
       <div v-if="showPreview" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" @click.self="showPreview = false">
-        <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
-          <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-zinc-800">
+        <div class="bg-white dark:bg-background-dark rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-border-dark">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 rounded-xl flex items-center justify-center" :style="{ backgroundColor: contentType?.color }">
                 <span class="material-symbols-outlined text-white text-lg">description</span>
@@ -948,7 +948,7 @@ function getFieldColor(fieldType: string): string {
                 <input
                   v-if="field.fieldType === 'Text'"
                   type="text"
-                  class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-teal/50 focus:border-teal transition-colors"
+                  class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-border-dark rounded-xl bg-white dark:bg-surface-dark focus:ring-2 focus:ring-teal/50 focus:border-teal transition-colors"
                   :placeholder="field.description || field.displayName"
                   :readonly="field.isReadOnly"
                 />
@@ -957,7 +957,7 @@ function getFieldColor(fieldType: string): string {
                 <textarea
                   v-else-if="field.fieldType === 'TextArea'"
                   rows="3"
-                  class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-teal/50 focus:border-teal transition-colors resize-none"
+                  class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-border-dark rounded-xl bg-white dark:bg-surface-dark focus:ring-2 focus:ring-teal/50 focus:border-teal transition-colors resize-none"
                   :placeholder="field.description || field.displayName"
                   :readonly="field.isReadOnly"
                 ></textarea>
@@ -967,7 +967,7 @@ function getFieldColor(fieldType: string): string {
                   v-else-if="['Number', 'Decimal'].includes(field.fieldType)"
                   type="number"
                   :step="field.fieldType === 'Decimal' ? '0.01' : '1'"
-                  class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-teal/50 focus:border-teal transition-colors"
+                  class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-border-dark rounded-xl bg-white dark:bg-surface-dark focus:ring-2 focus:ring-teal/50 focus:border-teal transition-colors"
                   :placeholder="field.description || field.displayName"
                   :readonly="field.isReadOnly"
                 />
@@ -976,7 +976,7 @@ function getFieldColor(fieldType: string): string {
                 <input
                   v-else-if="['Date', 'DateTime'].includes(field.fieldType)"
                   :type="field.fieldType === 'Date' ? 'date' : 'datetime-local'"
-                  class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-teal/50 focus:border-teal transition-colors"
+                  class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-border-dark rounded-xl bg-white dark:bg-surface-dark focus:ring-2 focus:ring-teal/50 focus:border-teal transition-colors"
                   :readonly="field.isReadOnly"
                 />
 
@@ -997,7 +997,7 @@ function getFieldColor(fieldType: string): string {
                 <select
                   v-else-if="field.fieldType === 'MultiSelect'"
                   multiple
-                  class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 focus:ring-2 focus:ring-teal/50 focus:border-teal h-24"
+                  class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-border-dark rounded-xl bg-white dark:bg-surface-dark focus:ring-2 focus:ring-teal/50 focus:border-teal h-24"
                   :disabled="field.isReadOnly"
                 >
                   <option v-for="opt in getFieldOptions(field)" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
@@ -1015,7 +1015,7 @@ function getFieldColor(fieldType: string): string {
                 <input
                   v-else
                   type="text"
-                  class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800"
+                  class="w-full px-4 py-2.5 text-sm border border-gray-200 dark:border-border-dark rounded-xl bg-white dark:bg-surface-dark"
                   :placeholder="field.displayName"
                 />
 
@@ -1024,7 +1024,7 @@ function getFieldColor(fieldType: string): string {
             </div>
           </div>
 
-          <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50">
+          <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-100 dark:border-border-dark bg-gray-50 dark:bg-surface-dark/50">
             <button @click="showPreview = false" class="px-5 py-2.5 text-sm font-medium bg-teal text-white rounded-xl hover:bg-teal/90 transition-colors">
               Close Preview
             </button>

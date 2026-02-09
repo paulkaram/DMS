@@ -53,12 +53,6 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
-      path: '/delegations',
-      name: 'delegations',
-      component: () => import('@/pages/DelegationsPage.vue'),
-      meta: { requiresAuth: true }
-    },
-    {
       path: '/settings',
       name: 'settings',
       component: () => import('@/pages/SettingsPage.vue'),
@@ -101,12 +95,6 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
-      path: '/vacation',
-      name: 'vacation',
-      component: () => import('@/pages/VacationPage.vue'),
-      meta: { requiresAuth: true }
-    },
-    {
       path: '/approvals',
       name: 'approvals',
       component: () => import('@/pages/ApprovalsPage.vue'),
@@ -125,12 +113,6 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     // Administration Pages
-    {
-      path: '/admin/cases',
-      name: 'admin-cases',
-      component: () => import('@/pages/admin/CasesPage.vue'),
-      meta: { requiresAuth: true }
-    },
     {
       path: '/admin/search-config',
       name: 'admin-search-config',

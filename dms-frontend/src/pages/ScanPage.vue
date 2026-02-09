@@ -100,8 +100,8 @@ function handleScanUploaded() {
     </div>
 
     <!-- Folder Selection -->
-    <div class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm">
-      <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50">
+    <div class="bg-white dark:bg-background-dark rounded-2xl border border-zinc-200 dark:border-border-dark overflow-hidden shadow-sm">
+      <div class="px-6 py-4 border-b border-zinc-200 dark:border-border-dark bg-zinc-50 dark:bg-surface-dark/50">
         <h2 class="font-semibold text-zinc-900 dark:text-white flex items-center gap-2">
           <span class="material-symbols-outlined text-teal text-lg">folder_open</span>
           Select Target Folder
@@ -116,12 +116,12 @@ function handleScanUploaded() {
         </div>
 
         <!-- Tree -->
-        <div v-else class="border border-zinc-200 dark:border-zinc-700 rounded-xl max-h-[400px] overflow-auto">
+        <div v-else class="border border-zinc-200 dark:border-border-dark rounded-xl max-h-[400px] overflow-auto">
           <div class="p-2">
             <div v-for="cabinet in treeNodes" :key="cabinet.id" class="select-none">
               <!-- Cabinet -->
               <div
-                class="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                class="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors hover:bg-zinc-50 dark:hover:bg-surface-dark"
                 @click="toggleNode(cabinet)"
               >
                 <span class="material-symbols-outlined text-sm text-zinc-400 transition-transform" :class="{ 'rotate-90': cabinet.isExpanded }">
@@ -139,7 +139,7 @@ function handleScanUploaded() {
                     class="flex items-center gap-2 px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
                     :class="selectedFolderId === folder.id
                       ? 'bg-teal/10 text-teal'
-                      : 'hover:bg-zinc-50 dark:hover:bg-zinc-800'"
+                      : 'hover:bg-zinc-50 dark:hover:bg-surface-dark'"
                     @click="selectFolder(folder.id, folder.name)"
                   >
                     <span
@@ -165,7 +165,7 @@ function handleScanUploaded() {
                       class="flex items-center gap-2 px-3 py-1.5 rounded-lg cursor-pointer transition-colors"
                       :class="selectedFolderId === sub.id
                         ? 'bg-teal/10 text-teal'
-                        : 'hover:bg-zinc-50 dark:hover:bg-zinc-800'"
+                        : 'hover:bg-zinc-50 dark:hover:bg-surface-dark'"
                       @click="selectFolder(sub.id, sub.name)"
                     >
                       <span class="w-5"></span>

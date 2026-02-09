@@ -11,7 +11,6 @@ const adminSections = [
     icon: 'description',
     color: 'teal',
     items: [
-      { name: 'Case', path: '/admin/cases', icon: 'inventory_2', description: 'Manage document cases and containers' },
       { name: 'Workflow Designer', path: '/admin/workflow-designer', icon: 'account_tree', description: 'Design automated document processes' },
       { name: 'Content Type Builder', path: '/admin/content-type-builder', icon: 'build', description: 'Create custom metadata schemas' },
       { name: 'Folder Content Type', path: '/admin/folder-content-types', icon: 'folder_special', description: 'Define folder classification types' },
@@ -157,7 +156,7 @@ function getIconTextClass(color: string) {
           v-model="searchQuery"
           type="text"
           placeholder="Search settings..."
-          class="w-full pl-12 pr-4 py-3 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:ring-2 focus:ring-teal/50 focus:border-teal transition-all"
+          class="w-full pl-12 pr-4 py-3 bg-white dark:bg-surface-dark border border-zinc-200 dark:border-border-dark rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:ring-2 focus:ring-teal/50 focus:border-teal transition-all"
         />
       </div>
     </div>
@@ -192,12 +191,12 @@ function getIconTextClass(color: string) {
       <div
         v-for="section in filteredSections"
         :key="section.id"
-        class="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden shadow-sm"
+        class="bg-white dark:bg-background-dark rounded-2xl border border-zinc-200 dark:border-border-dark overflow-hidden shadow-sm"
       >
         <!-- Section Header -->
         <button
           @click="toggleSection(section.id)"
-          class="w-full px-6 py-4 flex items-center justify-between hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
+          class="w-full px-6 py-4 flex items-center justify-between hover:bg-zinc-50 dark:hover:bg-surface-dark/50 transition-colors"
         >
           <div class="flex items-center gap-4">
             <div
@@ -232,7 +231,7 @@ function getIconTextClass(color: string) {
               v-for="item in section.items"
               :key="item.path"
               :to="item.path"
-              class="group p-4 rounded-xl border border-zinc-200 dark:border-zinc-700 hover:border-teal dark:hover:border-teal bg-zinc-50/50 dark:bg-zinc-800/30 hover:bg-teal/5 dark:hover:bg-teal/10 transition-all"
+              class="group p-4 rounded-xl border border-zinc-200 dark:border-border-dark hover:border-teal dark:hover:border-teal bg-zinc-50/50 dark:bg-surface-dark/30 hover:bg-teal/5 dark:hover:bg-teal/10 transition-all"
             >
               <div class="flex items-start gap-3">
                 <div
@@ -258,7 +257,7 @@ function getIconTextClass(color: string) {
     </div>
 
     <!-- Footer Help -->
-    <div class="bg-gradient-to-r from-zinc-100 to-zinc-50 dark:from-zinc-800 dark:to-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-zinc-700">
+    <div class="bg-gradient-to-r from-zinc-100 to-zinc-50 dark:from-zinc-800 dark:to-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-border-dark">
       <div class="flex flex-col md:flex-row items-center justify-between gap-4">
         <div class="flex items-center gap-4">
           <div class="w-12 h-12 rounded-full bg-teal/10 flex items-center justify-center">

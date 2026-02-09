@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, watch, onMounted, onUnmounted, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useDocumentsStore } from '@/stores/documents'
 import { useAuthStore } from '@/stores/auth'
-import { referenceDataApi, cabinetsApi, foldersApi, documentsApi, folderLinksApi, filingPlansApi, permissionsApi, activityLogsApi, contentTypeDefinitionsApi } from '@/api/client'
+import { referenceDataApi, cabinetsApi, foldersApi, documentsApi, filingPlansApi, permissionsApi, activityLogsApi, contentTypeDefinitionsApi, documentShortcutsApi, documentPasswordsApi } from '@/api/client'
 import TreeView from '@/components/common/TreeView.vue'
 import FileList from '@/components/common/FileList.vue'
 import FolderGrid from '@/components/common/FolderGrid.vue'
@@ -11,21 +11,26 @@ import ContextMenu from '@/components/common/ContextMenu.vue'
 import SelectionToolbar from '@/components/common/SelectionToolbar.vue'
 import DocumentViewer from '@/components/documents/DocumentViewer.vue'
 import MoveDocumentsModal from '@/components/documents/MoveDocumentsModal.vue'
+import CreateShortcutModal from '@/components/documents/CreateShortcutModal.vue'
 import ShareDocumentModal from '@/components/documents/ShareDocumentModal.vue'
 import UploadDocumentModal from '@/components/documents/UploadDocumentModal.vue'
 import ScanDocumentModal from '@/components/documents/ScanDocumentModal.vue'
 import DocumentPasswordDialog from '@/components/documents/DocumentPasswordDialog.vue'
+import DocumentAttachmentsPanel from '@/components/documents/DocumentAttachmentsPanel.vue'
+import DocumentCommentsPanel from '@/components/documents/DocumentCommentsPanel.vue'
+import DocumentLinksPanel from '@/components/documents/DocumentLinksPanel.vue'
 import FolderContentTypeModal from '@/components/folders/FolderContentTypeModal.vue'
 import { PermissionManagementModal } from '@/components/permissions'
 import ApplyTemplateModal from '@/components/templates/ApplyTemplateModal.vue'
 import type { MenuItem } from '@/components/common/ContextMenu.vue'
-import type { Classification, Importance, DocumentType, Cabinet, Folder, TreeNode, FolderLink, FilingPlan, Permission, ActivityLog, Document, ApplyTemplateResult } from '@/types'
+import type { Classification, Importance, DocumentType, Cabinet, Folder, TreeNode, FilingPlan, Permission, ActivityLog, Document, ApplyTemplateResult } from '@/types'
 import { PermissionLevels } from '@/types'
-import { UiSelect, UiConfirmDialog } from '@/components/ui'
+import { UiSelect, UiConfirmDialog, UiModal, UiButton } from '@/components/ui'
 import type { ConfirmDialogType } from '@/components/ui/ConfirmDialog.vue'
 import { useBulkOperations } from '@/composables/useBulkOperations'
 
 const router = useRouter()
+const route = useRoute()
 const store = useDocumentsStore()
 const authStore = useAuthStore()
 const { isProcessing: isBulkProcessing, bulkDelete, bulkMove, bulkDownload } = useBulkOperations()
@@ -88,6 +93,87 @@ const moveDocument = ref<Document | null>(null)
 const copyDocument = ref<Document | null>(null)
 const clipboard = ref<{ action: 'copy' | 'cut'; document: Document } | null>(null)
 
+// Attachments state
+const showAttachmentsModal = ref(false)
+const attachmentsDocument = ref<Document | null>(null)
+const attachmentsCanEdit = ref(false)
+const attachmentsPassword = ref<string | undefined>(undefined)
+watch(showAttachmentsModal, (open) => {
+  if (!open) {
+    attachmentsDocument.value = null
+    attachmentsPassword.value = undefined
+  }
+})
+
+// Password validation dialog (for gating secured content)
+const showPasswordValidation = ref(false)
+const passwordValidationDocId = ref('')
+const passwordValidationDocName = ref('')
+const passwordValidationInput = ref('')
+const passwordValidationError = ref('')
+const passwordValidationLoading = ref(false)
+const showPasswordText = ref(false)
+const passwordValidationHint = ref<string | null>(null)
+let passwordValidationCallback: ((password: string) => void) | null = null
+
+function requestPasswordValidation(doc: Document, callback: (password: string) => void) {
+  passwordValidationDocId.value = doc.id
+  passwordValidationDocName.value = doc.name
+  passwordValidationInput.value = ''
+  passwordValidationError.value = ''
+  showPasswordText.value = false
+  passwordValidationHint.value = null
+  passwordValidationCallback = callback
+  showPasswordValidation.value = true
+  // Load hint
+  documentPasswordsApi.getHint(doc.id).then(r => {
+    passwordValidationHint.value = r.data || null
+  }).catch(() => {})
+}
+
+async function submitPasswordValidation() {
+  if (!passwordValidationInput.value.trim()) {
+    passwordValidationError.value = 'Please enter the password'
+    return
+  }
+  passwordValidationLoading.value = true
+  passwordValidationError.value = ''
+  try {
+    const response = await documentPasswordsApi.validatePassword(passwordValidationDocId.value, passwordValidationInput.value)
+    if (response.data === true) {
+      showPasswordValidation.value = false
+      if (passwordValidationCallback) {
+        passwordValidationCallback(passwordValidationInput.value)
+        passwordValidationCallback = null
+      }
+    } else {
+      passwordValidationError.value = 'Incorrect password. Please try again.'
+    }
+  } catch {
+    passwordValidationError.value = 'Incorrect password. Please try again.'
+  } finally {
+    passwordValidationLoading.value = false
+  }
+}
+
+function closePasswordValidation() {
+  showPasswordValidation.value = false
+  passwordValidationCallback = null
+}
+
+// Comments state
+const showCommentsModal = ref(false)
+const commentsDocument = ref<Document | null>(null)
+
+// Links state
+const showLinksModal = ref(false)
+const linksDocument = ref<Document | null>(null)
+const linksCanEdit = ref(false)
+
+// Shortcut state
+const showCreateShortcutModal = ref(false)
+const shortcutDocument = ref<Document | null>(null)
+
 // Modals
 const showNewCabinetModal = ref(false)
 const showEditCabinetModal = ref(false)
@@ -146,18 +232,10 @@ function handleConfirmDialogConfirm() {
 }
 
 // Additional Modals
-const showFolderLinksModal = ref(false)
-const showViewLinksModal = ref(false)
 const showFilingPlanModal = ref(false)
 const showPermissionsModal = ref(false)
 const showAuditModal = ref(false)
 const showSettingsModal = ref(false)
-
-// Folder Links Data
-const folderLinks = ref<FolderLink[]>([])
-const incomingLinks = ref<FolderLink[]>([])
-const newLinkTargetId = ref('')
-const isLoadingLinks = ref(false)
 
 // Filing Plan Data
 const filingPlans = ref<FilingPlan[]>([])
@@ -195,7 +273,7 @@ const editCabinetData = ref({ id: '', name: '', description: '' })
 
 const newFolderName = ref('')
 const newFolderDescription = ref('')
-const editFolderData = ref({ id: '', name: '', description: '' })
+const editFolderData = ref({ id: '', name: '', description: '', accessMode: 0 })
 
 // Upload data
 const uploadFiles = ref<File[]>([])
@@ -230,6 +308,33 @@ onMounted(async () => {
     store.loadCabinets(),
     loadReferenceData()
   ])
+
+  // Handle deep-link query params (?cabinet=...&folder=...)
+  const cabinetId = route.query.cabinet as string | undefined
+  const folderId = route.query.folder as string | undefined
+
+  if (folderId) {
+    try {
+      const folderRes = await foldersApi.getById(folderId)
+      const folder = folderRes.data as Folder
+      const cabinet = store.cabinets.find(c => c.id === folder.cabinetId)
+      if (cabinet) {
+        store.selectCabinet(cabinet)
+        await store.loadFolderTree(cabinet.id)
+        await store.selectFolder(folder)
+        await store.loadSubFolders(cabinet.id, folder.id)
+      }
+    } catch {
+      // Folder not found or no access — stay on default view
+    }
+  } else if (cabinetId) {
+    const cabinet = store.cabinets.find(c => c.id === cabinetId)
+    if (cabinet) {
+      store.selectCabinet(cabinet)
+      await store.loadFolderTree(cabinet.id)
+      await store.loadSubFolders(cabinet.id)
+    }
+  }
 })
 
 async function loadReferenceData() {
@@ -316,7 +421,8 @@ function openEditFolder(folder: Folder) {
   editFolderData.value = {
     id: folder.id,
     name: folder.name,
-    description: folder.description || ''
+    description: folder.description || '',
+    accessMode: folder.accessMode ?? 0
   }
   showEditFolderModal.value = true
 }
@@ -327,7 +433,8 @@ async function handleUpdateFolder() {
     await foldersApi.update(editFolderData.value.id, {
       name: editFolderData.value.name,
       description: editFolderData.value.description,
-      breakInheritance: false
+      breakInheritance: false,
+      accessMode: editFolderData.value.accessMode
     })
     // Update tree node directly without reloading (preserves expansion state)
     store.updateNodeName(editFolderData.value.id, editFolderData.value.name)
@@ -465,15 +572,12 @@ const getActionCode = (menuId: string, isCabinet: boolean): string | null => {
     'rename': `${prefix}.rename`,
     'add-folder': 'folder.create',
     'add-file': 'document.upload',
-    'upload': 'folder.upload',
     'apply-template': 'folder.template.manage',
     'paste': 'folder.paste',
     'add-pattern': 'folder.pattern.add',
     'add-filing-plan': 'folder.filingplan.add',
     'settings': `${prefix}.settings`,
     'content-types': 'folder.contenttype.manage',
-    'link-folders': 'folder.link.manage',
-    'view-links': 'folder.link.view',
     'share': 'folder.share',
     'permissions': `${prefix}.permissions`,
     'delete': `${prefix}.delete`,
@@ -531,7 +635,7 @@ const contextMenuItems = computed<MenuItem[]>(() => {
   // Add actions (Write + role permissions)
   const addActionsAvailable = canPerform('add-folder', canWrite) ||
     canPerform('apply-template', canWrite) ||
-    (!isCabinet && (canPerform('add-file', canWrite) || canPerform('upload', canWrite)))
+    (!isCabinet && canPerform('add-file', canWrite))
 
   if (addActionsAvailable) {
     if (items.length > 0) items.push({ id: 'divider1', label: '', divider: true })
@@ -543,10 +647,7 @@ const contextMenuItems = computed<MenuItem[]>(() => {
     }
     if (!isCabinet) {
       if (canPerform('add-file', canWrite)) {
-        items.push({ id: 'add-file', label: 'Add file', icon: 'file-add' })
-      }
-      if (canPerform('upload', canWrite)) {
-        items.push({ id: 'upload', label: 'Upload', icon: 'upload' })
+        items.push({ id: 'add-file', label: 'Upload file', icon: 'upload' })
       }
       if (hasClipboard && canPerform('paste', canWrite)) {
         items.push({ id: 'paste', label: pasteLabel, icon: 'paste' })
@@ -581,19 +682,14 @@ const contextMenuItems = computed<MenuItem[]>(() => {
     if (canPerform('content-types', canAdmin)) {
       items.push({ id: 'content-types', label: 'Manage Content Types', icon: 'category' })
     }
-  }
-
-  // Link actions
-  if (!isCabinet) {
-    const linkActionsAvailable = canPerform('link-folders', canWrite) || canPerform('view-links', canRead)
-    if (linkActionsAvailable) {
-      if (items.length > 0) items.push({ id: 'divider4', label: '', divider: true })
-      if (canPerform('link-folders', canWrite)) {
-        items.push({ id: 'link-folders', label: 'Link to other folders', icon: 'link' })
-      }
-      if (canPerform('view-links', canRead)) {
-        items.push({ id: 'view-links', label: 'View link to other folders', icon: 'link-view' })
-      }
+    // Private folder toggle (folders only, admin permission)
+    if (!isCabinet && canAdmin) {
+      const isPrivate = contextMenuNode.value?.accessMode === 1
+      items.push({
+        id: 'toggle-private',
+        label: isPrivate ? 'Disable Private Mode' : 'Enable Private Mode',
+        icon: isPrivate ? 'lock-open' : 'lock'
+      })
     }
   }
 
@@ -631,9 +727,6 @@ const contextMenuItems = computed<MenuItem[]>(() => {
       items.push({ id: 'export', label: 'Export', icon: 'export' })
     }
   }
-
-  // Grid view is always available (UI preference, not a permission)
-  items.push({ id: 'grid-view', label: 'Show as grid', icon: 'grid' })
 
   return items
 })
@@ -674,7 +767,7 @@ async function handleContextMenuSelect(actionId: string) {
         editCabinetData.value = { id: node.id, name: node.name, description: '' }
         showEditCabinetModal.value = true
       } else {
-        editFolderData.value = { id: node.id, name: node.name, description: '' }
+        editFolderData.value = { id: node.id, name: node.name, description: '', accessMode: 0 }
         showEditFolderModal.value = true
       }
       break
@@ -689,7 +782,6 @@ async function handleContextMenuSelect(actionId: string) {
       showNewFolderModal.value = true
       break
     case 'add-file':
-    case 'upload':
       if (!isCabinet) {
         store.selectFolder({ id: node.id, name: node.name } as Folder)
         openUploadModal()
@@ -722,18 +814,6 @@ async function handleContextMenuSelect(actionId: string) {
       }
       showContentTypeModal.value = true
       break
-    case 'link-folders':
-      if (!isCabinet) {
-        await loadFolderLinks(node.id)
-        showFolderLinksModal.value = true
-      }
-      break
-    case 'view-links':
-      if (!isCabinet) {
-        await loadIncomingLinks(node.id)
-        showViewLinksModal.value = true
-      }
-      break
     case 'share':
       router.push(`/my-shared-items`)
       break
@@ -756,8 +836,26 @@ async function handleContextMenuSelect(actionId: string) {
     case 'dashboard':
       router.push('/dashboard')
       break
-    case 'grid-view':
-      viewMode.value = viewMode.value === 'list' ? 'grid' : 'list'
+    case 'toggle-private':
+      if (!isCabinet) {
+        const newAccessMode = node.accessMode === 1 ? 0 : 1
+        try {
+          await foldersApi.update(node.id, {
+            name: node.name,
+            description: '',
+            breakInheritance: false,
+            accessMode: newAccessMode
+          })
+          // Update tree node accessMode in place
+          node.accessMode = newAccessMode
+          // Refresh folder data if it's the currently viewed folder
+          if (store.currentFolder?.id === node.id) {
+            store.currentFolder.accessMode = newAccessMode
+          }
+        } catch (err) {
+          // silently fail
+        }
+      }
       break
     case 'export':
       // Export functionality - could download folder contents as zip
@@ -765,52 +863,6 @@ async function handleContextMenuSelect(actionId: string) {
   }
 
   closeContextMenu()
-}
-
-// Folder Links Operations
-async function loadFolderLinks(folderId: string) {
-  isLoadingLinks.value = true
-  try {
-    const response = await folderLinksApi.getFromFolder(folderId)
-    folderLinks.value = response.data
-  } catch (err) {
-  } finally {
-    isLoadingLinks.value = false
-  }
-}
-
-async function loadIncomingLinks(folderId: string) {
-  isLoadingLinks.value = true
-  try {
-    const response = await folderLinksApi.getToFolder(folderId)
-    incomingLinks.value = response.data
-  } catch (err) {
-  } finally {
-    isLoadingLinks.value = false
-  }
-}
-
-async function createFolderLink() {
-  if (!contextMenuNode.value || !newLinkTargetId.value) return
-  try {
-    await folderLinksApi.create({
-      sourceFolderId: contextMenuNode.value.id,
-      targetFolderId: newLinkTargetId.value
-    })
-    await loadFolderLinks(contextMenuNode.value.id)
-    newLinkTargetId.value = ''
-  } catch (err) {
-  }
-}
-
-async function deleteFolderLink(linkId: string) {
-  try {
-    await folderLinksApi.delete(linkId)
-    if (contextMenuNode.value) {
-      await loadFolderLinks(contextMenuNode.value.id)
-    }
-  } catch (err) {
-  }
 }
 
 // Filing Plans Operations
@@ -1164,6 +1216,76 @@ function handleDocumentAction(action: string, document: Document) {
     case 'route':
       router.push(`/approvals/new?documentId=${document.id}`)
       break
+    case 'view-comments':
+      commentsDocument.value = document
+      showCommentsModal.value = true
+      break
+    case 'edit-comments':
+      commentsDocument.value = document
+      showCommentsModal.value = true
+      break
+    case 'view-links':
+      linksDocument.value = document
+      linksCanEdit.value = false
+      showLinksModal.value = true
+      break
+    case 'link-files':
+      linksDocument.value = document
+      linksCanEdit.value = true
+      showLinksModal.value = true
+      break
+    case 'view-attachments':
+      if (document.hasPassword) {
+        requestPasswordValidation(document, (password) => {
+          attachmentsDocument.value = document
+          attachmentsCanEdit.value = false
+          attachmentsPassword.value = password
+          showAttachmentsModal.value = true
+        })
+      } else {
+        attachmentsDocument.value = document
+        attachmentsCanEdit.value = false
+        showAttachmentsModal.value = true
+      }
+      break
+    case 'edit-attachments':
+      if (document.hasPassword) {
+        requestPasswordValidation(document, (password) => {
+          attachmentsDocument.value = document
+          attachmentsCanEdit.value = true
+          attachmentsPassword.value = password
+          showAttachmentsModal.value = true
+        })
+      } else {
+        attachmentsDocument.value = document
+        attachmentsCanEdit.value = true
+        showAttachmentsModal.value = true
+      }
+      break
+    case 'create-shortcut':
+      shortcutDocument.value = document
+      showCreateShortcutModal.value = true
+      break
+    case 'remove-shortcut':
+      showConfirmation(
+        'warning',
+        'Remove Shortcut',
+        `Remove this shortcut to "${document.name}"? The original document will not be affected.`,
+        'Remove',
+        async () => {
+          if (!document.shortcutId) return
+          try {
+            await documentShortcutsApi.delete(document.shortcutId)
+            if (store.currentFolder) {
+              await store.loadDocuments(store.currentFolder.id)
+            }
+            showNotification('success', 'Shortcut Removed', `Shortcut to "${document.name}" has been removed.`)
+          } catch (err: any) {
+            showNotification('danger', 'Remove Failed', err.response?.data?.message || 'Failed to remove shortcut.')
+          }
+        }
+      )
+      break
     default:
   }
 }
@@ -1334,10 +1456,10 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
   <div class="-m-6 flex h-[calc(100vh-4rem)]">
     <!-- Sidebar Tree -->
     <div
-      class="flex-shrink-0 bg-white dark:bg-zinc-900/50 border-r border-zinc-200 dark:border-zinc-800 flex flex-col"
+      class="flex-shrink-0 bg-white dark:bg-background-dark/50 border-r border-zinc-200 dark:border-border-dark flex flex-col"
       :style="{ width: `${treePanelWidth}px` }"
     >
-      <div class="px-2 py-2 border-b border-zinc-200 dark:border-zinc-800">
+      <div class="px-2 py-2 border-b border-zinc-200 dark:border-border-dark">
         <button
           @click="showNewCabinetModal = true"
           class="w-full py-2 px-3 bg-brand-gradient text-white text-sm rounded-lg font-medium shadow-md shadow-teal/20 flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
@@ -1363,7 +1485,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
     <div
       @mousedown.stop="onSplitterMouseDown"
       class="w-1 flex-shrink-0 cursor-col-resize hover:w-1.5 hover:bg-teal/40 transition-all z-10 relative group"
-      :class="isResizing ? 'w-1.5 bg-teal' : 'bg-zinc-200 dark:bg-zinc-700'"
+      :class="isResizing ? 'w-1.5 bg-teal' : 'bg-zinc-200 dark:bg-border-dark'"
     >
       <!-- Grip dots - only visible on hover -->
       <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
@@ -1386,7 +1508,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
     <!-- Main Content -->
     <div class="flex-1 flex flex-col overflow-hidden">
       <!-- Header -->
-      <div class="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700 px-6 py-4">
+      <div class="bg-white dark:bg-background-dark border-b border-zinc-200 dark:border-border-dark px-6 py-4">
         <!-- Title Row -->
         <div class="flex items-center justify-between mb-3">
           <h1 class="text-xl font-bold text-zinc-900 dark:text-zinc-100">Explorer</h1>
@@ -1432,7 +1554,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
           <!-- Actions Toolbar -->
           <div class="flex items-center gap-3">
             <!-- Icon Button Group (Delete & Edit) -->
-            <div v-if="store.currentCabinet" class="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-lg p-1">
+            <div v-if="store.currentCabinet" class="flex items-center bg-zinc-100 dark:bg-surface-dark rounded-lg p-1">
               <!-- Delete Button -->
               <button
                 v-if="!store.currentFolder"
@@ -1474,7 +1596,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
             <button
               v-if="store.currentCabinet"
               @click="showNewFolderModal = true"
-              class="flex items-center gap-2 px-3 py-2 text-zinc-600 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-600 hover:border-teal hover:text-teal rounded-lg text-sm font-medium transition-colors"
+              class="flex items-center gap-2 px-3 py-2 text-zinc-600 dark:text-zinc-300 border border-zinc-300 dark:border-border-dark hover:border-teal hover:text-teal rounded-lg text-sm font-medium transition-colors"
             >
               <span class="material-symbols-outlined text-[20px]">create_new_folder</span>
               <span class="hidden sm:inline">New Folder</span>
@@ -1484,7 +1606,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
             <button
               v-if="store.currentFolder"
               @click="showScanModal = true"
-              class="flex items-center gap-2 px-3 py-2 text-zinc-600 dark:text-zinc-300 border border-zinc-300 dark:border-zinc-600 hover:border-teal hover:text-teal rounded-lg text-sm font-medium transition-colors"
+              class="flex items-center gap-2 px-3 py-2 text-zinc-600 dark:text-zinc-300 border border-zinc-300 dark:border-border-dark hover:border-teal hover:text-teal rounded-lg text-sm font-medium transition-colors"
             >
               <span class="material-symbols-outlined text-[20px]">document_scanner</span>
               <span class="hidden sm:inline">Scan</span>
@@ -1524,11 +1646,11 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
                 <span class="text-xs text-zinc-400">({{ store.subFolders.length }})</span>
               </div>
               <!-- View Mode Toggle -->
-              <div class="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-lg p-0.5">
+              <div class="flex items-center bg-zinc-100 dark:bg-surface-dark rounded-lg p-0.5">
                 <button
                   @click="folderViewMode = 'grid'"
                   class="p-1.5 rounded-md transition-colors"
-                  :class="folderViewMode === 'grid' ? 'bg-white dark:bg-zinc-700 shadow-sm text-teal' : 'text-zinc-400 hover:text-zinc-600'"
+                  :class="folderViewMode === 'grid' ? 'bg-white dark:bg-border-dark shadow-sm text-teal' : 'text-zinc-400 hover:text-zinc-600'"
                   title="Grid view"
                 >
                   <span class="material-symbols-outlined text-lg">grid_view</span>
@@ -1536,7 +1658,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
                 <button
                   @click="folderViewMode = 'list'"
                   class="p-1.5 rounded-md transition-colors"
-                  :class="folderViewMode === 'list' ? 'bg-white dark:bg-zinc-700 shadow-sm text-teal' : 'text-zinc-400 hover:text-zinc-600'"
+                  :class="folderViewMode === 'list' ? 'bg-white dark:bg-border-dark shadow-sm text-teal' : 'text-zinc-400 hover:text-zinc-600'"
                   title="List view"
                 >
                   <span class="material-symbols-outlined text-lg">view_list</span>
@@ -1553,7 +1675,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
               :selectable="true"
               @folder-dblclick="handleFolderDoubleClick"
               @selection-change="handleFolderSelectionChange"
-              @context-menu="(e, f) => handleTreeContextMenu(e, { id: f.id, name: f.name, type: 'folder', children: [], isExpanded: false })"
+              @context-menu="(e, f) => handleTreeContextMenu(e, { id: f.id, name: f.name, type: 'folder', children: [], isExpanded: false, accessMode: f.accessMode })"
             />
           </div>
 
@@ -1680,6 +1802,14 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
       @confirm="handleBulkMove"
     />
 
+    <!-- Create Shortcut Modal -->
+    <CreateShortcutModal
+      v-if="shortcutDocument"
+      v-model="showCreateShortcutModal"
+      :document="shortcutDocument"
+      @created="shortcutDocument = null; showNotification('success', 'Shortcut Created', 'Document shortcut has been created successfully.')"
+    />
+
     <!-- Share Document Modal -->
     <ShareDocumentModal
       v-if="showShareModal && shareDocument"
@@ -1697,151 +1827,336 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
       @updated="showPasswordDialog = false; passwordDocument = null"
     />
 
+    <!-- Password Validation Dialog (for gating secured content) -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="duration-200 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="duration-150 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div v-if="showPasswordValidation" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-8" @click.self="closePasswordValidation">
+          <Transition
+            enter-active-class="duration-200 ease-out"
+            enter-from-class="opacity-0 scale-95 translate-y-4"
+            enter-to-class="opacity-100 scale-100 translate-y-0"
+            leave-active-class="duration-150 ease-in"
+            leave-from-class="opacity-100 scale-100 translate-y-0"
+            leave-to-class="opacity-0 scale-95 translate-y-4"
+          >
+            <div v-if="showPasswordValidation" class="w-full max-w-md">
+              <form @submit.prevent="submitPasswordValidation" class="bg-white dark:bg-background-dark rounded-2xl shadow-2xl p-8">
+                <!-- Lock Icon -->
+                <div class="flex justify-center mb-6">
+                  <div class="w-20 h-20 rounded-2xl bg-amber-500/10 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-5xl text-amber-500">lock</span>
+                  </div>
+                </div>
+
+                <!-- Title -->
+                <h2 class="text-xl font-bold text-center text-zinc-900 dark:text-white mb-2">
+                  Password Protected
+                </h2>
+                <p class="text-sm text-center text-zinc-500 dark:text-zinc-400 mb-6">
+                  This document requires a password to view
+                </p>
+
+                <!-- Hint -->
+                <div v-if="passwordValidationHint" class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
+                  <div class="flex items-start gap-2">
+                    <span class="material-symbols-outlined text-blue-500 text-lg mt-0.5">lightbulb</span>
+                    <div>
+                      <p class="text-xs font-medium text-blue-700 dark:text-blue-300 uppercase tracking-wide">Hint</p>
+                      <p class="text-sm text-blue-600 dark:text-blue-400">{{ passwordValidationHint }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Password Input -->
+                <div class="mb-4">
+                  <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+                    Enter Password
+                  </label>
+                  <div class="relative">
+                    <input
+                      v-model="passwordValidationInput"
+                      :type="showPasswordText ? 'text' : 'password'"
+                      class="w-full px-4 py-3 pr-12 border border-zinc-200 dark:border-border-dark rounded-xl bg-white dark:bg-surface-dark text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal transition-all"
+                      placeholder="Enter document password..."
+                      autofocus
+                    />
+                    <button
+                      type="button"
+                      @click="showPasswordText = !showPasswordText"
+                      class="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+                    >
+                      <span class="material-symbols-outlined text-xl">{{ showPasswordText ? 'visibility_off' : 'visibility' }}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Error Message -->
+                <div v-if="passwordValidationError" class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
+                  <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-red-500 text-lg">error</span>
+                    <p class="text-sm text-red-600 dark:text-red-400">{{ passwordValidationError }}</p>
+                  </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex gap-3">
+                  <button
+                    type="button"
+                    @click="closePasswordValidation"
+                    class="flex-1 py-3 text-zinc-600 dark:text-zinc-400 font-medium rounded-xl hover:bg-zinc-100 dark:hover:bg-surface-dark transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    :disabled="!passwordValidationInput.trim() || passwordValidationLoading"
+                    class="flex-1 py-3 bg-teal text-white font-medium rounded-xl hover:bg-teal/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                  >
+                    <svg v-if="passwordValidationLoading" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                    {{ passwordValidationLoading ? 'Verifying...' : 'Unlock' }}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </Transition>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- Attachments Modal -->
+    <DocumentAttachmentsPanel
+      v-if="attachmentsDocument"
+      v-model="showAttachmentsModal"
+      :document-id="attachmentsDocument.id"
+      :document-name="attachmentsDocument.name"
+      :can-edit="attachmentsCanEdit"
+      :password="attachmentsPassword"
+    />
+
+    <!-- Comments Modal -->
+    <UiModal
+      v-model="showCommentsModal"
+      size="lg"
+      :show-close="false"
+      @close="commentsDocument = null"
+    >
+      <template #header>
+        <div class="flex items-center justify-between w-full">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-primary/30 backdrop-blur rounded-xl flex items-center justify-center">
+              <span class="material-symbols-outlined text-white text-xl">chat</span>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-white">Comments</h3>
+              <p class="text-sm text-white/60">{{ commentsDocument?.name || 'Document' }}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="w-9 h-9 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
+            @click="showCommentsModal = false; commentsDocument = null"
+          >
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </template>
+      <DocumentCommentsPanel
+        v-if="commentsDocument"
+        :document-id="commentsDocument.id"
+        embedded
+        @close="showCommentsModal = false; commentsDocument = null"
+      />
+    </UiModal>
+
+    <!-- Links Modal -->
+    <UiModal
+      v-model="showLinksModal"
+      size="lg"
+      :show-close="false"
+      @close="linksDocument = null"
+    >
+      <template #header>
+        <div class="flex items-center justify-between w-full">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-primary/30 backdrop-blur rounded-xl flex items-center justify-center">
+              <span class="material-symbols-outlined text-white text-xl">link</span>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-white">Document Links</h3>
+              <p class="text-sm text-white/60">{{ linksDocument?.name || 'Document' }}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="w-9 h-9 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
+            @click="showLinksModal = false; linksDocument = null"
+          >
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </template>
+      <DocumentLinksPanel
+        v-if="linksDocument"
+        :document-id="linksDocument.id"
+        :can-edit="linksCanEdit"
+        embedded
+        @close="showLinksModal = false; linksDocument = null"
+      />
+    </UiModal>
+
     <!-- New Cabinet Modal -->
-    <div v-if="showNewCabinetModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl w-full max-w-md mx-4 border border-zinc-200 dark:border-zinc-800">
-        <div class="p-6">
-          <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Create New Cabinet</h3>
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Name *</label>
-              <input
-                v-model="newCabinetName"
-                type="text"
-                class="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
-                placeholder="Cabinet name"
-                @keyup.enter="handleCreateCabinet"
-              />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Description</label>
-              <textarea
-                v-model="newCabinetDescription"
-                rows="3"
-                class="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
-                placeholder="Optional description"
-              ></textarea>
-            </div>
-          </div>
-          <div class="mt-6 flex justify-end gap-3">
-            <button @click="showNewCabinetModal = false" class="px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
-              Cancel
-            </button>
-            <button @click="handleCreateCabinet" class="px-4 py-2 bg-brand-gradient text-white rounded-lg hover:opacity-90">
-              Create
-            </button>
-          </div>
+    <UiModal v-model="showNewCabinetModal" title="Create New Cabinet" size="sm">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Name *</label>
+          <input
+            v-model="newCabinetName"
+            type="text"
+            class="w-full px-4 py-2 border border-zinc-300 dark:border-border-dark rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-surface-dark text-zinc-900 dark:text-zinc-100"
+            placeholder="Cabinet name"
+            @keyup.enter="handleCreateCabinet"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Description</label>
+          <textarea
+            v-model="newCabinetDescription"
+            rows="3"
+            class="w-full px-4 py-2 border border-zinc-300 dark:border-border-dark rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-surface-dark text-zinc-900 dark:text-zinc-100"
+            placeholder="Optional description"
+          ></textarea>
         </div>
       </div>
-    </div>
+      <template #footer>
+        <div class="flex justify-end gap-3">
+          <UiButton variant="outline" @click="showNewCabinetModal = false">Cancel</UiButton>
+          <UiButton @click="handleCreateCabinet">Create</UiButton>
+        </div>
+      </template>
+    </UiModal>
 
     <!-- Edit Cabinet Modal -->
-    <div v-if="showEditCabinetModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl w-full max-w-md mx-4 border border-zinc-200 dark:border-zinc-800">
-        <div class="p-6">
-          <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Edit Cabinet</h3>
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Name *</label>
-              <input
-                v-model="editCabinetData.name"
-                type="text"
-                class="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
-              />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Description</label>
-              <textarea
-                v-model="editCabinetData.description"
-                rows="3"
-                class="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
-              ></textarea>
-            </div>
-          </div>
-          <div class="mt-6 flex justify-end gap-3">
-            <button @click="showEditCabinetModal = false" class="px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
-              Cancel
-            </button>
-            <button @click="handleUpdateCabinet" class="px-4 py-2 bg-brand-gradient text-white rounded-lg hover:opacity-90">
-              Save
-            </button>
-          </div>
+    <UiModal v-model="showEditCabinetModal" title="Edit Cabinet" size="sm">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Name *</label>
+          <input
+            v-model="editCabinetData.name"
+            type="text"
+            class="w-full px-4 py-2 border border-zinc-300 dark:border-border-dark rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-surface-dark text-zinc-900 dark:text-zinc-100"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Description</label>
+          <textarea
+            v-model="editCabinetData.description"
+            rows="3"
+            class="w-full px-4 py-2 border border-zinc-300 dark:border-border-dark rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-surface-dark text-zinc-900 dark:text-zinc-100"
+          ></textarea>
         </div>
       </div>
-    </div>
+      <template #footer>
+        <div class="flex justify-end gap-3">
+          <UiButton variant="outline" @click="showEditCabinetModal = false">Cancel</UiButton>
+          <UiButton @click="handleUpdateCabinet">Save</UiButton>
+        </div>
+      </template>
+    </UiModal>
 
     <!-- New Folder Modal -->
-    <div v-if="showNewFolderModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl w-full max-w-md mx-4 border border-zinc-200 dark:border-zinc-800">
-        <div class="p-6">
-          <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Create New Folder</h3>
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Name *</label>
-              <input
-                v-model="newFolderName"
-                type="text"
-                class="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
-                placeholder="Folder name"
-                @keyup.enter="handleCreateFolder"
-              />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Description</label>
-              <textarea
-                v-model="newFolderDescription"
-                rows="3"
-                class="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
-                placeholder="Optional description"
-              ></textarea>
-            </div>
-          </div>
-          <div class="mt-6 flex justify-end gap-3">
-            <button @click="showNewFolderModal = false" class="px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
-              Cancel
-            </button>
-            <button @click="handleCreateFolder" class="px-4 py-2 bg-brand-gradient text-white rounded-lg hover:opacity-90">
-              Create
-            </button>
-          </div>
+    <UiModal v-model="showNewFolderModal" title="Create New Folder" size="sm">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Name *</label>
+          <input
+            v-model="newFolderName"
+            type="text"
+            class="w-full px-4 py-2 border border-zinc-300 dark:border-border-dark rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-surface-dark text-zinc-900 dark:text-zinc-100"
+            placeholder="Folder name"
+            @keyup.enter="handleCreateFolder"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Description</label>
+          <textarea
+            v-model="newFolderDescription"
+            rows="3"
+            class="w-full px-4 py-2 border border-zinc-300 dark:border-border-dark rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-surface-dark text-zinc-900 dark:text-zinc-100"
+            placeholder="Optional description"
+          ></textarea>
         </div>
       </div>
-    </div>
+      <template #footer>
+        <div class="flex justify-end gap-3">
+          <UiButton variant="outline" @click="showNewFolderModal = false">Cancel</UiButton>
+          <UiButton @click="handleCreateFolder">Create</UiButton>
+        </div>
+      </template>
+    </UiModal>
 
     <!-- Edit Folder Modal -->
-    <div v-if="showEditFolderModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl w-full max-w-md mx-4 border border-zinc-200 dark:border-zinc-800">
-        <div class="p-6">
-          <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Edit Folder</h3>
-          <div class="space-y-4">
+    <UiModal v-model="showEditFolderModal" title="Edit Folder" size="sm">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Name *</label>
+          <input
+            v-model="editFolderData.name"
+            type="text"
+            class="w-full px-4 py-2 border border-zinc-300 dark:border-border-dark rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-surface-dark text-zinc-900 dark:text-zinc-100"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Description</label>
+          <textarea
+            v-model="editFolderData.description"
+            rows="3"
+            class="w-full px-4 py-2 border border-zinc-300 dark:border-border-dark rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-surface-dark text-zinc-900 dark:text-zinc-100"
+          ></textarea>
+        </div>
+        <div class="flex items-center justify-between p-3 rounded-lg border border-zinc-200 dark:border-border-dark bg-zinc-50 dark:bg-surface-dark">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-lg" :class="editFolderData.accessMode === 1 ? 'text-amber-500' : 'text-zinc-400'">
+              {{ editFolderData.accessMode === 1 ? 'lock' : 'lock_open' }}
+            </span>
             <div>
-              <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Name *</label>
-              <input
-                v-model="editFolderData.name"
-                type="text"
-                class="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
-              />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Description</label>
-              <textarea
-                v-model="editFolderData.description"
-                rows="3"
-                class="w-full px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
-              ></textarea>
+              <p class="text-sm font-medium text-zinc-700 dark:text-zinc-200">Private Folder</p>
+              <p class="text-xs text-zinc-500 dark:text-zinc-400">Users only see their own documents. Admins see all.</p>
             </div>
           </div>
-          <div class="mt-6 flex justify-end gap-3">
-            <button @click="showEditFolderModal = false" class="px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
-              Cancel
-            </button>
-            <button @click="handleUpdateFolder" class="px-4 py-2 bg-brand-gradient text-white rounded-lg hover:opacity-90">
-              Save
-            </button>
-          </div>
+          <button
+            type="button"
+            @click="editFolderData.accessMode = editFolderData.accessMode === 1 ? 0 : 1"
+            :class="editFolderData.accessMode === 1 ? 'bg-teal' : 'bg-zinc-300 dark:bg-zinc-600'"
+            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal/50"
+          >
+            <span
+              :class="editFolderData.accessMode === 1 ? 'translate-x-5' : 'translate-x-0'"
+              class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out mt-0.5 ml-0.5"
+            />
+          </button>
         </div>
       </div>
-    </div>
+      <template #footer>
+        <div class="flex justify-end gap-3">
+          <UiButton variant="outline" @click="showEditFolderModal = false">Cancel</UiButton>
+          <UiButton @click="handleUpdateFolder">Save</UiButton>
+        </div>
+      </template>
+    </UiModal>
 
     <!-- Upload Modal -->
     <UploadDocumentModal
@@ -1872,238 +2187,124 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
     />
 
     <!-- Delete Confirmation Modal -->
-    <div v-if="showDeleteConfirm" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl w-full max-w-sm mx-4 border border-zinc-200 dark:border-zinc-800">
-        <div class="p-6">
-          <div class="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 dark:bg-red-900/30 rounded-full mb-4">
-            <span class="material-symbols-outlined text-red-600">warning</span>
-          </div>
-          <h3 class="text-lg font-semibold text-zinc-900 dark:text-zinc-100 text-center mb-2">Delete {{ deleteTarget?.type }}</h3>
-          <p class="text-zinc-500 text-center mb-6">
-            Are you sure you want to delete "{{ deleteTarget?.name }}"? This action cannot be undone.
-          </p>
-          <div class="flex gap-3">
-            <button
-              @click="showDeleteConfirm = false; deleteTarget = null"
-              class="flex-1 px-4 py-2 border border-zinc-300 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
-            >
-              Cancel
-            </button>
-            <button
-              @click="handleDelete"
-              class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-            >
-              Delete
-            </button>
-          </div>
+    <UiModal v-model="showDeleteConfirm" :title="'Delete ' + (deleteTarget?.type || '')" size="sm" @close="deleteTarget = null">
+      <div class="text-center">
+        <div class="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 dark:bg-red-900/30 rounded-full mb-4">
+          <span class="material-symbols-outlined text-red-600">warning</span>
         </div>
+        <p class="text-zinc-500 dark:text-zinc-400">
+          Are you sure you want to delete "{{ deleteTarget?.name }}"? This action cannot be undone.
+        </p>
       </div>
-    </div>
-
-    <!-- Folder Links Modal -->
-    <div v-if="showFolderLinksModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4">
-        <div class="p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-900">Link to Other Folders</h3>
-            <button @click="showFolderLinksModal = false" class="text-gray-400 hover:text-gray-600">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          <!-- Add New Link -->
-          <div class="flex gap-2 mb-4">
-            <input
-              v-model="newLinkTargetId"
-              type="text"
-              class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal/50"
-              placeholder="Target folder ID"
-            />
-            <button
-              @click="createFolderLink"
-              class="px-4 py-2 bg-teal text-white rounded-lg hover:bg-teal/90"
-            >
-              Add Link
-            </button>
-          </div>
-
-          <!-- Existing Links -->
-          <div v-if="isLoadingLinks" class="text-center py-8 text-gray-500">Loading...</div>
-          <div v-else-if="folderLinks.length === 0" class="text-center py-8 text-gray-500">
-            No links configured
-          </div>
-          <div v-else class="space-y-2 max-h-64 overflow-y-auto">
-            <div
-              v-for="link in folderLinks"
-              :key="link.id"
-              class="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-            >
-              <div>
-                <p class="text-sm font-medium text-gray-700">{{ link.targetFolderName || link.targetFolderId }}</p>
-                <p v-if="link.targetFolderPath" class="text-xs text-gray-500">{{ link.targetFolderPath }}</p>
-              </div>
-              <button
-                @click="deleteFolderLink(link.id)"
-                class="p-1 text-red-500 hover:text-red-700"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
-            </div>
-          </div>
+      <template #footer>
+        <div class="flex justify-end gap-3">
+          <UiButton variant="outline" @click="showDeleteConfirm = false; deleteTarget = null">Cancel</UiButton>
+          <UiButton variant="danger" @click="handleDelete">Delete</UiButton>
         </div>
-      </div>
-    </div>
-
-    <!-- View Incoming Links Modal -->
-    <div v-if="showViewLinksModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4">
-        <div class="p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-900">Links to This Folder</h3>
-            <button @click="showViewLinksModal = false" class="text-gray-400 hover:text-gray-600">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          <div v-if="isLoadingLinks" class="text-center py-8 text-gray-500">Loading...</div>
-          <div v-else-if="incomingLinks.length === 0" class="text-center py-8 text-gray-500">
-            No folders link to this one
-          </div>
-          <div v-else class="space-y-2 max-h-64 overflow-y-auto">
-            <div
-              v-for="link in incomingLinks"
-              :key="link.id"
-              class="p-3 bg-gray-50 rounded-lg"
-            >
-              <p class="text-sm font-medium text-gray-700">{{ link.sourceFolderName || link.sourceFolderId }}</p>
-              <p class="text-xs text-gray-500">Linked on {{ formatDate(link.createdAt) }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+      </template>
+    </UiModal>
 
     <!-- Filing Plans Modal -->
-    <div v-if="showFilingPlanModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl mx-4">
-        <div class="p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-900">Filing Plans</h3>
-            <button @click="showFilingPlanModal = false" class="text-gray-400 hover:text-gray-600">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-
-          <button
-            @click="showNewFilingPlanModal = true"
-            class="mb-4 flex items-center gap-2 px-4 py-2 bg-teal text-white rounded-lg hover:bg-teal/90"
-          >
+    <UiModal v-model="showFilingPlanModal" title="Filing Plans" size="lg">
+      <div>
+        <UiButton class="mb-4" @click="showNewFilingPlanModal = true">
+          <span class="flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
             New Filing Plan
-          </button>
+          </span>
+        </UiButton>
 
-          <div v-if="isLoadingFilingPlans" class="text-center py-8 text-gray-500">Loading...</div>
-          <div v-else-if="filingPlans.length === 0" class="text-center py-8 text-gray-500">
-            No filing plans configured
-          </div>
-          <div v-else class="space-y-2 max-h-96 overflow-y-auto">
-            <div
-              v-for="plan in filingPlans"
-              :key="plan.id"
-              class="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
-            >
-              <div>
-                <p class="font-medium text-gray-900">{{ plan.name }}</p>
-                <p v-if="plan.description" class="text-sm text-gray-500">{{ plan.description }}</p>
-                <div class="flex items-center gap-4 mt-1 text-xs text-gray-400">
-                  <span v-if="plan.pattern">Pattern: {{ plan.pattern }}</span>
-                  <span v-if="plan.classificationName">Classification: {{ plan.classificationName }}</span>
-                  <span v-if="plan.documentTypeName">Type: {{ plan.documentTypeName }}</span>
-                </div>
+        <div v-if="isLoadingFilingPlans" class="text-center py-8 text-zinc-500 dark:text-zinc-400">Loading...</div>
+        <div v-else-if="filingPlans.length === 0" class="text-center py-8 text-zinc-500 dark:text-zinc-400">
+          No filing plans configured
+        </div>
+        <div v-else class="space-y-2 max-h-96 overflow-y-auto">
+          <div
+            v-for="plan in filingPlans"
+            :key="plan.id"
+            class="flex items-center justify-between p-4 bg-zinc-50 dark:bg-surface-dark rounded-lg"
+          >
+            <div>
+              <p class="font-medium text-zinc-900 dark:text-zinc-100">{{ plan.name }}</p>
+              <p v-if="plan.description" class="text-sm text-zinc-500 dark:text-zinc-400">{{ plan.description }}</p>
+              <div class="flex items-center gap-4 mt-1 text-xs text-zinc-400 dark:text-zinc-500">
+                <span v-if="plan.pattern">Pattern: {{ plan.pattern }}</span>
+                <span v-if="plan.classificationName">Classification: {{ plan.classificationName }}</span>
+                <span v-if="plan.documentTypeName">Type: {{ plan.documentTypeName }}</span>
               </div>
-              <button
-                @click="deleteFilingPlan(plan.id)"
-                class="p-2 text-red-500 hover:text-red-700"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
             </div>
+            <button
+              @click="deleteFilingPlan(plan.id)"
+              class="p-2 text-red-500 hover:text-red-700"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
           </div>
         </div>
       </div>
-    </div>
+      <template #footer>
+        <div class="flex justify-end">
+          <UiButton variant="outline" @click="showFilingPlanModal = false">Close</UiButton>
+        </div>
+      </template>
+    </UiModal>
 
     <!-- New Filing Plan Modal -->
-    <div v-if="showNewFilingPlanModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4">
-        <div class="p-6">
-          <h3 class="text-lg font-semibold text-gray-900 mb-4">New Filing Plan</h3>
-          <div class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
-              <input
-                v-model="newFilingPlan.name"
-                type="text"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal/50"
-                placeholder="Plan name"
-              />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-              <textarea
-                v-model="newFilingPlan.description"
-                rows="2"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal/50"
-                placeholder="Optional description"
-              ></textarea>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Pattern</label>
-              <input
-                v-model="newFilingPlan.pattern"
-                type="text"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal/50"
-                placeholder="e.g., {year}/{month}/{type}"
-              />
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-              <UiSelect
-                v-model="newFilingPlan.classificationId"
-                :options="classificationOptions"
-                label="Classification"
-                placeholder="None"
-              />
-              <UiSelect
-                v-model="newFilingPlan.documentTypeId"
-                :options="documentTypeOptions"
-                label="Document Type"
-                placeholder="None"
-              />
-            </div>
-          </div>
-          <div class="mt-6 flex justify-end gap-3">
-            <button @click="showNewFilingPlanModal = false" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-              Cancel
-            </button>
-            <button @click="createFilingPlan" class="px-4 py-2 bg-teal text-white rounded-lg hover:bg-teal/90">
-              Create
-            </button>
-          </div>
+    <UiModal v-model="showNewFilingPlanModal" title="New Filing Plan" size="sm">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Name *</label>
+          <input
+            v-model="newFilingPlan.name"
+            type="text"
+            class="w-full px-4 py-2 border border-zinc-300 dark:border-border-dark rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-surface-dark text-zinc-900 dark:text-zinc-100"
+            placeholder="Plan name"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Description</label>
+          <textarea
+            v-model="newFilingPlan.description"
+            rows="2"
+            class="w-full px-4 py-2 border border-zinc-300 dark:border-border-dark rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-surface-dark text-zinc-900 dark:text-zinc-100"
+            placeholder="Optional description"
+          ></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Pattern</label>
+          <input
+            v-model="newFilingPlan.pattern"
+            type="text"
+            class="w-full px-4 py-2 border border-zinc-300 dark:border-border-dark rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-surface-dark text-zinc-900 dark:text-zinc-100"
+            placeholder="e.g., {year}/{month}/{type}"
+          />
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <UiSelect
+            v-model="newFilingPlan.classificationId"
+            :options="classificationOptions"
+            label="Classification"
+            placeholder="None"
+          />
+          <UiSelect
+            v-model="newFilingPlan.documentTypeId"
+            :options="documentTypeOptions"
+            label="Document Type"
+            placeholder="None"
+          />
         </div>
       </div>
-    </div>
+      <template #footer>
+        <div class="flex justify-end gap-3">
+          <UiButton variant="outline" @click="showNewFilingPlanModal = false">Cancel</UiButton>
+          <UiButton @click="createFilingPlan">Create</UiButton>
+        </div>
+      </template>
+    </UiModal>
 
     <!-- Enterprise Permission Management Modal -->
     <PermissionManagementModal
@@ -2127,95 +2328,65 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
     />
 
     <!-- Audit Trail Modal -->
-    <div v-if="showAuditModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-3xl mx-4">
-        <div class="p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-900">
-              Audit Trail for {{ contextMenuNode?.name }}
-            </h3>
-            <button @click="showAuditModal = false" class="text-gray-400 hover:text-gray-600">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+    <UiModal v-model="showAuditModal" :title="'Audit Trail for ' + (contextMenuNode?.name || '')" size="xl">
+      <div v-if="isLoadingAudit" class="text-center py-8 text-zinc-500 dark:text-zinc-400">Loading...</div>
+      <div v-else-if="auditLogs.length === 0" class="text-center py-8 text-zinc-500 dark:text-zinc-400">
+        No activity recorded
+      </div>
+      <div v-else class="max-h-96 overflow-y-auto">
+        <div class="space-y-3">
+          <div
+            v-for="log in auditLogs"
+            :key="log.id"
+            class="flex items-start gap-3 p-3 bg-zinc-50 dark:bg-surface-dark rounded-lg"
+          >
+            <div class="flex-shrink-0 w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+              <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
               </svg>
-            </button>
-          </div>
-
-          <div v-if="isLoadingAudit" class="text-center py-8 text-gray-500">Loading...</div>
-          <div v-else-if="auditLogs.length === 0" class="text-center py-8 text-gray-500">
-            No activity recorded
-          </div>
-          <div v-else class="max-h-96 overflow-y-auto">
-            <div class="space-y-3">
-              <div
-                v-for="log in auditLogs"
-                :key="log.id"
-                class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg"
-              >
-                <div class="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                  </svg>
-                </div>
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center justify-between">
-                    <p class="text-sm font-medium text-gray-900">{{ log.action }}</p>
-                    <span class="text-xs text-gray-400">{{ formatDate(log.createdAt) }}</span>
-                  </div>
-                  <p class="text-sm text-gray-500">{{ log.userName || 'System' }}</p>
-                  <p v-if="log.details" class="text-xs text-gray-400 mt-1">{{ log.details }}</p>
-                </div>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between">
+                <p class="text-sm font-medium text-zinc-900 dark:text-zinc-100">{{ log.action }}</p>
+                <span class="text-xs text-zinc-400 dark:text-zinc-500">{{ formatDate(log.createdAt) }}</span>
               </div>
+              <p class="text-sm text-zinc-500 dark:text-zinc-400">{{ log.userName || 'System' }}</p>
+              <p v-if="log.details" class="text-xs text-zinc-400 dark:text-zinc-500 mt-1">{{ log.details }}</p>
             </div>
           </div>
         </div>
       </div>
-    </div>
+      <template #footer>
+        <div class="flex justify-end">
+          <UiButton variant="outline" @click="showAuditModal = false">Close</UiButton>
+        </div>
+      </template>
+    </UiModal>
 
     <!-- Settings Modal -->
-    <div v-if="showSettingsModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4">
-        <div class="p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-900">
-              {{ contextMenuNode?.type === 'cabinet' ? 'Cabinet' : 'Folder' }} Settings
-            </h3>
-            <button @click="showSettingsModal = false" class="text-gray-400 hover:text-gray-600">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+    <UiModal v-model="showSettingsModal" :title="(contextMenuNode?.type === 'cabinet' ? 'Cabinet' : 'Folder') + ' Settings'" size="sm">
+      <div class="space-y-4">
+        <div class="flex items-center justify-between p-3 bg-zinc-50 dark:bg-surface-dark rounded-lg">
+          <div>
+            <p class="text-sm font-medium text-zinc-700 dark:text-zinc-200">Break Permission Inheritance</p>
+            <p class="text-xs text-zinc-500 dark:text-zinc-400">Stop inheriting permissions from parent</p>
           </div>
-
-          <div class="space-y-4">
-            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div>
-                <p class="text-sm font-medium text-gray-700">Break Permission Inheritance</p>
-                <p class="text-xs text-gray-500">Stop inheriting permissions from parent</p>
-              </div>
-              <button class="px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-100">
-                Break
-              </button>
-            </div>
-            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div>
-                <p class="text-sm font-medium text-gray-700">Notifications</p>
-                <p class="text-xs text-gray-500">Receive alerts for changes</p>
-              </div>
-              <button class="px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-100">
-                Configure
-              </button>
-            </div>
+          <UiButton variant="outline" size="sm">Break</UiButton>
+        </div>
+        <div class="flex items-center justify-between p-3 bg-zinc-50 dark:bg-surface-dark rounded-lg">
+          <div>
+            <p class="text-sm font-medium text-zinc-700 dark:text-zinc-200">Notifications</p>
+            <p class="text-xs text-zinc-500 dark:text-zinc-400">Receive alerts for changes</p>
           </div>
-
-          <div class="mt-6 flex justify-end">
-            <button @click="showSettingsModal = false" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-              Close
-            </button>
-          </div>
+          <UiButton variant="outline" size="sm">Configure</UiButton>
         </div>
       </div>
-    </div>
+      <template #footer>
+        <div class="flex justify-end">
+          <UiButton variant="outline" @click="showSettingsModal = false">Close</UiButton>
+        </div>
+      </template>
+    </UiModal>
   </div>
 </template>
 
@@ -2226,7 +2397,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
 }
 
 .toolbar-btn:hover {
-  @apply bg-white dark:bg-zinc-700;
+  @apply bg-white dark:bg-border-dark;
 }
 
 /* Selection Toolbar Transition */
@@ -2240,6 +2411,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
   opacity: 0;
   transform: translate(-50%, 20px);
 }
+
 
 </style>
 

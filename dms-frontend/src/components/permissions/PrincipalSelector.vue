@@ -47,7 +47,7 @@ const typeConfig = {
     label: 'User',
     pluralLabel: 'Users',
     color: 'from-primary to-teal-600',
-    bgColor: 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300',
+    bgColor: 'bg-white dark:bg-surface-dark border-zinc-200 dark:border-border-dark text-zinc-600 dark:text-zinc-300',
     selectedBg: 'bg-primary text-white border-primary',
     placeholder: 'Search users...',
     emptyIcon: 'person_off',
@@ -58,7 +58,7 @@ const typeConfig = {
     label: 'Role',
     pluralLabel: 'Roles',
     color: 'from-primary to-teal-600',
-    bgColor: 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300',
+    bgColor: 'bg-white dark:bg-surface-dark border-zinc-200 dark:border-border-dark text-zinc-600 dark:text-zinc-300',
     selectedBg: 'bg-primary text-white border-primary',
     placeholder: 'Search roles...',
     emptyIcon: 'group_off',
@@ -69,7 +69,7 @@ const typeConfig = {
     label: 'Structure',
     pluralLabel: 'Structures',
     color: 'from-primary to-teal-600',
-    bgColor: 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-600 text-zinc-600 dark:text-zinc-300',
+    bgColor: 'bg-white dark:bg-surface-dark border-zinc-200 dark:border-border-dark text-zinc-600 dark:text-zinc-300',
     selectedBg: 'bg-primary text-white border-primary',
     placeholder: 'Search structures...',
     emptyIcon: 'domain_disabled',
@@ -215,7 +215,7 @@ function selectType(type: 'User' | 'Role' | 'Structure') {
       <div
         ref="triggerRef"
         @click="isOpen = !isOpen"
-        class="w-full px-4 py-3 border-2 rounded-xl bg-white dark:bg-zinc-800 cursor-pointer flex items-center justify-between transition-all duration-200"
+        class="w-full px-4 py-3 border-2 rounded-xl bg-white dark:bg-surface-dark cursor-pointer flex items-center justify-between transition-all duration-200"
         :class="isOpen
           ? 'ring-2 ring-primary/30 border-primary shadow-lg'
           : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'"
@@ -239,7 +239,7 @@ function selectType(type: 'User' | 'Role' | 'Structure') {
           <button
             v-if="modelValue"
             @click.stop="clearSelection"
-            class="p-1.5 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-lg transition-colors"
+            class="p-1.5 hover:bg-gray-100 dark:hover:bg-border-dark rounded-lg transition-colors"
           >
             <span class="material-symbols-outlined text-gray-400 text-lg">close</span>
           </button>
@@ -261,7 +261,7 @@ function selectType(type: 'User' | 'Role' | 'Structure') {
         >
           <div
             v-if="isOpen"
-            class="fixed z-[9999] bg-white dark:bg-zinc-900 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+            class="fixed z-[9999] bg-white dark:bg-background-dark rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
             :style="dropdownStyle"
           >
             <!-- Search -->
@@ -272,7 +272,7 @@ function selectType(type: 'User' | 'Role' | 'Structure') {
                   v-model="searchQuery"
                   type="text"
                   :placeholder="currentTypeConfig.placeholder"
-                  class="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-zinc-800 text-gray-900 dark:text-white text-sm"
+                  class="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-surface-dark text-gray-900 dark:text-white text-sm"
                   @click.stop
                 />
               </div>

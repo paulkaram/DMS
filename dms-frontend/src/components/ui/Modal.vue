@@ -111,14 +111,14 @@ onUnmounted(() => {
           >
             <div
               v-if="isOpen"
-              class="relative w-full bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10"
+              class="relative w-full bg-white dark:bg-background-dark rounded-2xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10"
               :class="[sizeClasses, overflowVisible ? 'overflow-visible' : 'overflow-hidden']"
               @click.stop
             >
               <!-- Header with brand gradient -->
               <div
                 v-if="title || showClose || $slots.header"
-                class="relative bg-gradient-to-r from-navy via-navy/95 to-primary px-6 py-5 overflow-hidden"
+                class="relative bg-gradient-to-r from-navy via-navy/95 to-primary px-6 py-5 overflow-hidden rounded-t-2xl"
               >
                 <!-- Decorative elements -->
                 <div class="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full -translate-y-1/2 translate-x-1/2"></div>
@@ -157,7 +157,7 @@ onUnmounted(() => {
               <!-- Footer -->
               <div
                 v-if="$slots.footer"
-                class="px-6 py-4 bg-gray-50 dark:bg-zinc-800/50 border-t border-gray-200 dark:border-gray-700/50"
+                class="px-6 py-4 bg-gray-50 dark:bg-surface-dark/50 border-t border-gray-200 dark:border-gray-700/50 rounded-b-2xl"
               >
                 <slot name="footer" />
               </div>

@@ -121,8 +121,8 @@ public class FolderRepository : IFolderRepository
 
         using var connection = _connectionFactory.CreateConnection();
         await connection.ExecuteAsync(@"
-            INSERT INTO Folders (Id, CabinetId, ParentFolderId, Name, Description, Path, BreakInheritance, IsActive, CreatedBy, CreatedAt)
-            VALUES (@Id, @CabinetId, @ParentFolderId, @Name, @Description, @Path, @BreakInheritance, @IsActive, @CreatedBy, @CreatedAt)",
+            INSERT INTO Folders (Id, CabinetId, ParentFolderId, Name, Description, Path, BreakInheritance, AccessMode, IsActive, CreatedBy, CreatedAt)
+            VALUES (@Id, @CabinetId, @ParentFolderId, @Name, @Description, @Path, @BreakInheritance, @AccessMode, @IsActive, @CreatedBy, @CreatedAt)",
             entity);
 
         return entity.Id;
@@ -136,7 +136,8 @@ public class FolderRepository : IFolderRepository
         var affected = await connection.ExecuteAsync(@"
             UPDATE Folders
             SET Name = @Name, Description = @Description, ParentFolderId = @ParentFolderId,
-                Path = @Path, BreakInheritance = @BreakInheritance, ModifiedBy = @ModifiedBy, ModifiedAt = @ModifiedAt
+                Path = @Path, BreakInheritance = @BreakInheritance, AccessMode = @AccessMode,
+                ModifiedBy = @ModifiedBy, ModifiedAt = @ModifiedAt
             WHERE Id = @Id",
             entity);
 

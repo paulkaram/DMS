@@ -44,6 +44,7 @@ public static class DependencyInjection
         // Content and folder management repositories
         services.AddScoped<IContentTypeRepository, ContentTypeRepository>();
         services.AddScoped<IFolderLinkRepository, FolderLinkRepository>();
+        services.AddScoped<IDocumentShortcutRepository, DocumentShortcutRepository>();
         services.AddScoped<IFilingPlanRepository, FilingPlanRepository>();
 
         // Content Type Definitions (Form Builder)

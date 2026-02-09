@@ -448,12 +448,12 @@ function getFileIconBg(type: string): string {
   const colors: Record<string, string> = {
     'Pdf': 'bg-red-100 dark:bg-red-900/30',
     'Image': 'bg-purple-100 dark:bg-purple-900/30',
-    'Text': 'bg-zinc-100 dark:bg-zinc-700',
+    'Text': 'bg-zinc-100 dark:bg-border-dark',
     'Video': 'bg-pink-100 dark:bg-pink-900/30',
     'Audio': 'bg-indigo-100 dark:bg-indigo-900/30',
     'Office': 'bg-blue-100 dark:bg-blue-900/30'
   }
-  return colors[type] || 'bg-zinc-100 dark:bg-zinc-700'
+  return colors[type] || 'bg-zinc-100 dark:bg-border-dark'
 }
 
 function getFileIconColor(type: string): string {
@@ -910,7 +910,7 @@ async function handlePageManagementApplied(result: PageReorganizeResult) {
           <!-- Password Required -->
           <div v-if="requiresPassword" class="absolute inset-0 flex items-center justify-center p-8">
             <div class="w-full max-w-md">
-              <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl p-8">
+              <div class="bg-white dark:bg-background-dark rounded-2xl shadow-2xl p-8">
                 <!-- Lock Icon -->
                 <div class="flex justify-center mb-6">
                   <div class="w-20 h-20 rounded-2xl bg-amber-500/10 flex items-center justify-center">
@@ -946,7 +946,7 @@ async function handlePageManagementApplied(result: PageReorganizeResult) {
                     <input
                       v-model="enteredPassword"
                       :type="showPassword ? 'text' : 'password'"
-                      class="w-full px-4 py-3 pr-12 border border-zinc-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal transition-all"
+                      class="w-full px-4 py-3 pr-12 border border-zinc-200 dark:border-border-dark rounded-xl bg-white dark:bg-surface-dark text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal transition-all"
                       placeholder="Enter document password..."
                       @keyup.enter="validateAndLoadPreview"
                       autofocus
@@ -973,7 +973,7 @@ async function handlePageManagementApplied(result: PageReorganizeResult) {
                 <div class="flex gap-3">
                   <button
                     @click="isOpen = false"
-                    class="flex-1 py-3 text-zinc-600 dark:text-zinc-400 font-medium rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                    class="flex-1 py-3 text-zinc-600 dark:text-zinc-400 font-medium rounded-xl hover:bg-zinc-100 dark:hover:bg-surface-dark transition-colors"
                   >
                     Cancel
                   </button>

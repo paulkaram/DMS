@@ -585,7 +585,7 @@ function deleteWorkflow(id: string) {
         <!-- Create New Card -->
         <button
           @click="openDesigner()"
-          class="group min-h-[240px] rounded-2xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 hover:border-teal dark:hover:border-teal bg-white/50 dark:bg-zinc-900/50 flex flex-col items-center justify-center gap-4 transition-all hover:shadow-lg hover:shadow-teal/5"
+          class="group min-h-[240px] rounded-2xl border-2 border-dashed border-zinc-300 dark:border-border-dark hover:border-teal dark:hover:border-teal bg-white/50 dark:bg-background-dark/50 flex flex-col items-center justify-center gap-4 transition-all hover:shadow-lg hover:shadow-teal/5"
         >
           <div class="w-16 h-16 rounded-2xl bg-teal/10 group-hover:bg-teal/20 flex items-center justify-center transition-colors">
             <span class="material-symbols-outlined text-teal text-3xl">add</span>
@@ -600,10 +600,10 @@ function deleteWorkflow(id: string) {
         <div
           v-for="wf in workflows"
           :key="wf.id"
-          class="group bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 hover:border-teal/40 dark:hover:border-teal/40 shadow-sm hover:shadow-lg hover:shadow-teal/5 transition-all overflow-hidden"
+          class="group bg-white dark:bg-background-dark rounded-2xl border border-zinc-200 dark:border-border-dark hover:border-teal/40 dark:hover:border-teal/40 shadow-sm hover:shadow-lg hover:shadow-teal/5 transition-all overflow-hidden"
         >
           <!-- Card Header - Mini Flow Preview -->
-          <div class="h-28 bg-zinc-50 dark:bg-zinc-800/50 relative overflow-hidden border-b border-zinc-100 dark:border-zinc-800">
+          <div class="h-28 bg-zinc-50 dark:bg-surface-dark/50 relative overflow-hidden border-b border-zinc-100 dark:border-border-dark">
             <svg class="w-full h-full" viewBox="0 0 600 120" preserveAspectRatio="xMidYMid meet">
               <!-- Mini node visualization -->
               <g v-for="(step, i) in wf.steps.slice(0, 6)" :key="step.id">
@@ -680,7 +680,7 @@ function deleteWorkflow(id: string) {
             </div>
 
             <!-- Footer -->
-            <div class="flex items-center justify-between pt-3 border-t border-zinc-100 dark:border-zinc-800">
+            <div class="flex items-center justify-between pt-3 border-t border-zinc-100 dark:border-border-dark">
               <span class="text-[10px] text-zinc-400 uppercase tracking-wider">{{ formatDate(wf.updatedAt) }}</span>
               <div class="flex items-center gap-1">
                 <button
@@ -717,12 +717,12 @@ function deleteWorkflow(id: string) {
     <div v-else class="fixed inset-0 z-40 flex flex-col bg-zinc-100 dark:bg-zinc-950">
 
       <!-- Top Toolbar -->
-      <div class="flex-shrink-0 h-14 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 flex items-center px-4 gap-3 shadow-sm z-20">
+      <div class="flex-shrink-0 h-14 bg-white dark:bg-background-dark border-b border-zinc-200 dark:border-border-dark flex items-center px-4 gap-3 shadow-sm z-20">
         <!-- Back -->
-        <button @click="backToList" class="p-2 rounded-lg text-zinc-500 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+        <button @click="backToList" class="p-2 rounded-lg text-zinc-500 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-surface-dark transition-colors">
           <span class="material-symbols-outlined">arrow_back</span>
         </button>
-        <div class="w-px h-6 bg-zinc-200 dark:bg-zinc-700"></div>
+        <div class="w-px h-6 bg-zinc-200 dark:bg-border-dark"></div>
 
         <!-- Workflow Name -->
         <div class="flex items-center gap-2 flex-1 min-w-0">
@@ -738,7 +738,7 @@ function deleteWorkflow(id: string) {
         </div>
 
         <!-- Zoom Controls -->
-        <div class="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg px-1">
+        <div class="flex items-center gap-1 bg-zinc-100 dark:bg-surface-dark rounded-lg px-1">
           <button @click="zoom = Math.max(0.3, zoom - 0.1)" class="p-1.5 text-zinc-500 hover:text-zinc-700 dark:hover:text-white transition-colors rounded">
             <span class="material-symbols-outlined text-lg">remove</span>
           </button>
@@ -751,7 +751,7 @@ function deleteWorkflow(id: string) {
           </button>
         </div>
 
-        <div class="w-px h-6 bg-zinc-200 dark:bg-zinc-700"></div>
+        <div class="w-px h-6 bg-zinc-200 dark:bg-border-dark"></div>
 
         <!-- Save / Publish -->
         <UiButton variant="outline" size="sm" @click="showSaveModal = true">
@@ -766,8 +766,8 @@ function deleteWorkflow(id: string) {
 
       <div class="flex-1 flex overflow-hidden">
         <!-- Left Sidebar - Node Palette -->
-        <div class="flex-shrink-0 w-56 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 flex flex-col z-10">
-          <div class="p-3 border-b border-zinc-100 dark:border-zinc-800">
+        <div class="flex-shrink-0 w-56 bg-white dark:bg-background-dark border-r border-zinc-200 dark:border-border-dark flex flex-col z-10">
+          <div class="p-3 border-b border-zinc-100 dark:border-border-dark">
             <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Node Palette</p>
           </div>
           <div class="flex-1 overflow-y-auto p-3 space-y-1.5">
@@ -775,7 +775,7 @@ function deleteWorkflow(id: string) {
               v-for="nt in nodeTypes"
               :key="nt.type"
               @click="addNode(nt.type)"
-              class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all group"
+              class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-surface-dark transition-all group"
             >
               <div
                 class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110"
@@ -793,7 +793,7 @@ function deleteWorkflow(id: string) {
           </div>
 
           <!-- Connection Mode Indicator -->
-          <div v-if="isConnecting" class="p-3 border-t border-zinc-100 dark:border-zinc-800">
+          <div v-if="isConnecting" class="p-3 border-t border-zinc-100 dark:border-border-dark">
             <div class="bg-teal/10 border border-teal/30 rounded-xl p-3 text-center">
               <p class="text-xs font-semibold text-teal">Connecting...</p>
               <p class="text-[10px] text-zinc-500 mt-1">Click a target node</p>
@@ -802,8 +802,8 @@ function deleteWorkflow(id: string) {
           </div>
 
           <!-- Quick Help -->
-          <div class="p-3 border-t border-zinc-100 dark:border-zinc-800">
-            <div class="bg-zinc-50 dark:bg-zinc-800 rounded-xl p-3">
+          <div class="p-3 border-t border-zinc-100 dark:border-border-dark">
+            <div class="bg-zinc-50 dark:bg-surface-dark rounded-xl p-3">
               <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">Quick Help</p>
               <div class="space-y-1.5 text-[10px] text-zinc-500">
                 <p class="flex items-center gap-2"><span class="material-symbols-outlined text-xs">mouse</span> Drag nodes to move</p>
@@ -933,11 +933,11 @@ function deleteWorkflow(id: string) {
               <!-- Rect shape (Tasks) -->
               <div
                 v-else
-                class="h-14 rounded-xl shadow-lg flex items-center gap-2.5 px-3 transition-all cursor-move bg-white dark:bg-zinc-800 border-2"
+                class="h-14 rounded-xl shadow-lg flex items-center gap-2.5 px-3 transition-all cursor-move bg-white dark:bg-surface-dark border-2"
                 :class="[
                   selectedNodeId === node.id
                     ? 'border-teal shadow-teal/20 shadow-xl scale-105'
-                    : 'border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600 hover:scale-[1.02]'
+                    : 'border-zinc-200 dark:border-border-dark hover:border-zinc-300 dark:hover:border-zinc-600 hover:scale-[1.02]'
                 ]"
                 :style="{ width: getNodeWidth(node.type) + 'px' }"
               >
@@ -975,10 +975,10 @@ function deleteWorkflow(id: string) {
         </div>
 
         <!-- Right Panel - Properties -->
-        <div class="flex-shrink-0 w-72 bg-white dark:bg-zinc-900 border-l border-zinc-200 dark:border-zinc-800 flex flex-col z-10">
+        <div class="flex-shrink-0 w-72 bg-white dark:bg-background-dark border-l border-zinc-200 dark:border-border-dark flex flex-col z-10">
           <div v-if="selectedNode" class="flex-1 flex flex-col overflow-hidden">
             <!-- Panel Header -->
-            <div class="p-4 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+            <div class="p-4 border-b border-zinc-100 dark:border-border-dark flex items-center justify-between">
               <div class="flex items-center gap-2.5">
                 <div class="w-8 h-8 rounded-lg flex items-center justify-center" :style="{ backgroundColor: selectedNodeType?.color + '20' }">
                   <span class="material-symbols-outlined text-base" :style="{ color: selectedNodeType?.color }">{{ selectedNodeType?.icon }}</span>
@@ -1003,7 +1003,7 @@ function deleteWorkflow(id: string) {
                 <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Label</label>
                 <input
                   v-model="selectedNode.label"
-                  class="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all"
+                  class="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-border-dark bg-zinc-50 dark:bg-surface-dark text-sm text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all"
                 />
               </div>
 
@@ -1012,7 +1012,7 @@ function deleteWorkflow(id: string) {
                 <textarea
                   v-model="selectedNode.description"
                   rows="2"
-                  class="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all resize-none"
+                  class="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-border-dark bg-zinc-50 dark:bg-surface-dark text-sm text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all resize-none"
                   placeholder="Describe this step..."
                 ></textarea>
               </div>
@@ -1022,7 +1022,7 @@ function deleteWorkflow(id: string) {
                 <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Assignee</label>
                 <input
                   v-model="selectedNode.config.assignee"
-                  class="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all"
+                  class="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-border-dark bg-zinc-50 dark:bg-surface-dark text-sm text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all"
                   placeholder="User or role..."
                 />
               </div>
@@ -1033,7 +1033,7 @@ function deleteWorkflow(id: string) {
                 <textarea
                   v-model="selectedNode.config.condition"
                   rows="3"
-                  class="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-white font-mono text-xs focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all resize-none"
+                  class="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-border-dark bg-zinc-50 dark:bg-surface-dark text-sm text-zinc-900 dark:text-white font-mono text-xs focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all resize-none"
                   placeholder="e.g. document.classification == 'Confidential'"
                 ></textarea>
               </div>
@@ -1045,7 +1045,7 @@ function deleteWorkflow(id: string) {
                 </label>
                 <input
                   v-model="selectedNode.config.timeout"
-                  class="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all"
+                  class="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-border-dark bg-zinc-50 dark:bg-surface-dark text-sm text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all"
                   placeholder="e.g. 48h, 3d, 1w"
                 />
               </div>
@@ -1055,13 +1055,13 @@ function deleteWorkflow(id: string) {
                 <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Template</label>
                 <input
                   v-model="selectedNode.config.template"
-                  class="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all"
+                  class="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-border-dark bg-zinc-50 dark:bg-surface-dark text-sm text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all"
                   placeholder="Notification template name..."
                 />
                 <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5 mt-4">Recipients</label>
                 <input
                   v-model="selectedNode.config.recipients"
-                  class="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-sm text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all"
+                  class="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-border-dark bg-zinc-50 dark:bg-surface-dark text-sm text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all"
                   placeholder="Users, roles, or groups..."
                 />
               </div>
@@ -1075,7 +1075,7 @@ function deleteWorkflow(id: string) {
                     <input
                       v-model.number="selectedNode.x"
                       type="number"
-                      class="w-full px-2 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-xs text-zinc-900 dark:text-white font-mono focus:ring-1 focus:ring-teal/50 outline-none"
+                      class="w-full px-2 py-1.5 rounded-lg border border-zinc-200 dark:border-border-dark bg-zinc-50 dark:bg-surface-dark text-xs text-zinc-900 dark:text-white font-mono focus:ring-1 focus:ring-teal/50 outline-none"
                     />
                   </div>
                   <div class="flex-1">
@@ -1083,7 +1083,7 @@ function deleteWorkflow(id: string) {
                     <input
                       v-model.number="selectedNode.y"
                       type="number"
-                      class="w-full px-2 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-xs text-zinc-900 dark:text-white font-mono focus:ring-1 focus:ring-teal/50 outline-none"
+                      class="w-full px-2 py-1.5 rounded-lg border border-zinc-200 dark:border-border-dark bg-zinc-50 dark:bg-surface-dark text-xs text-zinc-900 dark:text-white font-mono focus:ring-1 focus:ring-teal/50 outline-none"
                     />
                   </div>
                 </div>
@@ -1096,7 +1096,7 @@ function deleteWorkflow(id: string) {
                   <div
                     v-for="conn in designerWorkflow.connections.filter(c => c.fromNodeId === selectedNode!.id || c.toNodeId === selectedNode!.id)"
                     :key="conn.id"
-                    class="flex items-center justify-between bg-zinc-50 dark:bg-zinc-800 rounded-lg px-2.5 py-1.5"
+                    class="flex items-center justify-between bg-zinc-50 dark:bg-surface-dark rounded-lg px-2.5 py-1.5"
                   >
                     <span class="text-[10px] text-zinc-600 dark:text-zinc-400 font-mono">
                       {{ conn.fromNodeId === selectedNode!.id ? '→ ' + conn.toNodeId : conn.fromNodeId + ' →' }}
@@ -1115,7 +1115,7 @@ function deleteWorkflow(id: string) {
 
           <!-- No Selection -->
           <div v-else class="flex-1 flex flex-col items-center justify-center p-6 text-center">
-            <div class="w-16 h-16 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4">
+            <div class="w-16 h-16 rounded-2xl bg-zinc-100 dark:bg-surface-dark flex items-center justify-center mb-4">
               <span class="material-symbols-outlined text-3xl text-zinc-300 dark:text-zinc-600">touch_app</span>
             </div>
             <p class="text-sm font-semibold text-zinc-500 dark:text-zinc-400">Select a node</p>
@@ -1153,7 +1153,7 @@ function deleteWorkflow(id: string) {
             :options="statusOptions"
           />
         </div>
-        <div class="bg-zinc-50 dark:bg-zinc-800 rounded-xl p-4">
+        <div class="bg-zinc-50 dark:bg-surface-dark rounded-xl p-4">
           <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">Summary</p>
           <div class="grid grid-cols-3 gap-4 text-center">
             <div>

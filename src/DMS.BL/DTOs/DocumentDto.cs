@@ -26,6 +26,26 @@ public class DocumentDto
     public DateTime CreatedAt { get; set; }
     public DateTime? ModifiedAt { get; set; }
     public bool HasPassword { get; set; }
+    public bool IsShortcut { get; set; }
+    public Guid? ShortcutId { get; set; }
+    public int AttachmentCount { get; set; }
+}
+
+public class DocumentShortcutDto
+{
+    public Guid Id { get; set; }
+    public Guid DocumentId { get; set; }
+    public Guid FolderId { get; set; }
+    public string? DocumentName { get; set; }
+    public string? FolderName { get; set; }
+    public string? FolderPath { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
+public class CreateDocumentShortcutDto
+{
+    public Guid DocumentId { get; set; }
+    public Guid FolderId { get; set; }
 }
 
 public class DocumentVersionDto

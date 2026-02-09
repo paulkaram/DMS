@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import type { SharedDocument, Document } from '@/types'
 import { sharesApi, documentsApi } from '@/api/client'
 import DocumentViewer from '@/components/documents/DocumentViewer.vue'
+import DocumentIcon from '@/components/common/DocumentIcon.vue'
 
 const router = useRouter()
 const sharedDocuments = ref<SharedDocument[]>([])
@@ -79,7 +80,6 @@ async function downloadDocument(doc: SharedDocument) {
 }
 
 function editDocument(doc: SharedDocument) {
-  // Navigate to document page in edit mode
   router.push(`/documents/${doc.documentId}?edit=true`)
 }
 
@@ -101,14 +101,6 @@ function openContextMenu(event: MouseEvent, doc: SharedDocument) {
 function closeContextMenu() {
   showContextMenu.value = false
   contextMenuDocument.value = null
-}
-
-function formatSize(bytes: number): string {
-  if (bytes === 0) return '0 B'
-  const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
 }
 
 function formatDate(dateStr: string): string {
@@ -153,6 +145,21 @@ function getRelativeTime(dateStr: string): string {
   if (days < 30) return `${Math.floor(days / 7)} weeks ago`
   return formatDate(dateStr)
 }
+
+// Stats
+const viewOnlyCount = computed(() => sharedDocuments.value.filter(d => d.permissionLevel === 1).length)
+const editableCount = computed(() => sharedDocuments.value.filter(d => d.permissionLevel === 2).length)
+const expiredCount = computed(() => sharedDocuments.value.filter(d => isExpired(d.expiresAt)).length)
+
+// Filter
+const selectedFilter = ref<string | null>(null)
+const displayedItems = computed(() => {
+  if (selectedFilter.value === null) return sharedDocuments.value
+  if (selectedFilter.value === 'view') return sharedDocuments.value.filter(d => d.permissionLevel === 1)
+  if (selectedFilter.value === 'edit') return sharedDocuments.value.filter(d => d.permissionLevel === 2)
+  if (selectedFilter.value === 'expired') return sharedDocuments.value.filter(d => isExpired(d.expiresAt))
+  return sharedDocuments.value
+})
 </script>
 
 <template>
@@ -165,163 +172,252 @@ function getRelativeTime(dateStr: string): string {
       </div>
       <button
         @click="loadSharedWithMe"
-        class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl font-medium text-sm transition-colors border border-zinc-200 dark:border-zinc-700"
+        class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-surface-dark hover:bg-zinc-50 dark:hover:bg-border-dark text-zinc-700 dark:text-zinc-300 rounded-xl font-medium text-sm transition-colors border border-zinc-200 dark:border-border-dark"
       >
         <span class="material-symbols-outlined text-lg">refresh</span>
         Refresh
       </button>
     </div>
 
-    <!-- Loading State -->
-    <div v-if="isLoading" class="flex items-center justify-center py-16">
-      <div class="flex flex-col items-center gap-3">
-        <div class="w-10 h-10 border-3 border-teal border-t-transparent rounded-full animate-spin"></div>
-        <span class="text-sm text-zinc-500 dark:text-zinc-400">Loading shared documents...</span>
-      </div>
-    </div>
-
-    <!-- Empty State -->
-    <div v-else-if="sharedDocuments.length === 0" class="bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-700 p-16 text-center">
-      <div class="w-16 h-16 mx-auto bg-[#1f2937] rounded-xl flex items-center justify-center mb-4">
-        <span class="material-symbols-outlined text-3xl text-zinc-500">folder_shared</span>
-      </div>
-      <p class="text-zinc-700 dark:text-zinc-300 font-medium">No shared documents</p>
-      <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Documents shared with you will appear here</p>
-    </div>
-
-    <!-- Shared Documents List -->
-    <div v-else class="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
-      <!-- Table Header -->
-      <div class="bg-white dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700 px-4 py-3">
-        <div class="grid grid-cols-12 gap-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
-          <div class="col-span-4">Document</div>
-          <div class="col-span-2">Shared By</div>
-          <div class="col-span-2">Permission</div>
-          <div class="col-span-2">Received</div>
-          <div class="col-span-2 text-right">Actions</div>
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="bg-[#0d1117] p-6 rounded-2xl text-white shadow-xl border border-zinc-800/50 min-h-[120px] flex flex-col justify-between relative overflow-hidden">
+        <svg class="absolute right-0 top-0 h-full w-32 opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <path d="M0,0 Q50,50 0,100 L100,100 L100,0 Z" fill="#00ae8c"/>
+        </svg>
+        <div class="flex items-center justify-between relative z-10">
+          <span class="material-symbols-outlined text-teal">visibility</span>
+          <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">View Only</span>
+        </div>
+        <div class="relative z-10">
+          <p class="text-4xl font-bold">{{ viewOnlyCount }}</p>
+          <p class="text-[10px] text-teal mt-2 font-medium">Read-only documents</p>
         </div>
       </div>
+      <div class="bg-[#0d1117] p-6 rounded-2xl text-white shadow-xl border border-zinc-800/50 min-h-[120px] flex flex-col justify-between relative overflow-hidden">
+        <svg class="absolute right-0 top-0 h-full w-32 opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <path d="M0,0 Q50,50 0,100 L100,100 L100,0 Z" fill="#00ae8c"/>
+        </svg>
+        <div class="flex items-center justify-between relative z-10">
+          <span class="material-symbols-outlined text-teal">edit</span>
+          <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Editable</span>
+        </div>
+        <div class="relative z-10">
+          <p class="text-4xl font-bold">{{ editableCount }}</p>
+          <p class="text-[10px] text-teal mt-2 font-medium">Edit permission documents</p>
+        </div>
+      </div>
+      <div class="bg-[#0d1117] p-6 rounded-2xl text-white shadow-xl border border-zinc-800/50 min-h-[120px] flex flex-col justify-between relative overflow-hidden">
+        <svg class="absolute right-0 top-0 h-full w-32 opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <path d="M0,0 Q50,50 0,100 L100,100 L100,0 Z" fill="#00ae8c"/>
+        </svg>
+        <div class="flex items-center justify-between relative z-10">
+          <span class="material-symbols-outlined text-teal">timer_off</span>
+          <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Expired</span>
+        </div>
+        <div class="relative z-10">
+          <p class="text-4xl font-bold">{{ expiredCount }}</p>
+          <p class="text-[10px] text-teal mt-2 font-medium">Expired shares</p>
+        </div>
+      </div>
+    </div>
 
-      <!-- Items -->
-      <div class="divide-y divide-zinc-100 dark:divide-zinc-800">
-        <div
-          v-for="doc in sharedDocuments"
-          :key="doc.shareId"
-          class="px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors group cursor-pointer"
-          :class="{ 'opacity-60': isExpired(doc.expiresAt) }"
-          @click="viewDocument(doc)"
-          @contextmenu="openContextMenu($event, doc)"
-        >
-          <div class="grid grid-cols-12 gap-4 items-center">
-            <!-- Document -->
-            <div class="col-span-4 flex items-center gap-3 min-w-0">
-              <div class="w-10 h-10 bg-[#1e3a5f] rounded-lg flex items-center justify-center flex-shrink-0">
-                <span class="material-symbols-outlined text-lg text-white">description</span>
-              </div>
-              <div class="min-w-0">
-                <div class="flex items-center gap-2">
-                  <p class="text-sm font-medium text-zinc-700 dark:text-zinc-200 truncate group-hover:text-teal transition-colors">
-                    {{ doc.documentName }}
-                  </p>
-                  <!-- Password Protected Badge -->
-                  <div
-                    v-if="doc.hasPassword"
-                    class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-gradient-to-r from-violet-500/15 to-fuchsia-500/15 border border-violet-300/30 dark:border-violet-500/30 shrink-0"
-                    title="Password protected"
-                  >
-                    <span
-                      class="material-symbols-outlined text-violet-500 dark:text-violet-400"
-                      style="font-size: 12px; font-variation-settings: 'FILL' 1;"
-                    >shield_lock</span>
-                    <span class="text-[9px] font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-wide pr-0.5">Secured</span>
-                  </div>
-                </div>
-                <p class="text-xs text-zinc-400 uppercase">{{ doc.extension?.replace('.', '') || 'File' }}</p>
-              </div>
-            </div>
+    <!-- Filter Tabs + Content -->
+    <div class="bg-white dark:bg-background-dark rounded-2xl shadow-sm border border-zinc-200 dark:border-border-dark overflow-hidden">
+      <div class="border-b border-zinc-200 dark:border-border-dark">
+        <nav class="flex">
+          <button
+            @click="selectedFilter = null"
+            :class="[
+              'px-6 py-4 text-sm font-medium border-b-2 transition-colors',
+              selectedFilter === null
+                ? 'border-teal text-teal'
+                : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
+            ]"
+          >
+            <span class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-lg">all_inbox</span>
+              All Items
+              <span v-if="sharedDocuments.length > 0" class="px-2 py-0.5 text-xs bg-teal/15 text-teal rounded-full">
+                {{ sharedDocuments.length }}
+              </span>
+            </span>
+          </button>
+          <button
+            @click="selectedFilter = 'view'"
+            :class="[
+              'px-6 py-4 text-sm font-medium border-b-2 transition-colors',
+              selectedFilter === 'view'
+                ? 'border-teal text-teal'
+                : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
+            ]"
+          >
+            <span class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-lg">visibility</span>
+              View Only
+              <span v-if="viewOnlyCount > 0" class="px-2 py-0.5 text-xs bg-zinc-100 dark:bg-surface-dark text-zinc-600 dark:text-zinc-300 rounded-full">
+                {{ viewOnlyCount }}
+              </span>
+            </span>
+          </button>
+          <button
+            @click="selectedFilter = 'edit'"
+            :class="[
+              'px-6 py-4 text-sm font-medium border-b-2 transition-colors',
+              selectedFilter === 'edit'
+                ? 'border-teal text-teal'
+                : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
+            ]"
+          >
+            <span class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-lg">edit</span>
+              Editable
+              <span v-if="editableCount > 0" class="px-2 py-0.5 text-xs bg-zinc-100 dark:bg-surface-dark text-zinc-600 dark:text-zinc-300 rounded-full">
+                {{ editableCount }}
+              </span>
+            </span>
+          </button>
+          <button
+            @click="selectedFilter = 'expired'"
+            :class="[
+              'px-6 py-4 text-sm font-medium border-b-2 transition-colors',
+              selectedFilter === 'expired'
+                ? 'border-teal text-teal'
+                : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
+            ]"
+          >
+            <span class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-lg">timer_off</span>
+              Expired
+              <span v-if="expiredCount > 0" class="px-2 py-0.5 text-xs bg-zinc-100 dark:bg-surface-dark text-zinc-600 dark:text-zinc-300 rounded-full">
+                {{ expiredCount }}
+              </span>
+            </span>
+          </button>
+        </nav>
+      </div>
 
-            <!-- Shared By -->
-            <div class="col-span-2 flex items-center gap-2">
-              <div class="w-6 h-6 bg-zinc-100 dark:bg-zinc-700 rounded-full flex items-center justify-center">
-                <span class="material-symbols-outlined text-xs text-zinc-500">person</span>
-              </div>
-              <span class="text-sm text-zinc-600 dark:text-zinc-300 truncate">{{ doc.sharedByUserName || 'Unknown' }}</span>
-            </div>
+      <!-- Loading State -->
+      <div v-if="isLoading" class="flex items-center justify-center py-16">
+        <div class="animate-spin w-8 h-8 border-4 border-teal border-t-transparent rounded-full"></div>
+      </div>
 
-            <!-- Permission -->
-            <div class="col-span-2">
+      <!-- Empty State -->
+      <div v-else-if="displayedItems.length === 0" class="text-center py-12">
+        <div class="w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-surface-dark flex items-center justify-center mx-auto mb-4">
+          <span class="material-symbols-outlined text-5xl text-zinc-400">folder_shared</span>
+        </div>
+        <h3 class="text-lg font-semibold text-zinc-700 dark:text-zinc-300">No shared documents</h3>
+        <p class="text-zinc-500 mt-1">Documents shared with you will appear here</p>
+      </div>
+
+      <!-- Shared Documents -->
+      <div v-else class="p-6">
+        <div class="space-y-2">
+          <div
+            v-for="(doc, index) in displayedItems"
+            :key="doc.shareId"
+            class="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-surface-dark rounded-xl border border-zinc-100 dark:border-border-dark hover:border-teal/30 hover:shadow-md transition-all cursor-pointer"
+            :class="{ 'opacity-60': isExpired(doc.expiresAt) }"
+            @click="viewDocument(doc)"
+            @contextmenu="openContextMenu($event, doc)"
+          >
+            <!-- Document Icon -->
+            <DocumentIcon :extension="doc.extension" :index="index" size="lg" />
+
+            <!-- Info -->
+            <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2">
-                <span :class="[
-                  'inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium',
-                  doc.permissionLevel === 2
-                    ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
-                    : 'bg-teal/10 text-teal'
-                ]">
-                  <span class="material-symbols-outlined text-xs">
-                    {{ doc.permissionLevel === 2 ? 'edit' : 'visibility' }}
-                  </span>
-                  {{ getPermissionLabel(doc.permissionLevel) }}
-                </span>
-                <!-- Expiry Badge -->
-                <span v-if="isExpired(doc.expiresAt)" class="px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400">
+                <p class="font-medium text-zinc-900 dark:text-white truncate">{{ doc.documentName }}</p>
+                <!-- Password Protected Badge -->
+                <div
+                  v-if="doc.hasPassword"
+                  class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-gradient-to-r from-violet-500/15 to-fuchsia-500/15 border border-violet-300/30 dark:border-violet-500/30 shrink-0"
+                  title="Password protected"
+                >
+                  <span
+                    class="material-symbols-outlined text-violet-500 dark:text-violet-400"
+                    style="font-size: 12px; font-variation-settings: 'FILL' 1;"
+                  >shield_lock</span>
+                  <span class="text-[9px] font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-wide pr-0.5">Secured</span>
+                </div>
+                <!-- Expiry Badges -->
+                <span v-if="isExpired(doc.expiresAt)" class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold uppercase bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 shrink-0">
                   Expired
                 </span>
-                <span v-else-if="isExpiringSoon(doc.expiresAt)" class="px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400">
+                <span v-else-if="isExpiringSoon(doc.expiresAt)" class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold uppercase bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 shrink-0">
                   Expiring
                 </span>
               </div>
-            </div>
-
-            <!-- Received Date -->
-            <div class="col-span-2">
-              <span class="text-sm text-zinc-500 dark:text-zinc-400">{{ getRelativeTime(doc.sharedAt) }}</span>
+              <div class="flex items-center gap-3 mt-1 text-sm text-zinc-500">
+                <span :class="[
+                  'px-2 py-0.5 rounded-full text-xs font-medium',
+                  doc.permissionLevel === 2
+                    ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
+                    : 'bg-teal/15 text-teal'
+                ]">
+                  {{ getPermissionLabel(doc.permissionLevel) }}
+                </span>
+                <span class="truncate flex items-center gap-1.5">
+                  <span class="material-symbols-outlined text-sm text-zinc-400">person</span>
+                  {{ doc.sharedByUserName || 'Unknown' }}
+                </span>
+                <span class="text-zinc-400">{{ getRelativeTime(doc.sharedAt) }}</span>
+              </div>
             </div>
 
             <!-- Actions -->
-            <div class="col-span-2 flex items-center justify-end gap-0.5">
-              <button
-                @click.stop="previewDocument(doc)"
-                :disabled="isExpired(doc.expiresAt)"
-                class="action-btn p-1.5 rounded text-zinc-400 hover:text-teal hover:bg-teal/10 transition-colors disabled:opacity-40"
-                data-tooltip="Preview"
-              >
-                <span class="material-symbols-outlined text-lg">open_in_new</span>
-              </button>
-              <button
-                @click.stop="downloadDocument(doc)"
-                :disabled="isExpired(doc.expiresAt)"
-                class="action-btn p-1.5 rounded text-zinc-400 hover:text-teal hover:bg-teal/10 transition-colors disabled:opacity-40"
-                data-tooltip="Download"
-              >
-                <span class="material-symbols-outlined text-lg">download</span>
-              </button>
-              <button
-                v-if="doc.permissionLevel === 2"
-                @click.stop="editDocument(doc)"
-                :disabled="isExpired(doc.expiresAt)"
-                class="action-btn p-1.5 rounded text-zinc-400 hover:text-amber-500 hover:bg-amber-500/10 transition-colors disabled:opacity-40"
-                data-tooltip="Edit"
-              >
-                <span class="material-symbols-outlined text-lg">edit</span>
-              </button>
-              <button
-                @click.stop="openContextMenu($event, doc)"
-                class="action-btn p-1.5 rounded text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
-                data-tooltip="More"
-              >
-                <span class="material-symbols-outlined text-lg">more_vert</span>
-              </button>
+            <div class="flex items-center gap-1 flex-shrink-0">
+              <div class="relative group">
+                <button
+                  @click.stop="previewDocument(doc)"
+                  :disabled="isExpired(doc.expiresAt)"
+                  class="p-2 text-zinc-500 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors disabled:opacity-40"
+                >
+                  <span class="material-symbols-outlined text-xl">open_in_new</span>
+                </button>
+                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-border-dark rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                  Preview
+                </span>
+              </div>
+              <div class="relative group">
+                <button
+                  @click.stop="downloadDocument(doc)"
+                  :disabled="isExpired(doc.expiresAt)"
+                  class="p-2 text-zinc-500 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors disabled:opacity-40"
+                >
+                  <span class="material-symbols-outlined text-xl">download</span>
+                </button>
+                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-border-dark rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                  Download
+                </span>
+              </div>
+              <div v-if="doc.permissionLevel === 2" class="relative group">
+                <button
+                  @click.stop="editDocument(doc)"
+                  :disabled="isExpired(doc.expiresAt)"
+                  class="p-2 text-zinc-500 hover:text-amber-500 hover:bg-amber-500/10 rounded-lg transition-colors disabled:opacity-40"
+                >
+                  <span class="material-symbols-outlined text-xl">edit</span>
+                </button>
+                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-border-dark rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                  Edit
+                </span>
+              </div>
+              <div class="relative group">
+                <button
+                  @click.stop="openContextMenu($event, doc)"
+                  class="p-2 text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-border-dark rounded-lg transition-colors"
+                >
+                  <span class="material-symbols-outlined text-xl">more_vert</span>
+                </button>
+                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-border-dark rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                  More
+                </span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-
-      <!-- Footer -->
-      <div class="bg-white dark:bg-zinc-800 border-t border-zinc-200 dark:border-zinc-700 px-4 py-2.5 flex items-center justify-between">
-        <span class="text-xs text-zinc-500">
-          <span class="font-medium text-zinc-700 dark:text-zinc-300">{{ sharedDocuments.length }}</span>
-          shared {{ sharedDocuments.length === 1 ? 'document' : 'documents' }}
-        </span>
       </div>
     </div>
 
@@ -337,11 +433,10 @@ function getRelativeTime(dateStr: string): string {
       >
         <div
           v-if="showContextMenu && contextMenuDocument"
-          class="fixed z-50 min-w-[180px] bg-white dark:bg-zinc-800 rounded-xl shadow-xl border border-zinc-200 dark:border-zinc-700 py-1.5 overflow-hidden"
+          class="fixed z-50 min-w-[180px] bg-white dark:bg-surface-dark rounded-xl shadow-xl border border-zinc-200 dark:border-border-dark py-1.5 overflow-hidden"
           :style="{ left: contextMenuPosition.x + 'px', top: contextMenuPosition.y + 'px' }"
           @click.stop
         >
-          <!-- Preview -->
           <button
             @click="previewDocument(contextMenuDocument); closeContextMenu()"
             :disabled="isExpired(contextMenuDocument.expiresAt)"
@@ -350,8 +445,6 @@ function getRelativeTime(dateStr: string): string {
             <span class="material-symbols-outlined text-lg">open_in_new</span>
             Preview
           </button>
-
-          <!-- Download -->
           <button
             @click="downloadDocument(contextMenuDocument); closeContextMenu()"
             :disabled="isExpired(contextMenuDocument.expiresAt)"
@@ -360,8 +453,6 @@ function getRelativeTime(dateStr: string): string {
             <span class="material-symbols-outlined text-lg">download</span>
             Download
           </button>
-
-          <!-- Edit (only if permission level is 2) -->
           <button
             v-if="contextMenuDocument.permissionLevel === 2"
             @click="editDocument(contextMenuDocument); closeContextMenu()"
@@ -371,10 +462,7 @@ function getRelativeTime(dateStr: string): string {
             <span class="material-symbols-outlined text-lg">edit</span>
             Edit
           </button>
-
-          <div class="my-1.5 border-t border-zinc-200 dark:border-zinc-700"></div>
-
-          <!-- View Details -->
+          <div class="my-1.5 border-t border-zinc-200 dark:border-border-dark"></div>
           <button
             @click="viewDocument(contextMenuDocument); closeContextMenu()"
             class="w-full px-4 py-2.5 text-left text-sm text-zinc-700 dark:text-zinc-200 hover:bg-teal/10 hover:text-teal flex items-center gap-3 transition-colors"
@@ -399,7 +487,7 @@ function getRelativeTime(dateStr: string): string {
         v-if="toast.show"
         class="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg"
         :class="toast.type === 'success'
-          ? 'bg-emerald-600 text-white'
+          ? 'bg-teal text-white'
           : 'bg-red-600 text-white'"
       >
         <span class="material-symbols-outlined text-xl">
@@ -416,77 +504,3 @@ function getRelativeTime(dateStr: string): string {
     />
   </div>
 </template>
-
-<style scoped>
-.border-3 {
-  border-width: 3px;
-}
-
-/* Modern Tooltip Styles */
-.action-btn {
-  position: relative;
-}
-
-.action-btn::before,
-.action-btn::after {
-  position: absolute;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.2s ease;
-  pointer-events: none;
-}
-
-/* Tooltip text */
-.action-btn::before {
-  content: attr(data-tooltip);
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%) translateY(4px);
-  padding: 6px 12px;
-  background: linear-gradient(135deg, #27272a 0%, #3f3f46 100%);
-  color: white;
-  font-size: 12px;
-  font-weight: 500;
-  white-space: nowrap;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
-  z-index: 50;
-}
-
-/* Tooltip arrow */
-.action-btn::after {
-  content: '';
-  bottom: calc(100% + 2px);
-  left: 50%;
-  transform: translateX(-50%) translateY(4px);
-  border: 6px solid transparent;
-  border-top-color: #3f3f46;
-  z-index: 50;
-}
-
-/* Show on hover */
-.action-btn:hover::before,
-.action-btn:hover::after {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(0);
-}
-
-/* Dark mode tooltip */
-:deep(.dark) .action-btn::before {
-  background: linear-gradient(135deg, #f4f4f5 0%, #e4e4e7 100%);
-  color: #27272a;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
-}
-
-:deep(.dark) .action-btn::after {
-  border-top-color: #e4e4e7;
-}
-
-/* Disabled tooltip should still show */
-.action-btn:disabled:hover::before,
-.action-btn:disabled:hover::after {
-  opacity: 1;
-  visibility: visible;
-}
-</style>

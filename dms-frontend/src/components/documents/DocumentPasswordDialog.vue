@@ -155,7 +155,7 @@ const canSubmit = computed(() => {
 
 <template>
   <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" @click.self="emit('close')">
-    <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10 w-full max-w-md mx-4 overflow-hidden">
+    <div class="bg-white dark:bg-background-dark rounded-2xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10 w-full max-w-md mx-4 overflow-hidden">
       <!-- Header with brand gradient -->
       <div class="relative bg-gradient-to-r from-navy via-navy/95 to-primary px-6 py-5 overflow-hidden">
         <!-- Decorative elements -->
@@ -195,7 +195,7 @@ const canSubmit = computed(() => {
           <div class="text-center py-4">
             <div
               class="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center"
-              :class="hasPassword ? 'bg-teal/10' : 'bg-zinc-100 dark:bg-zinc-800'"
+              :class="hasPassword ? 'bg-teal/10' : 'bg-zinc-100 dark:bg-surface-dark'"
             >
               <span
                 class="material-symbols-outlined text-3xl"
@@ -257,7 +257,7 @@ const canSubmit = computed(() => {
                 <input
                   v-model="newPassword"
                   :type="showPassword ? 'text' : 'password'"
-                  class="w-full px-4 py-2.5 pr-10 border border-zinc-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
+                  class="w-full px-4 py-2.5 pr-10 border border-zinc-200 dark:border-border-dark rounded-xl bg-white dark:bg-surface-dark text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
                   placeholder="Enter password..."
                 />
                 <button
@@ -275,7 +275,7 @@ const canSubmit = computed(() => {
               <input
                 v-model="confirmPassword"
                 :type="showPassword ? 'text' : 'password'"
-                class="w-full px-4 py-2.5 border border-zinc-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
+                class="w-full px-4 py-2.5 border border-zinc-200 dark:border-border-dark rounded-xl bg-white dark:bg-surface-dark text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
                 :class="{ 'border-red-500': confirmPassword && !passwordMatch }"
                 placeholder="Confirm password..."
               />
@@ -287,7 +287,7 @@ const canSubmit = computed(() => {
               <input
                 v-model="newHint"
                 type="text"
-                class="w-full px-4 py-2.5 border border-zinc-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
+                class="w-full px-4 py-2.5 border border-zinc-200 dark:border-border-dark rounded-xl bg-white dark:bg-surface-dark text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
                 placeholder="Password hint..."
               />
             </div>
@@ -304,7 +304,7 @@ const canSubmit = computed(() => {
             <div class="flex gap-3 pt-2">
               <button
                 @click="resetForm"
-                class="flex-1 py-2.5 text-zinc-600 dark:text-zinc-400 font-medium rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                class="flex-1 py-2.5 text-zinc-600 dark:text-zinc-400 font-medium rounded-xl hover:bg-zinc-100 dark:hover:bg-surface-dark transition-colors"
               >
                 Cancel
               </button>
@@ -327,7 +327,7 @@ const canSubmit = computed(() => {
               <input
                 v-model="currentPassword"
                 :type="showPassword ? 'text' : 'password'"
-                class="w-full px-4 py-2.5 border border-zinc-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
+                class="w-full px-4 py-2.5 border border-zinc-200 dark:border-border-dark rounded-xl bg-white dark:bg-surface-dark text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
                 placeholder="Enter current password..."
               />
             </div>
@@ -338,7 +338,7 @@ const canSubmit = computed(() => {
                 <input
                   v-model="newPassword"
                   :type="showPassword ? 'text' : 'password'"
-                  class="w-full px-4 py-2.5 pr-10 border border-zinc-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
+                  class="w-full px-4 py-2.5 pr-10 border border-zinc-200 dark:border-border-dark rounded-xl bg-white dark:bg-surface-dark text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
                   placeholder="Enter new password..."
                 />
                 <button
@@ -356,7 +356,7 @@ const canSubmit = computed(() => {
               <input
                 v-model="confirmPassword"
                 :type="showPassword ? 'text' : 'password'"
-                class="w-full px-4 py-2.5 border border-zinc-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
+                class="w-full px-4 py-2.5 border border-zinc-200 dark:border-border-dark rounded-xl bg-white dark:bg-surface-dark text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
                 :class="{ 'border-red-500': confirmPassword && !passwordMatch }"
                 placeholder="Confirm new password..."
               />
@@ -367,7 +367,7 @@ const canSubmit = computed(() => {
               <input
                 v-model="newHint"
                 type="text"
-                class="w-full px-4 py-2.5 border border-zinc-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
+                class="w-full px-4 py-2.5 border border-zinc-200 dark:border-border-dark rounded-xl bg-white dark:bg-surface-dark text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal"
                 placeholder="Password hint..."
               />
             </div>
@@ -377,7 +377,7 @@ const canSubmit = computed(() => {
             <div class="flex gap-3 pt-2">
               <button
                 @click="resetForm"
-                class="flex-1 py-2.5 text-zinc-600 dark:text-zinc-400 font-medium rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                class="flex-1 py-2.5 text-zinc-600 dark:text-zinc-400 font-medium rounded-xl hover:bg-zinc-100 dark:hover:bg-surface-dark transition-colors"
               >
                 Cancel
               </button>

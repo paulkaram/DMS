@@ -28,6 +28,7 @@ export interface Folder {
   description?: string
   path?: string
   breakInheritance: boolean
+  accessMode?: number
   createdAt: string
   modifiedAt?: string
   children?: Folder[]
@@ -38,12 +39,14 @@ export interface CreateFolder {
   parentFolderId?: string
   name: string
   description?: string
+  accessMode?: number
 }
 
 export interface UpdateFolder {
   name: string
   description?: string
   breakInheritance: boolean
+  accessMode?: number
 }
 
 // Document types
@@ -73,6 +76,20 @@ export interface Document {
   createdAt: string
   modifiedAt?: string
   hasPassword?: boolean
+  isShortcut?: boolean
+  shortcutId?: string
+  attachmentCount?: number
+}
+
+// Document Shortcut
+export interface DocumentShortcut {
+  id: string
+  documentId: string
+  folderId: string
+  documentName?: string
+  folderName?: string
+  folderPath?: string
+  createdAt: string
 }
 
 export interface DocumentVersion {
@@ -235,6 +252,7 @@ export interface TreeNode {
   children?: TreeNode[]
   isExpanded?: boolean
   isLoading?: boolean
+  accessMode?: number
 }
 
 // Reference data types
@@ -333,34 +351,6 @@ export interface UserPermissions {
   username: string
   roles: string[]
   allowedActionCodes: string[]
-}
-
-// Delegation types
-export interface Delegation {
-  id: string
-  fromUserId: string
-  fromUserName?: string
-  toUserId: string
-  toUserName?: string
-  roleId?: string
-  roleName?: string
-  startDate: string
-  endDate?: string
-  isActive: boolean
-  createdAt: string
-}
-
-export interface CreateDelegation {
-  toUserId: string
-  roleId?: string
-  startDate: string
-  endDate?: string
-}
-
-export interface UpdateDelegation {
-  startDate: string
-  endDate?: string
-  isActive: boolean
 }
 
 // Dashboard types
@@ -497,38 +487,7 @@ export interface RestoreRequest {
   restoreToFolderId?: string
 }
 
-// Vacation types
-export interface Vacation {
-  id: string
-  userId: string
-  delegateToUserId?: string
-  startDate: string
-  endDate: string
-  message?: string
-  autoReply: boolean
-  isActive: boolean
-  createdAt: string
-  modifiedAt?: string
-  userName?: string
-  delegateToUserName?: string
-}
 
-export interface CreateVacation {
-  delegateToUserId?: string
-  startDate: string
-  endDate: string
-  message?: string
-  autoReply: boolean
-}
-
-export interface UpdateVacation {
-  delegateToUserId?: string
-  startDate: string
-  endDate: string
-  message?: string
-  autoReply: boolean
-  isActive: boolean
-}
 
 // Approval types
 export interface ApprovalWorkflow {
@@ -959,24 +918,6 @@ export interface Bookmark {
   createdAt: string
 }
 
-// Case types
-export interface Case {
-  id: string
-  caseNumber: string
-  title: string
-  description?: string
-  status: string
-  priority?: string
-  assignedToUserId?: string
-  folderId?: string
-  dueDate?: string
-  closedDate?: string
-  isActive: boolean
-  createdAt: string
-  assignedToUserName?: string
-  folderName?: string
-}
-
 // ServiceEndpoint types
 export interface ServiceEndpoint {
   id: string
@@ -1305,33 +1246,7 @@ export interface PermissionAudit {
   performedAt: string
 }
 
-// Permission Delegation Types
-export interface PermissionDelegation {
-  id: string
-  delegatorId: string
-  delegatorName?: string
-  delegateId: string
-  delegateName?: string
-  nodeType: string
-  nodeId: string
-  nodeName?: string
-  permissionLevel: number
-  startDate: string
-  endDate: string
-  reason?: string
-  isActive: boolean
-  createdAt: string
-}
 
-export interface CreatePermissionDelegation {
-  delegateId: string
-  nodeType: string
-  nodeId: string
-  permissionLevel: number
-  startDate: string
-  endDate: string
-  reason?: string
-}
 
 // Principal types for selector
 export interface Principal {

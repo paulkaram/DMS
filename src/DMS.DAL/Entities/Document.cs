@@ -116,4 +116,7 @@ public class DocumentWithNames : Document
     public string? CreatedByName { get; set; }
     public string? CheckedOutByName { get; set; }
     public string? ContentTypeName { get; set; }
+    public bool IsShortcut { get; set; }
+    public Guid? ShortcutId { get; set; }
+    public int AttachmentCount { get; set; }
 }

@@ -23,7 +23,7 @@ function getContentTypeName(id?: string): string {
 <template>
   <div>
     <div
-      class="flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-700/50 group"
+      class="flex items-center gap-2 py-2 px-3 rounded-lg hover:bg-zinc-50 dark:hover:bg-border-dark/50 group"
       :style="{ marginLeft: (depth || 0) * 24 + 'px' }"
     >
       <span class="material-symbols-outlined text-amber-500">folder</span>

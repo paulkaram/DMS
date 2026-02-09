@@ -68,6 +68,7 @@ public class FolderService : IFolderService
             ParentFolderId = dto.ParentFolderId,
             Name = dto.Name,
             Description = dto.Description,
+            AccessMode = dto.AccessMode,
             CreatedBy = userId,
             IsActive = true
         };
@@ -90,6 +91,7 @@ public class FolderService : IFolderService
         folder.Name = dto.Name;
         folder.Description = dto.Description;
         folder.BreakInheritance = dto.BreakInheritance;
+        folder.AccessMode = dto.AccessMode;
         folder.ModifiedBy = userId;
 
         await _folderRepository.UpdateAsync(folder);
@@ -214,6 +216,7 @@ public class FolderService : IFolderService
             Description = folder.Description,
             Path = folder.Path,
             BreakInheritance = folder.BreakInheritance,
+            AccessMode = folder.AccessMode,
             CreatedAt = folder.CreatedAt,
             ModifiedAt = folder.ModifiedAt
         };

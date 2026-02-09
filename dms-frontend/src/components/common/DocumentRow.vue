@@ -34,8 +34,8 @@ const isSelected = computed({
   <tr
     @contextmenu="emit('context-menu', $event, document)"
     @dblclick="emit('view', document)"
-    class="transition-all duration-200 group cursor-pointer border-b border-zinc-100 dark:border-zinc-800 hover:bg-teal/5"
-    :class="selected ? 'bg-teal/10 border-l-2 border-l-teal' : 'bg-white dark:bg-zinc-900'"
+    class="transition-all duration-200 group cursor-pointer border-b border-zinc-100 dark:border-border-dark hover:bg-teal/5"
+    :class="selected ? 'bg-teal/10 border-l-2 border-l-teal' : 'bg-white dark:bg-background-dark'"
   >
     <!-- Checkbox -->
     <td v-if="selectable" class="px-5 py-4 w-12" @click.stop>
@@ -75,6 +75,30 @@ const isSelected = computed({
                 style="font-size: 12px; font-variation-settings: 'FILL' 1;"
               >shield_lock</span>
               <span class="text-[9px] font-semibold text-teal uppercase tracking-wide pr-0.5">Secured</span>
+            </div>
+            <!-- Shortcut Badge -->
+            <div
+              v-if="document.isShortcut"
+              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/30"
+              title="Shortcut — original is in another folder"
+            >
+              <span
+                class="material-symbols-outlined text-blue-500"
+                style="font-size: 12px;"
+              >shortcut</span>
+              <span class="text-[9px] font-semibold text-blue-500 uppercase tracking-wide pr-0.5">Shortcut</span>
+            </div>
+            <!-- Attachment Badge -->
+            <div
+              v-if="document.attachmentCount && document.attachmentCount > 0"
+              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-500/15 border border-violet-500/30"
+              :title="`${document.attachmentCount} attachment${document.attachmentCount !== 1 ? 's' : ''}`"
+            >
+              <span
+                class="material-symbols-outlined text-violet-500"
+                style="font-size: 12px; font-variation-settings: 'FILL' 1;"
+              >attach_file</span>
+              <span class="text-[9px] font-bold text-violet-600 dark:text-violet-400 tabular-nums pr-0.5">{{ document.attachmentCount }}</span>
             </div>
           </div>
           <span class="text-[10px] text-zinc-400 uppercase tracking-wide">{{ document.extension?.replace('.', '') }}</span>
@@ -129,25 +153,25 @@ const isSelected = computed({
 
     <!-- Actions -->
     <td class="px-5 py-4">
-      <div class="flex items-center justify-end gap-0.5 opacity-50 group-hover:opacity-100 transition-opacity">
+      <div class="flex items-center justify-end gap-0.5">
         <!-- Quick Actions -->
         <button
           @click.stop="emit('preview', document)"
-          class="p-2 text-zinc-400 hover:text-teal hover:bg-teal/10 rounded-lg transition-all"
+          class="p-2 text-teal/70 hover:text-teal hover:bg-teal/10 rounded-lg transition-all"
           title="Preview"
         >
           <span class="material-symbols-outlined text-lg">open_in_new</span>
         </button>
         <button
           @click.stop="emit('view', document)"
-          class="p-2 text-zinc-400 hover:text-teal hover:bg-teal/10 rounded-lg transition-all"
+          class="p-2 text-blue-500/70 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-all"
           title="Details"
         >
           <span class="material-symbols-outlined text-lg">info</span>
         </button>
         <button
           @click.stop="emit('download', document)"
-          class="p-2 text-zinc-400 hover:text-teal hover:bg-teal/10 rounded-lg transition-all"
+          class="p-2 text-emerald-500/70 hover:text-emerald-500 hover:bg-emerald-500/10 rounded-lg transition-all"
           title="Download"
         >
           <span class="material-symbols-outlined text-lg">download</span>
@@ -155,7 +179,7 @@ const isSelected = computed({
         <!-- More Menu Button -->
         <button
           @click.stop="emit('context-menu', $event, document)"
-          class="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 rounded-lg transition-all"
+          class="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-border-dark rounded-lg transition-all"
           title="More actions"
         >
           <span class="material-symbols-outlined text-lg">more_vert</span>

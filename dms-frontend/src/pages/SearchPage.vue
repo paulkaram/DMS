@@ -156,7 +156,7 @@ const documentTypeOptions = computed(() => [
     </div>
 
     <!-- Search Box -->
-    <div class="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-gray-200 dark:border-zinc-800 p-5 mb-6">
+    <div class="bg-white dark:bg-background-dark rounded-xl shadow-sm border border-gray-200 dark:border-border-dark p-5 mb-6">
       <div class="flex gap-4">
         <div class="flex-1 relative">
           <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -166,7 +166,7 @@ const documentTypeOptions = computed(() => [
             v-model="searchQuery"
             type="text"
             placeholder="Search documents by name, description..."
-            class="w-full pl-12 pr-4 py-3 border border-gray-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-teal/30 focus:border-teal bg-white dark:bg-zinc-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-zinc-500 transition-all"
+            class="w-full pl-12 pr-4 py-3 border border-gray-200 dark:border-border-dark rounded-xl focus:ring-2 focus:ring-teal/30 focus:border-teal bg-white dark:bg-surface-dark text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-zinc-500 transition-all"
             @keyup.enter="handleSearch"
           />
         </div>
@@ -174,7 +174,7 @@ const documentTypeOptions = computed(() => [
           @click="showFilters = !showFilters"
           :class="[
             'px-4 py-2 border rounded-xl flex items-center gap-2 transition-all font-medium',
-            showFilters ? 'border-teal bg-teal/10 text-teal' : 'border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 hover:border-teal/50'
+            showFilters ? 'border-teal bg-teal/10 text-teal' : 'border-gray-200 dark:border-border-dark text-gray-600 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-surface-dark hover:border-teal/50'
           ]"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -191,7 +191,7 @@ const documentTypeOptions = computed(() => [
       </div>
 
       <!-- Filters Panel -->
-      <div v-if="showFilters" class="mt-4 pt-4 border-t border-gray-200 dark:border-zinc-800">
+      <div v-if="showFilters" class="mt-4 pt-4 border-t border-gray-200 dark:border-border-dark">
         <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
           <UiSelect
             v-model="filters.classificationId"
@@ -242,8 +242,8 @@ const documentTypeOptions = computed(() => [
     </div>
 
     <!-- No Results -->
-    <div v-else-if="results.length === 0 && (searchQuery || Object.values(filters).some(v => v))" class="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-gray-200 dark:border-zinc-800 p-12 text-center">
-      <div class="w-16 h-16 mx-auto bg-gray-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mb-4">
+    <div v-else-if="results.length === 0 && (searchQuery || Object.values(filters).some(v => v))" class="bg-white dark:bg-background-dark rounded-xl shadow-sm border border-gray-200 dark:border-border-dark p-12 text-center">
+      <div class="w-16 h-16 mx-auto bg-gray-100 dark:bg-surface-dark rounded-full flex items-center justify-center mb-4">
         <svg class="w-8 h-8 text-gray-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
@@ -253,7 +253,7 @@ const documentTypeOptions = computed(() => [
     </div>
 
     <!-- Initial State -->
-    <div v-else-if="results.length === 0" class="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-gray-200 dark:border-zinc-800 p-12 text-center">
+    <div v-else-if="results.length === 0" class="bg-white dark:bg-background-dark rounded-xl shadow-sm border border-gray-200 dark:border-border-dark p-12 text-center">
       <div class="w-16 h-16 mx-auto bg-teal/10 rounded-full flex items-center justify-center mb-4">
         <svg class="w-8 h-8 text-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -269,9 +269,9 @@ const documentTypeOptions = computed(() => [
         <p class="text-sm text-gray-500 dark:text-zinc-400">Found <span class="font-semibold text-teal">{{ results.length }}</span> document(s)</p>
       </div>
 
-      <div class="bg-white dark:bg-zinc-900 rounded-xl shadow-sm border border-gray-200 dark:border-zinc-800 overflow-hidden">
+      <div class="bg-white dark:bg-background-dark rounded-xl shadow-sm border border-gray-200 dark:border-border-dark overflow-hidden">
         <table class="w-full">
-          <thead class="bg-gray-50 dark:bg-zinc-800/50">
+          <thead class="bg-gray-50 dark:bg-surface-dark/50">
             <tr>
               <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Document</th>
               <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Classification</th>

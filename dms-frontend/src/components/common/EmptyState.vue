@@ -13,8 +13,8 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="text-center py-16 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-700">
-    <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-zinc-800 mb-4">
+  <div class="text-center py-16 bg-white dark:bg-background-dark rounded-2xl border border-zinc-200 dark:border-border-dark">
+    <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-surface-dark mb-4">
       <span class="material-symbols-outlined text-4xl text-zinc-400">
         {{ icon || 'folder_off' }}
       </span>

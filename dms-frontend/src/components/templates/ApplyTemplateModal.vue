@@ -99,7 +99,7 @@ function countTotalFolders(nodes: any[]): number {
     class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
     @click.self="emit('close')"
   >
-    <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10 w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden">
+    <div class="bg-white dark:bg-background-dark rounded-2xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10 w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden">
       <!-- Header with brand gradient -->
       <div class="relative bg-gradient-to-r from-navy via-navy/95 to-primary px-6 py-5 overflow-hidden">
         <!-- Decorative elements -->
@@ -153,7 +153,7 @@ function countTotalFolders(nodes: any[]): number {
               class="p-3 border rounded-lg cursor-pointer transition-all"
               :class="selectedTemplateId === template.id
                 ? 'border-teal bg-teal/5 ring-1 ring-teal'
-                : 'border-zinc-200 dark:border-zinc-600 hover:border-zinc-300'"
+                : 'border-zinc-200 dark:border-border-dark hover:border-zinc-300'"
             >
               <div class="flex items-center gap-3">
                 <span class="material-symbols-outlined text-zinc-400">{{ template.icon || 'folder_special' }}</span>
@@ -187,7 +187,7 @@ function countTotalFolders(nodes: any[]): number {
           <input
             v-model="namePrefix"
             type="text"
-            class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal dark:bg-zinc-700 dark:text-white"
+            class="w-full px-3 py-2 border border-zinc-300 dark:border-border-dark rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal dark:bg-border-dark dark:text-white"
             placeholder="e.g., 2024 Project"
           />
           <p class="text-xs text-zinc-500 mt-1">
@@ -200,7 +200,7 @@ function countTotalFolders(nodes: any[]): number {
           <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
             Preview: Folders to Create
           </label>
-          <div class="bg-zinc-50 dark:bg-zinc-700/50 rounded-lg p-3 max-h-48 overflow-y-auto">
+          <div class="bg-zinc-50 dark:bg-border-dark/50 rounded-lg p-3 max-h-48 overflow-y-auto">
             <div
               v-for="(path, index) in previewResult.createdFolderPaths"
               :key="index"
@@ -217,7 +217,7 @@ function countTotalFolders(nodes: any[]): number {
       </div>
 
       <!-- Footer -->
-      <div class="px-6 py-4 bg-gray-50 dark:bg-zinc-800/50 border-t border-gray-200 dark:border-gray-700/50 flex items-center justify-end gap-3">
+      <div class="px-6 py-4 bg-gray-50 dark:bg-surface-dark/50 border-t border-gray-200 dark:border-gray-700/50 flex items-center justify-end gap-3">
         <button
           @click="emit('close')"
           class="px-4 py-2.5 text-zinc-600 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200 font-medium transition-colors"

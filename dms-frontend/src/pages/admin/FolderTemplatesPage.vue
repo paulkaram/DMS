@@ -263,8 +263,8 @@ function countNodes(nodes: FolderTemplateNode[]): number {
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Templates List -->
         <div class="lg:col-span-1">
-          <div class="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-zinc-200 dark:border-zinc-700">
-            <div class="px-4 py-3 border-b border-zinc-200 dark:border-zinc-700">
+          <div class="bg-white dark:bg-surface-dark rounded-lg shadow-sm border border-zinc-200 dark:border-border-dark">
+            <div class="px-4 py-3 border-b border-zinc-200 dark:border-border-dark">
               <h2 class="font-medium text-zinc-700 dark:text-zinc-200">Templates</h2>
             </div>
 
@@ -283,7 +283,7 @@ function countNodes(nodes: FolderTemplateNode[]): number {
                 v-for="template in templates"
                 :key="template.id"
                 @click="selectTemplate(template)"
-                class="p-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-700/50 transition-colors"
+                class="p-4 cursor-pointer hover:bg-zinc-50 dark:hover:bg-border-dark/50 transition-colors"
                 :class="{ 'bg-teal/5 border-l-2 border-teal': selectedTemplate?.id === template.id }"
               >
                 <div class="flex items-start justify-between">
@@ -333,8 +333,8 @@ function countNodes(nodes: FolderTemplateNode[]): number {
 
         <!-- Template Builder -->
         <div class="lg:col-span-2">
-          <div class="bg-white dark:bg-zinc-800 rounded-lg shadow-sm border border-zinc-200 dark:border-zinc-700">
-            <div class="px-4 py-3 border-b border-zinc-200 dark:border-zinc-700 flex items-center justify-between">
+          <div class="bg-white dark:bg-surface-dark rounded-lg shadow-sm border border-zinc-200 dark:border-border-dark">
+            <div class="px-4 py-3 border-b border-zinc-200 dark:border-border-dark flex items-center justify-between">
               <h2 class="font-medium text-zinc-700 dark:text-zinc-200">
                 {{ selectedTemplate ? `Template: ${selectedTemplate.name}` : 'Select a Template' }}
               </h2>
@@ -356,7 +356,7 @@ function countNodes(nodes: FolderTemplateNode[]): number {
 
             <div v-else class="p-4">
               <!-- Template Info -->
-              <div class="mb-4 p-3 bg-zinc-50 dark:bg-zinc-700/50 rounded-lg text-sm">
+              <div class="mb-4 p-3 bg-zinc-50 dark:bg-border-dark/50 rounded-lg text-sm">
                 <div class="flex items-center gap-4 text-zinc-600 dark:text-zinc-300">
                   <span v-if="selectedTemplate.description">{{ selectedTemplate.description }}</span>
                   <span v-else class="italic text-zinc-400">No description</span>
@@ -397,7 +397,7 @@ function countNodes(nodes: FolderTemplateNode[]): number {
       class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
       @click.self="showModal = false"
     >
-      <div class="bg-white dark:bg-zinc-800 rounded-lg shadow-xl w-full max-w-md p-6">
+      <div class="bg-white dark:bg-surface-dark rounded-lg shadow-xl w-full max-w-md p-6">
         <h3 class="text-lg font-semibold text-zinc-800 dark:text-zinc-100 mb-4">
           {{ isEditing ? 'Edit Template' : 'New Template' }}
         </h3>
@@ -408,7 +408,7 @@ function countNodes(nodes: FolderTemplateNode[]): number {
             <input
               v-model="formData.name"
               type="text"
-              class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal dark:bg-zinc-700 dark:text-white"
+              class="w-full px-3 py-2 border border-zinc-300 dark:border-border-dark rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal dark:bg-border-dark dark:text-white"
               placeholder="e.g., Project Folder"
             />
           </div>
@@ -418,7 +418,7 @@ function countNodes(nodes: FolderTemplateNode[]): number {
             <textarea
               v-model="formData.description"
               rows="2"
-              class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal dark:bg-zinc-700 dark:text-white"
+              class="w-full px-3 py-2 border border-zinc-300 dark:border-border-dark rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal dark:bg-border-dark dark:text-white"
               placeholder="What is this template for?"
             />
           </div>
@@ -430,7 +430,7 @@ function countNodes(nodes: FolderTemplateNode[]): number {
                 v-model="formData.category"
                 type="text"
                 list="categories"
-                class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal dark:bg-zinc-700 dark:text-white"
+                class="w-full px-3 py-2 border border-zinc-300 dark:border-border-dark rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal dark:bg-border-dark dark:text-white"
                 placeholder="e.g., Project"
               />
               <datalist id="categories">
@@ -443,7 +443,7 @@ function countNodes(nodes: FolderTemplateNode[]): number {
               <input
                 v-model="formData.icon"
                 type="text"
-                class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal dark:bg-zinc-700 dark:text-white"
+                class="w-full px-3 py-2 border border-zinc-300 dark:border-border-dark rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal dark:bg-border-dark dark:text-white"
                 placeholder="folder_special"
               />
             </div>
@@ -479,7 +479,7 @@ function countNodes(nodes: FolderTemplateNode[]): number {
       class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
       @click.self="showNodeModal = false"
     >
-      <div class="bg-white dark:bg-zinc-800 rounded-lg shadow-xl w-full max-w-md p-6">
+      <div class="bg-white dark:bg-surface-dark rounded-lg shadow-xl w-full max-w-md p-6">
         <h3 class="text-lg font-semibold text-zinc-800 dark:text-zinc-100 mb-4">
           {{ editingNode ? 'Edit Folder' : 'Add Folder' }}
         </h3>
@@ -490,7 +490,7 @@ function countNodes(nodes: FolderTemplateNode[]): number {
             <input
               v-model="nodeFormData.name"
               type="text"
-              class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal dark:bg-zinc-700 dark:text-white"
+              class="w-full px-3 py-2 border border-zinc-300 dark:border-border-dark rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal dark:bg-border-dark dark:text-white"
               placeholder="e.g., Documents"
             />
           </div>
@@ -500,7 +500,7 @@ function countNodes(nodes: FolderTemplateNode[]): number {
             <input
               v-model="nodeFormData.description"
               type="text"
-              class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal dark:bg-zinc-700 dark:text-white"
+              class="w-full px-3 py-2 border border-zinc-300 dark:border-border-dark rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal dark:bg-border-dark dark:text-white"
               placeholder="Optional description"
             />
           </div>
@@ -522,7 +522,7 @@ function countNodes(nodes: FolderTemplateNode[]): number {
               <input
                 v-model.number="nodeFormData.sortOrder"
                 type="number"
-                class="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal dark:bg-zinc-700 dark:text-white"
+                class="w-full px-3 py-2 border border-zinc-300 dark:border-border-dark rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal dark:bg-border-dark dark:text-white"
               />
             </div>
           </div>

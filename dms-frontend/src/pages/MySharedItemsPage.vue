@@ -3,7 +3,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import type { MySharedItem, Document } from '@/types'
 import { sharesApi, documentsApi } from '@/api/client'
-import Modal from '@/components/ui/Modal.vue'
+import { UiModal, UiButton } from '@/components/ui'
 import DatePicker from '@/components/ui/DatePicker.vue'
 import DocumentViewer from '@/components/documents/DocumentViewer.vue'
 import DocumentIcon from '@/components/common/DocumentIcon.vue'
@@ -51,7 +51,6 @@ function viewDocument(item: MySharedItem) {
 
 async function previewDocument(item: MySharedItem) {
   try {
-    // Fetch document details for the viewer
     const response = await documentsApi.getById(item.documentId)
     viewerDocument.value = response.data
     showViewer.value = true
@@ -87,7 +86,6 @@ async function extendExpiry() {
       expiresAt: newExpiryDate.value || undefined
     })
 
-    // Update local data
     const index = mySharedItems.value.findIndex(i => i.shareId === selectedItem.value!.shareId)
     if (index !== -1) {
       mySharedItems.value[index].expiresAt = newExpiryDate.value || undefined
@@ -156,6 +154,21 @@ const minDate = computed(() => {
   tomorrow.setDate(tomorrow.getDate() + 1)
   return tomorrow.toISOString().split('T')[0]
 })
+
+// Stats
+const viewOnlyCount = computed(() => mySharedItems.value.filter(i => i.permissionLevel === 1).length)
+const editableCount = computed(() => mySharedItems.value.filter(i => i.permissionLevel === 2).length)
+const expiredCount = computed(() => mySharedItems.value.filter(i => isExpired(i.expiresAt)).length)
+
+// Filter
+const selectedFilter = ref<string | null>(null)
+const displayedItems = computed(() => {
+  if (selectedFilter.value === null) return mySharedItems.value
+  if (selectedFilter.value === 'view') return mySharedItems.value.filter(i => i.permissionLevel === 1)
+  if (selectedFilter.value === 'edit') return mySharedItems.value.filter(i => i.permissionLevel === 2)
+  if (selectedFilter.value === 'expired') return mySharedItems.value.filter(i => isExpired(i.expiresAt))
+  return mySharedItems.value
+})
 </script>
 
 <template>
@@ -168,169 +181,276 @@ const minDate = computed(() => {
       </div>
       <button
         @click="loadMySharedItems"
-        class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl font-medium text-sm transition-colors border border-zinc-200 dark:border-zinc-700"
+        class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-surface-dark hover:bg-zinc-50 dark:hover:bg-border-dark text-zinc-700 dark:text-zinc-300 rounded-xl font-medium text-sm transition-colors border border-zinc-200 dark:border-border-dark"
       >
         <span class="material-symbols-outlined text-lg">refresh</span>
         Refresh
       </button>
     </div>
 
-    <!-- Loading State -->
-    <div v-if="isLoading" class="flex items-center justify-center py-16">
-      <div class="flex flex-col items-center gap-3">
-        <div class="w-10 h-10 border-3 border-teal border-t-transparent rounded-full animate-spin"></div>
-        <span class="text-sm text-zinc-500 dark:text-zinc-400">Loading shared items...</span>
-      </div>
-    </div>
-
-    <!-- Empty State -->
-    <div v-else-if="mySharedItems.length === 0" class="bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-700 p-16 text-center">
-      <div class="w-16 h-16 mx-auto bg-[#1f2937] rounded-xl flex items-center justify-center mb-4">
-        <span class="material-symbols-outlined text-3xl text-zinc-500">share</span>
-      </div>
-      <p class="text-zinc-700 dark:text-zinc-300 font-medium">No shared items</p>
-      <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Documents you share with others will appear here</p>
-    </div>
-
-    <!-- Shared Items List -->
-    <div v-else class="bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden">
-      <!-- Table Header -->
-      <div class="bg-white dark:bg-zinc-800 border-b border-zinc-200 dark:border-zinc-700 px-4 py-3">
-        <div class="grid grid-cols-12 gap-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
-          <div class="col-span-4">Document</div>
-          <div class="col-span-2">Shared With</div>
-          <div class="col-span-2">Permission</div>
-          <div class="col-span-2">Expires</div>
-          <div class="col-span-2 text-right">Actions</div>
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="bg-[#0d1117] p-6 rounded-2xl text-white shadow-xl border border-zinc-800/50 min-h-[120px] flex flex-col justify-between relative overflow-hidden">
+        <svg class="absolute right-0 top-0 h-full w-32 opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <path d="M0,0 Q50,50 0,100 L100,100 L100,0 Z" fill="#00ae8c"/>
+        </svg>
+        <div class="flex items-center justify-between relative z-10">
+          <span class="material-symbols-outlined text-teal">visibility</span>
+          <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">View Only</span>
+        </div>
+        <div class="relative z-10">
+          <p class="text-4xl font-bold">{{ viewOnlyCount }}</p>
+          <p class="text-[10px] text-teal mt-2 font-medium">Read-only shares</p>
         </div>
       </div>
+      <div class="bg-[#0d1117] p-6 rounded-2xl text-white shadow-xl border border-zinc-800/50 min-h-[120px] flex flex-col justify-between relative overflow-hidden">
+        <svg class="absolute right-0 top-0 h-full w-32 opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <path d="M0,0 Q50,50 0,100 L100,100 L100,0 Z" fill="#00ae8c"/>
+        </svg>
+        <div class="flex items-center justify-between relative z-10">
+          <span class="material-symbols-outlined text-teal">edit</span>
+          <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Editable</span>
+        </div>
+        <div class="relative z-10">
+          <p class="text-4xl font-bold">{{ editableCount }}</p>
+          <p class="text-[10px] text-teal mt-2 font-medium">Edit permission shares</p>
+        </div>
+      </div>
+      <div class="bg-[#0d1117] p-6 rounded-2xl text-white shadow-xl border border-zinc-800/50 min-h-[120px] flex flex-col justify-between relative overflow-hidden">
+        <svg class="absolute right-0 top-0 h-full w-32 opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <path d="M0,0 Q50,50 0,100 L100,100 L100,0 Z" fill="#00ae8c"/>
+        </svg>
+        <div class="flex items-center justify-between relative z-10">
+          <span class="material-symbols-outlined text-teal">timer_off</span>
+          <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Expired</span>
+        </div>
+        <div class="relative z-10">
+          <p class="text-4xl font-bold">{{ expiredCount }}</p>
+          <p class="text-[10px] text-teal mt-2 font-medium">Expired shares</p>
+        </div>
+      </div>
+    </div>
 
-      <!-- Items -->
-      <div class="divide-y divide-zinc-100 dark:divide-zinc-800">
-        <div
-          v-for="item in mySharedItems"
-          :key="item.shareId"
-          class="px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors group"
-        >
-          <div class="grid grid-cols-12 gap-4 items-center">
-            <!-- Document -->
-            <div class="col-span-4 flex items-center gap-3 min-w-0">
-              <DocumentIcon :extension="item.extension" size="md" />
-              <div class="min-w-0">
-                <div class="flex items-center gap-2">
-                  <p class="text-sm font-medium text-zinc-700 dark:text-zinc-200 truncate group-hover:text-teal transition-colors">
-                    {{ item.documentName }}
-                  </p>
-                  <!-- Password Protected Badge -->
-                  <div
-                    v-if="item.hasPassword"
-                    class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-gradient-to-r from-violet-500/15 to-fuchsia-500/15 border border-violet-300/30 dark:border-violet-500/30 shrink-0"
-                    title="Password protected"
-                  >
-                    <span
-                      class="material-symbols-outlined text-violet-500 dark:text-violet-400"
-                      style="font-size: 12px; font-variation-settings: 'FILL' 1;"
-                    >shield_lock</span>
-                    <span class="text-[9px] font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-wide pr-0.5">Secured</span>
-                  </div>
-                </div>
-                <p class="text-xs text-zinc-400 uppercase">{{ item.extension?.replace('.', '') || 'File' }}</p>
-              </div>
-            </div>
-
-            <!-- Shared With -->
-            <div class="col-span-2 flex items-center gap-2">
-              <div class="w-6 h-6 bg-zinc-100 dark:bg-zinc-700 rounded-full flex items-center justify-center">
-                <span class="material-symbols-outlined text-xs text-zinc-500">person</span>
-              </div>
-              <span class="text-sm text-zinc-600 dark:text-zinc-300 truncate">{{ item.sharedWithUserName }}</span>
-            </div>
-
-            <!-- Permission -->
-            <div class="col-span-2">
-              <span :class="[
-                'inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium',
-                item.permissionLevel === 2
-                  ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
-                  : 'bg-teal/10 text-teal'
-              ]">
-                <span class="material-symbols-outlined text-xs">
-                  {{ item.permissionLevel === 2 ? 'edit' : 'visibility' }}
-                </span>
-                {{ getPermissionLabel(item.permissionLevel) }}
+    <!-- Filter Tabs + Content -->
+    <div class="bg-white dark:bg-background-dark rounded-2xl shadow-sm border border-zinc-200 dark:border-border-dark overflow-hidden">
+      <div class="border-b border-zinc-200 dark:border-border-dark">
+        <nav class="flex">
+          <button
+            @click="selectedFilter = null"
+            :class="[
+              'px-6 py-4 text-sm font-medium border-b-2 transition-colors',
+              selectedFilter === null
+                ? 'border-teal text-teal'
+                : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
+            ]"
+          >
+            <span class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-lg">all_inbox</span>
+              All Items
+              <span v-if="mySharedItems.length > 0" class="px-2 py-0.5 text-xs bg-teal/15 text-teal rounded-full">
+                {{ mySharedItems.length }}
               </span>
+            </span>
+          </button>
+          <button
+            @click="selectedFilter = 'view'"
+            :class="[
+              'px-6 py-4 text-sm font-medium border-b-2 transition-colors',
+              selectedFilter === 'view'
+                ? 'border-teal text-teal'
+                : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
+            ]"
+          >
+            <span class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-lg">visibility</span>
+              View Only
+              <span v-if="viewOnlyCount > 0" class="px-2 py-0.5 text-xs bg-zinc-100 dark:bg-surface-dark text-zinc-600 dark:text-zinc-300 rounded-full">
+                {{ viewOnlyCount }}
+              </span>
+            </span>
+          </button>
+          <button
+            @click="selectedFilter = 'edit'"
+            :class="[
+              'px-6 py-4 text-sm font-medium border-b-2 transition-colors',
+              selectedFilter === 'edit'
+                ? 'border-teal text-teal'
+                : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
+            ]"
+          >
+            <span class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-lg">edit</span>
+              Editable
+              <span v-if="editableCount > 0" class="px-2 py-0.5 text-xs bg-zinc-100 dark:bg-surface-dark text-zinc-600 dark:text-zinc-300 rounded-full">
+                {{ editableCount }}
+              </span>
+            </span>
+          </button>
+          <button
+            @click="selectedFilter = 'expired'"
+            :class="[
+              'px-6 py-4 text-sm font-medium border-b-2 transition-colors',
+              selectedFilter === 'expired'
+                ? 'border-teal text-teal'
+                : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
+            ]"
+          >
+            <span class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-lg">timer_off</span>
+              Expired
+              <span v-if="expiredCount > 0" class="px-2 py-0.5 text-xs bg-zinc-100 dark:bg-surface-dark text-zinc-600 dark:text-zinc-300 rounded-full">
+                {{ expiredCount }}
+              </span>
+            </span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- Loading State -->
+      <div v-if="isLoading" class="flex items-center justify-center py-16">
+        <div class="animate-spin w-8 h-8 border-4 border-teal border-t-transparent rounded-full"></div>
+      </div>
+
+      <!-- Empty State -->
+      <div v-else-if="displayedItems.length === 0" class="text-center py-12">
+        <div class="w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-surface-dark flex items-center justify-center mx-auto mb-4">
+          <span class="material-symbols-outlined text-5xl text-zinc-400">share</span>
+        </div>
+        <h3 class="text-lg font-semibold text-zinc-700 dark:text-zinc-300">No shared items</h3>
+        <p class="text-zinc-500 mt-1">Documents you share with others will appear here</p>
+      </div>
+
+      <!-- Shared Items -->
+      <div v-else class="p-6">
+        <div class="space-y-2">
+          <div
+            v-for="(item, index) in displayedItems"
+            :key="item.shareId"
+            class="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-surface-dark rounded-xl border border-zinc-100 dark:border-border-dark hover:border-teal/30 hover:shadow-md transition-all"
+            :class="{ 'opacity-60': isExpired(item.expiresAt) }"
+          >
+            <!-- Document Icon -->
+            <DocumentIcon :extension="item.extension" :index="index" size="lg" />
+
+            <!-- Info -->
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <p class="font-medium text-zinc-900 dark:text-white truncate">{{ item.documentName }}</p>
+                <!-- Password Protected Badge -->
+                <div
+                  v-if="item.hasPassword"
+                  class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-gradient-to-r from-violet-500/15 to-fuchsia-500/15 border border-violet-300/30 dark:border-violet-500/30 shrink-0"
+                  title="Password protected"
+                >
+                  <span
+                    class="material-symbols-outlined text-violet-500 dark:text-violet-400"
+                    style="font-size: 12px; font-variation-settings: 'FILL' 1;"
+                  >shield_lock</span>
+                  <span class="text-[9px] font-semibold text-violet-600 dark:text-violet-400 uppercase tracking-wide pr-0.5">Secured</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-3 mt-1 text-sm text-zinc-500">
+                <span :class="[
+                  'px-2 py-0.5 rounded-full text-xs font-medium',
+                  item.permissionLevel === 2
+                    ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
+                    : 'bg-teal/15 text-teal'
+                ]">
+                  {{ getPermissionLabel(item.permissionLevel) }}
+                </span>
+                <span class="truncate flex items-center gap-1.5">
+                  <span class="material-symbols-outlined text-sm text-zinc-400">person</span>
+                  {{ item.sharedWithUserName }}
+                </span>
+              </div>
             </div>
 
-            <!-- Expires -->
-            <div class="col-span-2">
-              <div v-if="item.expiresAt" class="flex items-center gap-1 text-sm" :class="[
+            <!-- Expiry Info -->
+            <div class="text-sm flex-shrink-0 text-right mr-4">
+              <div v-if="item.expiresAt" :class="[
                 isExpired(item.expiresAt)
                   ? 'text-red-500'
                   : isExpiringSoon(item.expiresAt)
                     ? 'text-amber-500'
                     : 'text-zinc-500 dark:text-zinc-400'
               ]">
-                <span class="material-symbols-outlined text-sm">
-                  {{ isExpired(item.expiresAt) ? 'error' : 'schedule' }}
-                </span>
-                <span>{{ formatDate(item.expiresAt) }}</span>
+                <div class="flex items-center gap-1 justify-end">
+                  <span class="material-symbols-outlined text-sm">
+                    {{ isExpired(item.expiresAt) ? 'error' : 'schedule' }}
+                  </span>
+                  <span>{{ formatDate(item.expiresAt) }}</span>
+                </div>
+                <span v-if="isExpired(item.expiresAt)" class="text-[10px] font-semibold uppercase">Expired</span>
+                <span v-else-if="isExpiringSoon(item.expiresAt)" class="text-[10px] font-semibold uppercase">Expiring soon</span>
               </div>
-              <span v-else class="text-sm text-zinc-400">No expiry</span>
+              <span v-else class="text-xs text-zinc-400">No expiry</span>
             </div>
 
             <!-- Actions -->
-            <div class="col-span-2 flex items-center justify-end gap-0.5">
-              <button
-                @click="previewDocument(item)"
-                class="tooltip-btn p-1.5 rounded text-zinc-400 hover:text-teal hover:bg-teal/10 transition-colors"
-                data-tooltip="Preview"
-              >
-                <span class="material-symbols-outlined text-lg">open_in_new</span>
-              </button>
-              <button
-                @click="viewDocument(item)"
-                class="tooltip-btn p-1.5 rounded text-zinc-400 hover:text-teal hover:bg-teal/10 transition-colors"
-                data-tooltip="Details"
-              >
-                <span class="material-symbols-outlined text-lg">info</span>
-              </button>
-              <button
-                @click="copyShareUrl(item)"
-                class="tooltip-btn p-1.5 rounded text-zinc-400 hover:text-teal hover:bg-teal/10 transition-colors"
-                data-tooltip="Copy Link"
-              >
-                <span class="material-symbols-outlined text-lg">link</span>
-              </button>
-              <button
-                @click="openExtendModal(item)"
-                class="tooltip-btn p-1.5 rounded text-zinc-400 hover:text-teal hover:bg-teal/10 transition-colors"
-                data-tooltip="Extend"
-              >
-                <span class="material-symbols-outlined text-lg">event</span>
-              </button>
-              <button
-                @click="revokeShare(item)"
-                class="tooltip-btn p-1.5 rounded text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                data-tooltip="Revoke"
-              >
-                <span class="material-symbols-outlined text-lg">link_off</span>
-              </button>
+            <div class="flex items-center gap-1 flex-shrink-0">
+              <div class="relative group">
+                <button
+                  @click="previewDocument(item)"
+                  class="p-2 text-zinc-500 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors"
+                >
+                  <span class="material-symbols-outlined text-xl">open_in_new</span>
+                </button>
+                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-border-dark rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                  Preview
+                </span>
+              </div>
+              <div class="relative group">
+                <button
+                  @click="viewDocument(item)"
+                  class="p-2 text-zinc-500 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors"
+                >
+                  <span class="material-symbols-outlined text-xl">info</span>
+                </button>
+                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-border-dark rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                  Details
+                </span>
+              </div>
+              <div class="relative group">
+                <button
+                  @click="copyShareUrl(item)"
+                  class="p-2 text-zinc-500 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors"
+                >
+                  <span class="material-symbols-outlined text-xl">link</span>
+                </button>
+                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-border-dark rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                  Copy Link
+                </span>
+              </div>
+              <div class="relative group">
+                <button
+                  @click="openExtendModal(item)"
+                  class="p-2 text-zinc-500 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors"
+                >
+                  <span class="material-symbols-outlined text-xl">event</span>
+                </button>
+                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-border-dark rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                  Extend
+                </span>
+              </div>
+              <div class="relative group">
+                <button
+                  @click="revokeShare(item)"
+                  class="p-2 text-zinc-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                >
+                  <span class="material-symbols-outlined text-xl">link_off</span>
+                </button>
+                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-border-dark rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                  Revoke
+                </span>
+              </div>
             </div>
           </div>
         </div>
       </div>
-
-      <!-- Footer -->
-      <div class="bg-white dark:bg-zinc-800 border-t border-zinc-200 dark:border-zinc-700 px-4 py-2.5 flex items-center justify-between">
-        <span class="text-xs text-zinc-500">
-          <span class="font-medium text-zinc-700 dark:text-zinc-300">{{ mySharedItems.length }}</span>
-          shared {{ mySharedItems.length === 1 ? 'item' : 'items' }}
-        </span>
-      </div>
     </div>
 
     <!-- Extend Date Modal -->
-    <Modal v-model="showExtendModal" size="sm" :overflow-visible="true">
+    <UiModal v-model="showExtendModal" size="sm" :overflow-visible="true">
       <template #header>
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 bg-primary/30 backdrop-blur rounded-xl flex items-center justify-center">
@@ -344,9 +464,9 @@ const minDate = computed(() => {
       </template>
 
       <div class="space-y-5">
-        <p class="text-sm text-gray-600 dark:text-zinc-400">
+        <p class="text-sm text-zinc-600 dark:text-zinc-400">
           Set a new expiry date for sharing with
-          <span class="font-semibold text-gray-900 dark:text-white">{{ selectedItem?.sharedWithUserName }}</span>
+          <span class="font-semibold text-zinc-900 dark:text-white">{{ selectedItem?.sharedWithUserName }}</span>
         </p>
 
         <DatePicker
@@ -357,30 +477,21 @@ const minDate = computed(() => {
           :clearable="true"
         />
 
-        <p class="text-xs text-gray-500 dark:text-zinc-500">
+        <p class="text-xs text-zinc-500 dark:text-zinc-500">
           Leave empty to remove expiry (share will not expire)
         </p>
       </div>
 
       <template #footer>
         <div class="flex justify-end gap-3">
-          <button
-            @click="showExtendModal = false"
-            class="px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-700 rounded-xl transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            @click="extendExpiry"
-            :disabled="isExtending"
-            class="px-5 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-navy to-primary hover:shadow-lg hover:shadow-primary/25 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-          >
+          <UiButton variant="outline" @click="showExtendModal = false">Cancel</UiButton>
+          <UiButton @click="extendExpiry" :disabled="isExtending">
             <span v-if="isExtending" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-            <span>{{ isExtending ? 'Updating...' : 'Update Expiry' }}</span>
-          </button>
+            {{ isExtending ? 'Updating...' : 'Update Expiry' }}
+          </UiButton>
         </div>
       </template>
-    </Modal>
+    </UiModal>
 
     <!-- Toast Notification -->
     <Transition
@@ -412,56 +523,3 @@ const minDate = computed(() => {
     />
   </div>
 </template>
-
-<style scoped>
-.border-3 {
-  border-width: 3px;
-}
-
-/* Tooltip Styles */
-.tooltip-btn {
-  position: relative;
-}
-
-.tooltip-btn::before {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%) translateY(4px);
-  padding: 4px 8px;
-  background: #1f2937;
-  color: white;
-  font-size: 11px;
-  font-weight: 500;
-  white-space: nowrap;
-  border-radius: 4px;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.15s ease;
-  pointer-events: none;
-  z-index: 50;
-}
-
-.tooltip-btn::after {
-  content: '';
-  position: absolute;
-  bottom: calc(100% + 2px);
-  left: 50%;
-  transform: translateX(-50%) translateY(4px);
-  border: 4px solid transparent;
-  border-top-color: #1f2937;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.15s ease;
-  pointer-events: none;
-  z-index: 50;
-}
-
-.tooltip-btn:hover::before,
-.tooltip-btn:hover::after {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(0);
-}
-</style>

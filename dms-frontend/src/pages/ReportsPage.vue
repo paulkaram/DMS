@@ -154,7 +154,7 @@ function getActionColor(actionType: string): string {
     case 'move':
     case 'copied':
     case 'copy':
-      return 'bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300'
+      return 'bg-zinc-200 dark:bg-border-dark text-zinc-700 dark:text-zinc-300'
     case 'deleted':
     case 'delete':
       return 'bg-zinc-300 dark:bg-zinc-600 text-zinc-700 dark:text-zinc-300'
@@ -166,12 +166,12 @@ function getActionColor(actionType: string): string {
     case 'checkout':
     case 'checkedout':
     case 'discardedcheckout':
-      return 'bg-navy/10 dark:bg-zinc-700 text-navy dark:text-zinc-300'
+      return 'bg-navy/10 dark:bg-border-dark text-navy dark:text-zinc-300'
     case 'login':
     case 'logout':
-      return 'bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400'
+      return 'bg-zinc-100 dark:bg-border-dark text-zinc-600 dark:text-zinc-400'
     default:
-      return 'bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400'
+      return 'bg-zinc-100 dark:bg-border-dark text-zinc-600 dark:text-zinc-400'
   }
 }
 
@@ -254,7 +254,7 @@ async function exportPDF() {
         <p class="text-zinc-500 mt-1">Real-time enterprise statistics and document activity overview.</p>
       </div>
       <div class="flex items-center gap-3">
-        <button class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors shadow-sm">
+        <button class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-surface-dark border border-zinc-200 dark:border-border-dark rounded-lg text-sm font-medium hover:bg-zinc-50 dark:hover:bg-border-dark transition-colors shadow-sm">
           <span class="material-symbols-outlined text-lg">calendar_today</span>
           Last {{ selectedPeriod }} Days
         </button>
@@ -354,7 +354,7 @@ async function exportPDF() {
       <!-- Charts Row -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Document Growth Chart -->
-        <div class="lg:col-span-2 bg-white dark:bg-zinc-900 p-6 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+        <div class="lg:col-span-2 bg-white dark:bg-background-dark p-6 rounded-xl border border-zinc-200 dark:border-border-dark shadow-sm">
           <div class="flex items-center justify-between mb-8">
             <div>
               <h3 class="font-bold text-zinc-900 dark:text-zinc-100">Document Growth</h3>
@@ -376,19 +376,19 @@ async function exportPDF() {
           <div class="h-[280px] w-full flex items-end gap-2 px-4 relative pb-8">
             <!-- Grid Lines with Y-Axis Labels -->
             <div class="absolute inset-x-4 top-0 bottom-12 flex flex-col justify-between pointer-events-none">
-              <div class="border-b border-zinc-100 dark:border-zinc-800 w-full relative">
+              <div class="border-b border-zinc-100 dark:border-border-dark w-full relative">
                 <span class="absolute -left-2 -top-2 text-[9px] text-zinc-400">{{ Math.round(getMaxValue()) }}</span>
               </div>
-              <div class="border-b border-zinc-100 dark:border-zinc-800 w-full relative">
+              <div class="border-b border-zinc-100 dark:border-border-dark w-full relative">
                 <span class="absolute -left-2 -top-2 text-[9px] text-zinc-400">{{ Math.round(getMaxValue() * 0.75) }}</span>
               </div>
-              <div class="border-b border-zinc-100 dark:border-zinc-800 w-full relative">
+              <div class="border-b border-zinc-100 dark:border-border-dark w-full relative">
                 <span class="absolute -left-2 -top-2 text-[9px] text-zinc-400">{{ Math.round(getMaxValue() * 0.5) }}</span>
               </div>
-              <div class="border-b border-zinc-100 dark:border-zinc-800 w-full relative">
+              <div class="border-b border-zinc-100 dark:border-border-dark w-full relative">
                 <span class="absolute -left-2 -top-2 text-[9px] text-zinc-400">{{ Math.round(getMaxValue() * 0.25) }}</span>
               </div>
-              <div class="border-b border-zinc-100 dark:border-zinc-800 w-full relative">
+              <div class="border-b border-zinc-100 dark:border-border-dark w-full relative">
                 <span class="absolute -left-2 -top-2 text-[9px] text-zinc-400">0</span>
               </div>
             </div>
@@ -429,7 +429,7 @@ async function exportPDF() {
         </div>
 
         <!-- Document Types Donut Chart -->
-        <div class="bg-white dark:bg-zinc-900 p-6 rounded-xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+        <div class="bg-white dark:bg-background-dark p-6 rounded-xl border border-zinc-200 dark:border-border-dark shadow-sm">
           <h3 class="font-bold text-zinc-900 dark:text-zinc-100">Document Types</h3>
           <p class="text-xs text-zinc-500 mb-8">Storage distribution by extension</p>
 
@@ -487,7 +487,7 @@ async function exportPDF() {
             </div>
             <div class="flex items-center justify-between text-sm">
               <div class="flex items-center gap-2">
-                <span class="w-3 h-3 rounded bg-zinc-300 dark:bg-zinc-700"></span>
+                <span class="w-3 h-3 rounded bg-zinc-300 dark:bg-border-dark"></span>
                 <span class="text-zinc-600 dark:text-zinc-400 font-medium">Media & Other</span>
               </div>
               <span class="font-bold text-zinc-900 dark:text-zinc-100">20%</span>
@@ -497,8 +497,8 @@ async function exportPDF() {
       </div>
 
       <!-- Recent Activity Table -->
-      <div class="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl overflow-hidden shadow-sm">
-        <div class="px-6 py-4 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+      <div class="bg-white dark:bg-background-dark border border-zinc-200 dark:border-border-dark rounded-xl overflow-hidden shadow-sm">
+        <div class="px-6 py-4 border-b border-zinc-100 dark:border-border-dark flex items-center justify-between">
           <h3 class="font-bold text-zinc-900 dark:text-zinc-100">Recent System Activity</h3>
           <router-link to="/activity" class="text-teal text-xs font-semibold hover:underline">
             View Full Audit Log
@@ -507,7 +507,7 @@ async function exportPDF() {
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse">
             <thead>
-              <tr class="bg-zinc-50/50 dark:bg-zinc-800/50 text-[11px] font-bold text-zinc-400 uppercase tracking-widest border-b border-zinc-100 dark:border-zinc-800">
+              <tr class="bg-zinc-50/50 dark:bg-surface-dark/50 text-[11px] font-bold text-zinc-400 uppercase tracking-widest border-b border-zinc-100 dark:border-border-dark">
                 <th class="px-6 py-4">User</th>
                 <th class="px-6 py-4">Action</th>
                 <th class="px-6 py-4">Target Document / Cabinet</th>
@@ -519,7 +519,7 @@ async function exportPDF() {
               <tr
                 v-for="(activity, index) in recentActivity"
                 :key="activity.id"
-                class="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/40 transition-colors group"
+                class="hover:bg-zinc-50/50 dark:hover:bg-surface-dark/40 transition-colors group"
               >
                 <td class="px-6 py-4">
                   <div class="flex items-center gap-3">

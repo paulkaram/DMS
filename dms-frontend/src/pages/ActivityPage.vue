@@ -171,16 +171,16 @@ function getActionColor(action: string): string {
 function getActionBadgeClass(action: string): string {
   switch (action) {
     case 'Created': return 'bg-teal/15 text-teal'
-    case 'Updated': return 'bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300'
+    case 'Updated': return 'bg-zinc-200 dark:bg-border-dark text-zinc-700 dark:text-zinc-300'
     case 'Deleted': return 'bg-zinc-300 dark:bg-zinc-600 text-zinc-700 dark:text-zinc-300'
-    case 'Viewed': return 'bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400'
+    case 'Viewed': return 'bg-zinc-100 dark:bg-border-dark text-zinc-600 dark:text-zinc-400'
     case 'Downloaded': return 'bg-teal/10 text-teal'
-    case 'CheckedOut': return 'bg-navy/10 dark:bg-zinc-700 text-navy dark:text-zinc-300'
+    case 'CheckedOut': return 'bg-navy/10 dark:bg-border-dark text-navy dark:text-zinc-300'
     case 'CheckedIn': return 'bg-teal/15 text-teal'
-    case 'Moved': return 'bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300'
-    case 'Copied': return 'bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300'
+    case 'Moved': return 'bg-zinc-200 dark:bg-border-dark text-zinc-700 dark:text-zinc-300'
+    case 'Copied': return 'bg-zinc-200 dark:bg-border-dark text-zinc-700 dark:text-zinc-300'
     case 'DiscardedCheckout': return 'bg-zinc-200 dark:bg-zinc-600 text-zinc-600 dark:text-zinc-400'
-    default: return 'bg-zinc-100 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-400'
+    default: return 'bg-zinc-100 dark:bg-border-dark text-zinc-600 dark:text-zinc-400'
   }
 }
 
@@ -222,12 +222,12 @@ function clearFilters() {
             v-model="searchQuery"
             type="text"
             placeholder="Search activities..."
-            class="w-64 pl-10 pr-4 py-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none"
+            class="w-64 pl-10 pr-4 py-2 bg-white dark:bg-surface-dark border border-zinc-200 dark:border-border-dark rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none"
           />
         </div>
         <button
           @click="loadActivities"
-          class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl font-medium text-sm transition-colors border border-zinc-200 dark:border-zinc-700"
+          class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-surface-dark hover:bg-zinc-50 dark:hover:bg-border-dark text-zinc-700 dark:text-zinc-300 rounded-xl font-medium text-sm transition-colors border border-zinc-200 dark:border-border-dark"
         >
           <span class="material-symbols-outlined text-lg">refresh</span>
           Refresh
@@ -301,7 +301,7 @@ function clearFilters() {
     </div>
 
     <!-- Filters Card -->
-    <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-4">
+    <div class="bg-white dark:bg-background-dark rounded-2xl shadow-sm border border-zinc-200 dark:border-border-dark p-4">
       <div class="flex items-center justify-between">
         <!-- Filters -->
         <div class="flex items-center gap-4">
@@ -311,7 +311,7 @@ function clearFilters() {
             <div class="relative dropdown-action">
               <button
                 @click.stop="showActionDropdown = !showActionDropdown"
-                class="flex items-center gap-2 px-4 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-xl text-sm font-medium text-zinc-700 dark:text-zinc-300 transition-colors min-w-[120px] justify-between"
+                class="flex items-center gap-2 px-4 py-2 bg-zinc-100 dark:bg-surface-dark hover:bg-zinc-200 dark:hover:bg-border-dark rounded-xl text-sm font-medium text-zinc-700 dark:text-zinc-300 transition-colors min-w-[120px] justify-between"
               >
                 <span class="flex items-center gap-2">
                   <span v-if="selectedAction !== 'All'" class="material-symbols-outlined text-sm" :class="getActionColor(selectedAction).replace('bg-', 'text-')">{{ getActionIcon(selectedAction) }}</span>
@@ -327,12 +327,12 @@ function clearFilters() {
                 leave-from-class="opacity-100 scale-100 translate-y-0"
                 leave-to-class="opacity-0 scale-95 -translate-y-1"
               >
-                <div v-if="showActionDropdown" class="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-zinc-800 rounded-xl shadow-xl border border-zinc-200 dark:border-zinc-700 py-2 z-50 max-h-64 overflow-y-auto">
+                <div v-if="showActionDropdown" class="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-surface-dark rounded-xl shadow-xl border border-zinc-200 dark:border-border-dark py-2 z-50 max-h-64 overflow-y-auto">
                   <button
                     v-for="action in actionTypes"
                     :key="action"
                     @click="selectedAction = action; showActionDropdown = false"
-                    class="w-full px-4 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center gap-3 transition-colors"
+                    class="w-full px-4 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-border-dark flex items-center gap-3 transition-colors"
                     :class="selectedAction === action ? 'bg-teal/10 text-teal font-medium' : 'text-zinc-700 dark:text-zinc-300'"
                   >
                     <span v-if="action !== 'All'" class="material-symbols-outlined text-sm" :class="getActionColor(action).replace('bg-', 'text-')">{{ getActionIcon(action) }}</span>
@@ -351,7 +351,7 @@ function clearFilters() {
             <div class="relative dropdown-type">
               <button
                 @click.stop="showTypeDropdown = !showTypeDropdown"
-                class="flex items-center gap-2 px-4 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-xl text-sm font-medium text-zinc-700 dark:text-zinc-300 transition-colors min-w-[120px] justify-between"
+                class="flex items-center gap-2 px-4 py-2 bg-zinc-100 dark:bg-surface-dark hover:bg-zinc-200 dark:hover:bg-border-dark rounded-xl text-sm font-medium text-zinc-700 dark:text-zinc-300 transition-colors min-w-[120px] justify-between"
               >
                 <span class="flex items-center gap-2">
                   <span class="material-symbols-outlined text-sm text-zinc-500">{{ selectedNodeType === 'All' ? 'category' : getNodeTypeIcon(selectedNodeType) }}</span>
@@ -367,12 +367,12 @@ function clearFilters() {
                 leave-from-class="opacity-100 scale-100 translate-y-0"
                 leave-to-class="opacity-0 scale-95 -translate-y-1"
               >
-                <div v-if="showTypeDropdown" class="absolute top-full left-0 mt-2 w-44 bg-white dark:bg-zinc-800 rounded-xl shadow-xl border border-zinc-200 dark:border-zinc-700 py-2 z-50">
+                <div v-if="showTypeDropdown" class="absolute top-full left-0 mt-2 w-44 bg-white dark:bg-surface-dark rounded-xl shadow-xl border border-zinc-200 dark:border-border-dark py-2 z-50">
                   <button
                     v-for="type in nodeTypes"
                     :key="type"
                     @click="selectedNodeType = type; showTypeDropdown = false"
-                    class="w-full px-4 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center gap-3 transition-colors"
+                    class="w-full px-4 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-border-dark flex items-center gap-3 transition-colors"
                     :class="selectedNodeType === type ? 'bg-teal/10 text-teal font-medium' : 'text-zinc-700 dark:text-zinc-300'"
                   >
                     <span class="material-symbols-outlined text-sm" :class="selectedNodeType === type ? 'text-teal' : 'text-zinc-500'">{{ type === 'All' ? 'category' : getNodeTypeIcon(type) }}</span>
@@ -405,25 +405,25 @@ function clearFilters() {
     </div>
 
     <!-- Content Card -->
-    <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+    <div class="bg-white dark:bg-background-dark rounded-2xl shadow-sm border border-zinc-200 dark:border-border-dark overflow-hidden">
       <div class="p-6">
       <!-- Loading -->
       <div v-if="isLoading" class="space-y-3">
-        <div v-for="i in 10" :key="i" class="bg-zinc-50 dark:bg-zinc-800 rounded-xl p-4 animate-pulse">
+        <div v-for="i in 10" :key="i" class="bg-zinc-50 dark:bg-surface-dark rounded-xl p-4 animate-pulse">
           <div class="flex items-center gap-4">
-            <div class="w-10 h-10 bg-zinc-200 dark:bg-zinc-700 rounded-full"></div>
+            <div class="w-10 h-10 bg-zinc-200 dark:bg-border-dark rounded-full"></div>
             <div class="flex-1">
-              <div class="h-4 bg-zinc-200 dark:bg-zinc-700 rounded w-1/4 mb-2"></div>
-              <div class="h-3 bg-zinc-200 dark:bg-zinc-700 rounded w-1/2"></div>
+              <div class="h-4 bg-zinc-200 dark:bg-border-dark rounded w-1/4 mb-2"></div>
+              <div class="h-3 bg-zinc-200 dark:bg-border-dark rounded w-1/2"></div>
             </div>
-            <div class="h-3 bg-zinc-200 dark:bg-zinc-700 rounded w-20"></div>
+            <div class="h-3 bg-zinc-200 dark:bg-border-dark rounded w-20"></div>
           </div>
         </div>
       </div>
 
       <!-- Empty State -->
       <div v-else-if="filteredActivities.length === 0" class="text-center py-16">
-        <div class="w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mx-auto mb-4">
+        <div class="w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-surface-dark flex items-center justify-center mx-auto mb-4">
           <span class="material-symbols-outlined text-5xl text-zinc-400">history_toggle_off</span>
         </div>
         <h3 class="text-lg font-semibold text-zinc-700 dark:text-zinc-300">No Activities Found</h3>
@@ -444,7 +444,7 @@ function clearFilters() {
         <div
           v-for="(activity, index) in paginatedActivities"
           :key="activity.id"
-          class="bg-zinc-50 dark:bg-zinc-800 rounded-xl border border-zinc-100 dark:border-zinc-700 p-4 hover:shadow-md hover:border-teal/30 transition-all"
+          class="bg-zinc-50 dark:bg-surface-dark rounded-xl border border-zinc-100 dark:border-border-dark p-4 hover:shadow-md hover:border-teal/30 transition-all"
         >
           <div class="flex items-start gap-4">
             <!-- Action Icon -->
@@ -493,7 +493,7 @@ function clearFilters() {
           <div class="relative dropdown-pagesize">
             <button
               @click.stop="showPageSizeDropdown = !showPageSizeDropdown"
-              class="flex items-center gap-2 px-3 py-1.5 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-700 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm font-medium text-zinc-700 dark:text-zinc-300 transition-colors min-w-[70px] justify-between"
+              class="flex items-center gap-2 px-3 py-1.5 bg-zinc-50 dark:bg-surface-dark hover:bg-zinc-100 dark:hover:bg-border-dark border border-zinc-200 dark:border-border-dark rounded-xl text-sm font-medium text-zinc-700 dark:text-zinc-300 transition-colors min-w-[70px] justify-between"
             >
               {{ pageSize }}
               <span class="material-symbols-outlined text-base transition-transform" :class="{ 'rotate-180': showPageSizeDropdown }">expand_more</span>
@@ -506,12 +506,12 @@ function clearFilters() {
               leave-from-class="opacity-100 scale-100 translate-y-0"
               leave-to-class="opacity-0 scale-95 translate-y-1"
             >
-              <div v-if="showPageSizeDropdown" class="absolute bottom-full left-0 mb-2 w-24 bg-white dark:bg-zinc-800 rounded-xl shadow-xl border border-zinc-200 dark:border-zinc-700 py-2 z-50">
+              <div v-if="showPageSizeDropdown" class="absolute bottom-full left-0 mb-2 w-24 bg-white dark:bg-surface-dark rounded-xl shadow-xl border border-zinc-200 dark:border-border-dark py-2 z-50">
                 <button
                   v-for="size in pageSizeOptions"
                   :key="size"
                   @click="pageSize = size; showPageSizeDropdown = false"
-                  class="w-full px-4 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center justify-between transition-colors"
+                  class="w-full px-4 py-2 text-left text-sm hover:bg-zinc-100 dark:hover:bg-border-dark flex items-center justify-between transition-colors"
                   :class="pageSize === size ? 'bg-teal/10 text-teal font-medium' : 'text-zinc-700 dark:text-zinc-300'"
                 >
                   {{ size }}
@@ -528,14 +528,14 @@ function clearFilters() {
           <button
             @click="goToPage(1)"
             :disabled="currentPage === 1"
-            class="p-2 rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            class="p-2 rounded-xl border border-zinc-200 dark:border-border-dark text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-border-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <span class="material-symbols-outlined text-lg">first_page</span>
           </button>
           <button
             @click="goToPage(currentPage - 1)"
             :disabled="currentPage === 1"
-            class="p-2 rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            class="p-2 rounded-xl border border-zinc-200 dark:border-border-dark text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-border-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <span class="material-symbols-outlined text-lg">chevron_left</span>
           </button>
@@ -549,7 +549,7 @@ function clearFilters() {
                   'w-10 h-10 rounded-xl font-medium text-sm transition-colors',
                   currentPage === (totalPages <= 5 ? page : (page <= 3 ? page : totalPages - (5 - page)))
                     ? 'bg-teal text-white'
-                    : 'border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-700'
+                    : 'border border-zinc-200 dark:border-border-dark text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-border-dark'
                 ]"
               >
                 {{ totalPages <= 5 ? page : (page <= 3 ? page : totalPages - (5 - page)) }}
@@ -560,14 +560,14 @@ function clearFilters() {
           <button
             @click="goToPage(currentPage + 1)"
             :disabled="currentPage === totalPages"
-            class="p-2 rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            class="p-2 rounded-xl border border-zinc-200 dark:border-border-dark text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-border-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <span class="material-symbols-outlined text-lg">chevron_right</span>
           </button>
           <button
             @click="goToPage(totalPages)"
             :disabled="currentPage === totalPages"
-            class="p-2 rounded-xl border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            class="p-2 rounded-xl border border-zinc-200 dark:border-border-dark text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-border-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <span class="material-symbols-outlined text-lg">last_page</span>
           </button>

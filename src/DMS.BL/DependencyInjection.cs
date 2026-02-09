@@ -71,6 +71,9 @@ public static class DependencyInjection
         // Scan Service
         services.AddScoped<IScanService, ScanService>();
 
+        // Document Shortcuts
+        services.AddScoped<IDocumentShortcutService, DocumentShortcutService>();
+
         // Document Annotations
         services.AddScoped<IDocumentAnnotationService, DocumentAnnotationService>();
         services.AddScoped<ISavedSignatureService, SavedSignatureService>();

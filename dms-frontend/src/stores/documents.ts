@@ -67,7 +67,8 @@ export const useDocumentsStore = defineStore('documents', () => {
       type: 'folder' as const,
       parentId: folder.parentFolderId,
       children: folder.children ? mapFoldersToTreeNodes(folder.children) : [],
-      isExpanded: false
+      isExpanded: false,
+      accessMode: folder.accessMode
     }))
   }
 

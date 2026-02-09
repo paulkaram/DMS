@@ -137,23 +137,23 @@ async function handleSubmit() {
 
 <template>
   <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" @click.self="emit('close')">
-    <div class="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+    <div class="bg-white dark:bg-background-dark rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
       <!-- Header -->
-      <div class="px-6 py-5 border-b border-zinc-200 dark:border-zinc-700">
+      <div class="px-6 py-5 border-b border-zinc-200 dark:border-border-dark">
         <div class="flex items-center justify-between">
           <h2 class="text-xl font-semibold text-zinc-900 dark:text-white">Share "{{ document.name }}"</h2>
-          <button @click="emit('close')" class="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors">
+          <button @click="emit('close')" class="p-1.5 hover:bg-zinc-100 dark:hover:bg-surface-dark rounded-lg transition-colors">
             <span class="material-symbols-outlined text-zinc-500">close</span>
           </button>
         </div>
 
         <!-- Tabs -->
-        <div class="flex gap-1 mt-4 p-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
+        <div class="flex gap-1 mt-4 p-1 bg-zinc-100 dark:bg-surface-dark rounded-lg">
           <button
             @click="activeTab = 'people'"
             class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors"
             :class="activeTab === 'people'
-              ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm'
+              ? 'bg-white dark:bg-border-dark text-zinc-900 dark:text-white shadow-sm'
               : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900'"
           >
             <span class="material-symbols-outlined text-lg align-middle mr-1">group</span>
@@ -163,7 +163,7 @@ async function handleSubmit() {
             @click="activeTab = 'link'"
             class="flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors"
             :class="activeTab === 'link'
-              ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm'
+              ? 'bg-white dark:bg-border-dark text-zinc-900 dark:text-white shadow-sm'
               : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900'"
           >
             <span class="material-symbols-outlined text-lg align-middle mr-1">link</span>
@@ -183,7 +183,7 @@ async function handleSubmit() {
         <div v-if="activeTab === 'people'" class="space-y-4">
           <!-- User Search Input -->
           <div class="relative">
-            <div class="flex flex-wrap gap-2 p-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 min-h-[48px]">
+            <div class="flex flex-wrap gap-2 p-3 border border-zinc-300 dark:border-border-dark rounded-lg bg-white dark:bg-surface-dark min-h-[48px]">
               <!-- Selected Users Chips -->
               <div
                 v-for="user in selectedUsers"
@@ -212,7 +212,7 @@ async function handleSubmit() {
             <!-- User Dropdown -->
             <div
               v-if="showUserDropdown && (filteredUsers.length > 0 || isLoading)"
-              class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto"
+              class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-surface-dark border border-zinc-200 dark:border-border-dark rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto"
             >
               <div v-if="isLoading" class="p-4 text-center text-zinc-500">
                 <span class="material-symbols-outlined animate-spin">progress_activity</span>
@@ -221,7 +221,7 @@ async function handleSubmit() {
                 v-for="user in filteredUsers"
                 :key="user.id"
                 @click="selectUser(user)"
-                class="w-full flex items-center gap-3 p-3 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors text-left"
+                class="w-full flex items-center gap-3 p-3 hover:bg-zinc-50 dark:hover:bg-border-dark transition-colors text-left"
               >
                 <div :class="[getAvatarColor(user.id), 'w-10 h-10 rounded-full flex items-center justify-center text-white font-medium']">
                   {{ getInitials(user) }}
@@ -250,7 +250,7 @@ async function handleSubmit() {
                 class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
                 :class="permissionLevel === opt.value
                   ? 'bg-teal text-white'
-                  : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200'"
+                  : 'bg-zinc-100 dark:bg-surface-dark text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200'"
               >
                 <span class="material-symbols-outlined text-lg">{{ opt.icon }}</span>
                 {{ opt.label }}
@@ -264,7 +264,7 @@ async function handleSubmit() {
               v-model="message"
               rows="2"
               placeholder="Add a message (optional)"
-              class="w-full px-4 py-3 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal resize-none placeholder-zinc-400"
+              class="w-full px-4 py-3 border border-zinc-300 dark:border-border-dark rounded-lg bg-white dark:bg-surface-dark text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal resize-none placeholder-zinc-400"
             ></textarea>
           </div>
 
@@ -282,7 +282,7 @@ async function handleSubmit() {
 
         <!-- Link Tab -->
         <div v-if="activeTab === 'link'" class="space-y-4">
-          <div class="p-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl">
+          <div class="p-4 bg-zinc-50 dark:bg-surface-dark rounded-xl">
             <div class="flex items-center gap-3 mb-3">
               <div class="w-10 h-10 rounded-lg bg-teal/10 flex items-center justify-center">
                 <span class="material-symbols-outlined text-teal">link</span>
@@ -297,7 +297,7 @@ async function handleSubmit() {
               <input
                 :value="shareLink"
                 readonly
-                class="flex-1 px-3 py-2 bg-white dark:bg-zinc-700 border border-zinc-200 dark:border-zinc-600 rounded-lg text-sm text-zinc-600 dark:text-zinc-300"
+                class="flex-1 px-3 py-2 bg-white dark:bg-border-dark border border-zinc-200 dark:border-border-dark rounded-lg text-sm text-zinc-600 dark:text-zinc-300"
               />
               <button
                 @click="copyLink"

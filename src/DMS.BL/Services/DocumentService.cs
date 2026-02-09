@@ -19,6 +19,7 @@ public class DocumentService : IDocumentService
     private readonly IFolderRepository _folderRepository;
     private readonly IFileValidationService _fileValidationService;
     private readonly IDocumentPasswordRepository _passwordRepository;
+    private readonly IDocumentShortcutRepository _shortcutRepository;
 
     // JSON options for consistent serialization with camelCase
     private static readonly JsonSerializerOptions _jsonOptions = new()
@@ -38,7 +39,8 @@ public class DocumentService : IDocumentService
         IRecycleBinRepository recycleBinRepository,
         IFolderRepository folderRepository,
         IFileValidationService fileValidationService,
-        IDocumentPasswordRepository passwordRepository)
+        IDocumentPasswordRepository passwordRepository,
+        IDocumentShortcutRepository shortcutRepository)
     {
         _documentRepository = documentRepository;
         _versionRepository = versionRepository;
@@ -51,6 +53,7 @@ public class DocumentService : IDocumentService
         _folderRepository = folderRepository;
         _fileValidationService = fileValidationService;
         _passwordRepository = passwordRepository;
+        _shortcutRepository = shortcutRepository;
     }
 
     #region Basic CRUD Operations
@@ -429,6 +432,9 @@ public class DocumentService : IDocumentService
         await _recycleBinRepository.AddAsync(recycleBinItem);
 
         await _documentRepository.DeleteAsync(id);
+
+        // Clean up all shortcuts pointing to this document
+        await _shortcutRepository.DeleteAllByDocumentIdAsync(id);
 
         await _activityLogService.LogActivityAsync(
             ActivityActions.Deleted, "Document", id, document.Name, null, userId, null, null);
@@ -1249,7 +1255,10 @@ public class DocumentService : IDocumentService
             CreatedBy = document.CreatedBy,
             CreatedByName = document.CreatedByName,
             CreatedAt = document.CreatedAt,
-            ModifiedAt = document.ModifiedAt
+            ModifiedAt = document.ModifiedAt,
+            IsShortcut = document.IsShortcut,
+            ShortcutId = document.ShortcutId,
+            AttachmentCount = document.AttachmentCount
         };
     }
 
