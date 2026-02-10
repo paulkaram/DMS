@@ -165,11 +165,11 @@ function getCapabilities(level: PermissionLevelDefinition) {
       </div>
 
       <!-- Info Banner -->
-      <div class="relative overflow-hidden rounded-xl bg-gradient-to-r from-navy via-navy/95 to-primary p-5 mb-6">
+      <div class="relative overflow-hidden rounded-lg bg-gradient-to-r from-navy via-navy/95 to-primary p-5 mb-6">
         <div class="absolute top-0 right-0 w-40 h-40 bg-primary/20 rounded-full -translate-y-1/2 translate-x-1/3"></div>
         <div class="absolute bottom-0 left-1/3 w-24 h-24 bg-primary/10 rounded-full translate-y-1/2"></div>
         <div class="relative flex items-start gap-4">
-          <div class="w-10 h-10 bg-white/10 backdrop-blur rounded-xl flex items-center justify-center flex-shrink-0">
+          <div class="w-10 h-10 bg-white/10 backdrop-blur rounded-lg flex items-center justify-center flex-shrink-0">
             <span class="material-symbols-outlined text-teal text-xl">shield</span>
           </div>
           <div>
@@ -190,8 +190,8 @@ function getCapabilities(level: PermissionLevelDefinition) {
         </div>
       </div>
 
-      <div v-else-if="permissionLevels.length === 0" class="rounded-xl border border-zinc-200 dark:border-border-dark bg-white dark:bg-zinc-900 p-12 text-center">
-        <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+      <div v-else-if="permissionLevels.length === 0" class="rounded-lg border border-zinc-200 dark:border-border-dark bg-white dark:bg-zinc-900 p-12 text-center">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-lg bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
           <span class="material-symbols-outlined text-3xl text-zinc-400">shield</span>
         </div>
         <p class="text-lg font-semibold text-zinc-700 dark:text-zinc-200">No permission levels configured</p>
@@ -213,7 +213,7 @@ function getCapabilities(level: PermissionLevelDefinition) {
         <div
           v-for="level in sortedLevels"
           :key="level.id"
-          class="group grid grid-cols-12 gap-4 items-center rounded-xl border px-5 py-4 transition-all duration-200"
+          class="group grid grid-cols-12 gap-4 items-center rounded-lg border px-5 py-4 transition-all duration-200"
           :class="[
             'bg-white dark:bg-zinc-900/80',
             'border-zinc-200 dark:border-border-dark/60',
@@ -224,7 +224,7 @@ function getCapabilities(level: PermissionLevelDefinition) {
           <!-- Name with color indicator -->
           <div class="col-span-3 flex items-center gap-3">
             <div
-              class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm"
+              class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm"
               :style="{ backgroundColor: (level.color || '#6B7280') + '18' }"
             >
               <span

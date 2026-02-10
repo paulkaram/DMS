@@ -618,6 +618,16 @@ public class DocumentService : IDocumentService
         document.ContentType = finalContentType;
         document.ModifiedBy = userId;
 
+        // Update extension when a new file is uploaded with a different type
+        if (contentChanged && !string.IsNullOrEmpty(originalFileName))
+        {
+            var newExtension = Path.GetExtension(originalFileName);
+            if (!string.IsNullOrEmpty(newExtension))
+            {
+                document.Extension = newExtension;
+            }
+        }
+
         // Apply metadata changes from working copy
         if (!string.IsNullOrEmpty(workingCopy.DraftName))
             document.Name = workingCopy.DraftName;

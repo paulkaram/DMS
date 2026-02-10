@@ -172,7 +172,7 @@ const patternTypeOptions = computed(() =>
       </div>
 
       <!-- Info Box -->
-      <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
         <div class="flex items-start gap-3">
           <svg class="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -191,7 +191,7 @@ const patternTypeOptions = computed(() =>
 
       <div v-if="isLoading" class="text-center py-12 text-gray-500">Loading patterns...</div>
 
-      <div v-else class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div v-else class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <table class="w-full">
           <thead class="bg-gray-50">
             <tr>
@@ -253,7 +253,7 @@ const patternTypeOptions = computed(() =>
 
     <!-- Modal -->
     <div v-if="showModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 p-6">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 p-6">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ isEditing ? 'Edit Pattern' : 'New Pattern' }}</h3>
         <div class="space-y-4">
           <div>

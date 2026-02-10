@@ -153,7 +153,7 @@ onUnmounted(() => {
           >
             <div
               v-if="isOpen"
-              class="relative w-full max-w-md bg-white dark:bg-background-dark rounded-2xl shadow-2xl overflow-hidden"
+              class="relative w-full max-w-md bg-white dark:bg-background-dark rounded-lg shadow-2xl overflow-hidden"
               @click.stop
             >
               <!-- Content -->
@@ -161,7 +161,7 @@ onUnmounted(() => {
                 <div class="flex items-start gap-4">
                   <!-- Icon -->
                   <div
-                    class="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center"
+                    class="flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center"
                     :class="typeConfig.iconBg"
                   >
                     <span

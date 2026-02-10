@@ -233,7 +233,7 @@ function getTypeIcon(type: string) {
               v-model="searchQuery"
               type="text"
               placeholder="Search users..."
-              class="w-64 pl-10 pr-4 py-2.5 bg-white dark:bg-surface-dark border border-zinc-200 dark:border-border-dark rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all"
+              class="w-64 pl-10 pr-4 py-2.5 bg-white dark:bg-surface-dark border border-zinc-200 dark:border-border-dark rounded-lg text-zinc-900 dark:text-white placeholder-zinc-400 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition-all"
               @keyup.enter="handleSearch"
             />
           </div>
@@ -242,7 +242,7 @@ function getTypeIcon(type: string) {
 
       <!-- Stats Cards - More Compact -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="relative overflow-hidden bg-[#0d1117] rounded-xl p-4 flex items-center gap-4 shadow-lg border border-white/5">
+        <div class="relative overflow-hidden bg-[#0d1117] rounded-lg p-4 flex items-center gap-4 shadow-lg border border-white/5">
           <svg class="absolute right-0 top-0 h-full w-24 opacity-15" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 Q50,50 0,100 L100,100 L100,0 Z" fill="#00ae8c"/></svg>
           <div class="w-12 h-12 rounded-lg bg-teal/20 flex items-center justify-center relative z-10">
             <span class="material-symbols-outlined text-teal text-2xl">groups</span>
@@ -252,7 +252,7 @@ function getTypeIcon(type: string) {
             <p class="text-xs text-zinc-400 uppercase tracking-wide">Total Users</p>
           </div>
         </div>
-        <div class="relative overflow-hidden bg-[#0d1117] rounded-xl p-4 flex items-center gap-4 shadow-lg border border-white/5">
+        <div class="relative overflow-hidden bg-[#0d1117] rounded-lg p-4 flex items-center gap-4 shadow-lg border border-white/5">
           <svg class="absolute right-0 top-0 h-full w-24 opacity-15" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 Q50,50 0,100 L100,100 L100,0 Z" fill="#00ae8c"/></svg>
           <div class="w-12 h-12 rounded-lg bg-emerald-500/20 flex items-center justify-center relative z-10">
             <span class="material-symbols-outlined text-emerald-400 text-2xl">mail</span>
@@ -262,7 +262,7 @@ function getTypeIcon(type: string) {
             <p class="text-xs text-zinc-400 uppercase tracking-wide">With Email</p>
           </div>
         </div>
-        <div class="relative overflow-hidden bg-[#0d1117] rounded-xl p-4 flex items-center gap-4 shadow-lg border border-white/5">
+        <div class="relative overflow-hidden bg-[#0d1117] rounded-lg p-4 flex items-center gap-4 shadow-lg border border-white/5">
           <svg class="absolute right-0 top-0 h-full w-24 opacity-15" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 Q50,50 0,100 L100,100 L100,0 Z" fill="#00ae8c"/></svg>
           <div class="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center relative z-10">
             <span class="material-symbols-outlined text-blue-400 text-2xl">shield_person</span>
@@ -275,7 +275,7 @@ function getTypeIcon(type: string) {
       </div>
 
       <!-- Content -->
-      <div class="bg-white dark:bg-background-dark rounded-xl shadow-sm border border-zinc-200 dark:border-border-dark overflow-hidden">
+      <div class="bg-white dark:bg-background-dark rounded-lg shadow-sm border border-zinc-200 dark:border-border-dark overflow-hidden">
         <!-- Loading -->
         <div v-if="isLoading" class="p-8">
           <div class="flex items-center justify-center gap-3">
@@ -286,7 +286,7 @@ function getTypeIcon(type: string) {
 
         <!-- Empty State -->
         <div v-else-if="filteredUsers.length === 0" class="text-center py-16">
-          <div class="w-16 h-16 rounded-2xl bg-zinc-100 dark:bg-surface-dark flex items-center justify-center mx-auto mb-4">
+          <div class="w-16 h-16 rounded-lg bg-zinc-100 dark:bg-surface-dark flex items-center justify-center mx-auto mb-4">
             <span class="material-symbols-outlined text-4xl text-zinc-400">person_off</span>
           </div>
           <h3 class="text-lg font-semibold text-zinc-700 dark:text-zinc-300">No Users Found</h3>
@@ -374,12 +374,12 @@ function getTypeIcon(type: string) {
               v-for="(user, index) in filteredUsers"
               :key="user.id"
               @click="viewUser(user)"
-              class="bg-zinc-50 dark:bg-surface-dark rounded-xl p-4 hover:shadow-md hover:ring-1 hover:ring-primary/30 transition-all cursor-pointer group"
+              class="bg-zinc-50 dark:bg-surface-dark rounded-lg p-4 hover:shadow-md hover:ring-1 hover:ring-primary/30 transition-all cursor-pointer group"
             >
               <div class="flex items-start gap-3">
                 <div
                   :class="[
-                    'w-12 h-12 rounded-xl flex items-center justify-center text-white text-lg font-semibold flex-shrink-0',
+                    'w-12 h-12 rounded-lg flex items-center justify-center text-white text-lg font-semibold flex-shrink-0',
                     getAvatarColor(index)
                   ]"
                 >
@@ -442,7 +442,7 @@ function getTypeIcon(type: string) {
         leave-to-class="opacity-0"
       >
         <div v-if="showUserModal && selectedUser" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div class="bg-white dark:bg-background-dark rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
+          <div class="bg-white dark:bg-background-dark rounded-lg shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
             <!-- Modal Header -->
             <div class="relative bg-gradient-to-r from-navy to-primary p-6">
               <div class="relative text-center">
@@ -455,7 +455,7 @@ function getTypeIcon(type: string) {
 
               <button
                 @click="showUserModal = false"
-                class="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"
+                class="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
               >
                 <span class="material-symbols-outlined text-white">close</span>
               </button>
@@ -467,7 +467,7 @@ function getTypeIcon(type: string) {
               <div class="space-y-4">
                 <div class="flex items-center justify-between py-3 border-b border-zinc-100 dark:border-border-dark">
                   <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                    <div class="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
                       <span class="material-symbols-outlined text-blue-600 dark:text-blue-400">badge</span>
                     </div>
                     <span class="text-zinc-500 dark:text-zinc-400">Username</span>
@@ -477,7 +477,7 @@ function getTypeIcon(type: string) {
 
                 <div class="flex items-center justify-between py-3 border-b border-zinc-100 dark:border-border-dark">
                   <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                    <div class="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
                       <span class="material-symbols-outlined text-purple-600 dark:text-purple-400">person</span>
                     </div>
                     <span class="text-zinc-500 dark:text-zinc-400">First Name</span>
@@ -487,7 +487,7 @@ function getTypeIcon(type: string) {
 
                 <div class="flex items-center justify-between py-3 border-b border-zinc-100 dark:border-border-dark">
                   <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center">
+                    <div class="w-10 h-10 rounded-lg bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center">
                       <span class="material-symbols-outlined text-teal-600 dark:text-teal-400">person</span>
                     </div>
                     <span class="text-zinc-500 dark:text-zinc-400">Last Name</span>
@@ -497,7 +497,7 @@ function getTypeIcon(type: string) {
 
                 <div class="flex items-center justify-between py-3">
                   <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                    <div class="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
                       <span class="material-symbols-outlined text-amber-600 dark:text-amber-400">mail</span>
                     </div>
                     <span class="text-zinc-500 dark:text-zinc-400">Email</span>
@@ -513,7 +513,7 @@ function getTypeIcon(type: string) {
                   <span class="material-symbols-outlined animate-spin text-primary">progress_activity</span>
                 </div>
                 <template v-else>
-                  <div v-if="userRoles.length === 0" class="text-center py-4 bg-zinc-50 dark:bg-surface-dark rounded-xl mb-3">
+                  <div v-if="userRoles.length === 0" class="text-center py-4 bg-zinc-50 dark:bg-surface-dark rounded-lg mb-3">
                     <span class="material-symbols-outlined text-3xl text-zinc-300 dark:text-zinc-600">admin_panel_settings</span>
                     <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">No roles assigned</p>
                   </div>
@@ -521,9 +521,9 @@ function getTypeIcon(type: string) {
                     <div
                       v-for="role in userRoles"
                       :key="role.id"
-                      class="flex items-center gap-3 p-3 bg-zinc-50 dark:bg-surface-dark rounded-xl group"
+                      class="flex items-center gap-3 p-3 bg-zinc-50 dark:bg-surface-dark rounded-lg group"
                     >
-                      <div class="w-10 h-10 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center">
+                      <div class="w-10 h-10 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center">
                         <span class="material-symbols-outlined text-white text-lg">shield_person</span>
                       </div>
                       <div class="flex-1 min-w-0">
@@ -555,7 +555,7 @@ function getTypeIcon(type: string) {
                     <button
                       @click="assignRoleToUser"
                       :disabled="!selectedRoleToAdd || isAssigningRole"
-                      class="px-4 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5 whitespace-nowrap"
+                      class="px-4 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5 whitespace-nowrap"
                     >
                       <span v-if="isAssigningRole" class="material-symbols-outlined animate-spin text-base">progress_activity</span>
                       <span v-else class="material-symbols-outlined text-base">add</span>
@@ -571,7 +571,7 @@ function getTypeIcon(type: string) {
                 <div v-if="isLoadingDetails" class="flex items-center justify-center py-4">
                   <span class="material-symbols-outlined animate-spin text-primary">progress_activity</span>
                 </div>
-                <div v-else-if="userStructures.length === 0" class="text-center py-4 bg-zinc-50 dark:bg-surface-dark rounded-xl">
+                <div v-else-if="userStructures.length === 0" class="text-center py-4 bg-zinc-50 dark:bg-surface-dark rounded-lg">
                   <span class="material-symbols-outlined text-3xl text-zinc-300 dark:text-zinc-600">apartment</span>
                   <p class="text-sm text-zinc-500 dark:text-zinc-400 mt-1">No structures assigned</p>
                 </div>
@@ -579,9 +579,9 @@ function getTypeIcon(type: string) {
                   <div
                     v-for="structure in userStructures"
                     :key="structure.id"
-                    class="flex items-center gap-3 p-3 bg-zinc-50 dark:bg-surface-dark rounded-xl"
+                    class="flex items-center gap-3 p-3 bg-zinc-50 dark:bg-surface-dark rounded-lg"
                   >
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-r from-primary to-teal-600 flex items-center justify-center">
+                    <div class="w-10 h-10 rounded-lg bg-gradient-to-r from-primary to-teal-600 flex items-center justify-center">
                       <span class="material-symbols-outlined text-white text-lg">{{ getTypeIcon(structure.type) }}</span>
                     </div>
                     <div class="flex-1 min-w-0">
@@ -597,7 +597,7 @@ function getTypeIcon(type: string) {
             <div class="border-t border-zinc-100 dark:border-border-dark p-4 bg-zinc-50 dark:bg-surface-dark/50">
               <button
                 @click="showUserModal = false"
-                class="w-full px-5 py-2.5 bg-gradient-to-r from-navy to-primary text-white rounded-xl font-medium hover:shadow-lg hover:shadow-primary/25 transition-all"
+                class="w-full px-5 py-2.5 bg-gradient-to-r from-navy to-primary text-white rounded-lg font-medium hover:shadow-lg hover:shadow-primary/25 transition-all"
               >
                 Close
               </button>

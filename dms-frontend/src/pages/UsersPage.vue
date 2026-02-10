@@ -77,7 +77,7 @@ function getInitials(user: User) {
     </div>
 
     <!-- Search -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-4 mb-6">
       <div class="flex gap-4">
         <div class="flex-1 relative">
           <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -102,7 +102,7 @@ function getInitials(user: User) {
 
     <!-- Users Grid -->
     <div v-if="isLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <div v-for="i in 6" :key="i" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-pulse">
+      <div v-for="i in 6" :key="i" class="bg-white rounded-lg shadow-sm border border-gray-100 p-6 animate-pulse">
         <div class="flex items-center gap-4">
           <div class="w-12 h-12 bg-gray-200 rounded-full"></div>
           <div class="flex-1">
@@ -113,7 +113,7 @@ function getInitials(user: User) {
       </div>
     </div>
 
-    <div v-else-if="filteredUsers.length === 0" class="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+    <div v-else-if="filteredUsers.length === 0" class="bg-white rounded-lg shadow-sm border border-gray-100 p-12 text-center">
       <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
       </svg>
@@ -125,7 +125,7 @@ function getInitials(user: User) {
         v-for="user in filteredUsers"
         :key="user.id"
         @click="viewUser(user)"
-        class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow cursor-pointer"
+        class="bg-white rounded-lg shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow cursor-pointer"
       >
         <div class="flex items-center gap-4">
           <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-full flex items-center justify-center text-white font-medium">
@@ -146,7 +146,7 @@ function getInitials(user: User) {
     <!-- Roles Section -->
     <div class="mt-8">
       <h2 class="text-lg font-semibold text-gray-900 mb-4">Roles</h2>
-      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
         <table class="w-full">
           <thead class="bg-gray-50">
             <tr>
@@ -173,7 +173,7 @@ function getInitials(user: User) {
 
     <!-- User Details Modal -->
     <div v-if="showUserModal && selectedUser" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
         <div class="p-6">
           <div class="flex items-center justify-between mb-6">
             <h3 class="text-lg font-semibold text-gray-900">User Details</h3>

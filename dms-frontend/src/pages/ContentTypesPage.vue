@@ -164,7 +164,7 @@ function getFileIcon(extension: string): string {
       </div>
 
       <!-- Content Types Table -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div v-if="isLoading" class="p-8 text-center text-gray-500">
           <svg class="animate-spin h-8 w-8 mx-auto text-blue-600" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -264,7 +264,7 @@ function getFileIcon(extension: string): string {
 
     <!-- Create/Edit Modal -->
     <div v-if="showModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4">
         <div class="p-6">
           <h3 class="text-lg font-semibold text-gray-900 mb-4">
             {{ isEditing ? 'Edit Content Type' : 'Add Content Type' }}
@@ -350,7 +350,7 @@ function getFileIcon(extension: string): string {
 
     <!-- Delete Confirmation Modal -->
     <div v-if="showDeleteConfirm" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm mx-4">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-sm mx-4">
         <div class="p-6">
           <div class="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
             <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

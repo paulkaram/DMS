@@ -9,13 +9,19 @@ public class DocumentCommentService : IDocumentCommentService
 {
     private readonly IDocumentCommentRepository _commentRepository;
     private readonly IActivityLogRepository _activityLogRepository;
+    private readonly IUserRepository _userRepository;
+    private readonly IDocumentRepository _documentRepository;
 
     public DocumentCommentService(
         IDocumentCommentRepository commentRepository,
-        IActivityLogRepository activityLogRepository)
+        IActivityLogRepository activityLogRepository,
+        IUserRepository userRepository,
+        IDocumentRepository documentRepository)
     {
         _commentRepository = commentRepository;
         _activityLogRepository = activityLogRepository;
+        _userRepository = userRepository;
+        _documentRepository = documentRepository;
     }
 
     public async Task<IEnumerable<DocumentCommentDto>> GetByDocumentIdAsync(Guid documentId)
@@ -50,13 +56,19 @@ public class DocumentCommentService : IDocumentCommentService
         comment.Id = id;
 
         // Log activity
+        var user = await _userRepository.GetByIdAsync(userId);
+        var userName = user?.DisplayName ?? user?.Username ?? "Unknown User";
+        var document = await _documentRepository.GetByIdAsync(request.DocumentId);
+        var nodeName = document != null ? document.Name + (document.Extension ?? "") : null;
         await _activityLogRepository.CreateAsync(new ActivityLog
         {
             NodeType = NodeType.Document,
             NodeId = request.DocumentId,
+            NodeName = nodeName,
             Action = request.ParentCommentId.HasValue ? "ReplyAdded" : "CommentAdded",
             Details = $"Comment added: {request.Content.Substring(0, Math.Min(100, request.Content.Length))}...",
-            UserId = userId
+            UserId = userId,
+            UserName = userName
         });
 
         return await GetByIdAsync(id) ?? MapToDto(comment);
@@ -74,13 +86,19 @@ public class DocumentCommentService : IDocumentCommentService
 
         if (result)
         {
+            var user = await _userRepository.GetByIdAsync(userId);
+            var userName = user?.DisplayName ?? user?.Username ?? "Unknown User";
+            var document = await _documentRepository.GetByIdAsync(comment.DocumentId);
+            var nodeName = document != null ? document.Name + (document.Extension ?? "") : null;
             await _activityLogRepository.CreateAsync(new ActivityLog
             {
                 NodeType = NodeType.Document,
                 NodeId = comment.DocumentId,
+                NodeName = nodeName,
                 Action = "CommentUpdated",
                 Details = $"Comment updated",
-                UserId = userId
+                UserId = userId,
+                UserName = userName
             });
         }
 
@@ -96,13 +114,19 @@ public class DocumentCommentService : IDocumentCommentService
 
         if (result)
         {
+            var user = await _userRepository.GetByIdAsync(userId);
+            var userName = user?.DisplayName ?? user?.Username ?? "Unknown User";
+            var document = await _documentRepository.GetByIdAsync(comment.DocumentId);
+            var nodeName = document != null ? document.Name + (document.Extension ?? "") : null;
             await _activityLogRepository.CreateAsync(new ActivityLog
             {
                 NodeType = NodeType.Document,
                 NodeId = comment.DocumentId,
+                NodeName = nodeName,
                 Action = "CommentDeleted",
                 Details = "Comment deleted",
-                UserId = userId
+                UserId = userId,
+                UserName = userName
             });
         }
 

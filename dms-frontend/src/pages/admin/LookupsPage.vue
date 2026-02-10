@@ -125,7 +125,7 @@ function deleteItem(id: string) {
 
       <div class="grid grid-cols-3 gap-6">
         <!-- Lookups List -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <div class="p-4 border-b border-gray-200">
             <h3 class="font-medium text-gray-900">Lookup Tables</h3>
           </div>
@@ -160,7 +160,7 @@ function deleteItem(id: string) {
         </div>
 
         <!-- Lookup Items -->
-        <div class="col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="col-span-2 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <div class="p-4 border-b border-gray-200 flex items-center justify-between">
             <h3 class="font-medium text-gray-900">
               {{ selectedLookup ? `Items in "${selectedLookup.name}"` : 'Select a lookup' }}
@@ -222,7 +222,7 @@ function deleteItem(id: string) {
 
     <!-- Lookup Modal -->
     <div v-if="showLookupModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ isEditing ? 'Edit Lookup' : 'New Lookup' }}</h3>
         <div class="space-y-4">
           <div>
@@ -243,7 +243,7 @@ function deleteItem(id: string) {
 
     <!-- Item Modal -->
     <div v-if="showItemModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ isEditing ? 'Edit Item' : 'New Item' }}</h3>
         <div class="space-y-4">
           <div>

@@ -293,14 +293,14 @@ async function handleToggleInherit(assignment: FolderContentTypeAssignment) {
           leave-from-class="opacity-100 scale-100"
           leave-to-class="opacity-0 scale-95"
         >
-          <div class="bg-white dark:bg-background-dark rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col ring-1 ring-black/5 dark:ring-white/10">
+          <div class="bg-white dark:bg-background-dark rounded-lg shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col ring-1 ring-black/5 dark:ring-white/10">
             <!-- Header -->
             <div class="relative bg-gradient-to-r from-navy via-navy/95 to-primary p-5 overflow-hidden">
               <div class="absolute top-0 right-0 w-48 h-48 bg-primary/20 rounded-full -translate-y-1/2 translate-x-1/2"></div>
 
               <div class="relative flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 bg-primary/30 backdrop-blur rounded-xl flex items-center justify-center">
+                  <div class="w-10 h-10 bg-primary/30 backdrop-blur rounded-lg flex items-center justify-center">
                     <span class="material-symbols-outlined text-white text-xl">category</span>
                   </div>
                   <div>
@@ -313,7 +313,7 @@ async function handleToggleInherit(assignment: FolderContentTypeAssignment) {
                 </div>
                 <button
                   @click="emit('close')"
-                  class="w-9 h-9 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
+                  class="w-9 h-9 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
                 >
                   <span class="material-symbols-outlined text-white">close</span>
                 </button>
@@ -324,14 +324,14 @@ async function handleToggleInherit(assignment: FolderContentTypeAssignment) {
             <div class="flex-1 overflow-y-auto p-5">
               <!-- Messages -->
               <Transition enter-active-class="duration-300 ease-out" enter-from-class="opacity-0 -translate-y-2">
-                <div v-if="error" class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl flex items-center gap-2">
+                <div v-if="error" class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-lg flex items-center gap-2">
                   <span class="material-symbols-outlined text-red-500">error</span>
                   <p class="text-sm text-red-600 dark:text-red-400">{{ error }}</p>
                 </div>
               </Transition>
 
               <Transition enter-active-class="duration-300 ease-out" enter-from-class="opacity-0 -translate-y-2">
-                <div v-if="successMessage" class="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50 rounded-xl flex items-center gap-2">
+                <div v-if="successMessage" class="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50 rounded-lg flex items-center gap-2">
                   <span class="material-symbols-outlined text-green-500">check_circle</span>
                   <p class="text-sm text-green-600 dark:text-green-400">{{ successMessage }}</p>
                 </div>
@@ -339,7 +339,7 @@ async function handleToggleInherit(assignment: FolderContentTypeAssignment) {
 
               <!-- Loading -->
               <div v-if="isLoading" class="flex flex-col items-center justify-center py-12">
-                <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
+                <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
                   <span class="material-symbols-outlined animate-spin text-primary text-2xl">progress_activity</span>
                 </div>
                 <p class="text-sm text-gray-500">Loading content types...</p>
@@ -363,7 +363,7 @@ async function handleToggleInherit(assignment: FolderContentTypeAssignment) {
                     </button>
                   </div>
 
-                  <div v-if="directAssignments.length === 0" class="text-center py-8 bg-gray-50 dark:bg-surface-dark/50 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
+                  <div v-if="directAssignments.length === 0" class="text-center py-8 bg-gray-50 dark:bg-surface-dark/50 rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
                     <span class="material-symbols-outlined text-4xl text-gray-400 mb-2">category</span>
                     <p class="text-sm text-gray-500">No content types assigned directly</p>
                     <p class="text-xs text-gray-400 mt-1">Click "Add" to assign a content type</p>
@@ -373,7 +373,7 @@ async function handleToggleInherit(assignment: FolderContentTypeAssignment) {
                     <div
                       v-for="assignment in directAssignments"
                       :key="assignment.id"
-                      class="p-3 bg-gray-50 dark:bg-surface-dark/50 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-primary/30 transition-colors"
+                      class="p-3 bg-gray-50 dark:bg-surface-dark/50 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary/30 transition-colors"
                     >
                       <div class="flex items-center gap-3">
                         <div
@@ -456,7 +456,7 @@ async function handleToggleInherit(assignment: FolderContentTypeAssignment) {
                     <div
                       v-for="ct in effectiveContentTypes.filter(c => c.source !== 'Direct')"
                       :key="ct.contentTypeId"
-                      class="p-3 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl border border-blue-200/50 dark:border-blue-800/30"
+                      class="p-3 bg-blue-50/50 dark:bg-blue-900/10 rounded-lg border border-blue-200/50 dark:border-blue-800/30"
                     >
                       <div class="flex items-center gap-3">
                         <div
@@ -493,7 +493,7 @@ async function handleToggleInherit(assignment: FolderContentTypeAssignment) {
 
                 <!-- Empty state when no content types at all -->
                 <div v-if="!hasDirectAssignments && !hasInheritedAssignments" class="text-center py-8">
-                  <div class="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-surface-dark flex items-center justify-center mx-auto mb-4">
+                  <div class="w-16 h-16 rounded-lg bg-gray-100 dark:bg-surface-dark flex items-center justify-center mx-auto mb-4">
                     <span class="material-symbols-outlined text-4xl text-gray-400">category</span>
                   </div>
                   <p class="text-sm font-medium text-gray-700 dark:text-gray-300">No Content Types</p>
@@ -512,7 +512,7 @@ async function handleToggleInherit(assignment: FolderContentTypeAssignment) {
               leave-to-class="opacity-0"
             >
               <div v-if="showAssignForm" class="absolute inset-0 bg-black/40 flex items-center justify-center p-6">
-                <div class="bg-white dark:bg-background-dark rounded-xl shadow-xl w-full max-w-md p-5">
+                <div class="bg-white dark:bg-background-dark rounded-lg shadow-xl w-full max-w-md p-5">
                   <h4 class="text-base font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                     <span class="material-symbols-outlined text-primary">add_circle</span>
                     Assign Content Type
@@ -574,7 +574,7 @@ async function handleToggleInherit(assignment: FolderContentTypeAssignment) {
               <div class="flex justify-end">
                 <button
                   @click="emit('close')"
-                  class="px-5 py-2 text-sm font-medium bg-gradient-to-r from-navy to-primary text-white rounded-xl hover:shadow-lg hover:shadow-primary/25 transition-all"
+                  class="px-5 py-2 text-sm font-medium bg-gradient-to-r from-navy to-primary text-white rounded-lg hover:shadow-lg hover:shadow-primary/25 transition-all"
                 >
                   Done
                 </button>

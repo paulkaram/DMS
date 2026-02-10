@@ -169,7 +169,7 @@ const totalLinks = computed(() => outgoingLinks.value.length + incomingLinks.val
       <button
         v-if="canEdit"
         @click="showLinkForm = !showLinkForm"
-        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-teal text-white text-sm font-medium rounded-xl hover:bg-teal/90 transition-colors shadow-sm"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-teal text-white text-sm font-medium rounded-lg hover:bg-teal/90 transition-colors shadow-sm"
       >
         <span class="material-symbols-outlined text-lg">add</span>
         Add Link
@@ -296,7 +296,7 @@ const totalLinks = computed(() => outgoingLinks.value.length + incomingLinks.val
             <div
               v-for="link in outgoingLinks"
               :key="link.id"
-              class="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-surface-dark rounded-xl hover:bg-zinc-100 dark:hover:bg-surface-dark/80 transition-colors group"
+              class="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-surface-dark rounded-lg hover:bg-zinc-100 dark:hover:bg-surface-dark/80 transition-colors group"
             >
               <div class="w-10 h-10 rounded-lg bg-teal/10 flex items-center justify-center text-teal flex-shrink-0">
                 <span class="material-symbols-outlined">{{ getLinkTypeInfo(link.linkType).icon }}</span>
@@ -333,7 +333,7 @@ const totalLinks = computed(() => outgoingLinks.value.length + incomingLinks.val
             <div
               v-for="link in incomingLinks"
               :key="link.id"
-              class="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-surface-dark rounded-xl hover:bg-zinc-100 dark:hover:bg-surface-dark/80 transition-colors cursor-pointer"
+              class="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-surface-dark rounded-lg hover:bg-zinc-100 dark:hover:bg-surface-dark/80 transition-colors cursor-pointer"
               @click="navigateToDocument(link.sourceDocumentId)"
             >
               <div class="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500 flex-shrink-0">

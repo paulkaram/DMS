@@ -374,7 +374,7 @@ const inheritedPermissions = computed(() =>
           leave-from-class="opacity-100 scale-100"
           leave-to-class="opacity-0 scale-95"
         >
-          <div class="bg-white dark:bg-background-dark rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col ring-1 ring-black/5 dark:ring-white/10">
+          <div class="bg-white dark:bg-background-dark rounded-lg shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col ring-1 ring-black/5 dark:ring-white/10">
             <!-- Header - Dark gradient like FolderContentTypeModal -->
             <div class="relative bg-gradient-to-r from-navy via-navy/95 to-primary p-5 overflow-hidden">
               <div class="absolute top-0 right-0 w-48 h-48 bg-primary/20 rounded-full -translate-y-1/2 translate-x-1/2"></div>
@@ -382,7 +382,7 @@ const inheritedPermissions = computed(() =>
 
               <div class="relative flex items-center justify-between">
                 <div class="flex items-center gap-4">
-                  <div class="w-12 h-12 bg-primary/30 backdrop-blur rounded-xl flex items-center justify-center ring-1 ring-white/20">
+                  <div class="w-12 h-12 bg-primary/30 backdrop-blur rounded-lg flex items-center justify-center ring-1 ring-white/20">
                     <span class="material-symbols-outlined text-white text-2xl">admin_panel_settings</span>
                   </div>
                   <div>
@@ -395,7 +395,7 @@ const inheritedPermissions = computed(() =>
                 </div>
                 <button
                   @click="emit('close')"
-                  class="w-9 h-9 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
+                  class="w-9 h-9 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
                 >
                   <span class="material-symbols-outlined text-white">close</span>
                 </button>
@@ -434,7 +434,7 @@ const inheritedPermissions = computed(() =>
             <div class="flex-1 overflow-y-auto p-5">
               <!-- Messages -->
               <Transition enter-active-class="duration-300 ease-out" enter-from-class="opacity-0 -translate-y-2">
-                <div v-if="error" class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl flex items-center gap-2">
+                <div v-if="error" class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-lg flex items-center gap-2">
                   <span class="material-symbols-outlined text-red-500">error</span>
                   <p class="text-sm text-red-600 dark:text-red-400 flex-1">{{ error }}</p>
                   <button @click="error = null" class="p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg">
@@ -444,7 +444,7 @@ const inheritedPermissions = computed(() =>
               </Transition>
 
               <Transition enter-active-class="duration-300 ease-out" enter-from-class="opacity-0 -translate-y-2">
-                <div v-if="successMessage" class="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50 rounded-xl flex items-center gap-2">
+                <div v-if="successMessage" class="mb-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50 rounded-lg flex items-center gap-2">
                   <span class="material-symbols-outlined text-green-500">check_circle</span>
                   <p class="text-sm text-green-600 dark:text-green-400">{{ successMessage }}</p>
                 </div>
@@ -452,7 +452,7 @@ const inheritedPermissions = computed(() =>
 
               <!-- Loading -->
               <div v-if="isLoading" class="flex flex-col items-center justify-center py-12">
-                <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
+                <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
                   <span class="material-symbols-outlined animate-spin text-primary text-2xl">progress_activity</span>
                 </div>
                 <p class="text-sm text-gray-500">Loading permissions...</p>
@@ -463,7 +463,7 @@ const inheritedPermissions = computed(() =>
                 <!-- Inheritance Control -->
                 <div
                   v-if="nodeType !== 'Document'"
-                  class="p-4 rounded-xl border"
+                  class="p-4 rounded-lg border"
                   :class="nodePermissions?.breakInheritance
                     ? 'bg-zinc-50 dark:bg-surface-dark/50 border-zinc-200 dark:border-border-dark'
                     : 'bg-primary/5 dark:bg-primary/10 border-primary/20 dark:border-primary/30'"
@@ -471,7 +471,7 @@ const inheritedPermissions = computed(() =>
                   <div class="flex items-center justify-between">
                     <div class="flex items-center gap-4">
                       <div
-                        class="w-12 h-12 rounded-xl flex items-center justify-center"
+                        class="w-12 h-12 rounded-lg flex items-center justify-center"
                         :class="nodePermissions?.breakInheritance
                           ? 'bg-zinc-200 dark:bg-border-dark'
                           : 'bg-primary/20 dark:bg-primary/30'"
@@ -497,7 +497,7 @@ const inheritedPermissions = computed(() =>
                     <button
                       @click="handleInheritanceClick"
                       :disabled="isSaving"
-                      class="px-4 py-2.5 rounded-xl font-medium transition-all flex items-center gap-2 border-2 border-primary text-primary hover:bg-primary hover:text-white"
+                      class="px-4 py-2.5 rounded-lg font-medium transition-all flex items-center gap-2 border-2 border-primary text-primary hover:bg-primary hover:text-white"
                     >
                       <span class="material-symbols-outlined text-lg">{{ nodePermissions?.breakInheritance ? 'link' : 'link_off' }}</span>
                       {{ nodePermissions?.breakInheritance ? 'Restore Inheritance' : 'Break Inheritance' }}
@@ -509,7 +509,7 @@ const inheritedPermissions = computed(() =>
                 <div v-if="!showAddForm" class="flex justify-end">
                   <button
                     @click="openAddForm"
-                    class="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-navy to-primary text-white rounded-xl hover:shadow-lg hover:shadow-primary/25 transition-all font-medium"
+                    class="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-navy to-primary text-white rounded-lg hover:shadow-lg hover:shadow-primary/25 transition-all font-medium"
                   >
                     <span class="material-symbols-outlined">add</span>
                     Add Permission
@@ -525,7 +525,7 @@ const inheritedPermissions = computed(() =>
                   leave-from-class="opacity-100"
                   leave-to-class="opacity-0"
                 >
-                  <div v-if="showAddForm" class="p-5 bg-zinc-50 dark:bg-surface-dark/50 rounded-xl border border-zinc-200 dark:border-border-dark space-y-5">
+                  <div v-if="showAddForm" class="p-5 bg-zinc-50 dark:bg-surface-dark/50 rounded-lg border border-zinc-200 dark:border-border-dark space-y-5">
                     <div class="flex items-center justify-between">
                       <h4 class="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
                         <span class="material-symbols-outlined text-primary">add_circle</span>
@@ -551,7 +551,7 @@ const inheritedPermissions = computed(() =>
                           :key="preset.id"
                           type="button"
                           @click="selectedPreset = preset.id"
-                          class="relative p-4 rounded-xl border-2 transition-all duration-200 text-left group hover:shadow-md"
+                          class="relative p-4 rounded-lg border-2 transition-all duration-200 text-left group hover:shadow-md"
                           :class="selectedPreset === preset.id ? preset.selectedBg : preset.bgColor + ' hover:border-gray-300 dark:hover:border-gray-600'"
                         >
                           <!-- Selected indicator -->
@@ -564,7 +564,7 @@ const inheritedPermissions = computed(() =>
 
                           <!-- Icon -->
                           <div
-                            class="w-10 h-10 rounded-xl flex items-center justify-center mb-3 shadow-lg transition-transform group-hover:scale-105"
+                            class="w-10 h-10 rounded-lg flex items-center justify-center mb-3 shadow-lg transition-transform group-hover:scale-105"
                             :class="preset.color"
                           >
                             <span class="material-symbols-outlined text-white">{{ preset.icon }}</span>
@@ -613,7 +613,7 @@ const inheritedPermissions = computed(() =>
                               v-model="grantedReason"
                               type="text"
                               placeholder="Why is this permission being granted?"
-                              class="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-surface-dark text-gray-900 dark:text-white"
+                              class="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-surface-dark text-gray-900 dark:text-white"
                             />
                           </div>
 
@@ -632,14 +632,14 @@ const inheritedPermissions = computed(() =>
                     <div class="flex justify-end gap-3 pt-2 border-t border-zinc-200 dark:border-border-dark">
                       <button
                         @click="showAddForm = false"
-                        class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-border-dark rounded-xl transition-colors font-medium"
+                        class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-border-dark rounded-lg transition-colors font-medium"
                       >
                         Cancel
                       </button>
                       <button
                         @click="addPermission"
                         :disabled="!selectedPrincipal || isSaving"
-                        class="px-5 py-2 bg-gradient-to-r from-navy to-primary text-white rounded-xl hover:shadow-lg hover:shadow-primary/25 disabled:opacity-50 transition-all font-medium flex items-center gap-2"
+                        class="px-5 py-2 bg-gradient-to-r from-navy to-primary text-white rounded-lg hover:shadow-lg hover:shadow-primary/25 disabled:opacity-50 transition-all font-medium flex items-center gap-2"
                       >
                         <span v-if="isSaving" class="material-symbols-outlined animate-spin text-sm">progress_activity</span>
                         {{ isSaving ? 'Saving...' : 'Add Permission' }}
@@ -656,7 +656,7 @@ const inheritedPermissions = computed(() =>
                     <span class="px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full">{{ directPermissions.length }}</span>
                   </h4>
 
-                  <div v-if="directPermissions.length === 0" class="text-center py-8 bg-gray-50 dark:bg-surface-dark/50 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
+                  <div v-if="directPermissions.length === 0" class="text-center py-8 bg-gray-50 dark:bg-surface-dark/50 rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
                     <span class="material-symbols-outlined text-4xl text-gray-400 mb-2">shield</span>
                     <p class="text-sm text-gray-500 dark:text-gray-400">No direct permissions configured</p>
                     <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Click "Add Permission" to grant access</p>
@@ -666,7 +666,7 @@ const inheritedPermissions = computed(() =>
                     <div
                       v-for="(perm, index) in directPermissions"
                       :key="perm.id"
-                      class="p-4 bg-white dark:bg-surface-dark border border-gray-100 dark:border-gray-700 rounded-xl hover:border-primary/30 dark:hover:border-primary/50 transition-all hover:shadow-md"
+                      class="p-4 bg-white dark:bg-surface-dark border border-gray-100 dark:border-gray-700 rounded-lg hover:border-primary/30 dark:hover:border-primary/50 transition-all hover:shadow-md"
                     >
                       <!-- Edit Mode -->
                       <div v-if="editingPermission?.id === perm.id" class="space-y-4">
@@ -733,7 +733,7 @@ const inheritedPermissions = computed(() =>
 
                       <!-- View Mode -->
                       <div v-else class="flex items-center gap-4">
-                        <div :class="['w-11 h-11 rounded-xl flex items-center justify-center text-white shadow-lg', getAvatarColor(index)]">
+                        <div :class="['w-11 h-11 rounded-lg flex items-center justify-center text-white shadow-lg', getAvatarColor(index)]">
                           <span class="material-symbols-outlined">{{ getPrincipalIcon(perm.principalType) }}</span>
                         </div>
                         <div class="flex-1 min-w-0">
@@ -783,10 +783,10 @@ const inheritedPermissions = computed(() =>
                     <div
                       v-for="(perm, index) in inheritedPermissions"
                       :key="perm.id"
-                      class="p-4 bg-primary/5 dark:bg-primary/10 border border-primary/20 dark:border-primary/30 rounded-xl"
+                      class="p-4 bg-primary/5 dark:bg-primary/10 border border-primary/20 dark:border-primary/30 rounded-lg"
                     >
                       <div class="flex items-center gap-4">
-                        <div :class="['w-11 h-11 rounded-xl flex items-center justify-center text-white shadow-lg opacity-80', getAvatarColor(index)]">
+                        <div :class="['w-11 h-11 rounded-lg flex items-center justify-center text-white shadow-lg opacity-80', getAvatarColor(index)]">
                           <span class="material-symbols-outlined">{{ getPrincipalIcon(perm.principalType) }}</span>
                         </div>
                         <div class="flex-1 min-w-0">
@@ -815,7 +815,7 @@ const inheritedPermissions = computed(() =>
               <!-- Audit Tab -->
               <div v-else-if="activeTab === 'audit'" class="space-y-4">
                 <div v-if="auditLogs.length === 0" class="text-center py-12">
-                  <div class="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-surface-dark flex items-center justify-center mx-auto mb-4">
+                  <div class="w-16 h-16 rounded-lg bg-gray-100 dark:bg-surface-dark flex items-center justify-center mx-auto mb-4">
                     <span class="material-symbols-outlined text-4xl text-gray-400">history</span>
                   </div>
                   <p class="text-sm font-medium text-gray-700 dark:text-gray-300">No Audit Records</p>
@@ -826,11 +826,11 @@ const inheritedPermissions = computed(() =>
                   <div
                     v-for="log in auditLogs"
                     :key="log.id"
-                    class="p-4 bg-white dark:bg-surface-dark border border-gray-100 dark:border-gray-700 rounded-xl hover:shadow-md transition-shadow"
+                    class="p-4 bg-white dark:bg-surface-dark border border-gray-100 dark:border-gray-700 rounded-lg hover:shadow-md transition-shadow"
                   >
                     <div class="flex items-start gap-4">
                       <div
-                        class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                        class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
                         :class="{
                           'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400': log.action === 'Grant',
                           'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400': log.action === 'Revoke',
@@ -880,7 +880,7 @@ const inheritedPermissions = computed(() =>
               <div class="flex justify-end">
                 <button
                   @click="emit('close')"
-                  class="px-5 py-2.5 text-sm font-medium bg-gradient-to-r from-navy to-primary text-white rounded-xl hover:shadow-lg hover:shadow-primary/25 transition-all"
+                  class="px-5 py-2.5 text-sm font-medium bg-gradient-to-r from-navy to-primary text-white rounded-lg hover:shadow-lg hover:shadow-primary/25 transition-all"
                 >
                   Done
                 </button>
@@ -901,11 +901,11 @@ const inheritedPermissions = computed(() =>
       leave-to-class="opacity-0"
     >
       <div v-if="showBreakInheritanceDialog" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4" @click.self="showBreakInheritanceDialog = false">
-        <div class="bg-white dark:bg-background-dark rounded-2xl shadow-2xl w-full max-w-md overflow-hidden ring-1 ring-black/5 dark:ring-white/10">
+        <div class="bg-white dark:bg-background-dark rounded-lg shadow-2xl w-full max-w-md overflow-hidden ring-1 ring-black/5 dark:ring-white/10">
           <!-- Header -->
           <div class="p-5 bg-gradient-to-r from-amber-500 to-orange-500">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+              <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
                 <span class="material-symbols-outlined text-white text-xl">link_off</span>
               </div>
               <div>
@@ -922,7 +922,7 @@ const inheritedPermissions = computed(() =>
             </p>
 
             <div class="space-y-3">
-              <label class="flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all"
+              <label class="flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all"
                 :class="copyPermissionsOnBreak
                   ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-700'
                   : 'bg-white dark:bg-surface-dark border-gray-200 dark:border-gray-700 hover:border-gray-300'"
@@ -940,7 +940,7 @@ const inheritedPermissions = computed(() =>
                 </div>
               </label>
 
-              <label class="flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all"
+              <label class="flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all"
                 :class="!copyPermissionsOnBreak
                   ? 'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700'
                   : 'bg-white dark:bg-surface-dark border-gray-200 dark:border-gray-700 hover:border-gray-300'"
@@ -959,7 +959,7 @@ const inheritedPermissions = computed(() =>
               </label>
             </div>
 
-            <div v-if="!copyPermissionsOnBreak" class="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-xl">
+            <div v-if="!copyPermissionsOnBreak" class="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50 rounded-lg">
               <div class="flex items-start gap-2">
                 <span class="material-symbols-outlined text-amber-600 text-lg">warning</span>
                 <p class="text-xs text-amber-700 dark:text-amber-400">
@@ -973,14 +973,14 @@ const inheritedPermissions = computed(() =>
           <div class="p-4 bg-gray-50 dark:bg-surface-dark/50 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
             <button
               @click="showBreakInheritanceDialog = false"
-              class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-border-dark rounded-xl transition-colors"
+              class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-border-dark rounded-lg transition-colors"
             >
               Cancel
             </button>
             <button
               @click="performInheritanceChange"
               :disabled="isSaving"
-              class="px-4 py-2 text-sm font-medium bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl hover:shadow-lg transition-all disabled:opacity-50 flex items-center gap-2"
+              class="px-4 py-2 text-sm font-medium bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg hover:shadow-lg transition-all disabled:opacity-50 flex items-center gap-2"
             >
               <span v-if="isSaving" class="material-symbols-outlined animate-spin text-sm">progress_activity</span>
               Break Inheritance

@@ -78,7 +78,7 @@ defineExpose({ focus, textareaRef })
         :readonly="readonly"
         :rows="rows"
         :maxlength="maxlength"
-        class="w-full bg-white border rounded-xl px-4 py-3 text-sm transition-all duration-200
+        class="w-full bg-white border rounded-lg px-4 py-3 text-sm transition-all duration-200
                focus:outline-none focus:ring-2 focus:ring-teal/50 focus:border-teal
                disabled:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60
                placeholder:text-gray-400"

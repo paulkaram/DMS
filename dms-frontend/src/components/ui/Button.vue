@@ -73,7 +73,7 @@ function handleClick(e: MouseEvent) {
     :class="[
       variantClasses,
       sizeClasses,
-      rounded ? 'rounded-full' : 'rounded-xl',
+      rounded ? 'rounded-full' : 'rounded-lg',
       block ? 'w-full' : ''
     ]"
     @click="handleClick"

@@ -17,9 +17,11 @@ public class ActivityLogRepository : IActivityLogRepository
     {
         using var connection = _connectionFactory.CreateConnection();
         return await connection.QueryAsync<ActivityLog>(@"
-            SELECT * FROM ActivityLogs
-            WHERE NodeType = @NodeType AND NodeId = @NodeId
-            ORDER BY CreatedAt DESC
+            SELECT a.*, COALESCE(a.UserName, u.DisplayName, u.Username) AS UserName
+            FROM ActivityLogs a
+            LEFT JOIN Users u ON a.UserId = u.Id
+            WHERE a.NodeType = @NodeType AND a.NodeId = @NodeId
+            ORDER BY a.CreatedAt DESC
             OFFSET @Skip ROWS FETCH NEXT @Take ROWS ONLY",
             new { NodeType = (int)nodeType, NodeId = nodeId, Skip = skip, Take = take });
     }
@@ -28,9 +30,11 @@ public class ActivityLogRepository : IActivityLogRepository
     {
         using var connection = _connectionFactory.CreateConnection();
         return await connection.QueryAsync<ActivityLog>(@"
-            SELECT * FROM ActivityLogs
-            WHERE UserId = @UserId
-            ORDER BY CreatedAt DESC
+            SELECT a.*, COALESCE(a.UserName, u.DisplayName, u.Username) AS UserName
+            FROM ActivityLogs a
+            LEFT JOIN Users u ON a.UserId = u.Id
+            WHERE a.UserId = @UserId
+            ORDER BY a.CreatedAt DESC
             OFFSET @Skip ROWS FETCH NEXT @Take ROWS ONLY",
             new { UserId = userId, Skip = skip, Take = take });
     }
@@ -39,8 +43,10 @@ public class ActivityLogRepository : IActivityLogRepository
     {
         using var connection = _connectionFactory.CreateConnection();
         return await connection.QueryAsync<ActivityLog>(@"
-            SELECT TOP (@Take) * FROM ActivityLogs
-            ORDER BY CreatedAt DESC",
+            SELECT TOP (@Take) a.*, COALESCE(a.UserName, u.DisplayName, u.Username) AS UserName
+            FROM ActivityLogs a
+            LEFT JOIN Users u ON a.UserId = u.Id
+            ORDER BY a.CreatedAt DESC",
             new { Take = take });
     }
 

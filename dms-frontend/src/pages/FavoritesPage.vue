@@ -174,7 +174,7 @@ function formatDate(dateStr: string): string {
       </div>
       <button
         @click="loadFavorites"
-        class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-surface-dark hover:bg-zinc-50 dark:hover:bg-border-dark text-zinc-700 dark:text-zinc-300 rounded-xl font-medium text-sm transition-colors border border-zinc-200 dark:border-border-dark"
+        class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-surface-dark hover:bg-zinc-50 dark:hover:bg-border-dark text-zinc-700 dark:text-zinc-300 rounded-lg font-medium text-sm transition-colors border border-zinc-200 dark:border-border-dark"
       >
         <span class="material-symbols-outlined text-lg">refresh</span>
         Refresh
@@ -182,7 +182,7 @@ function formatDate(dateStr: string): string {
     </div>
 
     <!-- Stats Card -->
-    <div class="bg-[#0d1117] p-6 rounded-2xl text-white shadow-xl border border-zinc-800/50 max-w-xs relative overflow-hidden">
+    <div class="bg-[#0d1117] p-6 rounded-lg text-white shadow-xl border border-zinc-800/50 max-w-xs relative overflow-hidden">
       <svg class="absolute right-0 top-0 h-full w-32 opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
         <path d="M0,0 Q50,50 0,100 L100,100 L100,0 Z" fill="#00ae8c"/>
       </svg>
@@ -197,7 +197,7 @@ function formatDate(dateStr: string): string {
     </div>
 
     <!-- Main Content -->
-    <div class="bg-white dark:bg-background-dark rounded-2xl shadow-sm border border-zinc-200 dark:border-border-dark overflow-hidden">
+    <div class="bg-white dark:bg-background-dark rounded-lg shadow-sm border border-zinc-200 dark:border-border-dark overflow-hidden">
       <!-- Loading State -->
       <div v-if="isLoading" class="flex items-center justify-center py-16">
         <div class="animate-spin w-8 h-8 border-4 border-teal border-t-transparent rounded-full"></div>
@@ -205,14 +205,14 @@ function formatDate(dateStr: string): string {
 
       <!-- Empty State -->
       <div v-else-if="favorites.length === 0" class="text-center py-12">
-        <div class="w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-surface-dark flex items-center justify-center mx-auto mb-4">
+        <div class="w-20 h-20 rounded-lg bg-zinc-100 dark:bg-surface-dark flex items-center justify-center mx-auto mb-4">
           <span class="material-symbols-outlined text-5xl text-zinc-400">star</span>
         </div>
         <h3 class="text-lg font-semibold text-zinc-700 dark:text-zinc-300">No favorites yet</h3>
         <p class="text-zinc-500 mt-1">Star items to add them to your favorites</p>
         <router-link
           to="/explorer"
-          class="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-teal hover:bg-teal/90 text-white rounded-xl font-medium text-sm transition-colors"
+          class="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-teal hover:bg-teal/90 text-white rounded-lg font-medium text-sm transition-colors"
         >
           <span class="material-symbols-outlined text-lg">explore</span>
           Go to Explorer
@@ -226,7 +226,7 @@ function formatDate(dateStr: string): string {
           :key="item.id"
           @contextmenu="showContextMenu($event, item)"
           @dblclick="openFile(item)"
-          class="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-surface-dark rounded-xl border border-zinc-100 dark:border-border-dark hover:border-teal/30 hover:shadow-md transition-all cursor-pointer"
+          class="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-surface-dark rounded-lg border border-zinc-100 dark:border-border-dark hover:border-teal/30 hover:shadow-md transition-all cursor-pointer"
         >
           <!-- Avatar with alternating colors -->
           <DocumentIcon
@@ -333,7 +333,7 @@ function formatDate(dateStr: string): string {
       >
         <div
           v-if="contextMenu.show && contextMenu.item"
-          class="fixed z-[9999] bg-white dark:bg-surface-dark rounded-xl shadow-xl border border-gray-200 dark:border-border-dark py-1.5 min-w-[180px]"
+          class="fixed z-[9999] bg-white dark:bg-surface-dark rounded-lg shadow-xl border border-gray-200 dark:border-border-dark py-1.5 min-w-[180px]"
           :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }"
           @click.stop
         >

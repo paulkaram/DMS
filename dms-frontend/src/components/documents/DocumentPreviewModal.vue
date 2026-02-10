@@ -128,7 +128,7 @@ function resetZoom() {
   <Modal v-model="isOpen" size="xl">
     <template #header>
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 bg-primary/30 backdrop-blur rounded-xl flex items-center justify-center">
+        <div class="w-10 h-10 bg-primary/30 backdrop-blur rounded-lg flex items-center justify-center">
           <span class="material-symbols-outlined text-white text-xl">description</span>
         </div>
         <h3 class="text-lg font-semibold text-white flex items-center gap-2">
@@ -267,7 +267,7 @@ function resetZoom() {
               </p>
               <button
                 @click="handleDownload"
-                class="px-6 py-3 bg-teal text-white rounded-xl font-medium hover:bg-teal/90 transition-colors inline-flex items-center gap-2"
+                class="px-6 py-3 bg-teal text-white rounded-lg font-medium hover:bg-teal/90 transition-colors inline-flex items-center gap-2"
               >
                 <span class="material-symbols-outlined">download</span>
                 Download File

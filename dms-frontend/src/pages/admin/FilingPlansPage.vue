@@ -126,7 +126,7 @@ const documentTypeOptions = computed(() => [
         </button>
       </div>
 
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div v-if="isLoading" class="p-8 text-center text-gray-500">Loading...</div>
         <div v-else-if="filingPlans.length === 0" class="p-8 text-center text-gray-500">
           <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -183,7 +183,7 @@ const documentTypeOptions = computed(() => [
 
     <!-- Modal -->
     <div v-if="showModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 p-6">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 p-6">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ isEditing ? 'Edit Filing Plan' : 'New Filing Plan' }}</h3>
         <div class="space-y-4">
           <div>

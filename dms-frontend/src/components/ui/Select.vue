@@ -120,7 +120,7 @@ onUnmounted(() => {
     <button
       type="button"
       :disabled="disabled"
-      class="relative w-full bg-white dark:bg-surface-dark border rounded-xl text-left cursor-pointer
+      class="relative w-full bg-white dark:bg-surface-dark border rounded-lg text-left cursor-pointer
              transition-all duration-200 flex items-center justify-between gap-2
              focus:outline-none focus:ring-2 focus:ring-teal/50 focus:border-teal"
       :class="[
@@ -173,7 +173,7 @@ onUnmounted(() => {
     >
       <div
         v-if="isOpen"
-        class="absolute z-50 w-full mt-1 bg-white dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-xl shadow-lg overflow-hidden"
+        class="absolute z-50 w-full mt-1 bg-white dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-lg shadow-lg overflow-hidden"
       >
         <!-- Search Input -->
         <div v-if="searchable" class="p-2 border-b border-gray-100 dark:border-border-dark">

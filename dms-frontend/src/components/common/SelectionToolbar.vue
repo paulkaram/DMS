@@ -28,7 +28,7 @@ const canDelete = computed(() => authStore.hasPermission('document.delete'))
   <Transition name="slide-up">
     <div
       v-if="isVisible"
-      class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-zinc-900 text-white rounded-2xl shadow-2xl px-6 py-4 flex items-center gap-6 z-50"
+      class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-zinc-900 text-white rounded-lg shadow-2xl px-6 py-4 flex items-center gap-6 z-50"
     >
       <!-- Selection Count -->
       <div class="flex items-center gap-2.5 flex-shrink-0">
@@ -46,7 +46,7 @@ const canDelete = computed(() => authStore.hasPermission('document.delete'))
           v-if="canDownload"
           @click="emit('download-selected')"
           :disabled="isProcessing"
-          class="flex items-center gap-2 px-4 py-2 hover:bg-zinc-800 rounded-xl transition-colors disabled:opacity-50"
+          class="flex items-center gap-2 px-4 py-2 hover:bg-zinc-800 rounded-lg transition-colors disabled:opacity-50"
           title="Download as ZIP"
         >
           <span class="material-symbols-outlined text-[20px]">download</span>
@@ -58,7 +58,7 @@ const canDelete = computed(() => authStore.hasPermission('document.delete'))
           v-if="canMove"
           @click="emit('move-selected')"
           :disabled="isProcessing"
-          class="flex items-center gap-2 px-4 py-2 hover:bg-zinc-800 rounded-xl transition-colors disabled:opacity-50"
+          class="flex items-center gap-2 px-4 py-2 hover:bg-zinc-800 rounded-lg transition-colors disabled:opacity-50"
           title="Move selected"
         >
           <span class="material-symbols-outlined text-[20px]">drive_file_move</span>
@@ -70,7 +70,7 @@ const canDelete = computed(() => authStore.hasPermission('document.delete'))
           v-if="canDelete"
           @click="emit('delete-selected')"
           :disabled="isProcessing"
-          class="flex items-center gap-2 px-4 py-2 hover:bg-red-600 rounded-xl transition-colors disabled:opacity-50"
+          class="flex items-center gap-2 px-4 py-2 hover:bg-red-600 rounded-lg transition-colors disabled:opacity-50"
           title="Delete selected"
         >
           <span class="material-symbols-outlined text-[20px]">delete</span>
@@ -85,14 +85,14 @@ const canDelete = computed(() => authStore.hasPermission('document.delete'))
       <button
         @click="emit('clear-selection')"
         :disabled="isProcessing"
-        class="p-2 hover:bg-zinc-800 rounded-xl transition-colors disabled:opacity-50"
+        class="p-2 hover:bg-zinc-800 rounded-lg transition-colors disabled:opacity-50"
         title="Clear selection"
       >
         <span class="material-symbols-outlined">close</span>
       </button>
 
       <!-- Processing Indicator -->
-      <div v-if="isProcessing" class="absolute inset-0 bg-zinc-900/80 rounded-2xl flex items-center justify-center">
+      <div v-if="isProcessing" class="absolute inset-0 bg-zinc-900/80 rounded-lg flex items-center justify-center">
         <div class="flex items-center gap-3">
           <svg class="animate-spin w-5 h-5 text-teal" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

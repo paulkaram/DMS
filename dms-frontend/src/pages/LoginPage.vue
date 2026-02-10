@@ -44,7 +44,7 @@ async function handleLogin() {
       <div class="relative z-10 max-w-lg text-white">
         <div class="mb-12">
           <!-- Logo -->
-          <div class="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10 flex items-center justify-center mb-6">
+          <div class="w-16 h-16 rounded-lg bg-white/10 backdrop-blur-sm border border-white/10 flex items-center justify-center mb-6">
             <span class="material-symbols-outlined text-4xl text-white">description</span>
           </div>
 
@@ -56,12 +56,12 @@ async function handleLogin() {
 
         <!-- Feature Cards -->
         <div class="grid grid-cols-2 gap-6">
-          <div class="p-6 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10">
+          <div class="p-6 rounded-lg bg-white/10 backdrop-blur-sm border border-white/10">
             <span class="material-symbols-outlined text-teal mb-3">folder_managed</span>
             <h3 class="font-semibold text-lg">Smart Organization</h3>
             <p class="text-sm text-white/60">Intelligent filing with automated classification.</p>
           </div>
-          <div class="p-6 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10">
+          <div class="p-6 rounded-lg bg-white/10 backdrop-blur-sm border border-white/10">
             <span class="material-symbols-outlined text-teal mb-3">bolt</span>
             <h3 class="font-semibold text-lg">Instant Retrieval</h3>
             <p class="text-sm text-white/60">Find any document in milliseconds with search.</p>
@@ -97,7 +97,7 @@ async function handleLogin() {
                 v-model="username"
                 type="text"
                 autocomplete="username"
-                class="w-full pl-10 pr-4 py-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-teal/20 focus:border-teal transition-all outline-none"
+                class="w-full pl-10 pr-4 py-3 bg-zinc-50 border border-zinc-200 rounded-lg focus:ring-2 focus:ring-teal/20 focus:border-teal transition-all outline-none"
                 placeholder="Enter your username"
                 required
               />
@@ -117,7 +117,7 @@ async function handleLogin() {
                 v-model="password"
                 :type="showPassword ? 'text' : 'password'"
                 autocomplete="current-password"
-                class="w-full pl-10 pr-12 py-3 bg-zinc-50 border border-zinc-200 rounded-xl focus:ring-2 focus:ring-teal/20 focus:border-teal transition-all outline-none"
+                class="w-full pl-10 pr-12 py-3 bg-zinc-50 border border-zinc-200 rounded-lg focus:ring-2 focus:ring-teal/20 focus:border-teal transition-all outline-none"
                 placeholder="••••••••"
                 required
               />
@@ -145,7 +145,7 @@ async function handleLogin() {
           </div>
 
           <!-- Error Message -->
-          <div v-if="error" class="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm flex items-center gap-2">
+          <div v-if="error" class="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm flex items-center gap-2">
             <span class="material-symbols-outlined text-lg">error</span>
             {{ error }}
           </div>
@@ -184,7 +184,7 @@ async function handleLogin() {
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <button
               type="button"
-              class="flex items-center justify-center gap-3 px-4 py-3 border border-zinc-200 rounded-xl text-sm font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors"
+              class="flex items-center justify-center gap-3 px-4 py-3 border border-zinc-200 rounded-lg text-sm font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors"
             >
               <svg class="w-5 h-5" viewBox="0 0 24 24">
                 <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.909 3.204-1.908 4.212-1.286 1.286-3.303 2.56-6.412 2.56-5.18 0-9.397-4.186-9.397-9.396S6.793 2.138 11.972 2.138c2.805 0 4.936 1.103 6.436 2.522l2.316-2.316C18.663 1.103 15.65 0 11.972 0 5.42 0 0 5.42 0 12s5.42 12 11.972 12c3.57 0 6.26-1.17 8.35-3.348 2.16-2.16 2.84-5.19 2.84-7.59 0-.718-.065-1.403-.185-2.142h-10.51z" fill="currentColor"></path>
@@ -193,7 +193,7 @@ async function handleLogin() {
             </button>
             <button
               type="button"
-              class="flex items-center justify-center gap-3 px-4 py-3 border border-zinc-200 rounded-xl text-sm font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors"
+              class="flex items-center justify-center gap-3 px-4 py-3 border border-zinc-200 rounded-lg text-sm font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors"
             >
               <svg class="w-5 h-5" viewBox="0 0 23 23">
                 <path d="M11.4 24H0V12.6h11.4V24zM24 24H12.6V12.6H24V24zM11.4 11.4H0V0h11.4v11.4zM24 11.4H12.6V0H24v11.4z" fill="currentColor"></path>

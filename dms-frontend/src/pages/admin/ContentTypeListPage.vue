@@ -93,7 +93,7 @@ async function setAsSystemDefault(ct: ContentTypeDefinition, event: Event) {
       </div>
 
       <!-- Info Box -->
-      <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
         <div class="flex items-start gap-3">
           <svg class="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -114,7 +114,7 @@ async function setAsSystemDefault(ct: ContentTypeDefinition, event: Event) {
       </div>
 
       <!-- Content Types List -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div v-if="isLoading" class="p-8 text-center text-gray-500">
           <svg class="animate-spin h-8 w-8 mx-auto text-blue-600" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -146,7 +146,7 @@ async function setAsSystemDefault(ct: ContentTypeDefinition, event: Event) {
           >
             <div class="flex items-center gap-4">
               <div
-                class="w-12 h-12 rounded-xl flex items-center justify-center"
+                class="w-12 h-12 rounded-lg flex items-center justify-center"
                 :style="{ backgroundColor: (ct.color || '#3B82F6') + '20' }"
               >
                 <svg class="w-6 h-6" :style="{ color: ct.color || '#3B82F6' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -221,7 +221,7 @@ async function setAsSystemDefault(ct: ContentTypeDefinition, event: Event) {
 
     <!-- Delete Confirmation Modal -->
     <div v-if="showDeleteConfirm" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm mx-4 p-6">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-sm mx-4 p-6">
         <div class="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
           <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />

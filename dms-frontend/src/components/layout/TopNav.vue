@@ -68,7 +68,7 @@ function toggleDarkMode() {
         <input
           v-model="searchQuery"
           @keyup.enter="handleSearch"
-          class="w-full pl-10 pr-4 py-2.5 bg-zinc-50 dark:bg-surface-dark border border-zinc-200 dark:border-border-dark rounded-xl focus:ring-2 focus:ring-teal/50 focus:border-teal/50 text-sm transition-all placeholder:text-zinc-400"
+          class="w-full pl-10 pr-4 py-2.5 bg-zinc-50 dark:bg-surface-dark border border-zinc-200 dark:border-border-dark rounded-lg focus:ring-2 focus:ring-teal/50 focus:border-teal/50 text-sm transition-all placeholder:text-zinc-400"
           placeholder="Search documents, folders, or keywords..."
           type="text"
         />
@@ -83,7 +83,7 @@ function toggleDarkMode() {
     <div class="flex items-center gap-2">
       <!-- Quick actions -->
       <button
-        class="p-2.5 text-zinc-500 hover:text-teal hover:bg-teal/10 rounded-xl transition-all duration-200"
+        class="p-2.5 text-zinc-500 hover:text-teal hover:bg-teal/10 rounded-lg transition-all duration-200"
         title="Upload document"
       >
         <span class="material-symbols-outlined text-xl">upload</span>
@@ -91,7 +91,7 @@ function toggleDarkMode() {
 
       <button
         @click="toggleDarkMode"
-        class="p-2.5 text-zinc-500 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-xl transition-all duration-200"
+        class="p-2.5 text-zinc-500 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-all duration-200"
         title="Toggle dark mode"
       >
         <span class="material-symbols-outlined text-xl" :class="isDarkMode ? 'hidden' : ''">dark_mode</span>
@@ -99,7 +99,7 @@ function toggleDarkMode() {
       </button>
 
       <button
-        class="p-2.5 text-zinc-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all duration-200 relative"
+        class="p-2.5 text-zinc-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all duration-200 relative"
         title="Notifications"
       >
         <span class="material-symbols-outlined text-xl">notifications</span>
@@ -113,7 +113,7 @@ function toggleDarkMode() {
       <div class="relative">
         <button
           @click="showUserMenu = !showUserMenu"
-          class="flex items-center gap-3 p-1.5 rounded-xl hover:bg-zinc-100 dark:hover:bg-surface-dark transition-colors"
+          class="flex items-center gap-3 p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-surface-dark transition-colors"
         >
           <div class="text-right hidden sm:block">
             <p class="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
@@ -124,7 +124,7 @@ function toggleDarkMode() {
             </p>
           </div>
           <div class="relative">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-teal to-navy flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-teal/20">
+            <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-teal to-navy flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-teal/20">
               {{ getInitials() }}
             </div>
             <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white dark:border-zinc-900 rounded-full"></span>
@@ -142,12 +142,12 @@ function toggleDarkMode() {
         >
           <div
             v-if="showUserMenu"
-            class="absolute right-0 top-14 w-64 bg-white dark:bg-background-dark rounded-2xl shadow-xl border border-zinc-200 dark:border-border-dark py-2 overflow-hidden"
+            class="absolute right-0 top-14 w-64 bg-white dark:bg-background-dark rounded-lg shadow-xl border border-zinc-200 dark:border-border-dark py-2 overflow-hidden"
           >
             <!-- User info header -->
             <div class="px-4 py-3 border-b border-zinc-100 dark:border-border-dark">
               <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-teal to-navy flex items-center justify-center text-white font-bold shadow-lg">
+                <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-teal to-navy flex items-center justify-center text-white font-bold shadow-lg">
                   {{ getInitials() }}
                 </div>
                 <div>

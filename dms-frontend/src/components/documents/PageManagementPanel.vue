@@ -313,7 +313,7 @@ function resetChanges() {
           @dragleave="onDragLeave"
           @drop="onDrop(index, $event)"
           @dragend="onDragEnd"
-          class="group relative flex items-center gap-2 p-1.5 rounded-xl border transition-all duration-150 cursor-grab active:cursor-grabbing"
+          class="group relative flex items-center gap-2 p-1.5 rounded-lg border transition-all duration-150 cursor-grab active:cursor-grabbing"
           :class="[
             draggedIndex === index ? 'opacity-40 scale-95' : '',
             dragOverIndex === index && draggedIndex !== index

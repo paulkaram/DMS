@@ -199,7 +199,7 @@ function selectType(type: 'User' | 'Role' | 'Structure') {
         :key="type"
         type="button"
         @click="selectType(type)"
-        class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 font-medium text-sm transition-all duration-200"
+        class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border-2 font-medium text-sm transition-all duration-200"
         :class="selectedType === type
           ? typeConfig[type].selectedBg + ' shadow-lg'
           : typeConfig[type].bgColor + ' hover:shadow-md'"
@@ -215,7 +215,7 @@ function selectType(type: 'User' | 'Role' | 'Structure') {
       <div
         ref="triggerRef"
         @click="isOpen = !isOpen"
-        class="w-full px-4 py-3 border-2 rounded-xl bg-white dark:bg-surface-dark cursor-pointer flex items-center justify-between transition-all duration-200"
+        class="w-full px-4 py-3 border-2 rounded-lg bg-white dark:bg-surface-dark cursor-pointer flex items-center justify-between transition-all duration-200"
         :class="isOpen
           ? 'ring-2 ring-primary/30 border-primary shadow-lg'
           : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'"
@@ -261,7 +261,7 @@ function selectType(type: 'User' | 'Role' | 'Structure') {
         >
           <div
             v-if="isOpen"
-            class="fixed z-[9999] bg-white dark:bg-background-dark rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
+            class="fixed z-[9999] bg-white dark:bg-background-dark rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
             :style="dropdownStyle"
           >
             <!-- Search -->
@@ -282,7 +282,7 @@ function selectType(type: 'User' | 'Role' | 'Structure') {
             <div class="max-h-64 overflow-y-auto">
               <!-- Loading -->
               <div v-if="isLoading" class="p-8 text-center">
-                <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-2">
+                <div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mx-auto mb-2">
                   <span class="material-symbols-outlined animate-spin text-primary text-xl">progress_activity</span>
                 </div>
                 <p class="text-sm text-gray-500 dark:text-gray-400">Loading {{ currentTypeConfig.pluralLabel.toLowerCase() }}...</p>
@@ -324,7 +324,7 @@ function selectType(type: 'User' | 'Role' | 'Structure') {
                   class="px-4 py-3 hover:bg-primary/5 dark:hover:bg-primary/10 cursor-pointer flex items-center gap-3 transition-colors border-b border-gray-50 dark:border-gray-800 last:border-0"
                 >
                   <div
-                    class="w-10 h-10 rounded-xl flex items-center justify-center"
+                    class="w-10 h-10 rounded-lg flex items-center justify-center"
                     :class="getAvatarColor(index)"
                   >
                     <span class="material-symbols-outlined text-white">group</span>
@@ -345,7 +345,7 @@ function selectType(type: 'User' | 'Role' | 'Structure') {
                   class="px-4 py-3 hover:bg-primary/5 dark:hover:bg-primary/10 cursor-pointer flex items-center gap-3 transition-colors border-b border-gray-50 dark:border-gray-800 last:border-0"
                 >
                   <div
-                    class="w-10 h-10 rounded-xl flex items-center justify-center"
+                    class="w-10 h-10 rounded-lg flex items-center justify-center"
                     :class="getAvatarColor(index)"
                   >
                     <span class="material-symbols-outlined text-white">apartment</span>

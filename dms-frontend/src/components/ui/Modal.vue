@@ -111,14 +111,14 @@ onUnmounted(() => {
           >
             <div
               v-if="isOpen"
-              class="relative w-full bg-white dark:bg-background-dark rounded-2xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10"
+              class="relative w-full bg-white dark:bg-background-dark rounded-lg shadow-2xl ring-1 ring-black/5 dark:ring-white/10"
               :class="[sizeClasses, overflowVisible ? 'overflow-visible' : 'overflow-hidden']"
               @click.stop
             >
               <!-- Header with brand gradient -->
               <div
                 v-if="title || showClose || $slots.header"
-                class="relative bg-gradient-to-r from-navy via-navy/95 to-primary px-6 py-5 overflow-hidden rounded-t-2xl"
+                class="relative bg-gradient-to-r from-navy via-navy/95 to-primary px-6 py-5 overflow-hidden rounded-t-lg"
               >
                 <!-- Decorative elements -->
                 <div class="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full -translate-y-1/2 translate-x-1/2"></div>
@@ -127,7 +127,7 @@ onUnmounted(() => {
                 <div class="relative flex items-center justify-between">
                   <slot name="header">
                     <div class="flex items-center gap-3">
-                      <div class="w-10 h-10 bg-primary/30 backdrop-blur rounded-xl flex items-center justify-center">
+                      <div class="w-10 h-10 bg-primary/30 backdrop-blur rounded-lg flex items-center justify-center">
                         <span class="material-symbols-outlined text-white text-xl">description</span>
                       </div>
                       <h3 class="text-lg font-semibold text-white">{{ title }}</h3>
@@ -136,7 +136,7 @@ onUnmounted(() => {
                   <button
                     v-if="showClose"
                     type="button"
-                    class="w-9 h-9 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
+                    class="w-9 h-9 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
                     @click="close"
                   >
                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -157,7 +157,7 @@ onUnmounted(() => {
               <!-- Footer -->
               <div
                 v-if="$slots.footer"
-                class="px-6 py-4 bg-gray-50 dark:bg-surface-dark/50 border-t border-gray-200 dark:border-gray-700/50 rounded-b-2xl"
+                class="px-6 py-4 bg-gray-50 dark:bg-surface-dark/50 border-t border-gray-200 dark:border-gray-700/50 rounded-b-lg"
               >
                 <slot name="footer" />
               </div>

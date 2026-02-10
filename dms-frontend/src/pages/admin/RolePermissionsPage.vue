@@ -184,13 +184,13 @@ const categoryOptions = computed(() => [
       </div>
 
       <!-- Loading -->
-      <div v-if="isLoading" class="bg-white dark:bg-background-dark rounded-xl p-8 text-center">
+      <div v-if="isLoading" class="bg-white dark:bg-background-dark rounded-lg p-8 text-center">
         <span class="material-symbols-outlined animate-spin text-primary text-3xl">progress_activity</span>
         <p class="text-zinc-500 mt-2">Loading permissions...</p>
       </div>
 
       <!-- Permission Matrix -->
-      <div v-else class="bg-white dark:bg-background-dark rounded-xl shadow-sm border border-zinc-200 dark:border-border-dark overflow-hidden">
+      <div v-else class="bg-white dark:bg-background-dark rounded-lg shadow-sm border border-zinc-200 dark:border-border-dark overflow-hidden">
         <div class="overflow-x-auto">
           <table class="w-full">
             <thead class="bg-zinc-50 dark:bg-surface-dark/50 sticky top-0 z-10">

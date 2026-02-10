@@ -10,8 +10,8 @@ const props = defineProps<{
 
 const sizeClasses = {
   sm: { wrapper: 'w-8 h-8 rounded-lg', icon: 'text-base' },
-  md: { wrapper: 'w-10 h-10 rounded-xl', icon: 'text-xl' },
-  lg: { wrapper: 'w-12 h-12 rounded-xl', icon: 'text-2xl' }
+  md: { wrapper: 'w-10 h-10 rounded-lg', icon: 'text-xl' },
+  lg: { wrapper: 'w-12 h-12 rounded-lg', icon: 'text-2xl' }
 }
 
 // Alternating background colors - charcoal with teal accents

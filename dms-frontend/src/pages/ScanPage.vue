@@ -91,7 +91,7 @@ function handleScanUploaded() {
     <!-- Page Header -->
     <div>
       <h1 class="text-2xl font-bold text-zinc-900 dark:text-white flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-teal/10 flex items-center justify-center">
+        <div class="w-10 h-10 rounded-lg bg-teal/10 flex items-center justify-center">
           <span class="material-symbols-outlined text-teal text-xl">document_scanner</span>
         </div>
         Scan Document
@@ -100,7 +100,7 @@ function handleScanUploaded() {
     </div>
 
     <!-- Folder Selection -->
-    <div class="bg-white dark:bg-background-dark rounded-2xl border border-zinc-200 dark:border-border-dark overflow-hidden shadow-sm">
+    <div class="bg-white dark:bg-background-dark rounded-lg border border-zinc-200 dark:border-border-dark overflow-hidden shadow-sm">
       <div class="px-6 py-4 border-b border-zinc-200 dark:border-border-dark bg-zinc-50 dark:bg-surface-dark/50">
         <h2 class="font-semibold text-zinc-900 dark:text-white flex items-center gap-2">
           <span class="material-symbols-outlined text-teal text-lg">folder_open</span>
@@ -116,7 +116,7 @@ function handleScanUploaded() {
         </div>
 
         <!-- Tree -->
-        <div v-else class="border border-zinc-200 dark:border-border-dark rounded-xl max-h-[400px] overflow-auto">
+        <div v-else class="border border-zinc-200 dark:border-border-dark rounded-lg max-h-[400px] overflow-auto">
           <div class="p-2">
             <div v-for="cabinet in treeNodes" :key="cabinet.id" class="select-none">
               <!-- Cabinet -->
@@ -197,7 +197,7 @@ function handleScanUploaded() {
           <button
             @click="startScan"
             :disabled="!selectedFolderId"
-            class="px-6 py-2.5 bg-teal text-white font-medium rounded-xl hover:bg-teal/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-2 shadow-sm"
+            class="px-6 py-2.5 bg-teal text-white font-medium rounded-lg hover:bg-teal/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors inline-flex items-center gap-2 shadow-sm"
           >
             <span class="material-symbols-outlined text-xl">document_scanner</span>
             Start Scanning

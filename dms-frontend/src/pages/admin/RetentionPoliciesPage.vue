@@ -239,7 +239,7 @@ const expirationActionOptions = computed(() =>
       <div v-if="isLoading" class="text-center py-12 text-gray-500">Loading...</div>
 
       <!-- Policies Tab -->
-      <div v-else-if="activeTab === 'policies'" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div v-else-if="activeTab === 'policies'" class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <table class="w-full">
           <thead class="bg-gray-50">
             <tr>
@@ -299,7 +299,7 @@ const expirationActionOptions = computed(() =>
       </div>
 
       <!-- Expiring Soon Tab -->
-      <div v-else-if="activeTab === 'expiring'" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div v-else-if="activeTab === 'expiring'" class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <table class="w-full">
           <thead class="bg-gray-50">
             <tr>
@@ -326,7 +326,7 @@ const expirationActionOptions = computed(() =>
       </div>
 
       <!-- Pending Review Tab -->
-      <div v-else-if="activeTab === 'pending'" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div v-else-if="activeTab === 'pending'" class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <table class="w-full">
           <thead class="bg-gray-50">
             <tr>
@@ -357,7 +357,7 @@ const expirationActionOptions = computed(() =>
 
     <!-- Modal -->
     <div v-if="showModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 p-6 max-h-[90vh] overflow-y-auto">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 p-6 max-h-[90vh] overflow-y-auto">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ isEditing ? 'Edit Policy' : 'New Retention Policy' }}</h3>
         <div class="space-y-4">
           <div>

@@ -34,7 +34,7 @@ const textSizeClasses = {
     <div class="relative" :class="sizeClasses[size]">
       <!-- Outer rotating ring -->
       <div
-        class="absolute inset-0 rounded-xl animate-spin-slow"
+        class="absolute inset-0 rounded-lg animate-spin-slow"
         :class="sizeClasses[size]"
         style="animation-duration: 3s;"
       >

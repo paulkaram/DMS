@@ -68,7 +68,7 @@ const currentStrokeWidthLabel = computed(() => {
 <template>
   <div class="annotation-toolbar flex items-center gap-1 px-3 py-1.5 bg-white border-b border-zinc-200 shadow-sm">
     <!-- Tool Buttons -->
-    <div class="flex items-center gap-0.5 bg-zinc-50 rounded-xl px-1 py-0.5 border border-zinc-200">
+    <div class="flex items-center gap-0.5 bg-zinc-50 rounded-lg px-1 py-0.5 border border-zinc-200">
       <button
         v-for="tool in tools"
         :key="tool.id"
@@ -136,7 +136,7 @@ const currentStrokeWidthLabel = computed(() => {
       <!-- Color dropdown -->
       <div
         v-if="showColorPicker"
-        class="absolute top-full left-0 mt-1 p-2 bg-white rounded-xl shadow-xl border border-zinc-200 z-30"
+        class="absolute top-full left-0 mt-1 p-2 bg-white rounded-lg shadow-xl border border-zinc-200 z-30"
       >
         <div class="flex gap-1.5">
           <button

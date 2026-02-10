@@ -106,7 +106,7 @@ const cabinetCount = computed(() => recycleBinItems.value.filter(i => i.nodeType
       <div class="flex items-center gap-3">
         <button
           @click="loadRecycleBin"
-          class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-surface-dark hover:bg-zinc-50 dark:hover:bg-border-dark text-zinc-700 dark:text-zinc-300 rounded-xl font-medium text-sm transition-colors border border-zinc-200 dark:border-border-dark"
+          class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-surface-dark hover:bg-zinc-50 dark:hover:bg-border-dark text-zinc-700 dark:text-zinc-300 rounded-lg font-medium text-sm transition-colors border border-zinc-200 dark:border-border-dark"
         >
           <span class="material-symbols-outlined text-lg">refresh</span>
           Refresh
@@ -114,7 +114,7 @@ const cabinetCount = computed(() => recycleBinItems.value.filter(i => i.nodeType
         <button
           v-if="recycleBinItems.length > 0"
           @click="emptyRecycleBin"
-          class="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-medium text-sm"
+          class="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm"
         >
           <span class="material-symbols-outlined text-lg">delete_forever</span>
           Empty Recycle Bin
@@ -124,7 +124,7 @@ const cabinetCount = computed(() => recycleBinItems.value.filter(i => i.nodeType
 
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div class="bg-[#0d1117] p-6 rounded-2xl text-white shadow-xl border border-zinc-800/50 min-h-[120px] flex flex-col justify-between relative overflow-hidden border border-zinc-800/50">
+      <div class="bg-[#0d1117] p-6 rounded-lg text-white shadow-xl border border-zinc-800/50 min-h-[120px] flex flex-col justify-between relative overflow-hidden border border-zinc-800/50">
         <svg class="absolute right-0 top-0 h-full w-32 opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
           <path d="M0,0 Q50,50 0,100 L100,100 L100,0 Z" fill="#00ae8c"/>
         </svg>
@@ -137,7 +137,7 @@ const cabinetCount = computed(() => recycleBinItems.value.filter(i => i.nodeType
           <p class="text-[10px] text-teal mt-2 font-medium">Deleted documents</p>
         </div>
       </div>
-      <div class="bg-[#0d1117] p-6 rounded-2xl text-white shadow-xl border border-zinc-800/50 min-h-[120px] flex flex-col justify-between relative overflow-hidden border border-zinc-800/50">
+      <div class="bg-[#0d1117] p-6 rounded-lg text-white shadow-xl border border-zinc-800/50 min-h-[120px] flex flex-col justify-between relative overflow-hidden border border-zinc-800/50">
         <svg class="absolute right-0 top-0 h-full w-32 opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
           <path d="M0,0 Q50,50 0,100 L100,100 L100,0 Z" fill="#00ae8c"/>
         </svg>
@@ -150,7 +150,7 @@ const cabinetCount = computed(() => recycleBinItems.value.filter(i => i.nodeType
           <p class="text-[10px] text-teal mt-2 font-medium">Deleted folders</p>
         </div>
       </div>
-      <div class="bg-[#0d1117] p-6 rounded-2xl text-white shadow-xl border border-zinc-800/50 min-h-[120px] flex flex-col justify-between relative overflow-hidden border border-zinc-800/50">
+      <div class="bg-[#0d1117] p-6 rounded-lg text-white shadow-xl border border-zinc-800/50 min-h-[120px] flex flex-col justify-between relative overflow-hidden border border-zinc-800/50">
         <svg class="absolute right-0 top-0 h-full w-32 opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
           <path d="M0,0 Q50,50 0,100 L100,100 L100,0 Z" fill="#00ae8c"/>
         </svg>
@@ -166,7 +166,7 @@ const cabinetCount = computed(() => recycleBinItems.value.filter(i => i.nodeType
     </div>
 
     <!-- Filter Tabs -->
-    <div class="bg-white dark:bg-background-dark rounded-2xl shadow-sm border border-zinc-200 dark:border-border-dark overflow-hidden">
+    <div class="bg-white dark:bg-background-dark rounded-lg shadow-sm border border-zinc-200 dark:border-border-dark overflow-hidden">
       <div class="border-b border-zinc-200 dark:border-border-dark">
         <nav class="flex">
           <button
@@ -247,7 +247,7 @@ const cabinetCount = computed(() => recycleBinItems.value.filter(i => i.nodeType
 
       <!-- Empty State -->
       <div v-else-if="displayedItems.length === 0" class="text-center py-12">
-        <div class="w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-surface-dark flex items-center justify-center mx-auto mb-4">
+        <div class="w-20 h-20 rounded-lg bg-zinc-100 dark:bg-surface-dark flex items-center justify-center mx-auto mb-4">
           <span class="material-symbols-outlined text-5xl text-zinc-400">delete_outline</span>
         </div>
         <h3 class="text-lg font-semibold text-zinc-700 dark:text-zinc-300">Recycle bin is empty</h3>
@@ -260,7 +260,7 @@ const cabinetCount = computed(() => recycleBinItems.value.filter(i => i.nodeType
           <div
             v-for="(item, index) in displayedItems"
             :key="item.id"
-            class="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-surface-dark rounded-xl border border-zinc-100 dark:border-border-dark hover:border-teal/30 hover:shadow-md transition-all"
+            class="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-surface-dark rounded-lg border border-zinc-100 dark:border-border-dark hover:border-teal/30 hover:shadow-md transition-all"
           >
             <!-- Icon -->
             <DocumentIcon

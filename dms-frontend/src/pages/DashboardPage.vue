@@ -288,7 +288,7 @@ function navigateToActivity(activity: ActivityLog) {
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <!-- Total Documents Card -->
-      <div class="bg-[#0d1117] p-6 rounded-2xl text-white shadow-xl border border-zinc-800/50 min-h-[140px] flex flex-col justify-between relative overflow-hidden">
+      <div class="bg-[#0d1117] p-6 rounded-lg text-white shadow-xl border border-zinc-800/50 min-h-[140px] flex flex-col justify-between relative overflow-hidden">
         <svg class="absolute right-0 top-0 h-full w-32 opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
           <path d="M0,0 Q50,50 0,100 L100,100 L100,0 Z" fill="#00ae8c"/>
         </svg>
@@ -306,7 +306,7 @@ function navigateToActivity(activity: ActivityLog) {
       </div>
 
       <!-- Cabinets Card -->
-      <div class="bg-[#0d1117] p-6 rounded-2xl text-white shadow-xl border border-zinc-800/50 min-h-[140px] flex flex-col justify-between relative overflow-hidden">
+      <div class="bg-[#0d1117] p-6 rounded-lg text-white shadow-xl border border-zinc-800/50 min-h-[140px] flex flex-col justify-between relative overflow-hidden">
         <svg class="absolute right-0 top-0 h-full w-32 opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
           <path d="M0,0 Q50,50 0,100 L100,100 L100,0 Z" fill="#00ae8c"/>
         </svg>
@@ -324,7 +324,7 @@ function navigateToActivity(activity: ActivityLog) {
       </div>
 
       <!-- Active Users Card -->
-      <div class="bg-[#0d1117] p-6 rounded-2xl text-white shadow-xl border border-zinc-800/50 min-h-[140px] flex flex-col justify-between relative overflow-hidden">
+      <div class="bg-[#0d1117] p-6 rounded-lg text-white shadow-xl border border-zinc-800/50 min-h-[140px] flex flex-col justify-between relative overflow-hidden">
         <svg class="absolute right-0 top-0 h-full w-32 opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
           <path d="M0,0 Q50,50 0,100 L100,100 L100,0 Z" fill="#00ae8c"/>
         </svg>
@@ -342,7 +342,7 @@ function navigateToActivity(activity: ActivityLog) {
       </div>
 
       <!-- My Checkouts Card -->
-      <div class="bg-[#0d1117] p-6 rounded-2xl text-white shadow-xl border border-zinc-800/50 min-h-[140px] flex flex-col justify-between relative overflow-hidden">
+      <div class="bg-[#0d1117] p-6 rounded-lg text-white shadow-xl border border-zinc-800/50 min-h-[140px] flex flex-col justify-between relative overflow-hidden">
         <svg class="absolute right-0 top-0 h-full w-32 opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
           <path d="M0,0 Q50,50 0,100 L100,100 L100,0 Z" fill="#00ae8c"/>
         </svg>
@@ -359,28 +359,28 @@ function navigateToActivity(activity: ActivityLog) {
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- Quick Actions -->
-      <div class="bg-white dark:bg-background-dark rounded-2xl shadow-sm border border-zinc-200 dark:border-border-dark overflow-hidden">
+      <div class="bg-white dark:bg-background-dark rounded-lg shadow-sm border border-zinc-200 dark:border-border-dark overflow-hidden">
         <div class="p-6 border-b border-zinc-100 dark:border-border-dark">
           <h3 class="text-sm font-bold text-zinc-800 dark:text-white uppercase tracking-wider">Quick Actions</h3>
         </div>
         <div class="p-4 space-y-2">
           <button
             @click="navigateToExplorer"
-            class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-zinc-600 dark:text-zinc-300 hover:bg-teal/10 hover:text-teal transition-all group"
+            class="w-full flex items-center gap-4 px-4 py-3 rounded-lg text-zinc-600 dark:text-zinc-300 hover:bg-teal/10 hover:text-teal transition-all group"
           >
             <span class="material-symbols-outlined text-xl text-teal">explore</span>
             <span class="text-sm font-semibold">Browse Documents</span>
           </button>
           <button
             @click="router.push('/search')"
-            class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-zinc-600 dark:text-zinc-300 hover:bg-teal/10 hover:text-teal transition-all group"
+            class="w-full flex items-center gap-4 px-4 py-3 rounded-lg text-zinc-600 dark:text-zinc-300 hover:bg-teal/10 hover:text-teal transition-all group"
           >
             <span class="material-symbols-outlined text-xl text-teal">search</span>
             <span class="text-sm font-semibold">Search Documents</span>
           </button>
           <button
             @click="router.push('/activity')"
-            class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-zinc-600 dark:text-zinc-300 hover:bg-teal/10 hover:text-teal transition-all group"
+            class="w-full flex items-center gap-4 px-4 py-3 rounded-lg text-zinc-600 dark:text-zinc-300 hover:bg-teal/10 hover:text-teal transition-all group"
           >
             <span class="material-symbols-outlined text-xl text-teal">history</span>
             <span class="text-sm font-semibold">View Activity</span>
@@ -389,7 +389,7 @@ function navigateToActivity(activity: ActivityLog) {
       </div>
 
       <!-- Recent Documents -->
-      <div class="bg-white dark:bg-background-dark rounded-2xl shadow-sm border border-zinc-200 dark:border-border-dark overflow-hidden">
+      <div class="bg-white dark:bg-background-dark rounded-lg shadow-sm border border-zinc-200 dark:border-border-dark overflow-hidden">
         <div class="p-6 border-b border-zinc-100 dark:border-border-dark flex justify-between items-center">
           <h3 class="text-sm font-bold text-zinc-800 dark:text-white uppercase tracking-wider">Recent Documents</h3>
           <button @click="navigateToExplorer" class="text-[10px] font-bold text-teal uppercase hover:underline tracking-wider">View All</button>
@@ -430,7 +430,7 @@ function navigateToActivity(activity: ActivityLog) {
       </div>
 
       <!-- My Checkouts -->
-      <div class="bg-white dark:bg-background-dark rounded-2xl shadow-sm border border-zinc-200 dark:border-border-dark overflow-hidden h-full flex flex-col">
+      <div class="bg-white dark:bg-background-dark rounded-lg shadow-sm border border-zinc-200 dark:border-border-dark overflow-hidden h-full flex flex-col">
         <div class="p-6 border-b border-zinc-100 dark:border-border-dark">
           <h3 class="text-sm font-bold text-zinc-800 dark:text-white uppercase tracking-wider">My Checked Out Files</h3>
         </div>
@@ -470,7 +470,7 @@ function navigateToActivity(activity: ActivityLog) {
     </div>
 
     <!-- Recent Activity -->
-    <div class="bg-white dark:bg-background-dark rounded-2xl shadow-sm border border-zinc-200 dark:border-border-dark overflow-hidden">
+    <div class="bg-white dark:bg-background-dark rounded-lg shadow-sm border border-zinc-200 dark:border-border-dark overflow-hidden">
       <div class="p-6 border-b border-zinc-100 dark:border-border-dark flex justify-between items-center">
         <h3 class="text-sm font-bold text-zinc-800 dark:text-white uppercase tracking-wider">Recent Activity</h3>
         <button @click="router.push('/activity')" class="text-[10px] font-bold text-teal uppercase hover:underline tracking-wider">View All</button>

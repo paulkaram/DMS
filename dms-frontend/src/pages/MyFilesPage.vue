@@ -105,7 +105,7 @@ async function discardCheckout(doc: Document) {
       </div>
       <button
         @click="loadData"
-        class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-surface-dark hover:bg-zinc-50 dark:hover:bg-border-dark text-zinc-700 dark:text-zinc-300 rounded-xl font-medium text-sm transition-colors border border-zinc-200 dark:border-border-dark"
+        class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-surface-dark hover:bg-zinc-50 dark:hover:bg-border-dark text-zinc-700 dark:text-zinc-300 rounded-lg font-medium text-sm transition-colors border border-zinc-200 dark:border-border-dark"
       >
         <span class="material-symbols-outlined text-lg">refresh</span>
         Refresh
@@ -114,7 +114,7 @@ async function discardCheckout(doc: Document) {
 
     <!-- Stats Cards -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-      <div class="bg-[#0d1117] p-6 rounded-2xl text-white shadow-xl border border-zinc-800/50 min-h-[120px] flex flex-col justify-between relative overflow-hidden">
+      <div class="bg-[#0d1117] p-6 rounded-lg text-white shadow-xl border border-zinc-800/50 min-h-[120px] flex flex-col justify-between relative overflow-hidden">
         <svg class="absolute right-0 top-0 h-full w-32 opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
           <path d="M0,0 Q50,50 0,100 L100,100 L100,0 Z" fill="#00ae8c"/>
         </svg>
@@ -127,7 +127,7 @@ async function discardCheckout(doc: Document) {
           <p class="text-[10px] text-teal mt-2 font-medium">Documents you created</p>
         </div>
       </div>
-      <div class="bg-[#0d1117] p-6 rounded-2xl text-white shadow-xl border border-zinc-800/50 min-h-[120px] flex flex-col justify-between relative overflow-hidden">
+      <div class="bg-[#0d1117] p-6 rounded-lg text-white shadow-xl border border-zinc-800/50 min-h-[120px] flex flex-col justify-between relative overflow-hidden">
         <svg class="absolute right-0 top-0 h-full w-32 opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
           <path d="M0,0 Q50,50 0,100 L100,100 L100,0 Z" fill="#00ae8c"/>
         </svg>
@@ -143,7 +143,7 @@ async function discardCheckout(doc: Document) {
     </div>
 
     <!-- Tabs -->
-    <div class="bg-white dark:bg-background-dark rounded-2xl shadow-sm border border-zinc-200 dark:border-border-dark overflow-hidden">
+    <div class="bg-white dark:bg-background-dark rounded-lg shadow-sm border border-zinc-200 dark:border-border-dark overflow-hidden">
       <div class="border-b border-zinc-200 dark:border-border-dark">
         <nav class="flex">
           <button
@@ -191,14 +191,14 @@ async function discardCheckout(doc: Document) {
       <!-- Uploads Tab -->
       <div v-else-if="activeTab === 'uploads'" class="p-6">
         <div v-if="myDocuments.length === 0" class="text-center py-12">
-          <div class="w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-surface-dark flex items-center justify-center mx-auto mb-4">
+          <div class="w-20 h-20 rounded-lg bg-zinc-100 dark:bg-surface-dark flex items-center justify-center mx-auto mb-4">
             <span class="material-symbols-outlined text-5xl text-zinc-400">cloud_upload</span>
           </div>
           <h3 class="text-lg font-semibold text-zinc-700 dark:text-zinc-300">No uploads yet</h3>
           <p class="text-zinc-500 mt-1">Documents you upload will appear here</p>
           <router-link
             to="/explorer"
-            class="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-teal hover:bg-teal/90 text-white rounded-xl font-medium text-sm transition-colors"
+            class="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-teal hover:bg-teal/90 text-white rounded-lg font-medium text-sm transition-colors"
           >
             <span class="material-symbols-outlined text-lg">explore</span>
             Go to Explorer
@@ -209,7 +209,7 @@ async function discardCheckout(doc: Document) {
           <div
             v-for="(doc, index) in myDocuments"
             :key="doc.id"
-            class="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-surface-dark rounded-xl border border-zinc-100 dark:border-border-dark hover:border-teal/30 hover:shadow-md transition-all"
+            class="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-surface-dark rounded-lg border border-zinc-100 dark:border-border-dark hover:border-teal/30 hover:shadow-md transition-all"
           >
             <DocumentIcon :extension="doc.extension" :index="index" size="lg" />
             <div class="flex-1 min-w-0 cursor-pointer" @click="viewDocument(doc)">
@@ -287,7 +287,7 @@ async function discardCheckout(doc: Document) {
       <!-- Checkouts Tab -->
       <div v-else-if="activeTab === 'checkouts'" class="p-6">
         <div v-if="myCheckouts.length === 0" class="text-center py-12">
-          <div class="w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-surface-dark flex items-center justify-center mx-auto mb-4">
+          <div class="w-20 h-20 rounded-lg bg-zinc-100 dark:bg-surface-dark flex items-center justify-center mx-auto mb-4">
             <span class="material-symbols-outlined text-5xl text-zinc-400">check_circle</span>
           </div>
           <h3 class="text-lg font-semibold text-zinc-700 dark:text-zinc-300">No checked out files</h3>
@@ -298,7 +298,7 @@ async function discardCheckout(doc: Document) {
           <div
             v-for="(doc, index) in myCheckouts"
             :key="doc.id"
-            class="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-surface-dark rounded-xl border border-zinc-100 dark:border-border-dark hover:border-teal/30 hover:shadow-md transition-all"
+            class="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-surface-dark rounded-lg border border-zinc-100 dark:border-border-dark hover:border-teal/30 hover:shadow-md transition-all"
           >
             <DocumentIcon :extension="doc.extension" :index="index" size="lg" />
             <div class="flex-1 min-w-0 cursor-pointer" @click="viewDocument(doc)">

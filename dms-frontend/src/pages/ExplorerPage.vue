@@ -1720,7 +1720,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
     <Transition name="slide-up">
       <div
         v-if="selectedFolderIds.length > 0"
-        class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-zinc-900 text-white rounded-2xl shadow-2xl px-6 py-4 flex items-center gap-6 z-50"
+        class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-zinc-900 text-white rounded-lg shadow-2xl px-6 py-4 flex items-center gap-6 z-50"
       >
         <!-- Selection Count -->
         <div class="flex items-center gap-2">
@@ -1737,7 +1737,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
           <button
             @click="handleBulkDeleteFolders"
             :disabled="isBulkDeletingFolders"
-            class="flex items-center gap-2 px-4 py-2 hover:bg-red-600 rounded-xl transition-colors disabled:opacity-50"
+            class="flex items-center gap-2 px-4 py-2 hover:bg-red-600 rounded-lg transition-colors disabled:opacity-50"
             title="Delete selected folders"
           >
             <span class="material-symbols-outlined text-[20px]">delete</span>
@@ -1752,14 +1752,14 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
         <button
           @click="clearFolderSelection"
           :disabled="isBulkDeletingFolders"
-          class="p-2 hover:bg-zinc-800 rounded-xl transition-colors disabled:opacity-50"
+          class="p-2 hover:bg-zinc-800 rounded-lg transition-colors disabled:opacity-50"
           title="Clear selection"
         >
           <span class="material-symbols-outlined">close</span>
         </button>
 
         <!-- Processing Indicator -->
-        <div v-if="isBulkDeletingFolders" class="absolute inset-0 bg-zinc-900/80 rounded-2xl flex items-center justify-center">
+        <div v-if="isBulkDeletingFolders" class="absolute inset-0 bg-zinc-900/80 rounded-lg flex items-center justify-center">
           <div class="flex items-center gap-3">
             <svg class="animate-spin w-5 h-5 text-teal" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -1847,10 +1847,10 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
             leave-to-class="opacity-0 scale-95 translate-y-4"
           >
             <div v-if="showPasswordValidation" class="w-full max-w-md">
-              <form @submit.prevent="submitPasswordValidation" class="bg-white dark:bg-background-dark rounded-2xl shadow-2xl p-8">
+              <form @submit.prevent="submitPasswordValidation" class="bg-white dark:bg-background-dark rounded-lg shadow-2xl p-8">
                 <!-- Lock Icon -->
                 <div class="flex justify-center mb-6">
-                  <div class="w-20 h-20 rounded-2xl bg-amber-500/10 flex items-center justify-center">
+                  <div class="w-20 h-20 rounded-lg bg-amber-500/10 flex items-center justify-center">
                     <span class="material-symbols-outlined text-5xl text-amber-500">lock</span>
                   </div>
                 </div>
@@ -1864,7 +1864,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
                 </p>
 
                 <!-- Hint -->
-                <div v-if="passwordValidationHint" class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
+                <div v-if="passwordValidationHint" class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                   <div class="flex items-start gap-2">
                     <span class="material-symbols-outlined text-blue-500 text-lg mt-0.5">lightbulb</span>
                     <div>
@@ -1883,7 +1883,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
                     <input
                       v-model="passwordValidationInput"
                       :type="showPasswordText ? 'text' : 'password'"
-                      class="w-full px-4 py-3 pr-12 border border-zinc-200 dark:border-border-dark rounded-xl bg-white dark:bg-surface-dark text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal transition-all"
+                      class="w-full px-4 py-3 pr-12 border border-zinc-200 dark:border-border-dark rounded-lg bg-white dark:bg-surface-dark text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal transition-all"
                       placeholder="Enter document password..."
                       autofocus
                     />
@@ -1898,7 +1898,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
                 </div>
 
                 <!-- Error Message -->
-                <div v-if="passwordValidationError" class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
+                <div v-if="passwordValidationError" class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                   <div class="flex items-center gap-2">
                     <span class="material-symbols-outlined text-red-500 text-lg">error</span>
                     <p class="text-sm text-red-600 dark:text-red-400">{{ passwordValidationError }}</p>
@@ -1910,14 +1910,14 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
                   <button
                     type="button"
                     @click="closePasswordValidation"
-                    class="flex-1 py-3 text-zinc-600 dark:text-zinc-400 font-medium rounded-xl hover:bg-zinc-100 dark:hover:bg-surface-dark transition-colors"
+                    class="flex-1 py-3 text-zinc-600 dark:text-zinc-400 font-medium rounded-lg hover:bg-zinc-100 dark:hover:bg-surface-dark transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     :disabled="!passwordValidationInput.trim() || passwordValidationLoading"
-                    class="flex-1 py-3 bg-teal text-white font-medium rounded-xl hover:bg-teal/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                    class="flex-1 py-3 bg-teal text-white font-medium rounded-lg hover:bg-teal/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                   >
                     <svg v-if="passwordValidationLoading" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -1953,7 +1953,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
       <template #header>
         <div class="flex items-center justify-between w-full">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-primary/30 backdrop-blur rounded-xl flex items-center justify-center">
+            <div class="w-10 h-10 bg-primary/30 backdrop-blur rounded-lg flex items-center justify-center">
               <span class="material-symbols-outlined text-white text-xl">chat</span>
             </div>
             <div>
@@ -1963,7 +1963,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
           </div>
           <button
             type="button"
-            class="w-9 h-9 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
+            class="w-9 h-9 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
             @click="showCommentsModal = false; commentsDocument = null"
           >
             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1990,7 +1990,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
       <template #header>
         <div class="flex items-center justify-between w-full">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-primary/30 backdrop-blur rounded-xl flex items-center justify-center">
+            <div class="w-10 h-10 bg-primary/30 backdrop-blur rounded-lg flex items-center justify-center">
               <span class="material-symbols-outlined text-white text-xl">link</span>
             </div>
             <div>
@@ -2000,7 +2000,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
           </div>
           <button
             type="button"
-            class="w-9 h-9 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
+            class="w-9 h-9 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
             @click="showLinksModal = false; linksDocument = null"
           >
             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

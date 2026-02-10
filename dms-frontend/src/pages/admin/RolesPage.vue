@@ -219,12 +219,12 @@ function getInitials(name: string) {
             v-model="searchQuery"
             type="text"
             placeholder="Search roles..."
-            class="w-64 pl-10 pr-4 py-2 bg-white dark:bg-surface-dark border border-zinc-200 dark:border-border-dark rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none"
+            class="w-64 pl-10 pr-4 py-2 bg-white dark:bg-surface-dark border border-zinc-200 dark:border-border-dark rounded-lg text-zinc-900 dark:text-white placeholder-zinc-400 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none"
           />
         </div>
         <button
           @click="openCreateModal"
-          class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-navy to-teal hover:shadow-lg hover:shadow-teal/25 text-white rounded-xl font-medium text-sm transition-all"
+          class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-navy to-teal hover:shadow-lg hover:shadow-teal/25 text-white rounded-lg font-medium text-sm transition-all"
         >
           <span class="material-symbols-outlined text-lg">add</span>
           Create Role
@@ -234,7 +234,7 @@ function getInitials(name: string) {
 
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div class="relative overflow-hidden bg-[#0d1117] rounded-xl p-4 flex items-center gap-4 shadow-lg border border-white/5">
+      <div class="relative overflow-hidden bg-[#0d1117] rounded-lg p-4 flex items-center gap-4 shadow-lg border border-white/5">
         <svg class="absolute right-0 top-0 h-full w-24 opacity-15" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 Q50,50 0,100 L100,100 L100,0 Z" fill="#00ae8c"/></svg>
         <div class="w-12 h-12 rounded-lg bg-teal/20 flex items-center justify-center relative z-10">
           <span class="material-symbols-outlined text-teal text-2xl">shield_person</span>
@@ -244,7 +244,7 @@ function getInitials(name: string) {
           <p class="text-xs text-zinc-400 uppercase tracking-wide">Total Roles</p>
         </div>
       </div>
-      <div class="relative overflow-hidden bg-[#0d1117] rounded-xl p-4 flex items-center gap-4 shadow-lg border border-white/5">
+      <div class="relative overflow-hidden bg-[#0d1117] rounded-lg p-4 flex items-center gap-4 shadow-lg border border-white/5">
         <svg class="absolute right-0 top-0 h-full w-24 opacity-15" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 Q50,50 0,100 L100,100 L100,0 Z" fill="#00ae8c"/></svg>
         <div class="w-12 h-12 rounded-lg bg-emerald-500/20 flex items-center justify-center relative z-10">
           <span class="material-symbols-outlined text-emerald-400 text-2xl">check_circle</span>
@@ -254,7 +254,7 @@ function getInitials(name: string) {
           <p class="text-xs text-zinc-400 uppercase tracking-wide">Active Roles</p>
         </div>
       </div>
-      <div class="relative overflow-hidden bg-[#0d1117] rounded-xl p-4 flex items-center gap-4 shadow-lg border border-white/5">
+      <div class="relative overflow-hidden bg-[#0d1117] rounded-lg p-4 flex items-center gap-4 shadow-lg border border-white/5">
         <svg class="absolute right-0 top-0 h-full w-24 opacity-15" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 Q50,50 0,100 L100,100 L100,0 Z" fill="#00ae8c"/></svg>
         <div class="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center relative z-10">
           <span class="material-symbols-outlined text-blue-400 text-2xl">groups</span>
@@ -267,11 +267,11 @@ function getInitials(name: string) {
     </div>
 
     <!-- Content Card -->
-    <div class="bg-white dark:bg-background-dark rounded-2xl shadow-sm border border-zinc-200 dark:border-border-dark overflow-hidden">
+    <div class="bg-white dark:bg-background-dark rounded-lg shadow-sm border border-zinc-200 dark:border-border-dark overflow-hidden">
       <div class="p-6">
       <!-- Messages -->
       <Transition enter-active-class="duration-300 ease-out" enter-from-class="opacity-0 -translate-y-2">
-        <div v-if="error" class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-2xl flex items-center gap-3">
+        <div v-if="error" class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-lg flex items-center gap-3">
           <span class="material-symbols-outlined text-red-500">error</span>
           <p class="text-red-600 dark:text-red-400 flex-1">{{ error }}</p>
           <button @click="error = null" class="p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg">
@@ -281,7 +281,7 @@ function getInitials(name: string) {
       </Transition>
 
       <Transition enter-active-class="duration-300 ease-out" enter-from-class="opacity-0 -translate-y-2">
-        <div v-if="successMessage" class="mb-6 p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-2xl flex items-center gap-3">
+        <div v-if="successMessage" class="mb-6 p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-lg flex items-center gap-3">
           <span class="material-symbols-outlined text-emerald-500">check_circle</span>
           <p class="text-emerald-600 dark:text-emerald-400">{{ successMessage }}</p>
         </div>
@@ -289,12 +289,12 @@ function getInitials(name: string) {
 
       <!-- Loading -->
       <div v-if="isLoading" class="space-y-3">
-        <div v-for="i in 5" :key="i" class="h-14 bg-zinc-100 dark:bg-surface-dark rounded-xl animate-pulse"></div>
+        <div v-for="i in 5" :key="i" class="h-14 bg-zinc-100 dark:bg-surface-dark rounded-lg animate-pulse"></div>
       </div>
 
       <!-- Empty State -->
       <div v-else-if="filteredRoles.length === 0" class="text-center py-16">
-        <div class="w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-surface-dark flex items-center justify-center mx-auto mb-4">
+        <div class="w-20 h-20 rounded-lg bg-zinc-100 dark:bg-surface-dark flex items-center justify-center mx-auto mb-4">
           <span class="material-symbols-outlined text-5xl text-zinc-400">group_off</span>
         </div>
         <h3 class="text-lg font-semibold text-zinc-700 dark:text-zinc-300">No Roles Found</h3>
@@ -302,7 +302,7 @@ function getInitials(name: string) {
         <button
           v-if="!searchQuery"
           @click="openCreateModal"
-          class="mt-4 px-5 py-2.5 bg-gradient-to-r from-navy to-teal text-white rounded-xl font-medium hover:shadow-lg hover:shadow-teal/25 transition-all"
+          class="mt-4 px-5 py-2.5 bg-gradient-to-r from-navy to-teal text-white rounded-lg font-medium hover:shadow-lg hover:shadow-teal/25 transition-all"
         >
           Create Role
         </button>
@@ -386,7 +386,7 @@ function getInitials(name: string) {
         <div
           v-for="(role, index) in filteredRoles"
           :key="role.id"
-          class="bg-zinc-50 dark:bg-surface-dark rounded-xl p-4 border border-zinc-100 dark:border-border-dark hover:border-primary/30 hover:shadow-md transition-all group"
+          class="bg-zinc-50 dark:bg-surface-dark rounded-lg p-4 border border-zinc-100 dark:border-border-dark hover:border-primary/30 hover:shadow-md transition-all group"
         >
           <div class="flex items-start justify-between mb-3">
             <div :class="[getAvatarColor(index), 'w-10 h-10 rounded-lg flex items-center justify-center']">
@@ -446,11 +446,11 @@ function getInitials(name: string) {
         leave-to-class="opacity-0"
       >
         <div v-if="showRoleModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div class="bg-white dark:bg-background-dark rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+          <div class="bg-white dark:bg-background-dark rounded-lg shadow-2xl w-full max-w-md overflow-hidden">
             <!-- Modal Header -->
             <div class="relative bg-gradient-to-r from-navy via-navy/95 to-primary p-5">
               <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
                   <span class="material-symbols-outlined text-white">{{ editingRole ? 'edit' : 'add_circle' }}</span>
                 </div>
                 <div>
@@ -460,7 +460,7 @@ function getInitials(name: string) {
               </div>
               <button
                 @click="showRoleModal = false"
-                class="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"
+                class="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
               >
                 <span class="material-symbols-outlined text-white">close</span>
               </button>
@@ -474,7 +474,7 @@ function getInitials(name: string) {
                   v-model="roleForm.name"
                   type="text"
                   placeholder="e.g., Administrator"
-                  class="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-surface-dark text-gray-900 dark:text-white"
+                  class="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-surface-dark text-gray-900 dark:text-white"
                 />
               </div>
               <div>
@@ -483,7 +483,7 @@ function getInitials(name: string) {
                   v-model="roleForm.description"
                   rows="3"
                   placeholder="Describe the role's purpose and permissions..."
-                  class="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-surface-dark text-gray-900 dark:text-white resize-none"
+                  class="w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-surface-dark text-gray-900 dark:text-white resize-none"
                 ></textarea>
               </div>
             </div>
@@ -492,14 +492,14 @@ function getInitials(name: string) {
             <div class="border-t border-gray-100 dark:border-gray-700 p-4 bg-gray-50 dark:bg-surface-dark/50 flex justify-end gap-3">
               <button
                 @click="showRoleModal = false"
-                class="px-5 py-2.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-border-dark rounded-xl font-medium transition-colors"
+                class="px-5 py-2.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-border-dark rounded-lg font-medium transition-colors"
               >
                 Cancel
               </button>
               <button
                 @click="saveRole"
                 :disabled="!roleForm.name.trim() || isSaving"
-                class="px-5 py-2.5 bg-gradient-to-r from-navy to-primary text-white rounded-xl font-medium hover:shadow-lg hover:shadow-primary/25 disabled:opacity-50 transition-all flex items-center gap-2"
+                class="px-5 py-2.5 bg-gradient-to-r from-navy to-primary text-white rounded-lg font-medium hover:shadow-lg hover:shadow-primary/25 disabled:opacity-50 transition-all flex items-center gap-2"
               >
                 <span v-if="isSaving" class="material-symbols-outlined animate-spin text-sm">progress_activity</span>
                 {{ isSaving ? 'Saving...' : (editingRole ? 'Update Role' : 'Create Role') }}
@@ -519,11 +519,11 @@ function getInitials(name: string) {
         leave-to-class="opacity-0"
       >
         <div v-if="showMembersModal && selectedRole" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div class="bg-white dark:bg-background-dark rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+          <div class="bg-white dark:bg-background-dark rounded-lg shadow-2xl w-full max-w-lg overflow-hidden">
             <!-- Modal Header -->
             <div class="relative bg-gradient-to-r from-navy via-navy/95 to-primary p-5">
               <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
                   <span class="material-symbols-outlined text-white">people</span>
                 </div>
                 <div>
@@ -533,7 +533,7 @@ function getInitials(name: string) {
               </div>
               <button
                 @click="showMembersModal = false"
-                class="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"
+                class="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
               >
                 <span class="material-symbols-outlined text-white">close</span>
               </button>
@@ -554,7 +554,7 @@ function getInitials(name: string) {
                 <div
                   v-for="(member, index) in roleMembers"
                   :key="member.id"
-                  class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-surface-dark rounded-xl"
+                  class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-surface-dark rounded-lg"
                 >
                   <div :class="[getAvatarColor(index), 'w-10 h-10 rounded-full flex items-center justify-center text-white font-medium']">
                     {{ getInitials(member.displayName || member.username || '') }}
@@ -578,7 +578,7 @@ function getInitials(name: string) {
             <div class="border-t border-gray-100 dark:border-gray-700 p-4 bg-gray-50 dark:bg-surface-dark/50">
               <button
                 @click="showMembersModal = false"
-                class="w-full px-5 py-2.5 bg-gradient-to-r from-navy to-primary text-white rounded-xl font-medium hover:shadow-lg transition-all"
+                class="w-full px-5 py-2.5 bg-gradient-to-r from-navy to-primary text-white rounded-lg font-medium hover:shadow-lg transition-all"
               >
                 Done
               </button>
@@ -597,7 +597,7 @@ function getInitials(name: string) {
         leave-to-class="opacity-0"
       >
         <div v-if="showDeleteConfirm && selectedRole" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div class="bg-white dark:bg-background-dark rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+          <div class="bg-white dark:bg-background-dark rounded-lg shadow-2xl w-full max-w-sm p-6 text-center">
             <div class="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
               <span class="material-symbols-outlined text-red-600 dark:text-red-400 text-3xl">warning</span>
             </div>
@@ -608,14 +608,14 @@ function getInitials(name: string) {
             <div class="flex gap-3 mt-6">
               <button
                 @click="showDeleteConfirm = false"
-                class="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-surface-dark transition-colors"
+                class="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-surface-dark transition-colors"
               >
                 Cancel
               </button>
               <button
                 @click="deleteRole"
                 :disabled="isSaving"
-                class="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 disabled:opacity-50 transition-colors"
+                class="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 disabled:opacity-50 transition-colors"
               >
                 {{ isSaving ? 'Deleting...' : 'Delete' }}
               </button>

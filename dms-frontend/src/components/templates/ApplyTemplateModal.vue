@@ -99,7 +99,7 @@ function countTotalFolders(nodes: any[]): number {
     class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
     @click.self="emit('close')"
   >
-    <div class="bg-white dark:bg-background-dark rounded-2xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10 w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden">
+    <div class="bg-white dark:bg-background-dark rounded-lg shadow-2xl ring-1 ring-black/5 dark:ring-white/10 w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden">
       <!-- Header with brand gradient -->
       <div class="relative bg-gradient-to-r from-navy via-navy/95 to-primary px-6 py-5 overflow-hidden">
         <!-- Decorative elements -->
@@ -108,7 +108,7 @@ function countTotalFolders(nodes: any[]): number {
 
         <div class="relative flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-primary/30 backdrop-blur rounded-xl flex items-center justify-center">
+            <div class="w-10 h-10 bg-primary/30 backdrop-blur rounded-lg flex items-center justify-center">
               <span class="material-symbols-outlined text-white text-xl">folder_special</span>
             </div>
             <div>
@@ -120,7 +120,7 @@ function countTotalFolders(nodes: any[]): number {
           </div>
           <button
             @click="emit('close')"
-            class="w-9 h-9 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
+            class="w-9 h-9 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
           >
             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -227,7 +227,7 @@ function countTotalFolders(nodes: any[]): number {
         <button
           @click="applyTemplate"
           :disabled="!selectedTemplateId || isApplying"
-          class="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-teal to-teal/90 text-white rounded-xl hover:from-teal/90 hover:to-teal/80 disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-lg shadow-teal/25 transition-all"
+          class="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-teal to-teal/90 text-white rounded-lg hover:from-teal/90 hover:to-teal/80 disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-lg shadow-teal/25 transition-all"
         >
           <span v-if="isApplying" class="material-symbols-outlined animate-spin text-lg">progress_activity</span>
           <span class="material-symbols-outlined text-lg" v-else>play_arrow</span>

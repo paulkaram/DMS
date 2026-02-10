@@ -82,7 +82,7 @@ defineExpose({ clearSelection, selectedFolders })
         @click="emit('folder-click', folder)"
         @dblclick="emit('folder-dblclick', folder)"
         @contextmenu="handleContextMenu($event, folder)"
-        class="group relative rounded-xl border cursor-pointer transition-all duration-200 hover:shadow-lg overflow-hidden"
+        class="group relative rounded-lg border cursor-pointer transition-all duration-200 hover:shadow-lg overflow-hidden"
         :class="selectedFolders.has(folder.id)
           ? 'border-teal bg-teal/5 ring-2 ring-teal/30 dark:bg-teal/5'
           : 'border-zinc-200 dark:border-border-dark/50 bg-white dark:bg-zinc-900 hover:border-teal/40 dark:hover:border-teal/30'"
@@ -112,7 +112,7 @@ defineExpose({ clearSelection, selectedFolders })
 
         <!-- Folder Icon & Info -->
         <div class="flex flex-col items-center text-center px-4 pb-4 pt-1">
-          <div class="w-14 h-14 mb-2.5 flex items-center justify-center rounded-xl bg-gradient-to-br from-teal to-teal/80 shadow-md shadow-teal/20 group-hover:shadow-teal/30 group-hover:scale-105 transition-all duration-200">
+          <div class="w-14 h-14 mb-2.5 flex items-center justify-center rounded-lg bg-gradient-to-br from-teal to-teal/80 shadow-md shadow-teal/20 group-hover:shadow-teal/30 group-hover:scale-105 transition-all duration-200">
             <span class="material-symbols-outlined text-white text-[28px]" style="font-variation-settings: 'FILL' 1;">folder</span>
           </div>
           <p class="text-[13px] font-semibold text-zinc-700 dark:text-zinc-200 truncate w-full group-hover:text-teal transition-colors flex items-center justify-center gap-1">
@@ -127,7 +127,7 @@ defineExpose({ clearSelection, selectedFolders })
     </div>
 
     <!-- List View -->
-    <div v-else class="bg-white dark:bg-background-dark rounded-xl border border-zinc-200 dark:border-border-dark/50 overflow-hidden">
+    <div v-else class="bg-white dark:bg-background-dark rounded-lg border border-zinc-200 dark:border-border-dark/50 overflow-hidden">
       <!-- Header -->
       <div class="bg-zinc-50 dark:bg-surface-dark/50 border-b border-zinc-200 dark:border-border-dark/50 px-4 py-2.5">
         <div class="flex items-center gap-4 text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">

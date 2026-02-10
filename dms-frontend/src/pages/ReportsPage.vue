@@ -277,7 +277,7 @@ async function exportPDF() {
       <!-- Stats Cards -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Total Documents -->
-        <div class="bg-[#0d1117] p-6 rounded-2xl text-white shadow-xl border border-zinc-800/50 min-h-[140px] flex flex-col justify-between relative overflow-hidden">
+        <div class="bg-[#0d1117] p-6 rounded-lg text-white shadow-xl border border-zinc-800/50 min-h-[140px] flex flex-col justify-between relative overflow-hidden">
           <svg class="absolute right-0 top-0 h-full w-32 opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
             <path d="M0,0 Q50,50 0,100 L100,100 L100,0 Z" fill="#00ae8c"/>
           </svg>
@@ -295,7 +295,7 @@ async function exportPDF() {
         </div>
 
         <!-- Storage Used -->
-        <div class="bg-[#0d1117] p-6 rounded-2xl text-white shadow-xl border border-zinc-800/50 min-h-[140px] flex flex-col justify-between relative overflow-hidden">
+        <div class="bg-[#0d1117] p-6 rounded-lg text-white shadow-xl border border-zinc-800/50 min-h-[140px] flex flex-col justify-between relative overflow-hidden">
           <svg class="absolute right-0 top-0 h-full w-32 opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
             <path d="M0,0 Q50,50 0,100 L100,100 L100,0 Z" fill="#00ae8c"/>
           </svg>
@@ -313,7 +313,7 @@ async function exportPDF() {
         </div>
 
         <!-- Active Workflows -->
-        <div class="bg-[#0d1117] p-6 rounded-2xl text-white shadow-xl border border-zinc-800/50 min-h-[140px] flex flex-col justify-between relative overflow-hidden">
+        <div class="bg-[#0d1117] p-6 rounded-lg text-white shadow-xl border border-zinc-800/50 min-h-[140px] flex flex-col justify-between relative overflow-hidden">
           <svg class="absolute right-0 top-0 h-full w-32 opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
             <path d="M0,0 Q50,50 0,100 L100,100 L100,0 Z" fill="#00ae8c"/>
           </svg>
@@ -332,7 +332,7 @@ async function exportPDF() {
         </div>
 
         <!-- Total Users -->
-        <div class="bg-[#0d1117] p-6 rounded-2xl text-white shadow-xl border border-zinc-800/50 min-h-[140px] flex flex-col justify-between relative overflow-hidden">
+        <div class="bg-[#0d1117] p-6 rounded-lg text-white shadow-xl border border-zinc-800/50 min-h-[140px] flex flex-col justify-between relative overflow-hidden">
           <svg class="absolute right-0 top-0 h-full w-32 opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
             <path d="M0,0 Q50,50 0,100 L100,100 L100,0 Z" fill="#00ae8c"/>
           </svg>
@@ -354,7 +354,7 @@ async function exportPDF() {
       <!-- Charts Row -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Document Growth Chart -->
-        <div class="lg:col-span-2 bg-white dark:bg-background-dark p-6 rounded-xl border border-zinc-200 dark:border-border-dark shadow-sm">
+        <div class="lg:col-span-2 bg-white dark:bg-background-dark p-6 rounded-lg border border-zinc-200 dark:border-border-dark shadow-sm">
           <div class="flex items-center justify-between mb-8">
             <div>
               <h3 class="font-bold text-zinc-900 dark:text-zinc-100">Document Growth</h3>
@@ -429,7 +429,7 @@ async function exportPDF() {
         </div>
 
         <!-- Document Types Donut Chart -->
-        <div class="bg-white dark:bg-background-dark p-6 rounded-xl border border-zinc-200 dark:border-border-dark shadow-sm">
+        <div class="bg-white dark:bg-background-dark p-6 rounded-lg border border-zinc-200 dark:border-border-dark shadow-sm">
           <h3 class="font-bold text-zinc-900 dark:text-zinc-100">Document Types</h3>
           <p class="text-xs text-zinc-500 mb-8">Storage distribution by extension</p>
 
@@ -497,7 +497,7 @@ async function exportPDF() {
       </div>
 
       <!-- Recent Activity Table -->
-      <div class="bg-white dark:bg-background-dark border border-zinc-200 dark:border-border-dark rounded-xl overflow-hidden shadow-sm">
+      <div class="bg-white dark:bg-background-dark border border-zinc-200 dark:border-border-dark rounded-lg overflow-hidden shadow-sm">
         <div class="px-6 py-4 border-b border-zinc-100 dark:border-border-dark flex items-center justify-between">
           <h3 class="font-bold text-zinc-900 dark:text-zinc-100">Recent System Activity</h3>
           <router-link to="/activity" class="text-teal text-xs font-semibold hover:underline">

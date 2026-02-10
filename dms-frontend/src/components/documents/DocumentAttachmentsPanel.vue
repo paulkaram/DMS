@@ -293,21 +293,21 @@ const totalSize = computed(() => {
           >
             <div
               v-if="isOpen"
-              class="relative w-full max-w-2xl bg-white dark:bg-background-dark rounded-2xl shadow-2xl ring-1 ring-black/5 dark:ring-white/10 overflow-hidden"
+              class="relative w-full max-w-2xl bg-white dark:bg-background-dark rounded-lg shadow-2xl ring-1 ring-black/5 dark:ring-white/10 overflow-hidden"
               @click.stop
               @dragover="handleDragOver"
               @dragleave="handleDragLeave"
               @drop="handleDrop"
             >
               <!-- Header with brand gradient -->
-              <div class="relative bg-gradient-to-r from-navy via-navy/95 to-primary px-6 py-5 overflow-hidden rounded-t-2xl">
+              <div class="relative bg-gradient-to-r from-navy via-navy/95 to-primary px-6 py-5 overflow-hidden rounded-t-lg">
                 <!-- Decorative elements -->
                 <div class="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full -translate-y-1/2 translate-x-1/2"></div>
                 <div class="absolute bottom-0 left-0 w-20 h-20 bg-primary/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
 
                 <div class="relative flex items-center justify-between">
                   <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-primary/30 backdrop-blur rounded-xl flex items-center justify-center">
+                    <div class="w-10 h-10 bg-primary/30 backdrop-blur rounded-lg flex items-center justify-center">
                       <span class="material-symbols-outlined text-white text-xl">attach_file</span>
                     </div>
                     <div>
@@ -317,7 +317,7 @@ const totalSize = computed(() => {
                   </div>
                   <button
                     type="button"
-                    class="w-9 h-9 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
+                    class="w-9 h-9 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
                     @click="close"
                   >
                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -330,7 +330,7 @@ const totalSize = computed(() => {
               <!-- Drag overlay -->
               <div
                 v-if="isDragging && canEdit"
-                class="absolute inset-0 z-10 bg-teal/10 border-2 border-dashed border-teal rounded-2xl flex items-center justify-center"
+                class="absolute inset-0 z-10 bg-teal/10 border-2 border-dashed border-teal rounded-lg flex items-center justify-center"
               >
                 <div class="text-center">
                   <span class="material-symbols-outlined text-4xl text-teal mb-2">upload_file</span>
@@ -373,7 +373,7 @@ const totalSize = computed(() => {
                         type="file"
                         @change="uploadFile"
                         class="w-full text-sm text-zinc-600 dark:text-zinc-400
-                               file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0
+                               file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0
                                file:text-sm file:font-medium file:bg-teal file:text-white
                                hover:file:bg-teal/90 file:cursor-pointer file:transition-colors"
                         :disabled="isUploading"
@@ -384,7 +384,7 @@ const totalSize = computed(() => {
                       <input
                         v-model="description"
                         type="text"
-                        class="w-full px-4 py-2 border border-zinc-300 dark:border-border-dark rounded-xl bg-white dark:bg-surface-dark text-sm text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-teal/50 focus:border-teal transition-colors"
+                        class="w-full px-4 py-2 border border-zinc-300 dark:border-border-dark rounded-lg bg-white dark:bg-surface-dark text-sm text-zinc-900 dark:text-zinc-100 focus:ring-2 focus:ring-teal/50 focus:border-teal transition-colors"
                         placeholder="Enter description..."
                         :disabled="isUploading"
                       />
@@ -419,7 +419,7 @@ const totalSize = computed(() => {
 
                 <!-- Empty State -->
                 <div v-else-if="attachments.length === 0" class="text-center py-12">
-                  <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-zinc-100 dark:bg-surface-dark flex items-center justify-center">
+                  <div class="w-16 h-16 mx-auto mb-4 rounded-lg bg-zinc-100 dark:bg-surface-dark flex items-center justify-center">
                     <span class="material-symbols-outlined text-3xl text-zinc-400 dark:text-zinc-500">attach_file</span>
                   </div>
                   <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300">No attachments yet</p>
@@ -433,10 +433,10 @@ const totalSize = computed(() => {
                   <div
                     v-for="attachment in attachments"
                     :key="attachment.id"
-                    class="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-surface-dark rounded-xl hover:bg-zinc-100 dark:hover:bg-surface-dark/80 transition-colors group"
+                    class="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-surface-dark rounded-lg hover:bg-zinc-100 dark:hover:bg-surface-dark/80 transition-colors group"
                   >
                     <!-- File Icon -->
-                    <div class="w-10 h-10 rounded-xl bg-teal/10 flex items-center justify-center text-teal flex-shrink-0">
+                    <div class="w-10 h-10 rounded-lg bg-teal/10 flex items-center justify-center text-teal flex-shrink-0">
                       <span class="material-symbols-outlined">{{ getFileIcon(attachment.contentType) }}</span>
                     </div>
 
@@ -460,14 +460,14 @@ const totalSize = computed(() => {
                       <button
                         v-if="isPreviewable(attachment.contentType)"
                         @click="openPreview(attachment)"
-                        class="p-2 text-zinc-400 hover:text-teal hover:bg-teal/10 rounded-xl transition-colors"
+                        class="p-2 text-zinc-400 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors"
                         title="Preview"
                       >
                         <span class="material-symbols-outlined text-lg">visibility</span>
                       </button>
                       <button
                         @click="downloadAttachment(attachment)"
-                        class="p-2 text-zinc-400 hover:text-teal hover:bg-teal/10 rounded-xl transition-colors"
+                        class="p-2 text-zinc-400 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors"
                         title="Download"
                       >
                         <span class="material-symbols-outlined text-lg">download</span>
@@ -475,7 +475,7 @@ const totalSize = computed(() => {
                       <button
                         v-if="canEdit"
                         @click="confirmDelete(attachment)"
-                        class="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                        class="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                         title="Delete"
                       >
                         <span class="material-symbols-outlined text-lg">delete</span>
@@ -486,7 +486,7 @@ const totalSize = computed(() => {
               </div>
 
               <!-- Footer -->
-              <div class="px-6 py-4 bg-gray-50 dark:bg-surface-dark/50 border-t border-gray-200 dark:border-gray-700/50 rounded-b-2xl">
+              <div class="px-6 py-4 bg-gray-50 dark:bg-surface-dark/50 border-t border-gray-200 dark:border-gray-700/50 rounded-b-lg">
                 <div class="flex justify-end">
                   <UiButton variant="outline" @click="close">Close</UiButton>
                 </div>
@@ -599,9 +599,9 @@ const totalSize = computed(() => {
           <!-- Audio Preview -->
           <div
             v-else-if="previewUrl && getPreviewType(previewAttachment.contentType) === 'audio'"
-            class="w-full max-w-lg bg-white dark:bg-zinc-800 rounded-2xl p-8 shadow-2xl text-center"
+            class="w-full max-w-lg bg-white dark:bg-zinc-800 rounded-lg p-8 shadow-2xl text-center"
           >
-            <div class="w-20 h-20 mx-auto mb-4 rounded-2xl bg-teal/10 flex items-center justify-center">
+            <div class="w-20 h-20 mx-auto mb-4 rounded-lg bg-teal/10 flex items-center justify-center">
               <span class="material-symbols-outlined text-4xl text-teal">audio_file</span>
             </div>
             <p class="text-sm font-medium text-zinc-900 dark:text-zinc-100 mb-4">{{ previewAttachment.fileName }}</p>

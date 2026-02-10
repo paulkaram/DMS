@@ -160,7 +160,7 @@ function getStatusName(status: number): string {
     <div v-else>
       <!-- Pending Approval Tab -->
       <div v-if="activeTab === 'pending'">
-        <div v-if="pendingRequests.length === 0" class="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+        <div v-if="pendingRequests.length === 0" class="bg-white rounded-lg shadow-sm border border-gray-100 p-12 text-center">
           <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
@@ -172,7 +172,7 @@ function getStatusName(status: number): string {
           <div
             v-for="request in pendingRequests"
             :key="request.id"
-            class="bg-white rounded-xl shadow-sm border border-gray-100 p-4"
+            class="bg-white rounded-lg shadow-sm border border-gray-100 p-4"
           >
             <div class="flex items-start justify-between">
               <div class="flex items-start gap-4">
@@ -209,7 +209,7 @@ function getStatusName(status: number): string {
 
       <!-- My Requests Tab -->
       <div v-if="activeTab === 'myRequests'">
-        <div v-if="myRequests.length === 0" class="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+        <div v-if="myRequests.length === 0" class="bg-white rounded-lg shadow-sm border border-gray-100 p-12 text-center">
           <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
@@ -217,7 +217,7 @@ function getStatusName(status: number): string {
           <p class="text-gray-400 mt-1">Requests you submit will appear here</p>
         </div>
 
-        <div v-else class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div v-else class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
           <table class="w-full">
             <thead class="bg-gray-50">
               <tr>
@@ -266,7 +266,7 @@ function getStatusName(status: number): string {
 
       <!-- Workflows Tab -->
       <div v-if="activeTab === 'workflows'">
-        <div v-if="workflows.length === 0" class="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+        <div v-if="workflows.length === 0" class="bg-white rounded-lg shadow-sm border border-gray-100 p-12 text-center">
           <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
           </svg>
@@ -278,7 +278,7 @@ function getStatusName(status: number): string {
           <div
             v-for="workflow in workflows"
             :key="workflow.id"
-            class="bg-white rounded-xl shadow-sm border border-gray-100 p-4"
+            class="bg-white rounded-lg shadow-sm border border-gray-100 p-4"
           >
             <div class="flex items-start gap-4">
               <div class="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center">
@@ -315,7 +315,7 @@ function getStatusName(status: number): string {
 
     <!-- Action Modal -->
     <div v-if="showActionModal && selectedRequest" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
         <h2 class="text-lg font-semibold text-gray-900 mb-4">Review: {{ selectedRequest.documentName }}</h2>
 
         <form @submit.prevent="submitAction" class="space-y-4">

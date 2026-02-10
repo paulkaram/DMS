@@ -137,7 +137,7 @@ async function handleSubmit() {
 
 <template>
   <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" @click.self="emit('close')">
-    <div class="bg-white dark:bg-background-dark rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+    <div class="bg-white dark:bg-background-dark rounded-lg shadow-2xl w-full max-w-md mx-4 overflow-hidden">
       <!-- Header -->
       <div class="px-6 py-5 border-b border-zinc-200 dark:border-border-dark">
         <div class="flex items-center justify-between">
@@ -282,7 +282,7 @@ async function handleSubmit() {
 
         <!-- Link Tab -->
         <div v-if="activeTab === 'link'" class="space-y-4">
-          <div class="p-4 bg-zinc-50 dark:bg-surface-dark rounded-xl">
+          <div class="p-4 bg-zinc-50 dark:bg-surface-dark rounded-lg">
             <div class="flex items-center gap-3 mb-3">
               <div class="w-10 h-10 rounded-lg bg-teal/10 flex items-center justify-center">
                 <span class="material-symbols-outlined text-teal">link</span>

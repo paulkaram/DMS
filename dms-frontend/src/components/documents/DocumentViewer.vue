@@ -732,7 +732,7 @@ async function handlePageManagementApplied(result: PageReorganizeResult) {
           <!-- Center: Page Navigation (PDF only) -->
           <div
             v-if="previewInfo?.type === 'Pdf' && totalPages > 1"
-            class="flex items-center gap-1 bg-zinc-50 rounded-xl px-2 py-1 border border-zinc-200"
+            class="flex items-center gap-1 bg-zinc-50 rounded-lg px-2 py-1 border border-zinc-200"
           >
             <button
               @click="prevPage"
@@ -769,7 +769,7 @@ async function handlePageManagementApplied(result: PageReorganizeResult) {
             <!-- Zoom Controls -->
             <div
               v-if="previewInfo?.type === 'Pdf' || previewInfo?.type === 'Image'"
-              class="flex items-center gap-0.5 px-1.5 py-1 rounded-xl mr-2 bg-zinc-50 border border-zinc-200"
+              class="flex items-center gap-0.5 px-1.5 py-1 rounded-lg mr-2 bg-zinc-50 border border-zinc-200"
             >
               <button
                 @click="zoomOut"
@@ -910,10 +910,10 @@ async function handlePageManagementApplied(result: PageReorganizeResult) {
           <!-- Password Required -->
           <div v-if="requiresPassword" class="absolute inset-0 flex items-center justify-center p-8">
             <div class="w-full max-w-md">
-              <div class="bg-white dark:bg-background-dark rounded-2xl shadow-2xl p-8">
+              <div class="bg-white dark:bg-background-dark rounded-lg shadow-2xl p-8">
                 <!-- Lock Icon -->
                 <div class="flex justify-center mb-6">
-                  <div class="w-20 h-20 rounded-2xl bg-amber-500/10 flex items-center justify-center">
+                  <div class="w-20 h-20 rounded-lg bg-amber-500/10 flex items-center justify-center">
                     <span class="material-symbols-outlined text-5xl text-amber-500">lock</span>
                   </div>
                 </div>
@@ -927,7 +927,7 @@ async function handlePageManagementApplied(result: PageReorganizeResult) {
                 </p>
 
                 <!-- Hint -->
-                <div v-if="passwordHint" class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
+                <div v-if="passwordHint" class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                   <div class="flex items-start gap-2">
                     <span class="material-symbols-outlined text-blue-500 text-lg mt-0.5">lightbulb</span>
                     <div>
@@ -946,7 +946,7 @@ async function handlePageManagementApplied(result: PageReorganizeResult) {
                     <input
                       v-model="enteredPassword"
                       :type="showPassword ? 'text' : 'password'"
-                      class="w-full px-4 py-3 pr-12 border border-zinc-200 dark:border-border-dark rounded-xl bg-white dark:bg-surface-dark text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal transition-all"
+                      class="w-full px-4 py-3 pr-12 border border-zinc-200 dark:border-border-dark rounded-lg bg-white dark:bg-surface-dark text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal transition-all"
                       placeholder="Enter document password..."
                       @keyup.enter="validateAndLoadPreview"
                       autofocus
@@ -962,7 +962,7 @@ async function handlePageManagementApplied(result: PageReorganizeResult) {
                 </div>
 
                 <!-- Error Message -->
-                <div v-if="passwordError" class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
+                <div v-if="passwordError" class="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
                   <div class="flex items-center gap-2">
                     <span class="material-symbols-outlined text-red-500 text-lg">error</span>
                     <p class="text-sm text-red-600 dark:text-red-400">{{ passwordError }}</p>
@@ -973,14 +973,14 @@ async function handlePageManagementApplied(result: PageReorganizeResult) {
                 <div class="flex gap-3">
                   <button
                     @click="isOpen = false"
-                    class="flex-1 py-3 text-zinc-600 dark:text-zinc-400 font-medium rounded-xl hover:bg-zinc-100 dark:hover:bg-surface-dark transition-colors"
+                    class="flex-1 py-3 text-zinc-600 dark:text-zinc-400 font-medium rounded-lg hover:bg-zinc-100 dark:hover:bg-surface-dark transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     @click="validateAndLoadPreview"
                     :disabled="!enteredPassword || isValidatingPassword"
-                    class="flex-1 py-3 bg-teal text-white font-medium rounded-xl hover:bg-teal/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                    class="flex-1 py-3 bg-teal text-white font-medium rounded-lg hover:bg-teal/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                   >
                     <svg v-if="isValidatingPassword" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -1038,7 +1038,7 @@ async function handlePageManagementApplied(result: PageReorganizeResult) {
           <div v-else-if="error" class="absolute inset-0 flex items-center justify-center">
             <div class="text-center max-w-sm px-4">
               <div
-                class="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center"
+                class="w-16 h-16 mx-auto mb-4 rounded-lg flex items-center justify-center"
                 :class="isDarkMode ? 'bg-red-900/30' : 'bg-red-100'"
               >
                 <span class="material-symbols-outlined text-3xl text-red-500">error</span>
@@ -1112,7 +1112,7 @@ async function handlePageManagementApplied(result: PageReorganizeResult) {
             >
               <div class="max-w-4xl mx-auto">
                 <pre
-                  class="p-6 rounded-xl font-mono text-sm whitespace-pre-wrap leading-relaxed shadow-sm"
+                  class="p-6 rounded-lg font-mono text-sm whitespace-pre-wrap leading-relaxed shadow-sm"
                   :class="isDarkMode
                     ? 'bg-zinc-900 text-zinc-300 border border-zinc-700'
                     : 'bg-white text-zinc-700 border border-zinc-200'"
@@ -1135,7 +1135,7 @@ async function handlePageManagementApplied(result: PageReorganizeResult) {
               :class="isDarkMode ? 'bg-zinc-800' : 'bg-[#e2e8f0]'"
             >
               <div class="text-center">
-                <div class="w-28 h-28 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+                <div class="w-28 h-28 mx-auto mb-6 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
                   <span class="material-symbols-outlined text-5xl text-white">music_note</span>
                 </div>
                 <h3 class="font-medium mb-4" :class="isDarkMode ? 'text-white' : 'text-zinc-900'">
@@ -1153,7 +1153,7 @@ async function handlePageManagementApplied(result: PageReorganizeResult) {
             >
               <div class="text-center max-w-sm px-4">
                 <div
-                  class="w-20 h-20 mx-auto mb-4 rounded-2xl flex items-center justify-center"
+                  class="w-20 h-20 mx-auto mb-4 rounded-lg flex items-center justify-center"
                   :class="getFileIconBg(previewInfo.type)"
                 >
                   <span class="material-symbols-outlined text-4xl" :class="getFileIconColor(previewInfo.type)">
@@ -1286,7 +1286,7 @@ async function handlePageManagementApplied(result: PageReorganizeResult) {
                         class="group"
                       >
                         <div
-                          class="p-3 rounded-xl transition-colors"
+                          class="p-3 rounded-lg transition-colors"
                           :class="isDarkMode
                             ? 'bg-zinc-800 hover:bg-zinc-750 border border-zinc-700'
                             : 'bg-zinc-50 hover:bg-zinc-100 border border-zinc-100'"

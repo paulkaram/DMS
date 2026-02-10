@@ -314,7 +314,7 @@ function toggleSelectDocument(docId: string) {
     />
 
     <!-- Documents Table - Light with Charcoal Header -->
-    <div v-else class="bg-white dark:bg-background-dark rounded-2xl overflow-hidden shadow-xl border border-zinc-200 dark:border-border-dark">
+    <div v-else class="bg-white dark:bg-background-dark rounded-lg overflow-hidden shadow-xl border border-zinc-200 dark:border-border-dark">
       <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
           <thead>

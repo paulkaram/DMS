@@ -333,7 +333,7 @@ function getIconPath(icon: string): string {
 <template>
   <div
     ref="menuRef"
-    class="fixed bg-white dark:bg-surface-dark rounded-xl shadow-2xl border border-zinc-200 dark:border-border-dark py-2 z-50 min-w-[220px] max-h-[80vh] overflow-y-auto custom-scrollbar font-display"
+    class="fixed bg-white dark:bg-surface-dark rounded-lg shadow-2xl border border-zinc-200 dark:border-border-dark py-2 z-50 min-w-[220px] max-h-[80vh] overflow-y-auto custom-scrollbar font-display"
     :style="{ left: `${adjustedPosition.x}px`, top: `${adjustedPosition.y}px` }"
   >
     <!-- No permissions message -->

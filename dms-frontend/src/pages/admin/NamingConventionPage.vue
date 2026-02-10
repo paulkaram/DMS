@@ -137,7 +137,7 @@ const appliesToSelectOptions = computed(() =>
         </button>
       </div>
 
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
         <h3 class="font-medium text-gray-900 mb-2">Available Variables</h3>
         <div class="flex flex-wrap gap-2">
           <code class="px-2 py-1 bg-gray-100 text-xs rounded">{date}</code>
@@ -151,7 +151,7 @@ const appliesToSelectOptions = computed(() =>
         </div>
       </div>
 
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div v-if="isLoading" class="p-8 text-center text-gray-500">Loading...</div>
         <div v-else-if="conventions.length === 0" class="p-8 text-center text-gray-500">
           <p class="text-lg font-medium">No naming conventions configured</p>
@@ -212,7 +212,7 @@ const appliesToSelectOptions = computed(() =>
 
     <!-- Modal -->
     <div v-if="showModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 p-6">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 p-6">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ isEditing ? 'Edit Convention' : 'New Convention' }}</h3>
         <div class="space-y-4">
           <div>

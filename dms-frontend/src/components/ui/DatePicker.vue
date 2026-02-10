@@ -262,7 +262,7 @@ watch(() => props.modelValue, (newVal) => {
       ref="buttonRef"
       type="button"
       :disabled="disabled"
-      class="relative w-full bg-white dark:bg-surface-dark border rounded-xl text-left cursor-pointer
+      class="relative w-full bg-white dark:bg-surface-dark border rounded-lg text-left cursor-pointer
              transition-all duration-200 flex items-center justify-between gap-2
              focus:outline-none"
       :class="[
@@ -310,14 +310,14 @@ watch(() => props.modelValue, (newVal) => {
         <div
           v-if="isOpen"
           ref="dropdownRef"
-          class="fixed z-[9999] bg-white dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-2xl shadow-2xl p-5"
+          class="fixed z-[9999] bg-white dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-lg shadow-2xl p-5"
           :style="{ ...dropdownStyle, transformOrigin: openUpward ? 'bottom center' : 'top center' }"
         >
         <!-- Header with Month/Year Navigation -->
         <div class="flex items-center justify-between mb-4">
           <button
             type="button"
-            class="p-2 hover:bg-gray-100 dark:hover:bg-border-dark rounded-xl transition-colors"
+            class="p-2 hover:bg-gray-100 dark:hover:bg-border-dark rounded-lg transition-colors"
             @click="prevMonth"
           >
             <span class="material-symbols-outlined text-gray-600 dark:text-zinc-300">chevron_left</span>
@@ -325,7 +325,7 @@ watch(() => props.modelValue, (newVal) => {
 
           <button
             type="button"
-            class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-border-dark rounded-xl transition-colors flex items-center gap-2"
+            class="px-4 py-2 hover:bg-gray-100 dark:hover:bg-border-dark rounded-lg transition-colors flex items-center gap-2"
             @click="showYearPicker = !showYearPicker"
           >
             <span class="font-semibold text-gray-900 dark:text-white">
@@ -336,7 +336,7 @@ watch(() => props.modelValue, (newVal) => {
 
           <button
             type="button"
-            class="p-2 hover:bg-gray-100 dark:hover:bg-border-dark rounded-xl transition-colors"
+            class="p-2 hover:bg-gray-100 dark:hover:bg-border-dark rounded-lg transition-colors"
             @click="nextMonth"
           >
             <span class="material-symbols-outlined text-gray-600 dark:text-zinc-300">chevron_right</span>
@@ -352,7 +352,7 @@ watch(() => props.modelValue, (newVal) => {
           leave-from-class="opacity-100 translate-y-0"
           leave-to-class="opacity-0 -translate-y-2"
         >
-          <div v-if="showYearPicker" class="mb-4 p-3 bg-gray-50 dark:bg-background-dark rounded-xl">
+          <div v-if="showYearPicker" class="mb-4 p-3 bg-gray-50 dark:bg-background-dark rounded-lg">
             <!-- Year Navigation -->
             <div class="flex items-center justify-between mb-3">
               <button type="button" class="p-1 hover:bg-gray-200 dark:hover:bg-border-dark rounded-lg" @click="prevYear">
@@ -410,7 +410,7 @@ watch(() => props.modelValue, (newVal) => {
             :key="index"
             type="button"
             :disabled="day.isDisabled"
-            class="aspect-square flex items-center justify-center text-sm rounded-xl transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-teal/50"
+            class="aspect-square flex items-center justify-center text-sm rounded-lg transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-teal/50"
             :class="[
               day.isDisabled ? 'text-gray-300 dark:text-zinc-600 cursor-not-allowed' : 'cursor-pointer',
               !day.isCurrentMonth && !day.isSelected ? 'text-gray-400 dark:text-zinc-600' : '',

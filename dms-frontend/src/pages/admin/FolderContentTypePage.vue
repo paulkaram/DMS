@@ -235,7 +235,7 @@ function getCategoryColor(category: string): string {
       <div class="grid grid-cols-12 gap-6">
         <!-- Left Panel: Folder Browser -->
         <div class="col-span-4">
-          <div class="bg-white dark:bg-background-dark rounded-xl shadow-sm border border-gray-200 dark:border-border-dark p-4">
+          <div class="bg-white dark:bg-background-dark rounded-lg shadow-sm border border-gray-200 dark:border-border-dark p-4">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Select Folder</h2>
 
             <!-- Cabinet Selector -->
@@ -294,7 +294,7 @@ function getCategoryColor(category: string): string {
           </div>
 
           <!-- Available Content Types -->
-          <div class="bg-white dark:bg-background-dark rounded-xl shadow-sm border border-gray-200 dark:border-border-dark p-4 mt-4">
+          <div class="bg-white dark:bg-background-dark rounded-lg shadow-sm border border-gray-200 dark:border-border-dark p-4 mt-4">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Available Content Types</h2>
 
             <div v-if="isLoading" class="text-center py-4 text-gray-500">Loading...</div>
@@ -329,7 +329,7 @@ function getCategoryColor(category: string): string {
 
         <!-- Right Panel: Folder Assignments -->
         <div class="col-span-8">
-          <div class="bg-white dark:bg-background-dark rounded-xl shadow-sm border border-gray-200 dark:border-border-dark p-6">
+          <div class="bg-white dark:bg-background-dark rounded-lg shadow-sm border border-gray-200 dark:border-border-dark p-6">
             <div v-if="!selectedFolderId" class="text-center py-12">
               <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
@@ -420,7 +420,7 @@ function getCategoryColor(category: string): string {
 
     <!-- Assign Modal -->
     <div v-if="showAssignModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white dark:bg-background-dark rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
+      <div class="bg-white dark:bg-background-dark rounded-lg shadow-xl w-full max-w-md mx-4 p-6">
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Assign Content Type</h3>
 
         <div class="space-y-4">

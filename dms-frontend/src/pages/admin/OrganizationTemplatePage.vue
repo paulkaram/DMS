@@ -141,7 +141,7 @@ function formatFolders(folders: any[], indent: number): string {
       </div>
 
       <div v-if="isLoading" class="p-8 text-center text-gray-500">Loading...</div>
-      <div v-else-if="templates.length === 0" class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center text-gray-500">
+      <div v-else-if="templates.length === 0" class="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center text-gray-500">
         <p class="text-lg font-medium">No organization templates</p>
         <p class="text-sm mt-1">Create a template to define standard folder structures</p>
       </div>
@@ -149,7 +149,7 @@ function formatFolders(folders: any[], indent: number): string {
         <div
           v-for="template in templates"
           :key="template.id"
-          class="bg-white rounded-xl shadow-sm border border-gray-200 p-6"
+          class="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
         >
           <div class="flex items-start justify-between mb-4">
             <div>
@@ -200,7 +200,7 @@ function formatFolders(folders: any[], indent: number): string {
 
     <!-- Modal -->
     <div v-if="showModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 p-6 max-h-[90vh] overflow-y-auto">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 p-6 max-h-[90vh] overflow-y-auto">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ isEditing ? 'Edit Template' : 'New Template' }}</h3>
         <div class="space-y-4">
           <div>

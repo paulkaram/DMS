@@ -192,14 +192,14 @@ function close() {
           leave-from-class="opacity-100 scale-100"
           leave-to-class="opacity-0 scale-95"
         >
-          <div v-if="modelValue" class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+          <div v-if="modelValue" class="relative bg-white rounded-lg shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
             <!-- Header -->
             <div class="relative overflow-hidden px-6 py-4 bg-gradient-to-r from-[#0d1117] to-teal">
               <div class="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white/5"></div>
               <div class="absolute -right-2 -bottom-8 w-16 h-16 rounded-full bg-white/5"></div>
               <div class="relative flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
+                  <div class="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
                     <span class="material-symbols-outlined text-white">signature</span>
                   </div>
                   <div>
@@ -246,7 +246,7 @@ function close() {
             <div class="p-6">
               <!-- Draw Tab -->
               <div v-if="activeTab === 'draw'">
-                <div class="border-2 border-dashed border-zinc-200 rounded-xl overflow-hidden mb-4">
+                <div class="border-2 border-dashed border-zinc-200 rounded-lg overflow-hidden mb-4">
                   <canvas ref="drawCanvasRef" class="w-full" />
                 </div>
                 <div class="flex items-center justify-between mb-4">
@@ -260,7 +260,7 @@ function close() {
                 </div>
 
                 <!-- Save for reuse -->
-                <div class="flex items-center gap-3 mb-4 p-3 bg-zinc-50 rounded-xl">
+                <div class="flex items-center gap-3 mb-4 p-3 bg-zinc-50 rounded-lg">
                   <label class="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
@@ -280,7 +280,7 @@ function close() {
 
                 <button
                   @click="useDrawnSignature"
-                  class="w-full py-2.5 bg-teal text-white text-sm font-medium rounded-xl hover:bg-teal/90 transition-colors"
+                  class="w-full py-2.5 bg-teal text-white text-sm font-medium rounded-lg hover:bg-teal/90 transition-colors"
                 >
                   Use This Signature
                 </button>
@@ -292,7 +292,7 @@ function close() {
                   v-model="typedText"
                   type="text"
                   placeholder="Type your name..."
-                  class="w-full px-4 py-3 border border-zinc-200 rounded-xl text-lg focus:border-teal focus:ring-1 focus:ring-teal/20 outline-none mb-4"
+                  class="w-full px-4 py-3 border border-zinc-200 rounded-lg text-lg focus:border-teal focus:ring-1 focus:ring-teal/20 outline-none mb-4"
                 />
 
                 <!-- Font selection -->
@@ -311,7 +311,7 @@ function close() {
                 </div>
 
                 <!-- Preview -->
-                <div class="border-2 border-dashed border-zinc-200 rounded-xl p-6 mb-4 bg-white text-center">
+                <div class="border-2 border-dashed border-zinc-200 rounded-lg p-6 mb-4 bg-white text-center">
                   <span
                     class="text-4xl text-zinc-800"
                     :style="{ fontFamily: `'${typedFont}', cursive` }"
@@ -321,7 +321,7 @@ function close() {
                 </div>
 
                 <!-- Save for reuse -->
-                <div class="flex items-center gap-3 mb-4 p-3 bg-zinc-50 rounded-xl">
+                <div class="flex items-center gap-3 mb-4 p-3 bg-zinc-50 rounded-lg">
                   <label class="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
@@ -342,7 +342,7 @@ function close() {
                 <button
                   @click="useTypedSignature"
                   :disabled="!typedText"
-                  class="w-full py-2.5 bg-teal text-white text-sm font-medium rounded-xl hover:bg-teal/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  class="w-full py-2.5 bg-teal text-white text-sm font-medium rounded-lg hover:bg-teal/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   Use This Signature
                 </button>
@@ -355,7 +355,7 @@ function close() {
                 </div>
 
                 <div v-else-if="savedSignatures.length === 0" class="text-center py-8">
-                  <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-zinc-100 flex items-center justify-center">
+                  <div class="w-16 h-16 mx-auto mb-3 rounded-lg bg-zinc-100 flex items-center justify-center">
                     <span class="material-symbols-outlined text-3xl text-zinc-300">signature</span>
                   </div>
                   <p class="text-sm text-zinc-500">No saved signatures yet</p>
@@ -366,7 +366,7 @@ function close() {
                   <div
                     v-for="sig in savedSignatures"
                     :key="sig.id"
-                    class="flex items-center gap-3 p-3 border border-zinc-200 rounded-xl hover:border-teal/30 hover:bg-teal/5 transition-colors cursor-pointer group"
+                    class="flex items-center gap-3 p-3 border border-zinc-200 rounded-lg hover:border-teal/30 hover:bg-teal/5 transition-colors cursor-pointer group"
                     @click="useSavedSignature(sig)"
                   >
                     <div class="flex-1 min-w-0">

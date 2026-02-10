@@ -156,7 +156,7 @@ function isOwner(comment: Comment) {
         <div
           v-for="comment in comments"
           :key="comment.id"
-          class="bg-zinc-50 dark:bg-surface-dark rounded-xl p-4"
+          class="bg-zinc-50 dark:bg-surface-dark rounded-lg p-4"
         >
           <!-- Comment Header -->
           <div class="flex items-start justify-between mb-2">

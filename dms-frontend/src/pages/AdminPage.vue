@@ -156,7 +156,7 @@ function getIconTextClass(color: string) {
           v-model="searchQuery"
           type="text"
           placeholder="Search settings..."
-          class="w-full pl-12 pr-4 py-3 bg-white dark:bg-surface-dark border border-zinc-200 dark:border-border-dark rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 focus:ring-2 focus:ring-teal/50 focus:border-teal transition-all"
+          class="w-full pl-12 pr-4 py-3 bg-white dark:bg-surface-dark border border-zinc-200 dark:border-border-dark rounded-lg text-zinc-900 dark:text-white placeholder-zinc-400 focus:ring-2 focus:ring-teal/50 focus:border-teal transition-all"
         />
       </div>
     </div>
@@ -167,7 +167,7 @@ function getIconTextClass(color: string) {
         v-for="item in quickAccess"
         :key="item.name"
         :to="item.path"
-        class="bg-[#0d1117] p-6 rounded-2xl text-white shadow-xl border border-zinc-800/50 min-h-[140px] flex flex-col justify-between relative overflow-hidden group hover:border-teal/30 transition-all"
+        class="bg-[#0d1117] p-6 rounded-lg text-white shadow-xl border border-zinc-800/50 min-h-[140px] flex flex-col justify-between relative overflow-hidden group hover:border-teal/30 transition-all"
       >
         <!-- Cyan Wave SVG -->
         <svg class="absolute right-0 top-0 h-full w-32 opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -175,7 +175,7 @@ function getIconTextClass(color: string) {
         </svg>
         <div class="relative z-10">
           <div class="flex items-center justify-between mb-3">
-            <div class="w-10 h-10 rounded-xl bg-teal/20 flex items-center justify-center">
+            <div class="w-10 h-10 rounded-lg bg-teal/20 flex items-center justify-center">
               <span class="material-symbols-outlined text-teal">{{ item.icon }}</span>
             </div>
             <span class="text-[10px] font-bold uppercase tracking-widest text-zinc-400">{{ item.label }}</span>
@@ -191,7 +191,7 @@ function getIconTextClass(color: string) {
       <div
         v-for="section in filteredSections"
         :key="section.id"
-        class="bg-white dark:bg-background-dark rounded-2xl border border-zinc-200 dark:border-border-dark overflow-hidden shadow-sm"
+        class="bg-white dark:bg-background-dark rounded-lg border border-zinc-200 dark:border-border-dark overflow-hidden shadow-sm"
       >
         <!-- Section Header -->
         <button
@@ -231,7 +231,7 @@ function getIconTextClass(color: string) {
               v-for="item in section.items"
               :key="item.path"
               :to="item.path"
-              class="group p-4 rounded-xl border border-zinc-200 dark:border-border-dark hover:border-teal dark:hover:border-teal bg-zinc-50/50 dark:bg-surface-dark/30 hover:bg-teal/5 dark:hover:bg-teal/10 transition-all"
+              class="group p-4 rounded-lg border border-zinc-200 dark:border-border-dark hover:border-teal dark:hover:border-teal bg-zinc-50/50 dark:bg-surface-dark/30 hover:bg-teal/5 dark:hover:bg-teal/10 transition-all"
             >
               <div class="flex items-start gap-3">
                 <div
@@ -257,7 +257,7 @@ function getIconTextClass(color: string) {
     </div>
 
     <!-- Footer Help -->
-    <div class="bg-gradient-to-r from-zinc-100 to-zinc-50 dark:from-zinc-800 dark:to-zinc-900 rounded-2xl p-6 border border-zinc-200 dark:border-border-dark">
+    <div class="bg-gradient-to-r from-zinc-100 to-zinc-50 dark:from-zinc-800 dark:to-zinc-900 rounded-lg p-6 border border-zinc-200 dark:border-border-dark">
       <div class="flex flex-col md:flex-row items-center justify-between gap-4">
         <div class="flex items-center gap-4">
           <div class="w-12 h-12 rounded-full bg-teal/10 flex items-center justify-center">

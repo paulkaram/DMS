@@ -488,12 +488,12 @@ function getParentName(parentId: string | undefined) {
             v-model="searchQuery"
             type="text"
             placeholder="Search..."
-            class="w-48 pl-10 pr-4 py-2 bg-white dark:bg-surface-dark border border-zinc-200 dark:border-border-dark rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none"
+            class="w-48 pl-10 pr-4 py-2 bg-white dark:bg-surface-dark border border-zinc-200 dark:border-border-dark rounded-lg text-zinc-900 dark:text-white placeholder-zinc-400 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none"
           />
         </div>
         <button
           @click="openCreateModal()"
-          class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-navy to-teal hover:shadow-lg hover:shadow-teal/25 text-white rounded-xl font-medium text-sm transition-all"
+          class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-navy to-teal hover:shadow-lg hover:shadow-teal/25 text-white rounded-lg font-medium text-sm transition-all"
         >
           <span class="material-symbols-outlined text-lg">add</span>
           Create
@@ -506,7 +506,7 @@ function getParentName(parentId: string | undefined) {
       <button
         @click="selectedTypeFilter = 'All'"
         :class="[
-          'relative overflow-hidden px-4 py-3 rounded-xl flex items-center justify-between transition-all text-white shadow-lg border',
+          'relative overflow-hidden px-4 py-3 rounded-lg flex items-center justify-between transition-all text-white shadow-lg border',
           selectedTypeFilter === 'All'
             ? 'bg-[#0d1117] border-primary/40 ring-2 ring-primary/30'
             : 'bg-[#0d1117] border-white/5 hover:border-primary/20'
@@ -524,7 +524,7 @@ function getParentName(parentId: string | undefined) {
         :key="type"
         @click="selectedTypeFilter = type"
         :class="[
-          'relative overflow-hidden px-4 py-3 rounded-xl flex items-center justify-between transition-all text-white shadow-lg border',
+          'relative overflow-hidden px-4 py-3 rounded-lg flex items-center justify-between transition-all text-white shadow-lg border',
           selectedTypeFilter === type
             ? 'bg-[#0d1117] border-primary/40 ring-2 ring-primary/30'
             : 'bg-[#0d1117] border-white/5 hover:border-primary/20'
@@ -540,11 +540,11 @@ function getParentName(parentId: string | undefined) {
     </div>
 
     <!-- Content Card -->
-    <div class="bg-white dark:bg-background-dark rounded-2xl shadow-sm border border-zinc-200 dark:border-border-dark overflow-hidden">
+    <div class="bg-white dark:bg-background-dark rounded-lg shadow-sm border border-zinc-200 dark:border-border-dark overflow-hidden">
       <div class="p-6">
       <!-- Messages -->
       <Transition enter-active-class="duration-300 ease-out" enter-from-class="opacity-0 -translate-y-2">
-        <div v-if="error" class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-2xl flex items-center gap-3">
+        <div v-if="error" class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-lg flex items-center gap-3">
           <span class="material-symbols-outlined text-red-500">error</span>
           <p class="text-red-600 dark:text-red-400 flex-1">{{ error }}</p>
           <button @click="error = null" class="p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg">
@@ -554,7 +554,7 @@ function getParentName(parentId: string | undefined) {
       </Transition>
 
       <Transition enter-active-class="duration-300 ease-out" enter-from-class="opacity-0 -translate-y-2">
-        <div v-if="successMessage" class="mb-6 p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-2xl flex items-center gap-3">
+        <div v-if="successMessage" class="mb-6 p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-lg flex items-center gap-3">
           <span class="material-symbols-outlined text-emerald-500">check_circle</span>
           <p class="text-emerald-600 dark:text-emerald-400">{{ successMessage }}</p>
         </div>
@@ -562,13 +562,13 @@ function getParentName(parentId: string | undefined) {
 
       <!-- Loading -->
       <div v-if="isLoading" class="space-y-3">
-        <div v-for="i in 5" :key="i" class="h-14 bg-zinc-100 dark:bg-surface-dark rounded-xl animate-pulse"></div>
+        <div v-for="i in 5" :key="i" class="h-14 bg-zinc-100 dark:bg-surface-dark rounded-lg animate-pulse"></div>
       </div>
 
       <!-- Tree View -->
       <div v-else-if="viewMode === 'tree'">
         <div v-if="filteredTree.length === 0" class="text-center py-16">
-          <div class="w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-surface-dark flex items-center justify-center mx-auto mb-4">
+          <div class="w-20 h-20 rounded-lg bg-zinc-100 dark:bg-surface-dark flex items-center justify-center mx-auto mb-4">
             <span class="material-symbols-outlined text-5xl text-zinc-400">account_tree</span>
           </div>
           <h3 class="text-lg font-semibold text-zinc-700 dark:text-zinc-300">{{ searchQuery || selectedTypeFilter !== 'All' ? 'No Structures Match' : 'No Structures Found' }}</h3>
@@ -576,7 +576,7 @@ function getParentName(parentId: string | undefined) {
           <button
             v-if="!searchQuery && selectedTypeFilter === 'All'"
             @click="openCreateModal()"
-            class="mt-4 px-5 py-2.5 bg-gradient-to-r from-navy to-teal text-white rounded-xl font-medium hover:shadow-lg hover:shadow-teal/25 transition-all"
+            class="mt-4 px-5 py-2.5 bg-gradient-to-r from-navy to-teal text-white rounded-lg font-medium hover:shadow-lg hover:shadow-teal/25 transition-all"
           >
             Create Structure
           </button>
@@ -672,7 +672,7 @@ function getParentName(parentId: string | undefined) {
 
       <!-- Empty State (list/grid) -->
       <div v-else-if="filteredStructures.length === 0" class="text-center py-16">
-        <div class="w-20 h-20 rounded-2xl bg-zinc-100 dark:bg-surface-dark flex items-center justify-center mx-auto mb-4">
+        <div class="w-20 h-20 rounded-lg bg-zinc-100 dark:bg-surface-dark flex items-center justify-center mx-auto mb-4">
           <span class="material-symbols-outlined text-5xl text-zinc-400">domain_disabled</span>
         </div>
         <h3 class="text-lg font-semibold text-zinc-700 dark:text-zinc-300">No Structures Found</h3>
@@ -680,7 +680,7 @@ function getParentName(parentId: string | undefined) {
         <button
           v-if="!searchQuery"
           @click="openCreateModal()"
-          class="mt-4 px-5 py-2.5 bg-gradient-to-r from-navy to-teal text-white rounded-xl font-medium hover:shadow-lg hover:shadow-teal/25 transition-all"
+          class="mt-4 px-5 py-2.5 bg-gradient-to-r from-navy to-teal text-white rounded-lg font-medium hover:shadow-lg hover:shadow-teal/25 transition-all"
         >
           Create Structure
         </button>
@@ -784,7 +784,7 @@ function getParentName(parentId: string | undefined) {
         <div
           v-for="(structure, index) in filteredStructures"
           :key="structure.id"
-          class="bg-zinc-50 dark:bg-surface-dark rounded-xl p-4 border border-zinc-100 dark:border-border-dark hover:border-primary/30 hover:shadow-md transition-all group"
+          class="bg-zinc-50 dark:bg-surface-dark rounded-lg p-4 border border-zinc-100 dark:border-border-dark hover:border-primary/30 hover:shadow-md transition-all group"
         >
           <div class="flex items-start justify-between mb-3">
             <div :class="[getAvatarColor(index), 'w-10 h-10 rounded-lg flex items-center justify-center']">
@@ -868,11 +868,11 @@ function getParentName(parentId: string | undefined) {
         leave-to-class="opacity-0"
       >
         <div v-if="showStructureModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div class="bg-white dark:bg-background-dark rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+          <div class="bg-white dark:bg-background-dark rounded-lg shadow-2xl w-full max-w-md overflow-hidden">
             <!-- Modal Header -->
             <div class="relative bg-gradient-to-r from-navy via-navy/95 to-primary p-5">
               <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
                   <span class="material-symbols-outlined text-white">{{ editingStructure ? 'edit' : 'add_circle' }}</span>
                 </div>
                 <div>
@@ -882,7 +882,7 @@ function getParentName(parentId: string | undefined) {
               </div>
               <button
                 @click="showStructureModal = false"
-                class="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"
+                class="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
               >
                 <span class="material-symbols-outlined text-white">close</span>
               </button>
@@ -897,7 +897,7 @@ function getParentName(parentId: string | undefined) {
                     v-model="structureForm.code"
                     type="text"
                     placeholder="e.g., HR-001"
-                    class="w-full px-4 py-3 border border-gray-200 dark:border-border-dark rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-surface-dark text-gray-900 dark:text-white"
+                    class="w-full px-4 py-3 border border-gray-200 dark:border-border-dark rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-surface-dark text-gray-900 dark:text-white"
                   />
                 </div>
                 <div>
@@ -916,7 +916,7 @@ function getParentName(parentId: string | undefined) {
                   v-model="structureForm.name"
                   type="text"
                   placeholder="e.g., Human Resources Department"
-                  class="w-full px-4 py-3 border border-gray-200 dark:border-border-dark rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-surface-dark text-gray-900 dark:text-white"
+                  class="w-full px-4 py-3 border border-gray-200 dark:border-border-dark rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-surface-dark text-gray-900 dark:text-white"
                 />
               </div>
 
@@ -927,7 +927,7 @@ function getParentName(parentId: string | undefined) {
                   type="text"
                   dir="rtl"
                   placeholder="قسم الموارد البشرية"
-                  class="w-full px-4 py-3 border border-gray-200 dark:border-border-dark rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-surface-dark text-gray-900 dark:text-white"
+                  class="w-full px-4 py-3 border border-gray-200 dark:border-border-dark rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-surface-dark text-gray-900 dark:text-white"
                 />
               </div>
 
@@ -947,14 +947,14 @@ function getParentName(parentId: string | undefined) {
             <div class="border-t border-gray-100 dark:border-border-dark p-4 bg-gray-50 dark:bg-surface-dark/50 flex justify-end gap-3">
               <button
                 @click="showStructureModal = false"
-                class="px-5 py-2.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-border-dark rounded-xl font-medium transition-colors"
+                class="px-5 py-2.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-border-dark rounded-lg font-medium transition-colors"
               >
                 Cancel
               </button>
               <button
                 @click="saveStructure"
                 :disabled="!structureForm.code.trim() || !structureForm.name.trim() || isSaving"
-                class="px-5 py-2.5 bg-gradient-to-r from-navy to-primary text-white rounded-xl font-medium hover:shadow-lg hover:shadow-primary/25 disabled:opacity-50 transition-all flex items-center gap-2"
+                class="px-5 py-2.5 bg-gradient-to-r from-navy to-primary text-white rounded-lg font-medium hover:shadow-lg hover:shadow-primary/25 disabled:opacity-50 transition-all flex items-center gap-2"
               >
                 <span v-if="isSaving" class="material-symbols-outlined animate-spin text-sm">progress_activity</span>
                 {{ isSaving ? 'Saving...' : (editingStructure ? 'Update' : 'Create') }}
@@ -974,11 +974,11 @@ function getParentName(parentId: string | undefined) {
         leave-to-class="opacity-0"
       >
         <div v-if="showMembersModal && selectedStructure" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div class="bg-white dark:bg-background-dark rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+          <div class="bg-white dark:bg-background-dark rounded-lg shadow-2xl w-full max-w-lg overflow-hidden">
             <!-- Modal Header -->
             <div class="relative bg-gradient-to-r from-navy via-navy/95 to-primary p-5">
               <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
                   <span class="material-symbols-outlined text-white">people</span>
                 </div>
                 <div>
@@ -988,7 +988,7 @@ function getParentName(parentId: string | undefined) {
               </div>
               <button
                 @click="showMembersModal = false"
-                class="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"
+                class="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
               >
                 <span class="material-symbols-outlined text-white">close</span>
               </button>
@@ -999,7 +999,7 @@ function getParentName(parentId: string | undefined) {
               <!-- Add Member Button -->
               <button
                 @click="openAddMemberModal"
-                class="w-full mb-4 px-4 py-3 border-2 border-dashed border-gray-200 dark:border-border-dark rounded-xl text-gray-500 dark:text-gray-400 hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2"
+                class="w-full mb-4 px-4 py-3 border-2 border-dashed border-gray-200 dark:border-border-dark rounded-lg text-gray-500 dark:text-gray-400 hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2"
               >
                 <span class="material-symbols-outlined">person_add</span>
                 Add Member
@@ -1019,7 +1019,7 @@ function getParentName(parentId: string | undefined) {
                   <div
                     v-for="(member, index) in structureMembers"
                     :key="member.userId"
-                    class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-surface-dark rounded-xl"
+                    class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-surface-dark rounded-lg"
                   >
                     <div :class="[getAvatarColor(index), 'w-10 h-10 rounded-full flex items-center justify-center text-white font-medium']">
                       {{ getInitials(member.userDisplayName || member.userName || '') }}
@@ -1052,7 +1052,7 @@ function getParentName(parentId: string | undefined) {
             <div class="border-t border-gray-100 dark:border-border-dark p-4 bg-gray-50 dark:bg-surface-dark/50">
               <button
                 @click="showMembersModal = false"
-                class="w-full px-5 py-2.5 bg-gradient-to-r from-navy to-primary text-white rounded-xl font-medium hover:shadow-lg transition-all"
+                class="w-full px-5 py-2.5 bg-gradient-to-r from-navy to-primary text-white rounded-lg font-medium hover:shadow-lg transition-all"
               >
                 Done
               </button>
@@ -1071,11 +1071,11 @@ function getParentName(parentId: string | undefined) {
         leave-to-class="opacity-0"
       >
         <div v-if="showAddMemberModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div class="bg-white dark:bg-background-dark rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+          <div class="bg-white dark:bg-background-dark rounded-lg shadow-2xl w-full max-w-md overflow-hidden">
             <!-- Modal Header -->
             <div class="relative bg-gradient-to-r from-navy via-navy/95 to-primary p-5">
               <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
                   <span class="material-symbols-outlined text-white">person_add</span>
                 </div>
                 <div>
@@ -1085,7 +1085,7 @@ function getParentName(parentId: string | undefined) {
               </div>
               <button
                 @click="showAddMemberModal = false"
-                class="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-xl transition-colors"
+                class="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
               >
                 <span class="material-symbols-outlined text-white">close</span>
               </button>
@@ -1109,7 +1109,7 @@ function getParentName(parentId: string | undefined) {
                   v-model="memberForm.position"
                   type="text"
                   placeholder="e.g., Manager, Team Lead"
-                  class="w-full px-4 py-3 border border-gray-200 dark:border-border-dark rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-surface-dark text-gray-900 dark:text-white"
+                  class="w-full px-4 py-3 border border-gray-200 dark:border-border-dark rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-surface-dark text-gray-900 dark:text-white"
                 />
               </div>
 
@@ -1118,11 +1118,11 @@ function getParentName(parentId: string | undefined) {
                 <input
                   v-model="memberForm.startDate"
                   type="date"
-                  class="w-full px-4 py-3 border border-gray-200 dark:border-border-dark rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-surface-dark text-gray-900 dark:text-white"
+                  class="w-full px-4 py-3 border border-gray-200 dark:border-border-dark rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-surface-dark text-gray-900 dark:text-white"
                 />
               </div>
 
-              <div class="flex items-center gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl">
+              <div class="flex items-center gap-3 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
                 <UiToggle v-model="memberForm.isPrimary" />
                 <div>
                   <div class="font-medium text-gray-900 dark:text-white">Primary Structure</div>
@@ -1135,14 +1135,14 @@ function getParentName(parentId: string | undefined) {
             <div class="border-t border-gray-100 dark:border-border-dark p-4 bg-gray-50 dark:bg-surface-dark/50 flex justify-end gap-3">
               <button
                 @click="showAddMemberModal = false"
-                class="px-5 py-2.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-border-dark rounded-xl font-medium transition-colors"
+                class="px-5 py-2.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-border-dark rounded-lg font-medium transition-colors"
               >
                 Cancel
               </button>
               <button
                 @click="addMember"
                 :disabled="!memberForm.userId || isSaving"
-                class="px-5 py-2.5 bg-gradient-to-r from-navy to-primary text-white rounded-xl font-medium hover:shadow-lg hover:shadow-primary/25 disabled:opacity-50 transition-all flex items-center gap-2"
+                class="px-5 py-2.5 bg-gradient-to-r from-navy to-primary text-white rounded-lg font-medium hover:shadow-lg hover:shadow-primary/25 disabled:opacity-50 transition-all flex items-center gap-2"
               >
                 <span v-if="isSaving" class="material-symbols-outlined animate-spin text-sm">progress_activity</span>
                 {{ isSaving ? 'Adding...' : 'Add Member' }}
@@ -1162,7 +1162,7 @@ function getParentName(parentId: string | undefined) {
         leave-to-class="opacity-0"
       >
         <div v-if="showDeleteConfirm && selectedStructure" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div class="bg-white dark:bg-background-dark rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+          <div class="bg-white dark:bg-background-dark rounded-lg shadow-2xl w-full max-w-sm p-6 text-center">
             <div class="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
               <span class="material-symbols-outlined text-red-600 dark:text-red-400 text-3xl">warning</span>
             </div>
@@ -1173,14 +1173,14 @@ function getParentName(parentId: string | undefined) {
             <div class="flex gap-3 mt-6">
               <button
                 @click="showDeleteConfirm = false"
-                class="flex-1 px-4 py-2.5 border border-gray-200 dark:border-border-dark text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-50 dark:hover:bg-surface-dark transition-colors"
+                class="flex-1 px-4 py-2.5 border border-gray-200 dark:border-border-dark text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-surface-dark transition-colors"
               >
                 Cancel
               </button>
               <button
                 @click="deleteStructure"
                 :disabled="isSaving"
-                class="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 disabled:opacity-50 transition-colors"
+                class="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 disabled:opacity-50 transition-colors"
               >
                 {{ isSaving ? 'Deleting...' : 'Delete' }}
               </button>

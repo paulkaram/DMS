@@ -224,7 +224,7 @@ function getTabTitle() {
     </div>
 
     <!-- Loading State -->
-    <div v-if="isLoading" class="bg-white rounded-xl shadow-sm border border-gray-100 p-12">
+    <div v-if="isLoading" class="bg-white rounded-lg shadow-sm border border-gray-100 p-12">
       <div class="flex items-center justify-center gap-3">
         <svg class="animate-spin w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -235,7 +235,7 @@ function getTabTitle() {
     </div>
 
     <!-- Classifications Tab -->
-    <div v-else-if="activeTab === 'classifications'" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div v-else-if="activeTab === 'classifications'" class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
       <table class="w-full">
         <thead class="bg-gray-50">
           <tr>
@@ -261,7 +261,7 @@ function getTabTitle() {
     </div>
 
     <!-- Importances Tab -->
-    <div v-else-if="activeTab === 'importances'" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div v-else-if="activeTab === 'importances'" class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
       <table class="w-full">
         <thead class="bg-gray-50">
           <tr>
@@ -294,7 +294,7 @@ function getTabTitle() {
     </div>
 
     <!-- Document Types Tab -->
-    <div v-else class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div v-else class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
       <table class="w-full">
         <thead class="bg-gray-50">
           <tr>
@@ -321,7 +321,7 @@ function getTabTitle() {
 
     <!-- Create/Edit Modal -->
     <div v-if="showModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4">
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
         <div class="p-6">
           <div class="flex items-center justify-between mb-6">
             <h3 class="text-lg font-semibold text-gray-900">
