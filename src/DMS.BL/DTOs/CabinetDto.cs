@@ -22,3 +22,8 @@ public class UpdateCabinetDto
     public string? Description { get; set; }
     public bool BreakInheritance { get; set; }
 }
+
+public class CabinetPreviewTemplateRequest
+{
+    public Guid TemplateId { get; set; }
+}

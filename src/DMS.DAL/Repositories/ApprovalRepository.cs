@@ -1,27 +1,40 @@
-using Dapper;
 using DMS.DAL.Data;
 using DMS.DAL.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace DMS.DAL.Repositories;
 
 public class ApprovalWorkflowRepository : IApprovalWorkflowRepository
 {
-    private readonly IDbConnectionFactory _connectionFactory;
+    private readonly DmsDbContext _context;
 
-    public ApprovalWorkflowRepository(IDbConnectionFactory connectionFactory)
+    public ApprovalWorkflowRepository(DmsDbContext context)
     {
-        _connectionFactory = connectionFactory;
+        _context = context;
     }
 
     public async Task<ApprovalWorkflow?> GetByIdAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var workflow = await connection.QueryFirstOrDefaultAsync<ApprovalWorkflow>(@"
-            SELECT aw.*, f.Name as FolderName
-            FROM ApprovalWorkflows aw
-            LEFT JOIN Folders f ON aw.FolderId = f.Id
-            WHERE aw.Id = @Id",
-            new { Id = id });
+        var workflow = await _context.ApprovalWorkflows
+            .AsNoTracking()
+            .Where(w => w.Id == id)
+            .Select(w => new ApprovalWorkflow
+            {
+                Id = w.Id,
+                Name = w.Name,
+                Description = w.Description,
+                FolderId = w.FolderId,
+                RequiredApprovers = w.RequiredApprovers,
+                IsSequential = w.IsSequential,
+                IsActive = w.IsActive,
+                CreatedBy = w.CreatedBy,
+                CreatedAt = w.CreatedAt,
+                FolderName = _context.Folders
+                    .Where(f => f.Id == w.FolderId)
+                    .Select(f => f.Name)
+                    .FirstOrDefault()
+            })
+            .FirstOrDefaultAsync();
 
         if (workflow != null)
         {
@@ -33,37 +46,77 @@ public class ApprovalWorkflowRepository : IApprovalWorkflowRepository
 
     public async Task<IEnumerable<ApprovalWorkflow>> GetAllAsync()
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<ApprovalWorkflow>(@"
-            SELECT aw.*, f.Name as FolderName
-            FROM ApprovalWorkflows aw
-            LEFT JOIN Folders f ON aw.FolderId = f.Id
-            WHERE aw.IsActive = 1
-            ORDER BY aw.Name");
+        return await _context.ApprovalWorkflows
+            .AsNoTracking()
+            .OrderBy(w => w.Name)
+            .Select(w => new ApprovalWorkflow
+            {
+                Id = w.Id,
+                Name = w.Name,
+                Description = w.Description,
+                FolderId = w.FolderId,
+                RequiredApprovers = w.RequiredApprovers,
+                IsSequential = w.IsSequential,
+                IsActive = w.IsActive,
+                CreatedBy = w.CreatedBy,
+                CreatedAt = w.CreatedAt,
+                FolderName = _context.Folders
+                    .Where(f => f.Id == w.FolderId)
+                    .Select(f => f.Name)
+                    .FirstOrDefault()
+            })
+            .ToListAsync();
     }
 
     public async Task<ApprovalWorkflow?> GetByFolderIdAsync(Guid folderId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<ApprovalWorkflow>(@"
-            SELECT aw.*, f.Name as FolderName
-            FROM ApprovalWorkflows aw
-            LEFT JOIN Folders f ON aw.FolderId = f.Id
-            WHERE aw.FolderId = @FolderId AND aw.IsActive = 1",
-            new { FolderId = folderId });
+        return await _context.ApprovalWorkflows
+            .AsNoTracking()
+            .Where(w => w.FolderId == folderId)
+            .Select(w => new ApprovalWorkflow
+            {
+                Id = w.Id,
+                Name = w.Name,
+                Description = w.Description,
+                FolderId = w.FolderId,
+                RequiredApprovers = w.RequiredApprovers,
+                IsSequential = w.IsSequential,
+                IsActive = w.IsActive,
+                CreatedBy = w.CreatedBy,
+                CreatedAt = w.CreatedAt,
+                FolderName = _context.Folders
+                    .Where(f => f.Id == w.FolderId)
+                    .Select(f => f.Name)
+                    .FirstOrDefault()
+            })
+            .FirstOrDefaultAsync();
     }
 
     public async Task<IEnumerable<ApprovalWorkflowStep>> GetStepsAsync(Guid workflowId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<ApprovalWorkflowStep>(@"
-            SELECT aws.*, u.DisplayName as ApproverUserName, r.Name as ApproverRoleName
-            FROM ApprovalWorkflowSteps aws
-            LEFT JOIN Users u ON aws.ApproverUserId = u.Id
-            LEFT JOIN Roles r ON aws.ApproverRoleId = r.Id
-            WHERE aws.WorkflowId = @WorkflowId
-            ORDER BY aws.StepOrder",
-            new { WorkflowId = workflowId });
+        return await _context.ApprovalWorkflowSteps
+            .AsNoTracking()
+            .Where(s => s.WorkflowId == workflowId)
+            .OrderBy(s => s.StepOrder)
+            .Select(s => new ApprovalWorkflowStep
+            {
+                Id = s.Id,
+                WorkflowId = s.WorkflowId,
+                StepOrder = s.StepOrder,
+                ApproverUserId = s.ApproverUserId,
+                ApproverRoleId = s.ApproverRoleId,
+                IsRequired = s.IsRequired,
+                CreatedAt = s.CreatedAt,
+                ApproverUserName = _context.Users
+                    .Where(u => u.Id == s.ApproverUserId)
+                    .Select(u => u.DisplayName)
+                    .FirstOrDefault(),
+                ApproverRoleName = _context.Roles
+                    .Where(r => r.Id == s.ApproverRoleId)
+                    .Select(r => r.Name)
+                    .FirstOrDefault()
+            })
+            .ToListAsync();
     }
 
     public async Task<Guid> CreateAsync(ApprovalWorkflow entity)
@@ -71,36 +124,34 @@ public class ApprovalWorkflowRepository : IApprovalWorkflowRepository
         entity.Id = Guid.NewGuid();
         entity.CreatedAt = DateTime.UtcNow;
 
-        using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(@"
-            INSERT INTO ApprovalWorkflows (Id, Name, Description, FolderId,
-                RequiredApprovers, IsSequential, IsActive, CreatedBy, CreatedAt)
-            VALUES (@Id, @Name, @Description, @FolderId,
-                @RequiredApprovers, @IsSequential, @IsActive, @CreatedBy, @CreatedAt)",
-            entity);
+        _context.ApprovalWorkflows.Add(entity);
+        await _context.SaveChangesAsync();
 
         return entity.Id;
     }
 
     public async Task<bool> UpdateAsync(ApprovalWorkflow entity)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var affected = await connection.ExecuteAsync(@"
-            UPDATE ApprovalWorkflows
-            SET Name = @Name, Description = @Description, FolderId = @FolderId,
-                RequiredApprovers = @RequiredApprovers, IsSequential = @IsSequential,
-                IsActive = @IsActive
-            WHERE Id = @Id",
-            entity);
-        return affected > 0;
+        var existing = await _context.ApprovalWorkflows.FindAsync(entity.Id);
+        if (existing == null) return false;
+
+        existing.Name = entity.Name;
+        existing.Description = entity.Description;
+        existing.FolderId = entity.FolderId;
+        existing.RequiredApprovers = entity.RequiredApprovers;
+        existing.IsSequential = entity.IsSequential;
+        existing.IsActive = entity.IsActive;
+
+        return await _context.SaveChangesAsync() > 0;
     }
 
     public async Task<bool> DeleteAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var affected = await connection.ExecuteAsync(
-            "UPDATE ApprovalWorkflows SET IsActive = 0 WHERE Id = @Id", new { Id = id });
-        return affected > 0;
+        var entity = await _context.ApprovalWorkflows.FindAsync(id);
+        if (entity == null) return false;
+
+        entity.IsActive = false;
+        return await _context.SaveChangesAsync() > 0;
     }
 
     public async Task<Guid> AddStepAsync(ApprovalWorkflowStep step)
@@ -108,47 +159,63 @@ public class ApprovalWorkflowRepository : IApprovalWorkflowRepository
         step.Id = Guid.NewGuid();
         step.CreatedAt = DateTime.UtcNow;
 
-        using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(@"
-            INSERT INTO ApprovalWorkflowSteps (Id, WorkflowId, StepOrder,
-                ApproverUserId, ApproverRoleId, IsRequired, CreatedAt)
-            VALUES (@Id, @WorkflowId, @StepOrder,
-                @ApproverUserId, @ApproverRoleId, @IsRequired, @CreatedAt)",
-            step);
+        _context.ApprovalWorkflowSteps.Add(step);
+        await _context.SaveChangesAsync();
 
         return step.Id;
     }
 
     public async Task<bool> RemoveStepAsync(Guid stepId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var affected = await connection.ExecuteAsync(
-            "DELETE FROM ApprovalWorkflowSteps WHERE Id = @Id", new { Id = stepId });
-        return affected > 0;
+        var entity = await _context.ApprovalWorkflowSteps.FindAsync(stepId);
+        if (entity == null) return false;
+
+        _context.ApprovalWorkflowSteps.Remove(entity);
+        return await _context.SaveChangesAsync() > 0;
     }
 }
 
 public class ApprovalRequestRepository : IApprovalRequestRepository
 {
-    private readonly IDbConnectionFactory _connectionFactory;
+    private readonly DmsDbContext _context;
 
-    public ApprovalRequestRepository(IDbConnectionFactory connectionFactory)
+    public ApprovalRequestRepository(DmsDbContext context)
     {
-        _connectionFactory = connectionFactory;
+        _context = context;
     }
 
     public async Task<ApprovalRequest?> GetByIdAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var request = await connection.QueryFirstOrDefaultAsync<ApprovalRequest>(@"
-            SELECT ar.*, d.Name as DocumentName, u.DisplayName as RequestedByName,
-                   aw.Name as WorkflowName
-            FROM ApprovalRequests ar
-            LEFT JOIN Documents d ON ar.DocumentId = d.Id
-            LEFT JOIN Users u ON ar.RequestedBy = u.Id
-            LEFT JOIN ApprovalWorkflows aw ON ar.WorkflowId = aw.Id
-            WHERE ar.Id = @Id",
-            new { Id = id });
+        var request = await _context.ApprovalRequests
+            .AsNoTracking()
+            .Where(ar => ar.Id == id)
+            .Select(ar => new ApprovalRequest
+            {
+                Id = ar.Id,
+                DocumentId = ar.DocumentId,
+                WorkflowId = ar.WorkflowId,
+                RequestedBy = ar.RequestedBy,
+                Status = ar.Status,
+                DueDate = ar.DueDate,
+                Comments = ar.Comments,
+                CreatedAt = ar.CreatedAt,
+                CompletedAt = ar.CompletedAt,
+                DocumentName = _context.Documents
+                    .IgnoreQueryFilters()
+                    .Where(d => d.Id == ar.DocumentId)
+                    .Select(d => d.Name)
+                    .FirstOrDefault(),
+                RequestedByName = _context.Users
+                    .Where(u => u.Id == ar.RequestedBy)
+                    .Select(u => u.DisplayName)
+                    .FirstOrDefault(),
+                WorkflowName = _context.ApprovalWorkflows
+                    .IgnoreQueryFilters()
+                    .Where(w => w.Id == ar.WorkflowId)
+                    .Select(w => w.Name)
+                    .FirstOrDefault()
+            })
+            .FirstOrDefaultAsync();
 
         if (request != null)
         {
@@ -160,24 +227,46 @@ public class ApprovalRequestRepository : IApprovalRequestRepository
 
     public async Task<IEnumerable<ApprovalRequest>> GetByDocumentIdAsync(Guid documentId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<ApprovalRequest>(@"
-            SELECT ar.*, d.Name as DocumentName, u.DisplayName as RequestedByName,
-                   aw.Name as WorkflowName
-            FROM ApprovalRequests ar
-            LEFT JOIN Documents d ON ar.DocumentId = d.Id
-            LEFT JOIN Users u ON ar.RequestedBy = u.Id
-            LEFT JOIN ApprovalWorkflows aw ON ar.WorkflowId = aw.Id
-            WHERE ar.DocumentId = @DocumentId
-            ORDER BY ar.CreatedAt DESC",
-            new { DocumentId = documentId });
+        return await _context.ApprovalRequests
+            .AsNoTracking()
+            .Where(ar => ar.DocumentId == documentId)
+            .OrderByDescending(ar => ar.CreatedAt)
+            .Select(ar => new ApprovalRequest
+            {
+                Id = ar.Id,
+                DocumentId = ar.DocumentId,
+                WorkflowId = ar.WorkflowId,
+                RequestedBy = ar.RequestedBy,
+                Status = ar.Status,
+                DueDate = ar.DueDate,
+                Comments = ar.Comments,
+                CreatedAt = ar.CreatedAt,
+                CompletedAt = ar.CompletedAt,
+                DocumentName = _context.Documents
+                    .IgnoreQueryFilters()
+                    .Where(d => d.Id == ar.DocumentId)
+                    .Select(d => d.Name)
+                    .FirstOrDefault(),
+                RequestedByName = _context.Users
+                    .Where(u => u.Id == ar.RequestedBy)
+                    .Select(u => u.DisplayName)
+                    .FirstOrDefault(),
+                WorkflowName = _context.ApprovalWorkflows
+                    .IgnoreQueryFilters()
+                    .Where(w => w.Id == ar.WorkflowId)
+                    .Select(w => w.Name)
+                    .FirstOrDefault()
+            })
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<ApprovalRequest>> GetPendingForUserAsync(Guid userId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<ApprovalRequest>(@"
-            SELECT DISTINCT ar.*, d.Name as DocumentName, u.DisplayName as RequestedByName,
+        // Complex query with multiple JOINs and NOT EXISTS - using raw SQL
+        return await _context.Database.SqlQueryRaw<ApprovalRequest>(@"
+            SELECT DISTINCT ar.Id, ar.DocumentId, ar.WorkflowId, ar.RequestedBy,
+                   ar.Status, ar.DueDate, ar.Comments, ar.CreatedAt, ar.CompletedAt,
+                   d.Name as DocumentName, u.DisplayName as RequestedByName,
                    aw.Name as WorkflowName
             FROM ApprovalRequests ar
             LEFT JOIN Documents d ON ar.DocumentId = d.Id
@@ -186,60 +275,109 @@ public class ApprovalRequestRepository : IApprovalRequestRepository
             LEFT JOIN ApprovalWorkflowSteps aws ON aw.Id = aws.WorkflowId
             LEFT JOIN UserRoles ur ON aws.ApproverRoleId = ur.RoleId
             WHERE ar.Status = 0
-            AND (aws.ApproverUserId = @UserId OR ur.UserId = @UserId)
+            AND (aws.ApproverUserId = {0} OR ur.UserId = {0})
             AND NOT EXISTS (
                 SELECT 1 FROM ApprovalActions aa
-                WHERE aa.RequestId = ar.Id AND aa.ApproverId = @UserId
+                WHERE aa.RequestId = ar.Id AND aa.ApproverId = {0}
             )
             ORDER BY ar.CreatedAt DESC",
-            new { UserId = userId });
+            userId).ToListAsync();
     }
 
     public async Task<IEnumerable<ApprovalRequest>> GetByRequestedByAsync(Guid userId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<ApprovalRequest>(@"
-            SELECT ar.*, d.Name as DocumentName, u.DisplayName as RequestedByName,
-                   aw.Name as WorkflowName
-            FROM ApprovalRequests ar
-            LEFT JOIN Documents d ON ar.DocumentId = d.Id
-            LEFT JOIN Users u ON ar.RequestedBy = u.Id
-            LEFT JOIN ApprovalWorkflows aw ON ar.WorkflowId = aw.Id
-            WHERE ar.RequestedBy = @UserId
-            ORDER BY ar.CreatedAt DESC",
-            new { UserId = userId });
+        return await _context.ApprovalRequests
+            .AsNoTracking()
+            .Where(ar => ar.RequestedBy == userId)
+            .OrderByDescending(ar => ar.CreatedAt)
+            .Select(ar => new ApprovalRequest
+            {
+                Id = ar.Id,
+                DocumentId = ar.DocumentId,
+                WorkflowId = ar.WorkflowId,
+                RequestedBy = ar.RequestedBy,
+                Status = ar.Status,
+                DueDate = ar.DueDate,
+                Comments = ar.Comments,
+                CreatedAt = ar.CreatedAt,
+                CompletedAt = ar.CompletedAt,
+                DocumentName = _context.Documents
+                    .IgnoreQueryFilters()
+                    .Where(d => d.Id == ar.DocumentId)
+                    .Select(d => d.Name)
+                    .FirstOrDefault(),
+                RequestedByName = _context.Users
+                    .Where(u => u.Id == ar.RequestedBy)
+                    .Select(u => u.DisplayName)
+                    .FirstOrDefault(),
+                WorkflowName = _context.ApprovalWorkflows
+                    .IgnoreQueryFilters()
+                    .Where(w => w.Id == ar.WorkflowId)
+                    .Select(w => w.Name)
+                    .FirstOrDefault()
+            })
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<ApprovalRequest>> GetAllAsync(int? status = null)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var sql = @"
-            SELECT ar.*, d.Name as DocumentName, u.DisplayName as RequestedByName,
-                   aw.Name as WorkflowName
-            FROM ApprovalRequests ar
-            LEFT JOIN Documents d ON ar.DocumentId = d.Id
-            LEFT JOIN Users u ON ar.RequestedBy = u.Id
-            LEFT JOIN ApprovalWorkflows aw ON ar.WorkflowId = aw.Id
-            WHERE 1=1";
+        var query = _context.ApprovalRequests.AsNoTracking().AsQueryable();
 
         if (status.HasValue)
-            sql += " AND ar.Status = @Status";
+            query = query.Where(ar => ar.Status == status.Value);
 
-        sql += " ORDER BY ar.CreatedAt DESC";
-
-        return await connection.QueryAsync<ApprovalRequest>(sql, new { Status = status });
+        return await query
+            .OrderByDescending(ar => ar.CreatedAt)
+            .Select(ar => new ApprovalRequest
+            {
+                Id = ar.Id,
+                DocumentId = ar.DocumentId,
+                WorkflowId = ar.WorkflowId,
+                RequestedBy = ar.RequestedBy,
+                Status = ar.Status,
+                DueDate = ar.DueDate,
+                Comments = ar.Comments,
+                CreatedAt = ar.CreatedAt,
+                CompletedAt = ar.CompletedAt,
+                DocumentName = _context.Documents
+                    .IgnoreQueryFilters()
+                    .Where(d => d.Id == ar.DocumentId)
+                    .Select(d => d.Name)
+                    .FirstOrDefault(),
+                RequestedByName = _context.Users
+                    .Where(u => u.Id == ar.RequestedBy)
+                    .Select(u => u.DisplayName)
+                    .FirstOrDefault(),
+                WorkflowName = _context.ApprovalWorkflows
+                    .IgnoreQueryFilters()
+                    .Where(w => w.Id == ar.WorkflowId)
+                    .Select(w => w.Name)
+                    .FirstOrDefault()
+            })
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<ApprovalAction>> GetActionsAsync(Guid requestId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<ApprovalAction>(@"
-            SELECT aa.*, u.DisplayName as ApproverName
-            FROM ApprovalActions aa
-            LEFT JOIN Users u ON aa.ApproverId = u.Id
-            WHERE aa.RequestId = @RequestId
-            ORDER BY aa.ActionDate",
-            new { RequestId = requestId });
+        return await _context.ApprovalActions
+            .AsNoTracking()
+            .Where(aa => aa.RequestId == requestId)
+            .OrderBy(aa => aa.ActionDate)
+            .Select(aa => new ApprovalAction
+            {
+                Id = aa.Id,
+                RequestId = aa.RequestId,
+                StepId = aa.StepId,
+                ApproverId = aa.ApproverId,
+                Action = aa.Action,
+                Comments = aa.Comments,
+                ActionDate = aa.ActionDate,
+                ApproverName = _context.Users
+                    .Where(u => u.Id == aa.ApproverId)
+                    .Select(u => u.DisplayName)
+                    .FirstOrDefault()
+            })
+            .ToListAsync();
     }
 
     public async Task<Guid> CreateAsync(ApprovalRequest entity)
@@ -247,26 +385,21 @@ public class ApprovalRequestRepository : IApprovalRequestRepository
         entity.Id = Guid.NewGuid();
         entity.CreatedAt = DateTime.UtcNow;
 
-        using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(@"
-            INSERT INTO ApprovalRequests (Id, DocumentId, WorkflowId, RequestedBy,
-                Status, DueDate, Comments, CreatedAt)
-            VALUES (@Id, @DocumentId, @WorkflowId, @RequestedBy,
-                @Status, @DueDate, @Comments, @CreatedAt)",
-            entity);
+        _context.ApprovalRequests.Add(entity);
+        await _context.SaveChangesAsync();
 
         return entity.Id;
     }
 
     public async Task<bool> UpdateStatusAsync(Guid id, int status, DateTime? completedAt = null)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var affected = await connection.ExecuteAsync(@"
-            UPDATE ApprovalRequests
-            SET Status = @Status, CompletedAt = @CompletedAt
-            WHERE Id = @Id",
-            new { Id = id, Status = status, CompletedAt = completedAt ?? DateTime.UtcNow });
-        return affected > 0;
+        var entity = await _context.ApprovalRequests.FindAsync(id);
+        if (entity == null) return false;
+
+        entity.Status = status;
+        entity.CompletedAt = completedAt ?? DateTime.UtcNow;
+
+        return await _context.SaveChangesAsync() > 0;
     }
 
     public async Task<Guid> AddActionAsync(ApprovalAction action)
@@ -274,11 +407,8 @@ public class ApprovalRequestRepository : IApprovalRequestRepository
         action.Id = Guid.NewGuid();
         action.ActionDate = DateTime.UtcNow;
 
-        using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(@"
-            INSERT INTO ApprovalActions (Id, RequestId, StepId, ApproverId, Action, Comments, ActionDate)
-            VALUES (@Id, @RequestId, @StepId, @ApproverId, @Action, @Comments, @ActionDate)",
-            action);
+        _context.ApprovalActions.Add(action);
+        await _context.SaveChangesAsync();
 
         return action.Id;
     }

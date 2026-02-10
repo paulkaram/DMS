@@ -1,32 +1,35 @@
-using Dapper;
 using DMS.DAL.Data;
 using DMS.DAL.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace DMS.DAL.Repositories;
 
 public class DocumentVersionMetadataRepository : IDocumentVersionMetadataRepository
 {
-    private readonly IDbConnectionFactory _connectionFactory;
+    private readonly DmsDbContext _context;
 
-    public DocumentVersionMetadataRepository(IDbConnectionFactory connectionFactory)
+    public DocumentVersionMetadataRepository(DmsDbContext context)
     {
-        _connectionFactory = connectionFactory;
+        _context = context;
     }
 
     public async Task<IEnumerable<DocumentVersionMetadata>> GetByVersionIdAsync(Guid versionId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<DocumentVersionMetadata>(
-            "SELECT * FROM DocumentVersionMetadata WHERE DocumentVersionId = @VersionId ORDER BY FieldName",
-            new { VersionId = versionId });
+        return await _context.DocumentVersionMetadata
+            .AsNoTracking()
+            .Where(m => m.DocumentVersionId == versionId)
+            .OrderBy(m => m.FieldName)
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<DocumentVersionMetadata>> GetByDocumentIdAsync(Guid documentId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<DocumentVersionMetadata>(
-            "SELECT * FROM DocumentVersionMetadata WHERE DocumentId = @DocumentId ORDER BY DocumentVersionId, FieldName",
-            new { DocumentId = documentId });
+        return await _context.DocumentVersionMetadata
+            .AsNoTracking()
+            .Where(m => m.DocumentId == documentId)
+            .OrderBy(m => m.DocumentVersionId)
+            .ThenBy(m => m.FieldName)
+            .ToListAsync();
     }
 
     public async Task<Dictionary<Guid, List<DocumentVersionMetadata>>> GetMetadataForVersionsAsync(
@@ -36,10 +39,11 @@ public class DocumentVersionMetadataRepository : IDocumentVersionMetadataReposit
         if (!idList.Any())
             return new Dictionary<Guid, List<DocumentVersionMetadata>>();
 
-        using var connection = _connectionFactory.CreateConnection();
-        var results = await connection.QueryAsync<DocumentVersionMetadata>(
-            "SELECT * FROM DocumentVersionMetadata WHERE DocumentVersionId IN @VersionIds ORDER BY FieldName",
-            new { VersionIds = idList });
+        var results = await _context.DocumentVersionMetadata
+            .AsNoTracking()
+            .Where(m => idList.Contains(m.DocumentVersionId))
+            .OrderBy(m => m.FieldName)
+            .ToListAsync();
 
         return results.GroupBy(m => m.DocumentVersionId)
             .ToDictionary(g => g.Key, g => g.ToList());
@@ -52,8 +56,6 @@ public class DocumentVersionMetadataRepository : IDocumentVersionMetadataReposit
         if (!metadataList.Any())
             return;
 
-        using var connection = _connectionFactory.CreateConnection();
-
         foreach (var item in metadataList)
         {
             item.Id = Guid.NewGuid();
@@ -62,31 +64,23 @@ public class DocumentVersionMetadataRepository : IDocumentVersionMetadataReposit
             item.CreatedAt = DateTime.UtcNow;
         }
 
-        await connection.ExecuteAsync(@"
-            INSERT INTO DocumentVersionMetadata (
-                Id, DocumentVersionId, DocumentId, ContentTypeId, FieldId, FieldName,
-                Value, NumericValue, DateValue, CreatedAt)
-            VALUES (
-                @Id, @DocumentVersionId, @DocumentId, @ContentTypeId, @FieldId, @FieldName,
-                @Value, @NumericValue, @DateValue, @CreatedAt)",
-            metadataList);
+        _context.DocumentVersionMetadata.AddRange(metadataList);
+        await _context.SaveChangesAsync();
     }
 
     public async Task<bool> SnapshotCurrentMetadataToVersionAsync(Guid documentId, Guid versionId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-
-        // Copy current document metadata to version metadata snapshot
-        var affected = await connection.ExecuteAsync(@"
+        // Copy current document metadata to version metadata snapshot using raw SQL
+        // This is more efficient than loading all metadata into memory and re-inserting
+        var affected = await _context.Database.ExecuteSqlInterpolatedAsync($@"
             INSERT INTO DocumentVersionMetadata (
                 Id, DocumentVersionId, DocumentId, ContentTypeId, FieldId, FieldName,
                 Value, NumericValue, DateValue, CreatedAt)
             SELECT
-                NEWID(), @VersionId, DocumentId, ContentTypeId, FieldId, FieldName,
+                NEWID(), {versionId}, DocumentId, ContentTypeId, FieldId, FieldName,
                 Value, NumericValue, DateValue, GETUTCDATE()
             FROM DocumentMetadata
-            WHERE DocumentId = @DocumentId",
-            new { DocumentId = documentId, VersionId = versionId });
+            WHERE DocumentId = {documentId}");
 
         return affected > 0;
     }

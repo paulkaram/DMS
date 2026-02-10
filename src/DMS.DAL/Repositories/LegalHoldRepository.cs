@@ -1,38 +1,42 @@
-using Dapper;
 using DMS.DAL.Data;
 using DMS.DAL.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace DMS.DAL.Repositories;
 
 public class LegalHoldRepository : ILegalHoldRepository
 {
-    private readonly IDbConnectionFactory _connectionFactory;
+    private readonly DmsDbContext _context;
 
-    public LegalHoldRepository(IDbConnectionFactory connectionFactory)
+    public LegalHoldRepository(DmsDbContext context)
     {
-        _connectionFactory = connectionFactory;
+        _context = context;
     }
 
     public async Task<LegalHold?> GetByIdAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<LegalHold>(
-            "SELECT * FROM LegalHolds WHERE Id = @Id",
-            new { Id = id });
+        return await _context.LegalHolds
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(lh => lh.Id == id);
     }
 
     public async Task<IEnumerable<LegalHold>> GetAllAsync()
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<LegalHold>(
-            "SELECT * FROM LegalHolds ORDER BY CreatedAt DESC");
+        return await _context.LegalHolds
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .OrderByDescending(lh => lh.CreatedAt)
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<LegalHold>> GetActiveAsync()
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<LegalHold>(
-            "SELECT * FROM LegalHolds WHERE Status = 'Active' AND IsActive = 1 ORDER BY CreatedAt DESC");
+        return await _context.LegalHolds
+            .AsNoTracking()
+            .Where(lh => lh.Status == "Active")
+            .OrderByDescending(lh => lh.CreatedAt)
+            .ToListAsync();
     }
 
     public async Task<Guid> CreateAsync(LegalHold entity)
@@ -40,18 +44,8 @@ public class LegalHoldRepository : ILegalHoldRepository
         entity.Id = Guid.NewGuid();
         entity.CreatedAt = DateTime.UtcNow;
 
-        using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(@"
-            INSERT INTO LegalHolds
-                (Id, HoldNumber, Name, Description, CaseReference, RequestedBy, RequestedAt,
-                 Status, EffectiveFrom, EffectiveUntil, AppliedBy, AppliedAt, ReleasedBy,
-                 ReleasedAt, ReleaseReason, Notes, IsActive, CreatedAt)
-            VALUES
-                (@Id, @HoldNumber, @Name, @Description, @CaseReference, @RequestedBy, @RequestedAt,
-                 @Status, @EffectiveFrom, @EffectiveUntil, @AppliedBy, @AppliedAt, @ReleasedBy,
-                 @ReleasedAt, @ReleaseReason, @Notes, @IsActive, @CreatedAt)",
-            entity);
-
+        _context.LegalHolds.Add(entity);
+        await _context.SaveChangesAsync();
         return entity.Id;
     }
 
@@ -59,138 +53,151 @@ public class LegalHoldRepository : ILegalHoldRepository
     {
         entity.ModifiedAt = DateTime.UtcNow;
 
-        using var connection = _connectionFactory.CreateConnection();
-        var affected = await connection.ExecuteAsync(@"
-            UPDATE LegalHolds
-            SET Name = @Name,
-                Description = @Description,
-                CaseReference = @CaseReference,
-                RequestedBy = @RequestedBy,
-                RequestedAt = @RequestedAt,
-                Status = @Status,
-                EffectiveUntil = @EffectiveUntil,
-                ReleasedBy = @ReleasedBy,
-                ReleasedAt = @ReleasedAt,
-                ReleaseReason = @ReleaseReason,
-                Notes = @Notes,
-                IsActive = @IsActive,
-                ModifiedAt = @ModifiedAt
-            WHERE Id = @Id",
-            entity);
+        var existing = await _context.LegalHolds
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(lh => lh.Id == entity.Id);
+        if (existing == null) return false;
 
-        return affected > 0;
+        existing.Name = entity.Name;
+        existing.Description = entity.Description;
+        existing.CaseReference = entity.CaseReference;
+        existing.RequestedBy = entity.RequestedBy;
+        existing.RequestedAt = entity.RequestedAt;
+        existing.Status = entity.Status;
+        existing.EffectiveUntil = entity.EffectiveUntil;
+        existing.ReleasedBy = entity.ReleasedBy;
+        existing.ReleasedAt = entity.ReleasedAt;
+        existing.ReleaseReason = entity.ReleaseReason;
+        existing.Notes = entity.Notes;
+        existing.IsActive = entity.IsActive;
+        existing.ModifiedAt = entity.ModifiedAt;
+
+        return await _context.SaveChangesAsync() > 0;
     }
 }
 
 public class LegalHoldDocumentRepository : ILegalHoldDocumentRepository
 {
-    private readonly IDbConnectionFactory _connectionFactory;
+    private readonly DmsDbContext _context;
 
-    public LegalHoldDocumentRepository(IDbConnectionFactory connectionFactory)
+    public LegalHoldDocumentRepository(DmsDbContext context)
     {
-        _connectionFactory = connectionFactory;
+        _context = context;
     }
 
     public async Task<LegalHoldDocument?> GetByIdAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<LegalHoldDocument>(
-            "SELECT * FROM LegalHoldDocuments WHERE Id = @Id",
-            new { Id = id });
+        return await _context.LegalHoldDocuments
+            .AsNoTracking()
+            .FirstOrDefaultAsync(lhd => lhd.Id == id);
     }
 
     public async Task<IEnumerable<LegalHoldDocument>> GetByHoldIdAsync(Guid holdId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<LegalHoldDocument>(@"
-            SELECT lhd.*, d.Name as DocumentName, lh.Name as HoldName
-            FROM LegalHoldDocuments lhd
-            JOIN Documents d ON lhd.DocumentId = d.Id
-            JOIN LegalHolds lh ON lhd.LegalHoldId = lh.Id
-            WHERE lhd.LegalHoldId = @HoldId
-            ORDER BY lhd.AddedAt DESC",
-            new { HoldId = holdId });
+        return await _context.LegalHoldDocuments
+            .AsNoTracking()
+            .Where(lhd => lhd.LegalHoldId == holdId)
+            .Join(_context.Documents.AsNoTracking(), lhd => lhd.DocumentId, d => d.Id, (lhd, d) => new { lhd, d })
+            .Join(_context.LegalHolds.IgnoreQueryFilters().AsNoTracking(), x => x.lhd.LegalHoldId, lh => lh.Id, (x, lh) => new LegalHoldDocument
+            {
+                Id = x.lhd.Id,
+                LegalHoldId = x.lhd.LegalHoldId,
+                DocumentId = x.lhd.DocumentId,
+                AddedAt = x.lhd.AddedAt,
+                AddedBy = x.lhd.AddedBy,
+                ReleasedAt = x.lhd.ReleasedAt,
+                ReleasedBy = x.lhd.ReleasedBy,
+                Notes = x.lhd.Notes,
+                DocumentName = x.d.Name,
+                HoldName = lh.Name
+            })
+            .OrderByDescending(lhd => lhd.AddedAt)
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<LegalHoldDocument>> GetByDocumentIdAsync(Guid documentId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<LegalHoldDocument>(@"
-            SELECT lhd.*, d.Name as DocumentName, lh.Name as HoldName
-            FROM LegalHoldDocuments lhd
-            JOIN Documents d ON lhd.DocumentId = d.Id
-            JOIN LegalHolds lh ON lhd.LegalHoldId = lh.Id
-            WHERE lhd.DocumentId = @DocumentId
-            ORDER BY lhd.AddedAt DESC",
-            new { DocumentId = documentId });
+        return await _context.LegalHoldDocuments
+            .AsNoTracking()
+            .Where(lhd => lhd.DocumentId == documentId)
+            .Join(_context.Documents.AsNoTracking(), lhd => lhd.DocumentId, d => d.Id, (lhd, d) => new { lhd, d })
+            .Join(_context.LegalHolds.IgnoreQueryFilters().AsNoTracking(), x => x.lhd.LegalHoldId, lh => lh.Id, (x, lh) => new LegalHoldDocument
+            {
+                Id = x.lhd.Id,
+                LegalHoldId = x.lhd.LegalHoldId,
+                DocumentId = x.lhd.DocumentId,
+                AddedAt = x.lhd.AddedAt,
+                AddedBy = x.lhd.AddedBy,
+                ReleasedAt = x.lhd.ReleasedAt,
+                ReleasedBy = x.lhd.ReleasedBy,
+                Notes = x.lhd.Notes,
+                DocumentName = x.d.Name,
+                HoldName = lh.Name
+            })
+            .OrderByDescending(lhd => lhd.AddedAt)
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<LegalHoldDocument>> GetActiveByDocumentIdAsync(Guid documentId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<LegalHoldDocument>(@"
-            SELECT lhd.*, d.Name as DocumentName, lh.Name as HoldName
-            FROM LegalHoldDocuments lhd
-            JOIN Documents d ON lhd.DocumentId = d.Id
-            JOIN LegalHolds lh ON lhd.LegalHoldId = lh.Id
-            WHERE lhd.DocumentId = @DocumentId
-              AND lhd.ReleasedAt IS NULL
-              AND lh.Status = 'Active'
-            ORDER BY lhd.AddedAt DESC",
-            new { DocumentId = documentId });
+        return await _context.LegalHoldDocuments
+            .AsNoTracking()
+            .Where(lhd => lhd.DocumentId == documentId && lhd.ReleasedAt == null)
+            .Join(_context.Documents.AsNoTracking(), lhd => lhd.DocumentId, d => d.Id, (lhd, d) => new { lhd, d })
+            .Join(_context.LegalHolds.AsNoTracking(), x => x.lhd.LegalHoldId, lh => lh.Id, (x, lh) => new { x.lhd, x.d, lh })
+            .Where(x => x.lh.Status == "Active")
+            .Select(x => new LegalHoldDocument
+            {
+                Id = x.lhd.Id,
+                LegalHoldId = x.lhd.LegalHoldId,
+                DocumentId = x.lhd.DocumentId,
+                AddedAt = x.lhd.AddedAt,
+                AddedBy = x.lhd.AddedBy,
+                ReleasedAt = x.lhd.ReleasedAt,
+                ReleasedBy = x.lhd.ReleasedBy,
+                Notes = x.lhd.Notes,
+                DocumentName = x.d.Name,
+                HoldName = x.lh.Name
+            })
+            .OrderByDescending(lhd => lhd.AddedAt)
+            .ToListAsync();
     }
 
     public async Task<bool> IsDocumentOnHoldAsync(Guid documentId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var count = await connection.ExecuteScalarAsync<int>(@"
-            SELECT COUNT(1)
-            FROM LegalHoldDocuments lhd
-            JOIN LegalHolds lh ON lhd.LegalHoldId = lh.Id
-            WHERE lhd.DocumentId = @DocumentId
-              AND lhd.ReleasedAt IS NULL
-              AND lh.Status = 'Active'",
-            new { DocumentId = documentId });
-
-        return count > 0;
+        return await _context.LegalHoldDocuments
+            .AsNoTracking()
+            .Where(lhd => lhd.DocumentId == documentId && lhd.ReleasedAt == null)
+            .Join(_context.LegalHolds.AsNoTracking(), lhd => lhd.LegalHoldId, lh => lh.Id, (lhd, lh) => lh)
+            .Where(lh => lh.Status == "Active")
+            .AnyAsync();
     }
 
     public async Task<Guid> CreateAsync(LegalHoldDocument entity)
     {
         entity.Id = Guid.NewGuid();
 
-        using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(@"
-            INSERT INTO LegalHoldDocuments
-                (Id, LegalHoldId, DocumentId, AddedAt, AddedBy, ReleasedAt, ReleasedBy, Notes)
-            VALUES
-                (@Id, @LegalHoldId, @DocumentId, @AddedAt, @AddedBy, @ReleasedAt, @ReleasedBy, @Notes)",
-            entity);
-
+        _context.LegalHoldDocuments.Add(entity);
+        await _context.SaveChangesAsync();
         return entity.Id;
     }
 
     public async Task<bool> UpdateAsync(LegalHoldDocument entity)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var affected = await connection.ExecuteAsync(@"
-            UPDATE LegalHoldDocuments
-            SET ReleasedAt = @ReleasedAt,
-                ReleasedBy = @ReleasedBy,
-                Notes = @Notes
-            WHERE Id = @Id",
-            entity);
+        var existing = await _context.LegalHoldDocuments.FindAsync(entity.Id);
+        if (existing == null) return false;
 
-        return affected > 0;
+        existing.ReleasedAt = entity.ReleasedAt;
+        existing.ReleasedBy = entity.ReleasedBy;
+        existing.Notes = entity.Notes;
+
+        return await _context.SaveChangesAsync() > 0;
     }
 
     public async Task<bool> DeleteAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var affected = await connection.ExecuteAsync(
-            "DELETE FROM LegalHoldDocuments WHERE Id = @Id",
-            new { Id = id });
-
-        return affected > 0;
+        return await _context.LegalHoldDocuments
+            .Where(lhd => lhd.Id == id)
+            .ExecuteDeleteAsync() > 0;
     }
 }

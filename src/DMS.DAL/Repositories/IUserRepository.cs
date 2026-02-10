@@ -8,6 +8,8 @@ public interface IUserRepository
     Task<User?> GetByUsernameAsync(string username);
     Task<IEnumerable<User>> GetAllAsync();
     Task<IEnumerable<User>> SearchAsync(string? search);
+    Task<(List<User> Items, int TotalCount)> GetAllPaginatedAsync(int page, int pageSize);
+    Task<(List<User> Items, int TotalCount)> SearchPaginatedAsync(string? search, int page, int pageSize);
     Task<Guid> CreateAsync(User entity);
     Task<bool> UpdateAsync(User entity);
     Task<bool> UpdateLastLoginAsync(Guid id);
@@ -23,13 +25,3 @@ public interface IRoleRepository
     Task<bool> RemoveUserFromRoleAsync(Guid userId, Guid roleId);
 }
 
-public interface IDelegationRepository
-{
-    Task<Delegation?> GetByIdAsync(Guid id);
-    Task<IEnumerable<Delegation>> GetByFromUserIdAsync(Guid userId);
-    Task<IEnumerable<Delegation>> GetByToUserIdAsync(Guid userId);
-    Task<IEnumerable<Delegation>> GetActiveAsync();
-    Task<Guid> CreateAsync(Delegation entity);
-    Task<bool> UpdateAsync(Delegation entity);
-    Task<bool> DeleteAsync(Guid id);
-}

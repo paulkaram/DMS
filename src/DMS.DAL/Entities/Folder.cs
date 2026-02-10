@@ -1,6 +1,8 @@
+using DMS.DAL.Data;
+
 namespace DMS.DAL.Entities;
 
-public class Folder
+public class Folder : IAuditable, ISoftDeletable
 {
     public Guid Id { get; set; }
     public Guid CabinetId { get; set; }

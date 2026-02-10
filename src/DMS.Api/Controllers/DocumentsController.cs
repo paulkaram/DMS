@@ -1,3 +1,4 @@
+using DMS.Api.Constants;
 using DMS.BL.DTOs;
 using DMS.BL.Interfaces;
 using DMS.DAL.Entities;
@@ -6,47 +7,46 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace DMS.Api.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
 [Authorize]
-public class DocumentsController : ControllerBase
+public class DocumentsController : BaseApiController
 {
     private readonly IDocumentService _documentService;
     private readonly IBulkOperationService _bulkOperationService;
     private readonly IPreviewService _previewService;
-    private readonly IPermissionService _permissionService;
     private readonly IFolderService _folderService;
 
     public DocumentsController(
         IDocumentService documentService,
         IBulkOperationService bulkOperationService,
         IPreviewService previewService,
-        IPermissionService permissionService,
         IFolderService folderService)
     {
         _documentService = documentService;
         _bulkOperationService = bulkOperationService;
         _previewService = previewService;
-        _permissionService = permissionService;
         _folderService = folderService;
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] Guid? folderId, [FromQuery] string? search, [FromQuery] Guid? classificationId, [FromQuery] Guid? documentTypeId)
+    public async Task<IActionResult> GetAll(
+        [FromQuery] Guid? folderId, [FromQuery] string? search,
+        [FromQuery] Guid? classificationId, [FromQuery] Guid? documentTypeId,
+        [FromQuery] int page = 1, [FromQuery] int pageSize = AppConstants.DefaultPageSize)
     {
         var userId = GetCurrentUserId();
+        pageSize = Math.Min(pageSize, AppConstants.MaxPageSize);
 
         // If searching within a folder, check read permission on folder
         if (folderId.HasValue)
         {
             if (!await HasPermissionAsync(userId, "Folder", folderId.Value, (int)PermissionLevel.Read))
-                return Forbid("You don't have permission to view this folder");
+                return Forbid(ErrorMessages.Permissions.ViewFolder);
         }
 
-        var result = await _documentService.SearchAsync(search, folderId, classificationId, documentTypeId);
+        var result = await _documentService.SearchPaginatedAsync(search, folderId, classificationId, documentTypeId, page, pageSize);
         if (!result.Success) return BadRequest(result.Errors);
 
-        var docs = result.Data!;
+        var pagedResult = result.Data!;
 
         // Private folder filtering: non-admin users only see their own documents
         if (folderId.HasValue)
@@ -56,19 +56,20 @@ public class DocumentsController : ControllerBase
             {
                 if (!IsAdmin() && !await HasPermissionAsync(userId, "Folder", folderId.Value, (int)PermissionLevel.Admin))
                 {
-                    docs = docs.Where(d => d.CreatedBy == userId).ToList();
+                    pagedResult.Items = pagedResult.Items.Where(d => d.CreatedBy == userId).ToList();
                 }
             }
         }
 
         // Filter documents based on user's read permission
         var accessibleDocs = new List<DocumentDto>();
-        foreach (var doc in docs)
+        foreach (var doc in pagedResult.Items)
         {
             if (await HasPermissionAsync(userId, "Document", doc.Id, (int)PermissionLevel.Read))
                 accessibleDocs.Add(doc);
         }
-        return Ok(accessibleDocs);
+        pagedResult.Items = accessibleDocs;
+        return Ok(pagedResult);
     }
 
     [HttpGet("{id:guid}")]
@@ -78,7 +79,7 @@ public class DocumentsController : ControllerBase
 
         // Check read permission on document
         if (!await HasPermissionAsync(userId, "Document", id, (int)PermissionLevel.Read))
-            return Forbid("You don't have permission to view this document");
+            return Forbid(ErrorMessages.Permissions.ViewDocument);
 
         var result = await _documentService.GetByIdAsync(id);
         return result.Success ? Ok(result.Data) : NotFound(result.Errors);
@@ -91,7 +92,7 @@ public class DocumentsController : ControllerBase
 
         // Check read permission on document
         if (!await HasPermissionAsync(userId, "Document", id, (int)PermissionLevel.Read))
-            return Forbid("You don't have permission to view this document");
+            return Forbid(ErrorMessages.Permissions.ViewDocument);
 
         var result = await _documentService.GetVersionsAsync(id);
         return result.Success ? Ok(result.Data) : BadRequest(result.Errors);
@@ -104,7 +105,7 @@ public class DocumentsController : ControllerBase
 
         // Check read permission on document
         if (!await HasPermissionAsync(userId, "Document", id, (int)PermissionLevel.Read))
-            return Forbid("You don't have permission to download this document");
+            return Forbid(ErrorMessages.Permissions.DownloadDocument);
 
         var docResult = await _documentService.GetByIdAsync(id);
         if (!docResult.Success)
@@ -138,13 +139,13 @@ public class DocumentsController : ControllerBase
     public async Task<IActionResult> Create([FromForm] CreateDocumentDto dto, IFormFile file)
     {
         if (file == null || file.Length == 0)
-            return BadRequest(new[] { "File is required" });
+            return BadRequest(new[] { ErrorMessages.FileRequired });
 
         var userId = GetCurrentUserId();
 
         // Check write permission on target folder
         if (!await HasPermissionAsync(userId, "Folder", dto.FolderId, (int)PermissionLevel.Write))
-            return Forbid("You don't have permission to upload documents to this folder");
+            return Forbid(ErrorMessages.Permissions.UploadDocumentsToFolder);
 
         using var stream = file.OpenReadStream();
         var result = await _documentService.CreateAsync(dto, stream, file.FileName, file.ContentType, userId);
@@ -158,7 +159,7 @@ public class DocumentsController : ControllerBase
 
         // Check write permission on document
         if (!await HasPermissionAsync(userId, "Document", id, (int)PermissionLevel.Write))
-            return Forbid("You don't have permission to edit this document");
+            return Forbid(ErrorMessages.Permissions.EditDocument);
 
         var result = await _documentService.UpdateMetadataAsync(id, dto, userId);
         return result.Success ? Ok(result.Data) : BadRequest(result.Errors);
@@ -168,13 +169,13 @@ public class DocumentsController : ControllerBase
     public async Task<IActionResult> UpdateContent(Guid id, IFormFile file)
     {
         if (file == null || file.Length == 0)
-            return BadRequest(new[] { "File is required" });
+            return BadRequest(new[] { ErrorMessages.FileRequired });
 
         var userId = GetCurrentUserId();
 
         // Check write permission on document
         if (!await HasPermissionAsync(userId, "Document", id, (int)PermissionLevel.Write))
-            return Forbid("You don't have permission to edit this document");
+            return Forbid(ErrorMessages.Permissions.EditDocument);
 
         using var stream = file.OpenReadStream();
         var result = await _documentService.UpdateContentAsync(id, stream, file.FileName, file.ContentType, userId);
@@ -188,7 +189,7 @@ public class DocumentsController : ControllerBase
 
         // Check write permission on document
         if (!await HasPermissionAsync(userId, "Document", id, (int)PermissionLevel.Write))
-            return Forbid("You don't have permission to check out this document");
+            return Forbid(ErrorMessages.Permissions.CheckOutDocument);
 
         var result = await _documentService.CheckOutAsync(id, userId);
         return result.Success ? Ok(result.Message) : BadRequest(result.Errors);
@@ -205,7 +206,7 @@ public class DocumentsController : ControllerBase
 
         // Check write permission on document
         if (!await HasPermissionAsync(userId, "Document", id, (int)PermissionLevel.Write))
-            return Forbid("You don't have permission to check in this document");
+            return Forbid(ErrorMessages.Permissions.CheckInDocument);
 
         Stream? stream = null;
         string? fileName = null;
@@ -236,7 +237,7 @@ public class DocumentsController : ControllerBase
 
         // Check write permission on document
         if (!await HasPermissionAsync(userId, "Document", id, (int)PermissionLevel.Write))
-            return Forbid("You don't have permission to discard this checkout");
+            return Forbid(ErrorMessages.Permissions.DiscardCheckout);
 
         var result = await _documentService.DiscardCheckOutAsync(id, userId);
         return result.Success ? Ok(result.Message) : BadRequest(result.Errors);
@@ -266,7 +267,7 @@ public class DocumentsController : ControllerBase
 
         // Check write permission (only those who can edit can view working copy)
         if (!await HasPermissionAsync(userId, "Document", id, (int)PermissionLevel.Write))
-            return Forbid("You don't have permission to view this working copy");
+            return Forbid(ErrorMessages.Permissions.ViewWorkingCopy);
 
         var result = await _documentService.GetWorkingCopyAsync(id, userId);
         return result.Success ? Ok(result.Data) : BadRequest(result.Errors);
@@ -282,7 +283,7 @@ public class DocumentsController : ControllerBase
 
         // Check write permission
         if (!await HasPermissionAsync(userId, "Document", id, (int)PermissionLevel.Write))
-            return Forbid("You don't have permission to edit this document");
+            return Forbid(ErrorMessages.Permissions.EditDocument);
 
         var result = await _documentService.SaveWorkingCopyAsync(id, dto, userId);
         return result.Success ? Ok(result.Message) : BadRequest(result.Errors);
@@ -295,13 +296,13 @@ public class DocumentsController : ControllerBase
     public async Task<IActionResult> SaveWorkingCopyContent(Guid id, IFormFile file)
     {
         if (file == null || file.Length == 0)
-            return BadRequest(new[] { "File is required" });
+            return BadRequest(new[] { ErrorMessages.FileRequired });
 
         var userId = GetCurrentUserId();
 
         // Check write permission
         if (!await HasPermissionAsync(userId, "Document", id, (int)PermissionLevel.Write))
-            return Forbid("You don't have permission to edit this document");
+            return Forbid(ErrorMessages.Permissions.EditDocument);
 
         using var stream = file.OpenReadStream();
         var result = await _documentService.SaveWorkingCopyContentAsync(id, stream, file.FileName, file.ContentType, userId);
@@ -322,7 +323,7 @@ public class DocumentsController : ControllerBase
 
         // Check read permission
         if (!await HasPermissionAsync(userId, "Document", id, (int)PermissionLevel.Read))
-            return Forbid("You don't have permission to view this document");
+            return Forbid(ErrorMessages.Permissions.ViewDocument);
 
         var result = await _documentService.CompareVersionsAsync(id, source, target);
         return result.Success ? Ok(result.Data) : BadRequest(result.Errors);
@@ -338,7 +339,7 @@ public class DocumentsController : ControllerBase
 
         // Check write permission
         if (!await HasPermissionAsync(userId, "Document", id, (int)PermissionLevel.Write))
-            return Forbid("You don't have permission to restore versions of this document");
+            return Forbid(ErrorMessages.Permissions.RestoreVersion);
 
         var result = await _documentService.RestoreVersionAsync(id, versionId, dto, userId);
         return result.Success ? Ok(result.Data) : BadRequest(result.Errors);
@@ -368,11 +369,11 @@ public class DocumentsController : ControllerBase
 
         // Check write+delete permission on document (need to remove from current location)
         if (!await HasPermissionAsync(userId, "Document", id, (int)(PermissionLevel.Write | PermissionLevel.Delete)))
-            return Forbid("You don't have permission to move this document");
+            return Forbid(ErrorMessages.Permissions.MoveDocument);
 
         // Check write permission on destination folder
         if (!await HasPermissionAsync(userId, "Folder", dto.NewFolderId, (int)PermissionLevel.Write))
-            return Forbid("You don't have permission to move documents to this folder");
+            return Forbid(ErrorMessages.Permissions.MoveDocumentsToFolder);
 
         var result = await _documentService.MoveAsync(id, dto, userId);
         return result.Success ? Ok(result.Message) : BadRequest(result.Errors);
@@ -385,11 +386,11 @@ public class DocumentsController : ControllerBase
 
         // Check read permission on source document
         if (!await HasPermissionAsync(userId, "Document", id, (int)PermissionLevel.Read))
-            return Forbid("You don't have permission to copy this document");
+            return Forbid(ErrorMessages.Permissions.CopyDocument);
 
         // Check write permission on destination folder
         if (!await HasPermissionAsync(userId, "Folder", dto.TargetFolderId, (int)PermissionLevel.Write))
-            return Forbid("You don't have permission to copy documents to this folder");
+            return Forbid(ErrorMessages.Permissions.CopyDocumentsToFolder);
 
         var result = await _documentService.CopyAsync(id, dto, userId);
         return result.Success ? CreatedAtAction(nameof(GetById), new { id = result.Data!.Id }, result.Data) : BadRequest(result.Errors);
@@ -402,7 +403,7 @@ public class DocumentsController : ControllerBase
 
         // Check delete permission on document
         if (!await HasPermissionAsync(userId, "Document", id, (int)PermissionLevel.Delete))
-            return Forbid("You don't have permission to delete this document");
+            return Forbid(ErrorMessages.Permissions.DeleteDocument);
 
         var result = await _documentService.DeleteAsync(id, userId);
         return result.Success ? NoContent() : BadRequest(result.Errors);
@@ -416,7 +417,7 @@ public class DocumentsController : ControllerBase
 
         // Check read permission
         if (!await HasPermissionAsync(userId, "Document", id, (int)PermissionLevel.Read))
-            return Forbid("You don't have permission to preview this document");
+            return Forbid(ErrorMessages.Permissions.PreviewDocument);
 
         var result = await _previewService.GetPreviewInfoAsync(id, version);
         return result.Success ? Ok(result.Data) : NotFound(result.Errors);
@@ -427,7 +428,7 @@ public class DocumentsController : ControllerBase
     public async Task<IActionResult> BulkDelete([FromBody] BulkDeleteRequest request)
     {
         if (request.DocumentIds == null || request.DocumentIds.Count == 0)
-            return BadRequest(new[] { "No documents specified" });
+            return BadRequest(new[] { ErrorMessages.NoDocumentsSpecified });
 
         var userId = GetCurrentUserId();
         var result = await _bulkOperationService.BulkDeleteAsync(request.DocumentIds, userId);
@@ -438,7 +439,7 @@ public class DocumentsController : ControllerBase
     public async Task<IActionResult> BulkMove([FromBody] BulkMoveRequest request)
     {
         if (request.DocumentIds == null || request.DocumentIds.Count == 0)
-            return BadRequest(new[] { "No documents specified" });
+            return BadRequest(new[] { ErrorMessages.NoDocumentsSpecified });
 
         var userId = GetCurrentUserId();
         var result = await _bulkOperationService.BulkMoveAsync(request.DocumentIds, request.TargetFolderId, userId);
@@ -449,7 +450,7 @@ public class DocumentsController : ControllerBase
     public async Task<IActionResult> BulkDownload([FromBody] BulkDownloadRequest request)
     {
         if (request.DocumentIds == null || request.DocumentIds.Count == 0)
-            return BadRequest(new[] { "No documents specified" });
+            return BadRequest(new[] { ErrorMessages.NoDocumentsSpecified });
 
         var userId = GetCurrentUserId();
         var result = await _bulkOperationService.BulkDownloadAsync(request.DocumentIds, userId);
@@ -457,23 +458,5 @@ public class DocumentsController : ControllerBase
             return BadRequest(result.Errors);
 
         return File(result.Data!, "application/zip", $"documents-{DateTime.UtcNow:yyyyMMdd-HHmmss}.zip");
-    }
-
-    private Guid GetCurrentUserId()
-    {
-        var userIdClaim = User.FindFirst("sub")?.Value ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        return Guid.TryParse(userIdClaim, out var userId) ? userId : Guid.Empty;
-    }
-
-    private bool IsAdmin() => User.IsInRole("Admin");
-
-    private async Task<bool> HasPermissionAsync(Guid userId, string nodeType, Guid nodeId, int requiredLevel)
-    {
-        // Admin users bypass permission checks - they have full access to everything
-        if (IsAdmin())
-            return true;
-
-        var result = await _permissionService.HasPermissionAsync(userId, nodeType, nodeId, requiredLevel);
-        return result.Success && result.Data;
     }
 }

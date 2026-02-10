@@ -17,7 +17,6 @@ public static class DependencyInjection
 
         // User and auth services
         services.AddScoped<IUserService, UserService>();
-        services.AddScoped<IDelegationService, DelegationService>();
         services.AddScoped<IAuthService, AuthService>();
 
         // Permission service
@@ -33,7 +32,7 @@ public static class DependencyInjection
         services.AddScoped<IFavoriteService, FavoriteService>();
         services.AddScoped<IShareService, ShareService>();
         services.AddScoped<IRecycleBinService, RecycleBinService>();
-        services.AddScoped<IVacationService, VacationService>();
+
         services.AddScoped<IApprovalService, ApprovalService>();
 
         // Document feature services
@@ -80,6 +79,9 @@ public static class DependencyInjection
 
         // PDF Page Management
         services.AddScoped<IPdfPageService, PdfPageService>();
+
+        // Reports
+        services.AddScoped<IReportsService, ReportsService>();
 
         return services;
     }

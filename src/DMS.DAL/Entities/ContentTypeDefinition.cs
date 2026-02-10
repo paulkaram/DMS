@@ -1,3 +1,6 @@
+using System.Text.Json.Serialization;
+using DMS.DAL.Data;
+
 namespace DMS.DAL.Entities;
 
 /// <summary>
@@ -6,7 +9,7 @@ namespace DMS.DAL.Entities;
 /// Note: This was renamed from ContentTypeDefinition to ContentType in the database.
 /// The class keeps the original name for backwards compatibility but maps to ContentTypes table.
 /// </summary>
-public class ContentTypeDefinition
+public class ContentTypeDefinition : IAuditable, ISoftDeletable
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
@@ -142,13 +145,14 @@ public class ContentTypeField
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation
+    [JsonIgnore]
     public ContentTypeDefinition? ContentType { get; set; }
 }
 
 /// <summary>
 /// Stores actual metadata values for a document
 /// </summary>
-public class DocumentMetadata
+public class DocumentMetadata : IAuditable
 {
     public Guid Id { get; set; }
     public Guid DocumentId { get; set; }
@@ -214,6 +218,7 @@ public class FolderContentTypeAssignment
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation
+    [JsonIgnore]
     public ContentTypeDefinition? ContentType { get; set; }
 
     // Populated by queries (not from DB)
@@ -257,6 +262,7 @@ public class CabinetContentTypeAssignment
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation
+    [JsonIgnore]
     public ContentTypeDefinition? ContentType { get; set; }
 
     // Populated by queries (not from DB)

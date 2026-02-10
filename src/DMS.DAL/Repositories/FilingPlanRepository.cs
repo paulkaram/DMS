@@ -1,79 +1,90 @@
-using Dapper;
 using DMS.DAL.Data;
 using DMS.DAL.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace DMS.DAL.Repositories;
 
 public class FilingPlanRepository : IFilingPlanRepository
 {
-    private readonly IDbConnectionFactory _connectionFactory;
+    private readonly DmsDbContext _context;
 
-    public FilingPlanRepository(IDbConnectionFactory connectionFactory)
+    public FilingPlanRepository(DmsDbContext context)
     {
-        _connectionFactory = connectionFactory;
+        _context = context;
     }
 
-    public async Task<IEnumerable<FilingPlan>> GetByFolderAsync(Guid folderId)
-    {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<FilingPlan>(@"
-            SELECT fp.*, f.Name as FolderName, c.Name as ClassificationName, dt.Name as DocumentTypeName
-            FROM FilingPlans fp
-            LEFT JOIN Folders f ON fp.FolderId = f.Id
-            LEFT JOIN Classifications c ON fp.ClassificationId = c.Id
-            LEFT JOIN DocumentTypes dt ON fp.DocumentTypeId = dt.Id
-            WHERE fp.FolderId = @FolderId AND fp.IsActive = 1
-            ORDER BY fp.Name",
-            new { FolderId = folderId });
-    }
+    public async Task<IEnumerable<FilingPlan>> GetByFolderAsync(Guid folderId) =>
+        await _context.FilingPlans.AsNoTracking()
+            .Where(fp => fp.FolderId == folderId)
+            .GroupJoin(_context.Folders.AsNoTracking(), fp => fp.FolderId, f => f.Id, (fp, fs) => new { fp, fs })
+            .SelectMany(x => x.fs.DefaultIfEmpty(), (x, f) => new { x.fp, FolderName = f != null ? f.Name : null })
+            .GroupJoin(_context.Classifications.AsNoTracking(), x => x.fp.ClassificationId, c => c.Id, (x, cs) => new { x.fp, x.FolderName, cs })
+            .SelectMany(x => x.cs.DefaultIfEmpty(), (x, c) => new { x.fp, x.FolderName, ClassificationName = c != null ? c.Name : null })
+            .GroupJoin(_context.DocumentTypes.AsNoTracking(), x => x.fp.DocumentTypeId, dt => dt.Id, (x, dts) => new { x.fp, x.FolderName, x.ClassificationName, dts })
+            .SelectMany(x => x.dts.DefaultIfEmpty(), (x, dt) => new FilingPlan
+            {
+                Id = x.fp.Id,
+                FolderId = x.fp.FolderId,
+                Name = x.fp.Name,
+                Description = x.fp.Description,
+                Pattern = x.fp.Pattern,
+                ClassificationId = x.fp.ClassificationId,
+                DocumentTypeId = x.fp.DocumentTypeId,
+                IsActive = x.fp.IsActive,
+                CreatedBy = x.fp.CreatedBy,
+                CreatedAt = x.fp.CreatedAt,
+                FolderName = x.FolderName,
+                ClassificationName = x.ClassificationName,
+                DocumentTypeName = dt != null ? dt.Name : null
+            })
+            .OrderBy(fp => fp.Name)
+            .ToListAsync();
 
-    public async Task<FilingPlan?> GetByIdAsync(Guid id)
-    {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<FilingPlan>(@"
-            SELECT fp.*, f.Name as FolderName, c.Name as ClassificationName, dt.Name as DocumentTypeName
-            FROM FilingPlans fp
-            LEFT JOIN Folders f ON fp.FolderId = f.Id
-            LEFT JOIN Classifications c ON fp.ClassificationId = c.Id
-            LEFT JOIN DocumentTypes dt ON fp.DocumentTypeId = dt.Id
-            WHERE fp.Id = @Id",
-            new { Id = id });
-    }
+    public async Task<FilingPlan?> GetByIdAsync(Guid id) =>
+        await _context.FilingPlans.AsNoTracking()
+            .Where(fp => fp.Id == id)
+            .GroupJoin(_context.Folders.AsNoTracking(), fp => fp.FolderId, f => f.Id, (fp, fs) => new { fp, fs })
+            .SelectMany(x => x.fs.DefaultIfEmpty(), (x, f) => new { x.fp, FolderName = f != null ? f.Name : null })
+            .GroupJoin(_context.Classifications.AsNoTracking(), x => x.fp.ClassificationId, c => c.Id, (x, cs) => new { x.fp, x.FolderName, cs })
+            .SelectMany(x => x.cs.DefaultIfEmpty(), (x, c) => new { x.fp, x.FolderName, ClassificationName = c != null ? c.Name : null })
+            .GroupJoin(_context.DocumentTypes.AsNoTracking(), x => x.fp.DocumentTypeId, dt => dt.Id, (x, dts) => new { x.fp, x.FolderName, x.ClassificationName, dts })
+            .SelectMany(x => x.dts.DefaultIfEmpty(), (x, dt) => new FilingPlan
+            {
+                Id = x.fp.Id,
+                FolderId = x.fp.FolderId,
+                Name = x.fp.Name,
+                Description = x.fp.Description,
+                Pattern = x.fp.Pattern,
+                ClassificationId = x.fp.ClassificationId,
+                DocumentTypeId = x.fp.DocumentTypeId,
+                IsActive = x.fp.IsActive,
+                CreatedBy = x.fp.CreatedBy,
+                CreatedAt = x.fp.CreatedAt,
+                FolderName = x.FolderName,
+                ClassificationName = x.ClassificationName,
+                DocumentTypeName = dt != null ? dt.Name : null
+            })
+            .FirstOrDefaultAsync();
 
     public async Task<Guid> CreateAsync(FilingPlan entity)
     {
         entity.Id = Guid.NewGuid();
         entity.CreatedAt = DateTime.UtcNow;
 
-        using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(@"
-            INSERT INTO FilingPlans (Id, FolderId, Name, Description, Pattern,
-                ClassificationId, DocumentTypeId, IsActive, CreatedBy, CreatedAt)
-            VALUES (@Id, @FolderId, @Name, @Description, @Pattern,
-                @ClassificationId, @DocumentTypeId, @IsActive, @CreatedBy, @CreatedAt)",
-            entity);
+        _context.FilingPlans.Add(entity);
+        await _context.SaveChangesAsync();
 
         return entity.Id;
     }
 
     public async Task<bool> UpdateAsync(FilingPlan entity)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var affected = await connection.ExecuteAsync(@"
-            UPDATE FilingPlans
-            SET Name = @Name, Description = @Description, Pattern = @Pattern,
-                ClassificationId = @ClassificationId, DocumentTypeId = @DocumentTypeId,
-                IsActive = @IsActive
-            WHERE Id = @Id",
-            entity);
-        return affected > 0;
+        _context.FilingPlans.Update(entity);
+        return await _context.SaveChangesAsync() > 0;
     }
 
-    public async Task<bool> DeleteAsync(Guid id)
-    {
-        using var connection = _connectionFactory.CreateConnection();
-        var affected = await connection.ExecuteAsync(
-            "UPDATE FilingPlans SET IsActive = 0 WHERE Id = @Id", new { Id = id });
-        return affected > 0;
-    }
+    public async Task<bool> DeleteAsync(Guid id) =>
+        await _context.FilingPlans.Where(fp => fp.Id == id)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(fp => fp.IsActive, false)) > 0;
 }

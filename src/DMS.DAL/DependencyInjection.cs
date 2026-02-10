@@ -1,5 +1,6 @@
 using DMS.DAL.Data;
 using DMS.DAL.Repositories;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DMS.DAL;
@@ -8,8 +9,13 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddDataAccessLayer(this IServiceCollection services, string connectionString)
     {
-        // Register connection factory
-        services.AddSingleton<IDbConnectionFactory>(new SqlConnectionFactory(connectionString));
+        // Register EF Core DbContext
+        services.AddDbContext<DmsDbContext>(options =>
+            options.UseSqlServer(connectionString, sqlOptions =>
+                sqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 3,
+                    maxRetryDelay: TimeSpan.FromSeconds(10),
+                    errorNumbersToAdd: null)));
 
         // Core repositories
         services.AddScoped<ICabinetRepository, CabinetRepository>();
@@ -25,10 +31,9 @@ public static class DependencyInjection
         services.AddScoped<IDocumentTypeRepository, DocumentTypeRepository>();
         services.AddScoped<ILookupRepository, LookupRepository>();
 
-        // User and delegation repositories
+        // User repositories
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRoleRepository, RoleRepository>();
-        services.AddScoped<IDelegationRepository, DelegationRepository>();
 
         // Dashboard repository
         services.AddScoped<IDashboardRepository, DashboardRepository>();
@@ -37,7 +42,7 @@ public static class DependencyInjection
         services.AddScoped<IFavoriteRepository, FavoriteRepository>();
         services.AddScoped<IDocumentShareRepository, DocumentShareRepository>();
         services.AddScoped<IRecycleBinRepository, RecycleBinRepository>();
-        services.AddScoped<IVacationRepository, VacationRepository>();
+
         services.AddScoped<IApprovalWorkflowRepository, ApprovalWorkflowRepository>();
         services.AddScoped<IApprovalRequestRepository, ApprovalRequestRepository>();
 
@@ -96,8 +101,7 @@ public static class DependencyInjection
         services.AddScoped<IFolderTemplateRepository, FolderTemplateRepository>();
 
         // Role Permission Matrix
-        services.AddScoped<IRolePermissionRepository>(sp =>
-            new RolePermissionRepository(connectionString));
+        services.AddScoped<IRolePermissionRepository, RolePermissionRepository>();
 
         return services;
     }

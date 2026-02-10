@@ -1,9 +1,11 @@
+using DMS.DAL.Data;
+
 namespace DMS.DAL.Entities;
 
 /// <summary>
 /// Defines regex patterns for document matching, validation, and auto-filing
 /// </summary>
-public class Pattern
+public class Pattern : IAuditable, ISoftDeletable
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;

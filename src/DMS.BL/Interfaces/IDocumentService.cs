@@ -7,6 +7,7 @@ public interface IDocumentService
     Task<ServiceResult<DocumentDto>> GetByIdAsync(Guid id);
     Task<ServiceResult<List<DocumentDto>>> GetByFolderIdAsync(Guid folderId);
     Task<ServiceResult<List<DocumentDto>>> SearchAsync(string? name, Guid? folderId, Guid? classificationId, Guid? documentTypeId);
+    Task<ServiceResult<PagedResultDto<DocumentDto>>> SearchPaginatedAsync(string? name, Guid? folderId, Guid? classificationId, Guid? documentTypeId, int page, int pageSize);
     Task<ServiceResult<List<DocumentDto>>> GetCheckedOutByUserAsync(Guid userId);
     Task<ServiceResult<List<DocumentDto>>> GetCreatedByUserAsync(Guid userId, int take = 50);
     Task<ServiceResult<List<DocumentVersionDto>>> GetVersionsAsync(Guid documentId);

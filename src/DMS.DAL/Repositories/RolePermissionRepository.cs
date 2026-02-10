@@ -1,56 +1,65 @@
-using Dapper;
+using DMS.DAL.Data;
 using DMS.DAL.Entities;
-using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 
 namespace DMS.DAL.Repositories;
 
 public class RolePermissionRepository : IRolePermissionRepository
 {
-    private readonly string _connectionString;
+    private readonly DmsDbContext _context;
 
-    public RolePermissionRepository(string connectionString)
+    public RolePermissionRepository(DmsDbContext context)
     {
-        _connectionString = connectionString;
+        _context = context;
     }
 
     #region System Actions
 
     public async Task<IEnumerable<SystemAction>> GetAllActionsAsync(bool includeInactive = false)
     {
-        using var connection = new SqlConnection(_connectionString);
-        var sql = includeInactive
-            ? "SELECT * FROM SystemActions ORDER BY Category, SortOrder"
-            : "SELECT * FROM SystemActions WHERE IsActive = 1 ORDER BY Category, SortOrder";
-        return await connection.QueryAsync<SystemAction>(sql);
+        var query = _context.SystemActions.AsNoTracking();
+
+        if (!includeInactive)
+            query = query.Where(sa => sa.IsActive);
+
+        return await query
+            .OrderBy(sa => sa.Category)
+            .ThenBy(sa => sa.SortOrder)
+            .ToListAsync();
     }
 
     public async Task<SystemAction?> GetActionByIdAsync(Guid id)
     {
-        using var connection = new SqlConnection(_connectionString);
-        return await connection.QueryFirstOrDefaultAsync<SystemAction>(
-            "SELECT * FROM SystemActions WHERE Id = @Id", new { Id = id });
+        return await _context.SystemActions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(sa => sa.Id == id);
     }
 
     public async Task<SystemAction?> GetActionByCodeAsync(string code)
     {
-        using var connection = new SqlConnection(_connectionString);
-        return await connection.QueryFirstOrDefaultAsync<SystemAction>(
-            "SELECT * FROM SystemActions WHERE Code = @Code", new { Code = code });
+        return await _context.SystemActions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(sa => sa.Code == code);
     }
 
     public async Task<IEnumerable<SystemAction>> GetActionsByCategoryAsync(string category)
     {
-        using var connection = new SqlConnection(_connectionString);
-        return await connection.QueryAsync<SystemAction>(
-            "SELECT * FROM SystemActions WHERE Category = @Category AND IsActive = 1 ORDER BY SortOrder",
-            new { Category = category });
+        return await _context.SystemActions
+            .AsNoTracking()
+            .Where(sa => sa.Category == category && sa.IsActive)
+            .OrderBy(sa => sa.SortOrder)
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<string>> GetCategoriesAsync()
     {
-        using var connection = new SqlConnection(_connectionString);
-        return await connection.QueryAsync<string>(
-            "SELECT DISTINCT Category FROM SystemActions WHERE IsActive = 1 ORDER BY Category");
+        return await _context.SystemActions
+            .AsNoTracking()
+            .Where(sa => sa.IsActive)
+            .Select(sa => sa.Category)
+            .Distinct()
+            .OrderBy(c => c)
+            .ToListAsync();
     }
 
     #endregion
@@ -59,62 +68,116 @@ public class RolePermissionRepository : IRolePermissionRepository
 
     public async Task<IEnumerable<RoleActionPermission>> GetPermissionsByRoleAsync(Guid roleId)
     {
-        using var connection = new SqlConnection(_connectionString);
-        var sql = @"
-            SELECT rap.*, r.Name AS RoleName, sa.Code AS ActionCode, sa.Name AS ActionName, sa.Category AS ActionCategory
-            FROM RoleActionPermissions rap
-            INNER JOIN Roles r ON rap.RoleId = r.Id
-            INNER JOIN SystemActions sa ON rap.ActionId = sa.Id
-            WHERE rap.RoleId = @RoleId AND rap.IsAllowed = 1
-            ORDER BY sa.Category, sa.SortOrder";
-        return await connection.QueryAsync<RoleActionPermission>(sql, new { RoleId = roleId });
+        var permissions = await _context.RoleActionPermissions
+            .AsNoTracking()
+            .Where(rap => rap.RoleId == roleId && rap.IsAllowed)
+            .ToListAsync();
+
+        // Populate navigation properties from separate queries
+        var roleIds = permissions.Select(p => p.RoleId).Distinct().ToList();
+        var actionIds = permissions.Select(p => p.ActionId).Distinct().ToList();
+
+        var roles = await _context.Roles.AsNoTracking()
+            .Where(r => roleIds.Contains(r.Id))
+            .ToDictionaryAsync(r => r.Id, r => r.Name);
+
+        var actions = await _context.SystemActions.AsNoTracking()
+            .Where(sa => actionIds.Contains(sa.Id))
+            .ToDictionaryAsync(sa => sa.Id, sa => new { sa.Code, sa.Name, sa.Category, sa.SortOrder });
+
+        foreach (var p in permissions)
+        {
+            if (roles.TryGetValue(p.RoleId, out var roleName))
+                p.RoleName = roleName;
+            if (actions.TryGetValue(p.ActionId, out var action))
+            {
+                p.ActionCode = action.Code;
+                p.ActionName = action.Name;
+                p.ActionCategory = action.Category;
+            }
+        }
+
+        return permissions
+            .OrderBy(p => p.ActionCategory)
+            .ThenBy(p => actions.TryGetValue(p.ActionId, out var a) ? a.SortOrder : 0);
     }
 
     public async Task<IEnumerable<RoleActionPermission>> GetAllPermissionsAsync()
     {
-        using var connection = new SqlConnection(_connectionString);
-        var sql = @"
-            SELECT rap.*, r.Name AS RoleName, sa.Code AS ActionCode, sa.Name AS ActionName, sa.Category AS ActionCategory
-            FROM RoleActionPermissions rap
-            INNER JOIN Roles r ON rap.RoleId = r.Id
-            INNER JOIN SystemActions sa ON rap.ActionId = sa.Id
-            WHERE rap.IsAllowed = 1
-            ORDER BY r.Name, sa.Category, sa.SortOrder";
-        return await connection.QueryAsync<RoleActionPermission>(sql);
+        var permissions = await _context.RoleActionPermissions
+            .AsNoTracking()
+            .Where(rap => rap.IsAllowed)
+            .ToListAsync();
+
+        // Populate navigation properties from separate queries
+        var roleIds = permissions.Select(p => p.RoleId).Distinct().ToList();
+        var actionIds = permissions.Select(p => p.ActionId).Distinct().ToList();
+
+        var roles = await _context.Roles.AsNoTracking()
+            .Where(r => roleIds.Contains(r.Id))
+            .ToDictionaryAsync(r => r.Id, r => r.Name);
+
+        var actions = await _context.SystemActions.AsNoTracking()
+            .Where(sa => actionIds.Contains(sa.Id))
+            .ToDictionaryAsync(sa => sa.Id, sa => new { sa.Code, sa.Name, sa.Category, sa.SortOrder });
+
+        foreach (var p in permissions)
+        {
+            if (roles.TryGetValue(p.RoleId, out var roleName))
+                p.RoleName = roleName;
+            if (actions.TryGetValue(p.ActionId, out var action))
+            {
+                p.ActionCode = action.Code;
+                p.ActionName = action.Name;
+                p.ActionCategory = action.Category;
+            }
+        }
+
+        return permissions
+            .OrderBy(p => p.RoleName)
+            .ThenBy(p => p.ActionCategory)
+            .ThenBy(p => actions.TryGetValue(p.ActionId, out var a) ? a.SortOrder : 0);
     }
 
     public async Task<bool> HasPermissionAsync(Guid roleId, string actionCode)
     {
-        using var connection = new SqlConnection(_connectionString);
-        var sql = @"
-            SELECT COUNT(1) FROM RoleActionPermissions rap
-            INNER JOIN SystemActions sa ON rap.ActionId = sa.Id
-            WHERE rap.RoleId = @RoleId AND sa.Code = @ActionCode AND rap.IsAllowed = 1";
-        var count = await connection.ExecuteScalarAsync<int>(sql, new { RoleId = roleId, ActionCode = actionCode });
-        return count > 0;
+        return await _context.RoleActionPermissions
+            .AsNoTracking()
+            .AnyAsync(rap => rap.RoleId == roleId
+                && rap.IsAllowed
+                && _context.SystemActions.Any(sa => sa.Id == rap.ActionId && sa.Code == actionCode));
     }
 
     public async Task<bool> UserHasPermissionAsync(Guid userId, string actionCode)
     {
-        using var connection = new SqlConnection(_connectionString);
-        var sql = @"
-            SELECT COUNT(1) FROM RoleActionPermissions rap
-            INNER JOIN SystemActions sa ON rap.ActionId = sa.Id
-            INNER JOIN UserRoles ur ON rap.RoleId = ur.RoleId
-            WHERE ur.UserId = @UserId AND sa.Code = @ActionCode AND rap.IsAllowed = 1";
-        var count = await connection.ExecuteScalarAsync<int>(sql, new { UserId = userId, ActionCode = actionCode });
-        return count > 0;
+        return await _context.RoleActionPermissions
+            .AsNoTracking()
+            .AnyAsync(rap => rap.IsAllowed
+                && _context.UserRoles.Any(ur => ur.UserId == userId && ur.RoleId == rap.RoleId)
+                && _context.SystemActions.Any(sa => sa.Id == rap.ActionId && sa.Code == actionCode));
     }
 
     public async Task<IEnumerable<string>> GetUserAllowedActionsAsync(Guid userId)
     {
-        using var connection = new SqlConnection(_connectionString);
-        var sql = @"
-            SELECT DISTINCT sa.Code FROM RoleActionPermissions rap
-            INNER JOIN SystemActions sa ON rap.ActionId = sa.Id
-            INNER JOIN UserRoles ur ON rap.RoleId = ur.RoleId
-            WHERE ur.UserId = @UserId AND rap.IsAllowed = 1 AND sa.IsActive = 1";
-        return await connection.QueryAsync<string>(sql, new { UserId = userId });
+        var userRoleIds = await _context.UserRoles
+            .AsNoTracking()
+            .Where(ur => ur.UserId == userId)
+            .Select(ur => ur.RoleId)
+            .ToListAsync();
+
+        var allowedActionIds = await _context.RoleActionPermissions
+            .AsNoTracking()
+            .Where(rap => userRoleIds.Contains(rap.RoleId) && rap.IsAllowed)
+            .Select(rap => rap.ActionId)
+            .Distinct()
+            .ToListAsync();
+
+        return await _context.SystemActions
+            .AsNoTracking()
+            .Where(sa => allowedActionIds.Contains(sa.Id) && sa.IsActive)
+            .Select(sa => sa.Code)
+            .Distinct()
+            .ToListAsync();
     }
 
     #endregion
@@ -123,57 +186,75 @@ public class RolePermissionRepository : IRolePermissionRepository
 
     public async Task<bool> GrantPermissionAsync(Guid roleId, Guid actionId, Guid? grantedBy = null)
     {
-        using var connection = new SqlConnection(_connectionString);
-        var sql = @"
-            IF NOT EXISTS (SELECT 1 FROM RoleActionPermissions WHERE RoleId = @RoleId AND ActionId = @ActionId)
-                INSERT INTO RoleActionPermissions (RoleId, ActionId, IsAllowed, GrantedBy, GrantedAt)
-                VALUES (@RoleId, @ActionId, 1, @GrantedBy, GETUTCDATE())
-            ELSE
-                UPDATE RoleActionPermissions SET IsAllowed = 1, GrantedBy = @GrantedBy, GrantedAt = GETUTCDATE()
-                WHERE RoleId = @RoleId AND ActionId = @ActionId";
-        var rows = await connection.ExecuteAsync(sql, new { RoleId = roleId, ActionId = actionId, GrantedBy = grantedBy });
-        return rows > 0;
+        var existing = await _context.RoleActionPermissions
+            .FirstOrDefaultAsync(rap => rap.RoleId == roleId && rap.ActionId == actionId);
+
+        if (existing != null)
+        {
+            existing.IsAllowed = true;
+            existing.GrantedBy = grantedBy;
+            existing.GrantedAt = DateTime.UtcNow;
+        }
+        else
+        {
+            _context.RoleActionPermissions.Add(new RoleActionPermission
+            {
+                RoleId = roleId,
+                ActionId = actionId,
+                IsAllowed = true,
+                GrantedBy = grantedBy,
+                GrantedAt = DateTime.UtcNow
+            });
+        }
+
+        return await _context.SaveChangesAsync() > 0;
     }
 
     public async Task<bool> RevokePermissionAsync(Guid roleId, Guid actionId)
     {
-        using var connection = new SqlConnection(_connectionString);
-        var rows = await connection.ExecuteAsync(
-            "DELETE FROM RoleActionPermissions WHERE RoleId = @RoleId AND ActionId = @ActionId",
-            new { RoleId = roleId, ActionId = actionId });
-        return rows > 0;
+        return await _context.RoleActionPermissions
+            .Where(rap => rap.RoleId == roleId && rap.ActionId == actionId)
+            .ExecuteDeleteAsync() > 0;
     }
 
     public async Task<bool> SetRolePermissionsAsync(Guid roleId, IEnumerable<Guid> actionIds, Guid? grantedBy = null)
     {
-        using var connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync();
-        using var transaction = connection.BeginTransaction();
-
-        try
+        var strategy = _context.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
         {
-            // Remove all existing permissions for this role
-            await connection.ExecuteAsync(
-                "DELETE FROM RoleActionPermissions WHERE RoleId = @RoleId",
-                new { RoleId = roleId }, transaction);
+            await using var transaction = await _context.Database.BeginTransactionAsync();
 
-            // Add new permissions
-            foreach (var actionId in actionIds)
+            try
             {
-                await connection.ExecuteAsync(
-                    @"INSERT INTO RoleActionPermissions (RoleId, ActionId, IsAllowed, GrantedBy, GrantedAt)
-                      VALUES (@RoleId, @ActionId, 1, @GrantedBy, GETUTCDATE())",
-                    new { RoleId = roleId, ActionId = actionId, GrantedBy = grantedBy }, transaction);
-            }
+                // Remove all existing permissions for this role
+                await _context.RoleActionPermissions
+                    .Where(rap => rap.RoleId == roleId)
+                    .ExecuteDeleteAsync();
 
-            transaction.Commit();
-            return true;
-        }
-        catch
-        {
-            transaction.Rollback();
-            return false;
-        }
+                // Add new permissions
+                var now = DateTime.UtcNow;
+                foreach (var actionId in actionIds)
+                {
+                    _context.RoleActionPermissions.Add(new RoleActionPermission
+                    {
+                        RoleId = roleId,
+                        ActionId = actionId,
+                        IsAllowed = true,
+                        GrantedBy = grantedBy,
+                        GrantedAt = now
+                    });
+                }
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return true;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                return false;
+            }
+        });
     }
 
     #endregion

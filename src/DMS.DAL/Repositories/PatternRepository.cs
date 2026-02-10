@@ -1,83 +1,146 @@
 using System.Text.RegularExpressions;
-using Dapper;
 using DMS.DAL.Data;
 using DMS.DAL.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace DMS.DAL.Repositories;
 
 public class PatternRepository : IPatternRepository
 {
-    private readonly IDbConnectionFactory _connectionFactory;
+    private readonly DmsDbContext _context;
 
-    public PatternRepository(IDbConnectionFactory connectionFactory)
+    public PatternRepository(DmsDbContext context)
     {
-        _connectionFactory = connectionFactory;
+        _context = context;
     }
 
     public async Task<IEnumerable<Pattern>> GetAllAsync(bool includeInactive = false)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var sql = @"SELECT p.*,
-                    f.Name as TargetFolderName,
-                    ct.Name as ContentTypeName,
-                    c.Name as ClassificationName,
-                    dt.Name as DocumentTypeName
-                    FROM Patterns p
-                    LEFT JOIN Folders f ON p.TargetFolderId = f.Id
-                    LEFT JOIN ContentTypeDefinitions ct ON p.ContentTypeId = ct.Id
-                    LEFT JOIN Classifications c ON p.ClassificationId = c.Id
-                    LEFT JOIN DocumentTypes dt ON p.DocumentTypeId = dt.Id
-                    WHERE (@IncludeInactive = 1 OR p.IsActive = 1)
-                    ORDER BY p.Priority, p.Name";
-        return await connection.QueryAsync<Pattern>(sql, new { IncludeInactive = includeInactive });
+        var query = includeInactive
+            ? _context.Patterns.IgnoreQueryFilters()
+            : _context.Patterns.AsQueryable();
+
+        return await query
+            .AsNoTracking()
+            .GroupJoin(_context.Folders.AsNoTracking(), p => p.TargetFolderId, f => f.Id, (p, folders) => new { p, folders })
+            .SelectMany(x => x.folders.DefaultIfEmpty(), (x, f) => new { x.p, f })
+            .GroupJoin(_context.ContentTypeDefinitions.AsNoTracking(), x => x.p.ContentTypeId, ct => ct.Id, (x, cts) => new { x.p, x.f, cts })
+            .SelectMany(x => x.cts.DefaultIfEmpty(), (x, ct) => new { x.p, x.f, ct })
+            .GroupJoin(_context.Classifications.AsNoTracking(), x => x.p.ClassificationId, c => c.Id, (x, cs) => new { x.p, x.f, x.ct, cs })
+            .SelectMany(x => x.cs.DefaultIfEmpty(), (x, c) => new { x.p, x.f, x.ct, c })
+            .GroupJoin(_context.DocumentTypes.AsNoTracking(), x => x.p.DocumentTypeId, dt => dt.Id, (x, dts) => new { x.p, x.f, x.ct, x.c, dts })
+            .SelectMany(x => x.dts.DefaultIfEmpty(), (x, dt) => new Pattern
+            {
+                Id = x.p.Id,
+                Name = x.p.Name,
+                Regex = x.p.Regex,
+                Description = x.p.Description,
+                PatternType = x.p.PatternType,
+                TargetFolderId = x.p.TargetFolderId,
+                ContentTypeId = x.p.ContentTypeId,
+                ClassificationId = x.p.ClassificationId,
+                DocumentTypeId = x.p.DocumentTypeId,
+                Priority = x.p.Priority,
+                IsActive = x.p.IsActive,
+                CreatedBy = x.p.CreatedBy,
+                CreatedAt = x.p.CreatedAt,
+                ModifiedBy = x.p.ModifiedBy,
+                ModifiedAt = x.p.ModifiedAt,
+                TargetFolderName = x.f != null ? x.f.Name : null,
+                ContentTypeName = x.ct != null ? x.ct.Name : null,
+                ClassificationName = x.c != null ? x.c.Name : null,
+                DocumentTypeName = dt != null ? dt.Name : null
+            })
+            .OrderBy(p => p.Priority)
+            .ThenBy(p => p.Name)
+            .ToListAsync();
     }
 
     public async Task<Pattern?> GetByIdAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var sql = @"SELECT p.*,
-                    f.Name as TargetFolderName,
-                    ct.Name as ContentTypeName,
-                    c.Name as ClassificationName,
-                    dt.Name as DocumentTypeName
-                    FROM Patterns p
-                    LEFT JOIN Folders f ON p.TargetFolderId = f.Id
-                    LEFT JOIN ContentTypeDefinitions ct ON p.ContentTypeId = ct.Id
-                    LEFT JOIN Classifications c ON p.ClassificationId = c.Id
-                    LEFT JOIN DocumentTypes dt ON p.DocumentTypeId = dt.Id
-                    WHERE p.Id = @Id";
-        return await connection.QueryFirstOrDefaultAsync<Pattern>(sql, new { Id = id });
+        return await _context.Patterns
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(p => p.Id == id)
+            .GroupJoin(_context.Folders.AsNoTracking(), p => p.TargetFolderId, f => f.Id, (p, folders) => new { p, folders })
+            .SelectMany(x => x.folders.DefaultIfEmpty(), (x, f) => new { x.p, f })
+            .GroupJoin(_context.ContentTypeDefinitions.AsNoTracking(), x => x.p.ContentTypeId, ct => ct.Id, (x, cts) => new { x.p, x.f, cts })
+            .SelectMany(x => x.cts.DefaultIfEmpty(), (x, ct) => new { x.p, x.f, ct })
+            .GroupJoin(_context.Classifications.AsNoTracking(), x => x.p.ClassificationId, c => c.Id, (x, cs) => new { x.p, x.f, x.ct, cs })
+            .SelectMany(x => x.cs.DefaultIfEmpty(), (x, c) => new { x.p, x.f, x.ct, c })
+            .GroupJoin(_context.DocumentTypes.AsNoTracking(), x => x.p.DocumentTypeId, dt => dt.Id, (x, dts) => new { x.p, x.f, x.ct, x.c, dts })
+            .SelectMany(x => x.dts.DefaultIfEmpty(), (x, dt) => new Pattern
+            {
+                Id = x.p.Id,
+                Name = x.p.Name,
+                Regex = x.p.Regex,
+                Description = x.p.Description,
+                PatternType = x.p.PatternType,
+                TargetFolderId = x.p.TargetFolderId,
+                ContentTypeId = x.p.ContentTypeId,
+                ClassificationId = x.p.ClassificationId,
+                DocumentTypeId = x.p.DocumentTypeId,
+                Priority = x.p.Priority,
+                IsActive = x.p.IsActive,
+                CreatedBy = x.p.CreatedBy,
+                CreatedAt = x.p.CreatedAt,
+                ModifiedBy = x.p.ModifiedBy,
+                ModifiedAt = x.p.ModifiedAt,
+                TargetFolderName = x.f != null ? x.f.Name : null,
+                ContentTypeName = x.ct != null ? x.ct.Name : null,
+                ClassificationName = x.c != null ? x.c.Name : null,
+                DocumentTypeName = dt != null ? dt.Name : null
+            })
+            .FirstOrDefaultAsync();
     }
 
     public async Task<IEnumerable<Pattern>> GetByTypeAsync(string patternType)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var sql = @"SELECT p.*, f.Name as TargetFolderName
-                    FROM Patterns p
-                    LEFT JOIN Folders f ON p.TargetFolderId = f.Id
-                    WHERE p.PatternType = @PatternType AND p.IsActive = 1
-                    ORDER BY p.Priority, p.Name";
-        return await connection.QueryAsync<Pattern>(sql, new { PatternType = patternType });
+        return await _context.Patterns
+            .AsNoTracking()
+            .Where(p => p.PatternType == patternType)
+            .GroupJoin(_context.Folders.AsNoTracking(), p => p.TargetFolderId, f => f.Id, (p, folders) => new { p, folders })
+            .SelectMany(x => x.folders.DefaultIfEmpty(), (x, f) => new Pattern
+            {
+                Id = x.p.Id,
+                Name = x.p.Name,
+                Regex = x.p.Regex,
+                Description = x.p.Description,
+                PatternType = x.p.PatternType,
+                TargetFolderId = x.p.TargetFolderId,
+                ContentTypeId = x.p.ContentTypeId,
+                ClassificationId = x.p.ClassificationId,
+                DocumentTypeId = x.p.DocumentTypeId,
+                Priority = x.p.Priority,
+                IsActive = x.p.IsActive,
+                CreatedBy = x.p.CreatedBy,
+                CreatedAt = x.p.CreatedAt,
+                ModifiedBy = x.p.ModifiedBy,
+                ModifiedAt = x.p.ModifiedAt,
+                TargetFolderName = f != null ? f.Name : null
+            })
+            .OrderBy(p => p.Priority)
+            .ThenBy(p => p.Name)
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<Pattern>> GetByFolderAsync(Guid folderId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var sql = @"SELECT * FROM Patterns
-                    WHERE TargetFolderId = @FolderId AND IsActive = 1
-                    ORDER BY Priority, Name";
-        return await connection.QueryAsync<Pattern>(sql, new { FolderId = folderId });
+        return await _context.Patterns
+            .AsNoTracking()
+            .Where(p => p.TargetFolderId == folderId)
+            .OrderBy(p => p.Priority)
+            .ThenBy(p => p.Name)
+            .ToListAsync();
     }
 
     public async Task<Pattern?> FindMatchingPatternAsync(string value, string? patternType = null)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var sql = @"SELECT * FROM Patterns
-                    WHERE IsActive = 1
-                    AND (@PatternType IS NULL OR PatternType = @PatternType)
-                    ORDER BY Priority";
-
-        var patterns = await connection.QueryAsync<Pattern>(sql, new { PatternType = patternType });
+        var patterns = await _context.Patterns
+            .AsNoTracking()
+            .Where(p => patternType == null || p.PatternType == patternType)
+            .OrderBy(p => p.Priority)
+            .ToListAsync();
 
         foreach (var pattern in patterns)
         {
@@ -99,41 +162,44 @@ public class PatternRepository : IPatternRepository
 
     public async Task<Guid> CreateAsync(Pattern pattern)
     {
-        using var connection = _connectionFactory.CreateConnection();
         pattern.Id = Guid.NewGuid();
         pattern.CreatedAt = DateTime.UtcNow;
 
-        var sql = @"INSERT INTO Patterns
-                    (Id, Name, Regex, Description, PatternType, TargetFolderId, ContentTypeId,
-                     ClassificationId, DocumentTypeId, Priority, IsActive, CreatedBy, CreatedAt)
-                    VALUES (@Id, @Name, @Regex, @Description, @PatternType, @TargetFolderId, @ContentTypeId,
-                            @ClassificationId, @DocumentTypeId, @Priority, @IsActive, @CreatedBy, @CreatedAt)";
-
-        await connection.ExecuteAsync(sql, pattern);
+        _context.Patterns.Add(pattern);
+        await _context.SaveChangesAsync();
         return pattern.Id;
     }
 
     public async Task<bool> UpdateAsync(Pattern pattern)
     {
-        using var connection = _connectionFactory.CreateConnection();
         pattern.ModifiedAt = DateTime.UtcNow;
 
-        var sql = @"UPDATE Patterns SET
-                    Name = @Name, Regex = @Regex, Description = @Description, PatternType = @PatternType,
-                    TargetFolderId = @TargetFolderId, ContentTypeId = @ContentTypeId, ClassificationId = @ClassificationId,
-                    DocumentTypeId = @DocumentTypeId, Priority = @Priority, IsActive = @IsActive,
-                    ModifiedBy = @ModifiedBy, ModifiedAt = @ModifiedAt
-                    WHERE Id = @Id";
+        var existing = await _context.Patterns.FindAsync(pattern.Id);
+        if (existing == null) return false;
 
-        return await connection.ExecuteAsync(sql, pattern) > 0;
+        existing.Name = pattern.Name;
+        existing.Regex = pattern.Regex;
+        existing.Description = pattern.Description;
+        existing.PatternType = pattern.PatternType;
+        existing.TargetFolderId = pattern.TargetFolderId;
+        existing.ContentTypeId = pattern.ContentTypeId;
+        existing.ClassificationId = pattern.ClassificationId;
+        existing.DocumentTypeId = pattern.DocumentTypeId;
+        existing.Priority = pattern.Priority;
+        existing.IsActive = pattern.IsActive;
+        existing.ModifiedBy = pattern.ModifiedBy;
+        existing.ModifiedAt = pattern.ModifiedAt;
+
+        return await _context.SaveChangesAsync() > 0;
     }
 
     public async Task<bool> DeleteAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.ExecuteAsync(
-            "UPDATE Patterns SET IsActive = 0, ModifiedAt = @Now WHERE Id = @Id",
-            new { Id = id, Now = DateTime.UtcNow }) > 0;
+        return await _context.Patterns
+            .Where(p => p.Id == id)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(p => p.IsActive, false)
+                .SetProperty(p => p.ModifiedAt, DateTime.UtcNow)) > 0;
     }
 
     public Task<bool> TestPatternAsync(string regex, string testValue)

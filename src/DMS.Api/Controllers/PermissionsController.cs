@@ -5,10 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace DMS.Api.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
 [Authorize]
-public class PermissionsController : ControllerBase
+public class PermissionsController : BaseApiController
 {
     private readonly IPermissionService _permissionService;
 
@@ -222,10 +220,4 @@ public class PermissionsController : ControllerBase
     }
 
     #endregion
-
-    private Guid GetCurrentUserId()
-    {
-        var userIdClaim = User.FindFirst("sub")?.Value ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        return Guid.TryParse(userIdClaim, out var userId) ? userId : Guid.Empty;
-    }
 }

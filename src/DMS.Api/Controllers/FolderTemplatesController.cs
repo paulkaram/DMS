@@ -2,14 +2,12 @@ using DMS.BL.DTOs;
 using DMS.BL.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace DMS.Api.Controllers;
 
-[ApiController]
 [Route("api/folder-templates")]
 [Authorize]
-public class FolderTemplatesController : ControllerBase
+public class FolderTemplatesController : BaseApiController
 {
     private readonly IFolderTemplateService _templateService;
 
@@ -17,11 +15,6 @@ public class FolderTemplatesController : ControllerBase
     {
         _templateService = templateService;
     }
-
-    private Guid GetUserId() =>
-        Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new UnauthorizedAccessException());
-
-    private bool IsAdmin() => User.IsInRole("Administrator");
 
     /// <summary>
     /// Get all folder templates
@@ -99,7 +92,7 @@ public class FolderTemplatesController : ControllerBase
     [Authorize(Roles = "Administrator")]
     public async Task<ActionResult<FolderTemplateDto>> Create([FromBody] CreateFolderTemplateDto dto)
     {
-        var result = await _templateService.CreateAsync(dto, GetUserId());
+        var result = await _templateService.CreateAsync(dto, GetCurrentUserId());
         if (!result.Success)
             return BadRequest(result.Errors);
 
@@ -113,7 +106,7 @@ public class FolderTemplatesController : ControllerBase
     [Authorize(Roles = "Administrator")]
     public async Task<ActionResult<FolderTemplateDto>> Update(Guid id, [FromBody] UpdateFolderTemplateDto dto)
     {
-        var result = await _templateService.UpdateAsync(id, dto, GetUserId());
+        var result = await _templateService.UpdateAsync(id, dto, GetCurrentUserId());
         if (!result.Success)
             return BadRequest(result.Errors);
 
@@ -141,7 +134,7 @@ public class FolderTemplatesController : ControllerBase
     [Authorize(Roles = "Administrator")]
     public async Task<ActionResult<FolderTemplateDto>> Duplicate(Guid id, [FromBody] DuplicateTemplateRequest request)
     {
-        var result = await _templateService.DuplicateAsync(id, request.NewName, GetUserId());
+        var result = await _templateService.DuplicateAsync(id, request.NewName, GetCurrentUserId());
         if (!result.Success)
             return BadRequest(result.Errors);
 
@@ -206,9 +199,4 @@ public class FolderTemplatesController : ControllerBase
     }
 
     #endregion
-}
-
-public class DuplicateTemplateRequest
-{
-    public string NewName { get; set; } = string.Empty;
 }

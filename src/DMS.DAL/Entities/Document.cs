@@ -1,9 +1,11 @@
+using DMS.DAL.Data;
+
 namespace DMS.DAL.Entities;
 
 /// <summary>
 /// Represents a document in the DMS with ISO 15489/23081 compliant metadata.
 /// </summary>
-public class Document
+public class Document : IAuditable, ISoftDeletable
 {
     public Guid Id { get; set; }
     public Guid FolderId { get; set; }

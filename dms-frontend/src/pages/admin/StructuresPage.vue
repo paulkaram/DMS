@@ -124,7 +124,8 @@ async function loadData() {
       usersApi.getAll()
     ])
     structures.value = structuresRes.data
-    users.value = usersRes.data
+    const usersData = usersRes.data
+    users.value = Array.isArray(usersData) ? usersData : usersData.items ?? []
 
     // Try to load tree
     try {

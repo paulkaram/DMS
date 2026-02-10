@@ -65,6 +65,46 @@ public class UserService : IUserService
         return ServiceResult<List<UserDto>>.Ok(userDtos);
     }
 
+    public async Task<ServiceResult<PagedResultDto<UserDto>>> GetAllPaginatedAsync(int page, int pageSize)
+    {
+        var (items, totalCount) = await _userRepository.GetAllPaginatedAsync(page, pageSize);
+        var userDtos = new List<UserDto>();
+        foreach (var user in items)
+        {
+            var dto = MapToDto(user);
+            var roles = await _roleRepository.GetByUserIdAsync(user.Id);
+            dto.Roles = roles.Select(MapRoleToDto).ToList();
+            userDtos.Add(dto);
+        }
+        return ServiceResult<PagedResultDto<UserDto>>.Ok(new PagedResultDto<UserDto>
+        {
+            Items = userDtos,
+            TotalCount = totalCount,
+            PageNumber = page,
+            PageSize = pageSize
+        });
+    }
+
+    public async Task<ServiceResult<PagedResultDto<UserDto>>> SearchPaginatedAsync(string? search, int page, int pageSize)
+    {
+        var (items, totalCount) = await _userRepository.SearchPaginatedAsync(search, page, pageSize);
+        var userDtos = new List<UserDto>();
+        foreach (var user in items)
+        {
+            var dto = MapToDto(user);
+            var roles = await _roleRepository.GetByUserIdAsync(user.Id);
+            dto.Roles = roles.Select(MapRoleToDto).ToList();
+            userDtos.Add(dto);
+        }
+        return ServiceResult<PagedResultDto<UserDto>>.Ok(new PagedResultDto<UserDto>
+        {
+            Items = userDtos,
+            TotalCount = totalCount,
+            PageNumber = page,
+            PageSize = pageSize
+        });
+    }
+
     public async Task<ServiceResult<UserDto>> CreateAsync(CreateUserDto dto)
     {
         var existing = await _userRepository.GetByUsernameAsync(dto.Username);

@@ -1,15 +1,14 @@
+using DMS.BL.DTOs;
 using DMS.DAL.Entities;
 using DMS.DAL.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace DMS.Api.Controllers;
 
-[ApiController]
 [Route("api/patterns")]
 [Authorize]
-public class PatternsController : ControllerBase
+public class PatternsController : BaseApiController
 {
     private readonly IPatternRepository _repository;
 
@@ -17,8 +16,6 @@ public class PatternsController : ControllerBase
     {
         _repository = repository;
     }
-
-    private Guid GetUserId() => Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Pattern>>> GetAll([FromQuery] bool includeInactive = false)
@@ -78,7 +75,7 @@ public class PatternsController : ControllerBase
             ClassificationId = request.ClassificationId,
             DocumentTypeId = request.DocumentTypeId,
             Priority = request.Priority,
-            CreatedBy = GetUserId()
+            CreatedBy = GetCurrentUserId()
         };
 
         var id = await _repository.CreateAsync(pattern);
@@ -101,7 +98,7 @@ public class PatternsController : ControllerBase
         pattern.DocumentTypeId = request.DocumentTypeId;
         pattern.Priority = request.Priority;
         pattern.IsActive = request.IsActive;
-        pattern.ModifiedBy = GetUserId();
+        pattern.ModifiedBy = GetCurrentUserId();
 
         var result = await _repository.UpdateAsync(pattern);
         if (!result) return BadRequest();
@@ -116,42 +113,3 @@ public class PatternsController : ControllerBase
         return Ok();
     }
 }
-
-#region Request DTOs
-
-public class CreatePatternRequest
-{
-    public string Name { get; set; } = string.Empty;
-    public string Regex { get; set; } = string.Empty;
-    public string? Description { get; set; }
-    public string PatternType { get; set; } = "Naming";
-    public Guid? TargetFolderId { get; set; }
-    public Guid? ContentTypeId { get; set; }
-    public Guid? ClassificationId { get; set; }
-    public Guid? DocumentTypeId { get; set; }
-    public int Priority { get; set; } = 100;
-}
-
-public class UpdatePatternRequest : CreatePatternRequest
-{
-    public bool IsActive { get; set; } = true;
-}
-
-public class FindMatchRequest
-{
-    public string Value { get; set; } = string.Empty;
-    public string? PatternType { get; set; }
-}
-
-public class TestPatternRequest
-{
-    public string Regex { get; set; } = string.Empty;
-    public string TestValue { get; set; } = string.Empty;
-}
-
-public class TestPatternResult
-{
-    public bool Matches { get; set; }
-}
-
-#endregion

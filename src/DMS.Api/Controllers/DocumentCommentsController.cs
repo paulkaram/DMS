@@ -2,14 +2,12 @@ using DMS.BL.DTOs;
 using DMS.BL.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace DMS.Api.Controllers;
 
-[ApiController]
 [Route("api/documents/{documentId}/comments")]
 [Authorize]
-public class DocumentCommentsController : ControllerBase
+public class DocumentCommentsController : BaseApiController
 {
     private readonly IDocumentCommentService _commentService;
 
@@ -17,8 +15,6 @@ public class DocumentCommentsController : ControllerBase
     {
         _commentService = commentService;
     }
-
-    private Guid GetUserId() => Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<DocumentCommentDto>>> GetComments(Guid documentId)
@@ -53,14 +49,14 @@ public class DocumentCommentsController : ControllerBase
     public async Task<ActionResult<DocumentCommentDto>> AddComment(Guid documentId, [FromBody] CreateCommentRequest request)
     {
         request.DocumentId = documentId;
-        var comment = await _commentService.AddAsync(request, GetUserId());
+        var comment = await _commentService.AddAsync(request, GetCurrentUserId());
         return CreatedAtAction(nameof(GetComment), new { documentId, id = comment.Id }, comment);
     }
 
     [HttpPut("{id}")]
     public async Task<ActionResult> UpdateComment(Guid documentId, Guid id, [FromBody] UpdateCommentRequest request)
     {
-        var result = await _commentService.UpdateAsync(id, request, GetUserId());
+        var result = await _commentService.UpdateAsync(id, request, GetCurrentUserId());
         if (!result) return NotFound();
         return NoContent();
     }
@@ -68,7 +64,7 @@ public class DocumentCommentsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<ActionResult> DeleteComment(Guid documentId, Guid id)
     {
-        var result = await _commentService.DeleteAsync(id, GetUserId());
+        var result = await _commentService.DeleteAsync(id, GetCurrentUserId());
         if (!result) return NotFound();
         return NoContent();
     }

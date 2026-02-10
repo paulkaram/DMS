@@ -413,8 +413,26 @@ export const referenceDataApi = {
     apiClient.delete(`/document-types/${id}`),
 
   // Lookups
+  getLookups: () =>
+    apiClient.get('/lookups'),
+  getLookupById: (id: string) =>
+    apiClient.get(`/lookups/${id}`),
   getLookupItems: (name: string, language?: string) =>
-    apiClient.get(`/lookups/${name}`, { params: { language } })
+    apiClient.get(`/lookups/by-name/${name}`, { params: { language } }),
+  getLookupItemsById: (lookupId: string, language?: string) =>
+    apiClient.get(`/lookups/${lookupId}/items`, { params: { language } }),
+  createLookup: (data: { name: string; description?: string }) =>
+    apiClient.post('/lookups', data),
+  updateLookup: (id: string, data: { name: string; description?: string }) =>
+    apiClient.put(`/lookups/${id}`, data),
+  deleteLookup: (id: string) =>
+    apiClient.delete(`/lookups/${id}`),
+  createLookupItem: (lookupId: string, data: { value: string; displayText?: string; language?: string; sortOrder: number }) =>
+    apiClient.post(`/lookups/${lookupId}/items`, data),
+  updateLookupItem: (itemId: string, data: { value: string; displayText?: string; language?: string; sortOrder: number }) =>
+    apiClient.put(`/lookups/items/${itemId}`, data),
+  deleteLookupItem: (itemId: string) =>
+    apiClient.delete(`/lookups/items/${itemId}`)
 }
 
 // Favorites API

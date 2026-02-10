@@ -23,6 +23,9 @@ const isUploading = ref(false)
 const uploadProgress = ref(0)
 const error = ref('')
 
+// Wizard step for single/same-config upload
+const currentStep = ref(1)
+
 // Wizard state for multi-file upload
 type ConfigMode = 'same' | 'individual' | null
 const configMode = ref<ConfigMode>(null)
@@ -75,10 +78,7 @@ const contentTypeOptions = computed(() => {
 
   for (const ct of effectiveContentTypes.value) {
     let label = ct.name
-    if (ct.category) label += ` (${ct.category})`
-    if (ct.isDefault) label += ' [Default]'
-    if (ct.isRequired) label += ' *'
-    if (ct.source !== 'Direct') label += ` [${ct.source}${ct.sourceName ? `: ${ct.sourceName}` : ''}]`
+    if (ct.category) label += ` — ${ct.category}`
 
     options.push({
       value: ct.contentTypeId,
@@ -257,7 +257,8 @@ async function loadLookupData(fields: ContentTypeField[]) {
       lookupPromises.push(
         usersApi.getAll()
           .then(res => {
-            usersList.value = res.data || []
+            const data = res.data
+            usersList.value = Array.isArray(data) ? data : data.items ?? []
           })
           .catch(err => {
             usersList.value = []
@@ -490,6 +491,12 @@ const canProceedWizardStep = computed(() => {
 })
 
 const isLastWizardStep = computed(() => currentFileIndex.value === uploadFiles.value.length - 1)
+
+// Step 1 can proceed if files are selected
+const canProceedStep1 = computed(() => uploadFiles.value.length > 0)
+
+// Whether content types are available (controls if we show step 2)
+const hasContentTypeStep = computed(() => effectiveContentTypes.value.length > 0 || isLoadingContentTypes.value)
 
 function formatSize(bytes: number): string {
   if (bytes === 0) return '0 B'
@@ -807,24 +814,50 @@ function getMaterialIcon(iconName?: string): string {
                 </div>
               </Transition>
 
-              <!-- Two Column Layout (shown when not in mode selection) -->
-              <div v-if="!needsConfigModeSelection" class="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-gray-200 dark:divide-gray-700/50">
-                <!-- Section 1: File Upload (or Current File in Wizard) -->
-                <div class="p-6">
-                  <div class="flex items-center gap-3 mb-5">
-                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-navy to-primary flex items-center justify-center text-white text-sm font-bold shadow-lg shadow-primary/25">
-                      1
-                    </div>
-                    <div>
-                      <h4 class="text-base font-semibold text-gray-900 dark:text-white">
-                        {{ isWizardMode ? 'Current File' : 'Select Files' }}
-                      </h4>
-                      <p class="text-xs text-gray-500">
-                        {{ isWizardMode ? `File ${currentFileIndex + 1} of ${totalWizardSteps}` : 'Choose files to upload' }}
-                      </p>
-                    </div>
-                  </div>
+              <!-- Wizard Layout (shown when not in mode selection) -->
+              <div v-if="!needsConfigModeSelection" class="p-6">
+                <!-- Step Indicators -->
+                <div v-if="!isWizardMode" class="flex items-center gap-3 mb-6">
+                  <button
+                    @click="currentStep = 1"
+                    :class="[
+                      'flex items-center gap-2.5 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+                      currentStep === 1
+                        ? 'bg-gradient-to-r from-navy to-primary text-white shadow-lg shadow-primary/25'
+                        : uploadFiles.length > 0
+                          ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800'
+                          : 'bg-gray-100 dark:bg-surface-dark text-gray-500 border border-gray-200 dark:border-gray-700'
+                    ]"
+                  >
+                    <span v-if="currentStep !== 1 && uploadFiles.length > 0" class="material-symbols-outlined text-lg">check_circle</span>
+                    <span v-else class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold">1</span>
+                    Files & Details
+                  </button>
+                  <span class="material-symbols-outlined text-gray-300 dark:text-gray-600">chevron_right</span>
+                  <button
+                    @click="canProceedStep1 && hasContentTypeStep ? currentStep = 2 : null"
+                    :class="[
+                      'flex items-center gap-2.5 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+                      currentStep === 2
+                        ? 'bg-gradient-to-r from-navy to-primary text-white shadow-lg shadow-primary/25'
+                        : !canProceedStep1 || !hasContentTypeStep
+                          ? 'bg-gray-50 dark:bg-surface-dark/50 text-gray-400 border border-gray-200 dark:border-gray-700 cursor-not-allowed'
+                          : 'bg-gray-100 dark:bg-surface-dark text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:border-primary/50'
+                    ]"
+                  >
+                    <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                      :class="currentStep === 2 ? 'bg-white/20' : 'bg-gray-200 dark:bg-gray-700'"
+                    >2</span>
+                    Content Type
+                    <span
+                      v-if="hasRequiredContentType"
+                      class="px-1.5 py-0.5 text-[10px] font-bold bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded"
+                    >Required</span>
+                  </button>
+                </div>
 
+                <!-- ===== STEP 1: Files & Details ===== -->
+                <div v-if="currentStep === 1 || isWizardMode">
                   <!-- Wizard Mode: Current File Display -->
                   <div v-if="isWizardMode && currentFile" class="mb-5">
                     <div class="p-4 bg-gradient-to-r from-teal/10 to-primary/10 rounded-lg border border-teal/20">
@@ -844,8 +877,6 @@ function getMaterialIcon(iconName?: string): string {
                         </div>
                       </div>
                     </div>
-
-                    <!-- Back to mode selection -->
                     <button
                       @click="goBackToModeSelection"
                       class="mt-3 text-sm text-gray-500 hover:text-primary flex items-center gap-1 transition-colors"
@@ -908,7 +939,7 @@ function getMaterialIcon(iconName?: string): string {
                           {{ formatSize(uploadFiles.reduce((acc, f) => acc + f.size, 0)) }} total
                         </span>
                       </div>
-                      <div class="space-y-2 max-h-32 overflow-y-auto scrollbar-thin">
+                      <div class="space-y-2 max-h-40 overflow-y-auto scrollbar-thin">
                         <TransitionGroup
                           enter-active-class="duration-200 ease-out"
                           enter-from-class="opacity-0 translate-x-2"
@@ -939,7 +970,7 @@ function getMaterialIcon(iconName?: string): string {
                         </TransitionGroup>
                       </div>
 
-                      <!-- Change configuration mode link (only in 'same' mode with multiple files) -->
+                      <!-- Change configuration mode link -->
                       <button
                         v-if="configMode === 'same' && isMultiFileUpload"
                         @click="goBackToModeSelection"
@@ -952,7 +983,7 @@ function getMaterialIcon(iconName?: string): string {
                   </Transition>
 
                   <!-- Basic Metadata -->
-                  <div class="mt-5 space-y-4">
+                  <div class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Document Name</label>
                       <div class="relative">
@@ -971,7 +1002,7 @@ function getMaterialIcon(iconName?: string): string {
                         <span class="absolute left-3 top-3 material-symbols-outlined text-gray-400 text-lg">notes</span>
                         <textarea
                           v-model="basicMetadata.description"
-                          rows="2"
+                          rows="1"
                           class="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-surface-dark text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-teal/20 focus:border-teal transition-all resize-none"
                           placeholder="Add a description..."
                         ></textarea>
@@ -980,93 +1011,85 @@ function getMaterialIcon(iconName?: string): string {
                   </div>
                 </div>
 
-                <!-- Section 2: Content Type Metadata -->
-                <div class="p-6">
-                  <div class="flex items-center gap-3 mb-5">
-                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-white text-sm font-bold shadow-lg shadow-primary/25">
-                      2
-                    </div>
-                    <div class="flex-1">
-                      <h4 class="text-base font-semibold text-gray-900 dark:text-white">Content Type & Metadata</h4>
-                      <p class="text-xs text-gray-500">Define document properties</p>
-                    </div>
-                    <span
-                      v-if="hasRequiredContentType"
-                      class="px-2 py-1 text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg"
-                    >
-                      Required
-                    </span>
-                  </div>
-
+                <!-- ===== STEP 2: Content Type & Metadata ===== -->
+                <div v-if="currentStep === 2 && !isWizardMode">
                   <!-- Content Type Selection -->
-                  <div v-if="effectiveContentTypes.length > 0 || isLoadingContentTypes" class="mb-5">
+                  <div v-if="effectiveContentTypes.length > 0 || isLoadingContentTypes">
                     <div v-if="isLoadingContentTypes" class="flex flex-col items-center justify-center py-12">
                       <div class="w-12 h-12 rounded-lg bg-primary/10 dark:bg-primary/20 flex items-center justify-center mb-3">
-                        <span class="material-symbols-outlined animate-spin text-primary dark:text-primary text-2xl">progress_activity</span>
+                        <span class="material-symbols-outlined animate-spin text-primary text-2xl">progress_activity</span>
                       </div>
                       <p class="text-sm text-gray-500">Loading content types...</p>
                     </div>
                     <div v-else>
-                      <UiSelect
-                        v-model="selectedContentTypeId"
-                        :options="contentTypeOptions"
-                        label="Select Content Type"
-                        placeholder="-- Select Content Type --"
-                        :clearable="!hasRequiredContentType"
-                        searchable
-                      />
-
-                      <!-- Content Type Info Card -->
-                      <Transition
-                        enter-active-class="duration-300 ease-out"
-                        enter-from-class="opacity-0 translate-y-2"
-                        enter-to-class="opacity-100 translate-y-0"
-                      >
-                        <div
-                          v-if="selectedEffectiveContentType"
-                          class="mt-2 px-3 py-2 rounded-lg border transition-colors"
-                          :style="{
-                            borderColor: selectedEffectiveContentType.color || '#00ae8c',
-                            backgroundColor: (selectedEffectiveContentType.color || '#00ae8c') + '08'
-                          }"
+                      <!-- Content Type Cards -->
+                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Select Content Type</label>
+                      <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-5">
+                        <!-- No Content Type option -->
+                        <button
+                          v-if="!hasRequiredContentType"
+                          @click="selectedContentTypeId = null"
+                          :class="[
+                            'relative p-4 rounded-lg border-2 text-left transition-all duration-200',
+                            !selectedContentTypeId
+                              ? 'border-gray-400 bg-gray-50 dark:bg-surface-dark shadow-md'
+                              : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 hover:shadow-sm'
+                          ]"
                         >
-                          <div class="flex items-center gap-2">
-                            <div
-                              class="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0"
-                              :style="{ backgroundColor: selectedEffectiveContentType.color || '#00ae8c' }"
-                            >
-                              <span class="material-symbols-outlined text-white text-base">
-                                {{ getMaterialIcon(selectedEffectiveContentType.icon) }}
-                              </span>
-                            </div>
-                            <div class="flex-1 min-w-0 overflow-hidden">
-                              <div class="flex items-center gap-2">
-                                <p class="text-sm font-medium text-gray-900 dark:text-white truncate" :title="selectedEffectiveContentType.name">
-                                  {{ selectedEffectiveContentType.name }}
-                                </p>
-                                <span
-                                  v-if="selectedEffectiveContentType.isDefault"
-                                  class="inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded whitespace-nowrap"
-                                >
-                                  Default
-                                </span>
-                              </div>
-                              <p v-if="selectedEffectiveContentType.category" class="text-xs text-gray-500 truncate">
-                                {{ selectedEffectiveContentType.category }}
-                              </p>
-                            </div>
+                          <div class="w-9 h-9 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center mb-2">
+                            <span class="material-symbols-outlined text-gray-500 text-lg">block</span>
                           </div>
-                        </div>
-                      </Transition>
+                          <p class="text-sm font-medium text-gray-700 dark:text-gray-300">None</p>
+                          <p class="text-xs text-gray-400 mt-0.5">No metadata</p>
+                        </button>
 
-                      <p v-if="!hasRequiredContentType && !selectedContentTypeId" class="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                        <!-- Content Type Cards -->
+                        <button
+                          v-for="ct in effectiveContentTypes"
+                          :key="ct.contentTypeId"
+                          @click="selectedContentTypeId = ct.contentTypeId"
+                          :class="[
+                            'relative p-4 rounded-lg border-2 text-left transition-all duration-200',
+                            selectedContentTypeId === ct.contentTypeId
+                              ? 'shadow-md'
+                              : 'border-gray-200 dark:border-gray-700 hover:shadow-sm'
+                          ]"
+                          :style="selectedContentTypeId === ct.contentTypeId ? {
+                            borderColor: ct.color || '#00ae8c',
+                            backgroundColor: (ct.color || '#00ae8c') + '08'
+                          } : {}"
+                        >
+                          <div
+                            v-if="ct.isDefault"
+                            class="absolute top-2 right-2 px-1.5 py-0.5 text-[10px] font-bold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded"
+                          >Default</div>
+                          <div
+                            v-if="ct.isRequired"
+                            class="absolute top-2 right-2 px-1.5 py-0.5 text-[10px] font-bold bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded"
+                          >Required</div>
+                          <div
+                            class="w-9 h-9 rounded-lg flex items-center justify-center mb-2"
+                            :style="{ backgroundColor: ct.color || '#00ae8c' }"
+                          >
+                            <span class="material-symbols-outlined text-white text-lg">{{ getMaterialIcon(ct.icon) }}</span>
+                          </div>
+                          <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ ct.name }}</p>
+                          <p v-if="ct.category" class="text-xs text-gray-500 mt-0.5">{{ ct.category }}</p>
+                          <p v-if="ct.source !== 'Direct'" class="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[10px]">subdirectory_arrow_right</span>
+                            {{ ct.source }}
+                          </p>
+                        </button>
+                      </div>
+
+                      <p v-if="!hasRequiredContentType && !selectedContentTypeId" class="text-xs text-gray-500 flex items-center gap-1">
                         <span class="material-symbols-outlined text-xs">info</span>
-                        Optional - select to add custom metadata fields
+                        Optional — select a content type to add metadata fields
                       </p>
                     </div>
                   </div>
 
-                  <!-- No content types message -->
+                  <!-- No content types -->
                   <div v-else class="py-12 text-center">
                     <div class="w-16 h-16 rounded-lg bg-gray-100 dark:bg-surface-dark flex items-center justify-center mx-auto mb-4">
                       <span class="material-symbols-outlined text-4xl text-gray-400">category</span>
@@ -1075,176 +1098,174 @@ function getMaterialIcon(iconName?: string): string {
                     <p class="text-xs text-gray-500 mt-1">Documents can still be uploaded without metadata</p>
                   </div>
 
-                  <!-- Dynamic Metadata Fields -->
+                  <!-- Dynamic Metadata Fields (full-width, no scroll constraint) -->
                   <Transition
                     enter-active-class="duration-300 ease-out"
                     enter-from-class="opacity-0"
                     enter-to-class="opacity-100"
                   >
                     <div v-if="selectedContentType && selectedContentType.fields && selectedContentType.fields.length > 0">
-                      <div class="border-t border-gray-200 dark:border-gray-700/50 pt-5">
-                        <div class="flex items-center gap-2 mb-4">
+                      <div class="border-t border-gray-200 dark:border-gray-700/50 pt-5 mt-5">
+                        <div class="flex items-center gap-2 mb-5">
                           <span class="material-symbols-outlined text-primary">edit_note</span>
                           <h5 class="text-sm font-semibold text-gray-900 dark:text-white">Metadata Fields</h5>
                           <span class="text-xs text-gray-500">({{ selectedContentType.fields.length }} fields)</span>
                         </div>
 
-                        <div class="space-y-5 max-h-[300px] overflow-y-auto pr-2 scrollbar-thin">
-                          <div v-for="(fields, groupName) in groupedFields" :key="groupName">
-                            <p v-if="Object.keys(groupedFields).length > 1" class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
-                              <span class="material-symbols-outlined text-xs">folder_special</span>
-                              {{ groupName }}
-                            </p>
-                            <div class="grid grid-cols-1 gap-4">
-                              <div
-                                v-for="field in fields"
-                                :key="field.id"
-                                class="group"
-                              >
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 flex items-center gap-1">
-                                  {{ field.displayName }}
-                                  <span v-if="field.isRequired" class="text-red-500 text-xs">*</span>
+                        <div v-for="(fields, groupName) in groupedFields" :key="groupName">
+                          <p v-if="Object.keys(groupedFields).length > 1" class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-xs">folder_special</span>
+                            {{ groupName }}
+                          </p>
+                          <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+                            <div
+                              v-for="field in fields"
+                              :key="field.id"
+                              :class="field.fieldType === 'TextArea' ? 'md:col-span-2' : ''"
+                            >
+                              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 flex items-center gap-1">
+                                {{ field.displayName }}
+                                <span v-if="field.isRequired" class="text-red-500 text-xs">*</span>
+                              </label>
+
+                              <!-- Text -->
+                              <input
+                                v-if="field.fieldType === 'Text'"
+                                v-model="fieldValues[field.fieldName]"
+                                type="text"
+                                :placeholder="field.description || 'Enter text...'"
+                                :readonly="field.isReadOnly"
+                                class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-surface-dark text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                              />
+
+                              <!-- TextArea -->
+                              <textarea
+                                v-else-if="field.fieldType === 'TextArea'"
+                                v-model="fieldValues[field.fieldName]"
+                                rows="2"
+                                :placeholder="field.description || 'Enter text...'"
+                                :readonly="field.isReadOnly"
+                                class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-surface-dark text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none"
+                              ></textarea>
+
+                              <!-- Number -->
+                              <input
+                                v-else-if="field.fieldType === 'Number'"
+                                v-model.number="fieldValues[field.fieldName]"
+                                type="number"
+                                :placeholder="field.description || 'Enter number...'"
+                                :readonly="field.isReadOnly"
+                                class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-surface-dark text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                              />
+
+                              <!-- Decimal -->
+                              <input
+                                v-else-if="field.fieldType === 'Decimal'"
+                                v-model.number="fieldValues[field.fieldName]"
+                                type="number"
+                                step="0.01"
+                                :placeholder="field.description || 'Enter decimal...'"
+                                :readonly="field.isReadOnly"
+                                class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-surface-dark text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                              />
+
+                              <!-- Date -->
+                              <UiDatePicker
+                                v-else-if="field.fieldType === 'Date'"
+                                v-model="fieldValues[field.fieldName]"
+                                :placeholder="field.description || 'Select date...'"
+                                :disabled="field.isReadOnly"
+                                :clearable="!field.isRequired"
+                              />
+
+                              <!-- DateTime -->
+                              <UiDatePicker
+                                v-else-if="field.fieldType === 'DateTime'"
+                                v-model="fieldValues[field.fieldName]"
+                                :placeholder="field.description || 'Select date and time...'"
+                                :disabled="field.isReadOnly"
+                                :clearable="!field.isRequired"
+                              />
+
+                              <!-- Boolean -->
+                              <div v-else-if="field.fieldType === 'Boolean'" class="mt-1">
+                                <label class="inline-flex items-center gap-3 cursor-pointer group/check">
+                                  <div class="relative">
+                                    <input
+                                      v-model="fieldValues[field.fieldName]"
+                                      type="checkbox"
+                                      :disabled="field.isReadOnly"
+                                      class="sr-only peer"
+                                    />
+                                    <div class="w-10 h-6 bg-gray-200 dark:bg-border-dark rounded-full peer-checked:bg-primary transition-colors"></div>
+                                    <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow peer-checked:translate-x-4 transition-transform"></div>
+                                  </div>
+                                  <span class="text-sm text-gray-600 dark:text-gray-400">{{ field.description || 'Enable' }}</span>
                                 </label>
-
-                                <!-- Text -->
-                                <input
-                                  v-if="field.fieldType === 'Text'"
-                                  v-model="fieldValues[field.fieldName]"
-                                  type="text"
-                                  :placeholder="field.description || 'Enter text...'"
-                                  :readonly="field.isReadOnly"
-                                  class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-surface-dark text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                                />
-
-                                <!-- TextArea -->
-                                <textarea
-                                  v-else-if="field.fieldType === 'TextArea'"
-                                  v-model="fieldValues[field.fieldName]"
-                                  rows="2"
-                                  :placeholder="field.description || 'Enter text...'"
-                                  :readonly="field.isReadOnly"
-                                  class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-surface-dark text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none"
-                                ></textarea>
-
-                                <!-- Number -->
-                                <input
-                                  v-else-if="field.fieldType === 'Number'"
-                                  v-model.number="fieldValues[field.fieldName]"
-                                  type="number"
-                                  :placeholder="field.description || 'Enter number...'"
-                                  :readonly="field.isReadOnly"
-                                  class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-surface-dark text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                                />
-
-                                <!-- Decimal -->
-                                <input
-                                  v-else-if="field.fieldType === 'Decimal'"
-                                  v-model.number="fieldValues[field.fieldName]"
-                                  type="number"
-                                  step="0.01"
-                                  :placeholder="field.description || 'Enter decimal...'"
-                                  :readonly="field.isReadOnly"
-                                  class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-surface-dark text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                                />
-
-                                <!-- Date -->
-                                <UiDatePicker
-                                  v-else-if="field.fieldType === 'Date'"
-                                  v-model="fieldValues[field.fieldName]"
-                                  :placeholder="field.description || 'Select date...'"
-                                  :disabled="field.isReadOnly"
-                                  :clearable="!field.isRequired"
-                                />
-
-                                <!-- DateTime -->
-                                <UiDatePicker
-                                  v-else-if="field.fieldType === 'DateTime'"
-                                  v-model="fieldValues[field.fieldName]"
-                                  :placeholder="field.description || 'Select date and time...'"
-                                  :disabled="field.isReadOnly"
-                                  :clearable="!field.isRequired"
-                                />
-
-                                <!-- Boolean -->
-                                <div v-else-if="field.fieldType === 'Boolean'" class="mt-1">
-                                  <label class="inline-flex items-center gap-3 cursor-pointer group/check">
-                                    <div class="relative">
-                                      <input
-                                        v-model="fieldValues[field.fieldName]"
-                                        type="checkbox"
-                                        :disabled="field.isReadOnly"
-                                        class="sr-only peer"
-                                      />
-                                      <div class="w-10 h-6 bg-gray-200 dark:bg-border-dark rounded-full peer-checked:bg-primary transition-colors"></div>
-                                      <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow peer-checked:translate-x-4 transition-transform"></div>
-                                    </div>
-                                    <span class="text-sm text-gray-600 dark:text-gray-400">{{ field.description || 'Enable' }}</span>
-                                  </label>
-                                </div>
-
-                                <!-- Dropdown -->
-                                <UiSelect
-                                  v-else-if="field.fieldType === 'Dropdown'"
-                                  v-model="fieldValues[field.fieldName]"
-                                  :options="getFieldOptions(field)"
-                                  :placeholder="field.description || 'Select option...'"
-                                  :disabled="field.isReadOnly"
-                                  :clearable="!field.isRequired"
-                                />
-
-                                <!-- MultiSelect -->
-                                <select
-                                  v-else-if="field.fieldType === 'MultiSelect'"
-                                  v-model="fieldValues[field.fieldName]"
-                                  multiple
-                                  :disabled="field.isReadOnly"
-                                  class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-surface-dark text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all h-24"
-                                >
-                                  <option v-for="opt in getFieldOptions(field)" :key="opt.value" :value="opt.value">
-                                    {{ opt.label }}
-                                  </option>
-                                </select>
-
-                                <!-- Lookup -->
-                                <div v-else-if="field.fieldType === 'Lookup'" class="relative">
-                                  <UiSelect
-                                    v-model="fieldValues[field.fieldName]"
-                                    :options="getLookupOptions(field)"
-                                    :placeholder="field.description || 'Select option...'"
-                                    :disabled="field.isReadOnly || isLoadingLookups"
-                                    :clearable="!field.isRequired"
-                                    searchable
-                                  />
-                                  <span v-if="isLoadingLookups" class="absolute right-10 top-1/2 -translate-y-1/2 material-symbols-outlined text-primary animate-spin text-sm z-10">progress_activity</span>
-                                </div>
-
-                                <!-- User -->
-                                <div v-else-if="field.fieldType === 'User'" class="relative">
-                                  <UiSelect
-                                    v-model="fieldValues[field.fieldName]"
-                                    :options="getUserOptions()"
-                                    placeholder="Select User..."
-                                    :disabled="field.isReadOnly || isLoadingLookups"
-                                    :clearable="!field.isRequired"
-                                    searchable
-                                  />
-                                  <span v-if="isLoadingLookups" class="absolute right-10 top-1/2 -translate-y-1/2 material-symbols-outlined text-primary animate-spin text-sm z-10">progress_activity</span>
-                                </div>
-
-                                <!-- Default to text input -->
-                                <input
-                                  v-else
-                                  v-model="fieldValues[field.fieldName]"
-                                  type="text"
-                                  :placeholder="field.description || 'Enter value...'"
-                                  :readonly="field.isReadOnly"
-                                  class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-surface-dark text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                                />
-
-                                <p v-if="field.description && !['Boolean', 'Text', 'TextArea'].includes(field.fieldType)" class="text-xs text-gray-500 mt-1">
-                                  {{ field.description }}
-                                </p>
                               </div>
+
+                              <!-- Dropdown -->
+                              <UiSelect
+                                v-else-if="field.fieldType === 'Dropdown'"
+                                v-model="fieldValues[field.fieldName]"
+                                :options="getFieldOptions(field)"
+                                :placeholder="field.description || 'Select option...'"
+                                :disabled="field.isReadOnly"
+                                :clearable="!field.isRequired"
+                              />
+
+                              <!-- MultiSelect -->
+                              <select
+                                v-else-if="field.fieldType === 'MultiSelect'"
+                                v-model="fieldValues[field.fieldName]"
+                                multiple
+                                :disabled="field.isReadOnly"
+                                class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-surface-dark text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all h-24"
+                              >
+                                <option v-for="opt in getFieldOptions(field)" :key="opt.value" :value="opt.value">
+                                  {{ opt.label }}
+                                </option>
+                              </select>
+
+                              <!-- Lookup -->
+                              <div v-else-if="field.fieldType === 'Lookup'" class="relative">
+                                <UiSelect
+                                  v-model="fieldValues[field.fieldName]"
+                                  :options="getLookupOptions(field)"
+                                  :placeholder="field.description || 'Select option...'"
+                                  :disabled="field.isReadOnly || isLoadingLookups"
+                                  :clearable="!field.isRequired"
+                                  searchable
+                                />
+                                <span v-if="isLoadingLookups" class="absolute right-10 top-1/2 -translate-y-1/2 material-symbols-outlined text-primary animate-spin text-sm z-10">progress_activity</span>
+                              </div>
+
+                              <!-- User -->
+                              <div v-else-if="field.fieldType === 'User'" class="relative">
+                                <UiSelect
+                                  v-model="fieldValues[field.fieldName]"
+                                  :options="getUserOptions()"
+                                  placeholder="Select User..."
+                                  :disabled="field.isReadOnly || isLoadingLookups"
+                                  :clearable="!field.isRequired"
+                                  searchable
+                                />
+                                <span v-if="isLoadingLookups" class="absolute right-10 top-1/2 -translate-y-1/2 material-symbols-outlined text-primary animate-spin text-sm z-10">progress_activity</span>
+                              </div>
+
+                              <!-- Default -->
+                              <input
+                                v-else
+                                v-model="fieldValues[field.fieldName]"
+                                type="text"
+                                :placeholder="field.description || 'Enter value...'"
+                                :readonly="field.isReadOnly"
+                                class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-surface-dark text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                              />
+
+                              <p v-if="field.description && !['Boolean', 'Text', 'TextArea'].includes(field.fieldType)" class="text-xs text-gray-500 mt-1">
+                                {{ field.description }}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -1308,6 +1329,10 @@ function getMaterialIcon(iconName?: string): string {
                     Configuring: {{ currentFile?.name }}
                   </span>
                   <!-- Normal Mode Status -->
+                  <span v-else-if="currentStep === 2" class="flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm text-primary">edit_note</span>
+                    {{ selectedContentType?.name || 'Select content type' }}
+                  </span>
                   <span v-else-if="uploadFiles.length > 0" class="flex items-center gap-1">
                     <span class="material-symbols-outlined text-sm">check_circle</span>
                     {{ uploadFiles.length }} file{{ uploadFiles.length > 1 ? 's' : '' }} selected
@@ -1370,13 +1395,40 @@ function getMaterialIcon(iconName?: string): string {
                   <!-- Normal Mode -->
                   <template v-else>
                     <button
-                      @click="emit('close')"
+                      @click="currentStep > 1 ? currentStep-- : emit('close')"
                       :disabled="isUploading"
-                      class="px-5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-border-dark text-gray-700 dark:text-gray-300 font-medium transition-all disabled:opacity-50"
+                      class="px-5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-border-dark text-gray-700 dark:text-gray-300 font-medium transition-all disabled:opacity-50 flex items-center gap-1.5"
                     >
-                      Cancel
+                      <span v-if="currentStep > 1" class="material-symbols-outlined text-lg">arrow_back</span>
+                      {{ currentStep > 1 ? 'Back' : 'Cancel' }}
                     </button>
+
+                    <!-- Step 1 → Next or direct Upload -->
                     <button
+                      v-if="currentStep === 1 && hasContentTypeStep"
+                      @click="currentStep = 2"
+                      :disabled="!canProceedStep1"
+                      class="px-6 py-2.5 bg-gradient-to-r from-navy to-primary text-white rounded-lg hover:shadow-lg hover:shadow-primary/25 hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:shadow-none disabled:hover:translate-y-0 font-medium transition-all flex items-center gap-2"
+                    >
+                      Next
+                      <span class="material-symbols-outlined text-lg">arrow_forward</span>
+                    </button>
+
+                    <!-- Step 1 direct upload (no content types available) -->
+                    <button
+                      v-if="currentStep === 1 && !hasContentTypeStep"
+                      @click="handleUpload"
+                      :disabled="!canUpload || isUploading"
+                      class="px-6 py-2.5 bg-gradient-to-r from-navy to-primary text-white rounded-lg hover:shadow-lg hover:shadow-primary/25 hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:shadow-none disabled:hover:translate-y-0 font-medium transition-all flex items-center gap-2"
+                    >
+                      <span v-if="isUploading" class="material-symbols-outlined animate-spin text-lg">progress_activity</span>
+                      <span v-else class="material-symbols-outlined text-lg">cloud_upload</span>
+                      {{ isUploading ? 'Uploading...' : 'Upload' }}
+                    </button>
+
+                    <!-- Step 2 → Upload -->
+                    <button
+                      v-if="currentStep === 2"
                       @click="handleUpload"
                       :disabled="!canUpload || isUploading"
                       class="px-6 py-2.5 bg-gradient-to-r from-navy to-primary text-white rounded-lg hover:shadow-lg hover:shadow-primary/25 hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:shadow-none disabled:hover:translate-y-0 font-medium transition-all flex items-center gap-2"

@@ -1,32 +1,33 @@
-using Dapper;
 using DMS.DAL.Data;
 using DMS.DAL.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace DMS.DAL.Repositories;
 
 public class DocumentPasswordRepository : IDocumentPasswordRepository
 {
-    private readonly IDbConnectionFactory _connectionFactory;
+    private readonly DmsDbContext _context;
 
-    public DocumentPasswordRepository(IDbConnectionFactory connectionFactory)
+    public DocumentPasswordRepository(DmsDbContext context)
     {
-        _connectionFactory = connectionFactory;
+        _context = context;
     }
 
     public async Task<DocumentPassword?> GetByDocumentIdAsync(Guid documentId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<DocumentPassword>(
-            "SELECT * FROM DocumentPasswords WHERE DocumentId = @DocumentId AND IsActive = 1",
-            new { DocumentId = documentId });
+        // Global query filter already handles IsActive == true
+        return await _context.DocumentPasswords
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.DocumentId == documentId);
     }
 
     public async Task<DocumentPassword?> GetByIdAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<DocumentPassword>(
-            "SELECT * FROM DocumentPasswords WHERE Id = @Id",
-            new { Id = id });
+        // IgnoreQueryFilters: original Dapper query didn't filter by IsActive
+        return await _context.DocumentPasswords
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(p => p.Id == id);
     }
 
     public async Task<Guid> AddAsync(DocumentPassword password)
@@ -35,17 +36,14 @@ public class DocumentPasswordRepository : IDocumentPasswordRepository
         password.CreatedAt = DateTime.UtcNow;
         password.IsActive = true;
 
-        using var connection = _connectionFactory.CreateConnection();
+        // Deactivate any existing password (bypass soft-delete filter to deactivate all)
+        await _context.DocumentPasswords
+            .IgnoreQueryFilters()
+            .Where(p => p.DocumentId == password.DocumentId)
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.IsActive, false));
 
-        // Deactivate any existing password
-        await connection.ExecuteAsync(
-            "UPDATE DocumentPasswords SET IsActive = 0 WHERE DocumentId = @DocumentId",
-            new { password.DocumentId });
-
-        await connection.ExecuteAsync(@"
-            INSERT INTO DocumentPasswords (Id, DocumentId, PasswordHash, Hint, ExpiresAt, IsActive, CreatedBy, CreatedAt)
-            VALUES (@Id, @DocumentId, @PasswordHash, @Hint, @ExpiresAt, @IsActive, @CreatedBy, @CreatedAt)",
-            password);
+        _context.DocumentPasswords.Add(password);
+        await _context.SaveChangesAsync();
 
         return password.Id;
     }
@@ -54,49 +52,49 @@ public class DocumentPasswordRepository : IDocumentPasswordRepository
     {
         password.ModifiedAt = DateTime.UtcNow;
 
-        using var connection = _connectionFactory.CreateConnection();
-        var affected = await connection.ExecuteAsync(@"
-            UPDATE DocumentPasswords
-            SET PasswordHash = @PasswordHash, Hint = @Hint, ExpiresAt = @ExpiresAt,
-                ModifiedBy = @ModifiedBy, ModifiedAt = @ModifiedAt
-            WHERE Id = @Id AND IsActive = 1",
-            password);
+        // Global query filter ensures only IsActive == true records are matched
+        var affected = await _context.DocumentPasswords
+            .Where(p => p.Id == password.Id)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(p => p.PasswordHash, password.PasswordHash)
+                .SetProperty(p => p.Hint, password.Hint)
+                .SetProperty(p => p.ExpiresAt, password.ExpiresAt)
+                .SetProperty(p => p.ModifiedBy, password.ModifiedBy)
+                .SetProperty(p => p.ModifiedAt, password.ModifiedAt));
 
         return affected > 0;
     }
 
     public async Task<bool> DeleteAsync(Guid documentId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var affected = await connection.ExecuteAsync(
-            "UPDATE DocumentPasswords SET IsActive = 0 WHERE DocumentId = @DocumentId",
-            new { DocumentId = documentId });
+        // Soft delete: bypass filter to deactivate all for this document
+        var affected = await _context.DocumentPasswords
+            .IgnoreQueryFilters()
+            .Where(p => p.DocumentId == documentId)
+            .ExecuteUpdateAsync(s => s.SetProperty(p => p.IsActive, false));
 
         return affected > 0;
     }
 
     public async Task<bool> HasPasswordAsync(Guid documentId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var count = await connection.ExecuteScalarAsync<int>(@"
-            SELECT COUNT(*) FROM DocumentPasswords
-            WHERE DocumentId = @DocumentId AND IsActive = 1
-                AND (ExpiresAt IS NULL OR ExpiresAt > @Now)",
-            new { DocumentId = documentId, Now = DateTime.UtcNow });
-
-        return count > 0;
+        var now = DateTime.UtcNow;
+        // Global query filter handles IsActive == true
+        return await _context.DocumentPasswords
+            .AsNoTracking()
+            .AnyAsync(p => p.DocumentId == documentId
+                && (p.ExpiresAt == null || p.ExpiresAt > now));
     }
 
     public async Task<bool> ValidatePasswordAsync(Guid documentId, string passwordHash)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var count = await connection.ExecuteScalarAsync<int>(@"
-            SELECT COUNT(*) FROM DocumentPasswords
-            WHERE DocumentId = @DocumentId AND PasswordHash = @PasswordHash AND IsActive = 1
-                AND (ExpiresAt IS NULL OR ExpiresAt > @Now)",
-            new { DocumentId = documentId, PasswordHash = passwordHash, Now = DateTime.UtcNow });
-
-        return count > 0;
+        var now = DateTime.UtcNow;
+        // Global query filter handles IsActive == true
+        return await _context.DocumentPasswords
+            .AsNoTracking()
+            .AnyAsync(p => p.DocumentId == documentId
+                && p.PasswordHash == passwordHash
+                && (p.ExpiresAt == null || p.ExpiresAt > now));
     }
 
     public async Task<Dictionary<Guid, bool>> GetPasswordStatusBulkAsync(List<Guid> documentIds)
@@ -104,12 +102,15 @@ public class DocumentPasswordRepository : IDocumentPasswordRepository
         if (documentIds.Count == 0)
             return new Dictionary<Guid, bool>();
 
-        using var connection = _connectionFactory.CreateConnection();
-        var documentsWithPassword = await connection.QueryAsync<Guid>(@"
-            SELECT DocumentId FROM DocumentPasswords
-            WHERE DocumentId IN @DocumentIds AND IsActive = 1
-                AND (ExpiresAt IS NULL OR ExpiresAt > @Now)",
-            new { DocumentIds = documentIds, Now = DateTime.UtcNow });
+        var now = DateTime.UtcNow;
+        // Global query filter handles IsActive == true
+        var documentsWithPassword = await _context.DocumentPasswords
+            .AsNoTracking()
+            .Where(p => documentIds.Contains(p.DocumentId)
+                && (p.ExpiresAt == null || p.ExpiresAt > now))
+            .Select(p => p.DocumentId)
+            .Distinct()
+            .ToListAsync();
 
         var passwordSet = new HashSet<Guid>(documentsWithPassword);
         return documentIds.ToDictionary(id => id, id => passwordSet.Contains(id));

@@ -61,3 +61,19 @@ public class ContentTypeAssignmentDto
     public int DisplayOrder { get; set; }
     public DateTime CreatedAt { get; set; }
 }
+
+public class CreateContentTypeRequest
+{
+    public string Extension { get; set; } = string.Empty;
+    public string MimeType { get; set; } = string.Empty;
+    public string? DisplayName { get; set; }
+    public string? Icon { get; set; }
+    public bool AllowPreview { get; set; } = true;
+    public bool AllowThumbnail { get; set; } = true;
+    public int MaxFileSizeMB { get; set; } = 100;
+}
+
+public class UpdateContentTypeRequest : CreateContentTypeRequest
+{
+    public bool IsActive { get; set; } = true;
+}

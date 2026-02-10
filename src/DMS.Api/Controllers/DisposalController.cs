@@ -8,10 +8,8 @@ namespace DMS.Api.Controllers;
 /// <summary>
 /// ISO 15489 compliant disposal management endpoints.
 /// </summary>
-[ApiController]
-[Route("api/[controller]")]
 [Authorize]
-public class DisposalController : ControllerBase
+public class DisposalController : BaseApiController
 {
     private readonly IDisposalService _disposalService;
     private readonly ILogger<DisposalController> _logger;
@@ -59,7 +57,7 @@ public class DisposalController : ControllerBase
     [Authorize(Roles = "Administrator,Records")]
     public async Task<IActionResult> InitiateDisposal(Guid documentId, [FromBody] InitiateDisposalDto dto)
     {
-        var userId = GetUserId();
+        var userId = GetCurrentUserId();
         var result = await _disposalService.InitiateDisposalAsync(documentId, dto, userId);
 
         if (!result.Success)
@@ -75,7 +73,7 @@ public class DisposalController : ControllerBase
     [Authorize(Roles = "Administrator")]
     public async Task<IActionResult> ExecuteDisposal(Guid documentId, [FromQuery] string method = "HardDelete")
     {
-        var userId = GetUserId();
+        var userId = GetCurrentUserId();
         var result = await _disposalService.ExecuteDisposalAsync(documentId, userId, method);
 
         if (!result.Success)
@@ -134,14 +132,8 @@ public class DisposalController : ControllerBase
     [Authorize(Roles = "Administrator")]
     public async Task<IActionResult> ProcessScheduledDisposals()
     {
-        var userId = GetUserId();
+        var userId = GetCurrentUserId();
         var result = await _disposalService.ProcessScheduledDisposalsAsync(userId);
         return Ok(result);
-    }
-
-    private Guid GetUserId()
-    {
-        var claim = User.FindFirst("sub") ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
-        return claim != null ? Guid.Parse(claim.Value) : Guid.Empty;
     }
 }

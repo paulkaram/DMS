@@ -37,3 +37,8 @@ public class MoveFolderDto
     public Guid? NewParentFolderId { get; set; }
     public Guid? NewCabinetId { get; set; }
 }
+
+public class PreviewTemplateRequest
+{
+    public Guid TemplateId { get; set; }
+}

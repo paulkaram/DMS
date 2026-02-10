@@ -1,47 +1,73 @@
-using Dapper;
 using DMS.DAL.Data;
 using DMS.DAL.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace DMS.DAL.Repositories;
 
 public class FolderTemplateRepository : IFolderTemplateRepository
 {
-    private readonly IDbConnectionFactory _connectionFactory;
+    private readonly DmsDbContext _context;
 
-    public FolderTemplateRepository(IDbConnectionFactory connectionFactory)
+    public FolderTemplateRepository(DmsDbContext context)
     {
-        _connectionFactory = connectionFactory;
+        _context = context;
     }
 
     #region Template CRUD
 
     public async Task<IEnumerable<FolderTemplate>> GetAllAsync(bool includeInactive = false)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var sql = @"
-            SELECT t.*,
-                   u.DisplayName AS CreatedByName,
-                   (SELECT COUNT(*) FROM FolderTemplateUsage WHERE TemplateId = t.Id) AS UsageCount
-            FROM FolderTemplates t
-            LEFT JOIN Users u ON t.CreatedBy = u.Id
-            WHERE @IncludeInactive = 1 OR t.IsActive = 1
-            ORDER BY t.Category, t.Name";
+        var query = includeInactive
+            ? _context.FolderTemplates.IgnoreQueryFilters().AsNoTracking()
+            : _context.FolderTemplates.AsNoTracking();
 
-        return await connection.QueryAsync<FolderTemplate>(sql, new { IncludeInactive = includeInactive });
+        return await query
+            .GroupJoin(_context.Users.AsNoTracking(), t => t.CreatedBy, u => u.Id, (t, users) => new { t, users })
+            .SelectMany(x => x.users.DefaultIfEmpty(), (x, u) => new { x.t, u })
+            .Select(x => new FolderTemplate
+            {
+                Id = x.t.Id,
+                Name = x.t.Name,
+                Description = x.t.Description,
+                Category = x.t.Category,
+                Icon = x.t.Icon,
+                IsActive = x.t.IsActive,
+                IsDefault = x.t.IsDefault,
+                CreatedBy = x.t.CreatedBy,
+                CreatedAt = x.t.CreatedAt,
+                ModifiedBy = x.t.ModifiedBy,
+                ModifiedAt = x.t.ModifiedAt,
+                CreatedByName = x.u != null ? x.u.DisplayName : null,
+                UsageCount = _context.FolderTemplateUsages.Count(fu => fu.TemplateId == x.t.Id)
+            })
+            .OrderBy(t => t.Category)
+            .ThenBy(t => t.Name)
+            .ToListAsync();
     }
 
     public async Task<FolderTemplate?> GetByIdAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var sql = @"
-            SELECT t.*,
-                   u.DisplayName AS CreatedByName,
-                   (SELECT COUNT(*) FROM FolderTemplateUsage WHERE TemplateId = t.Id) AS UsageCount
-            FROM FolderTemplates t
-            LEFT JOIN Users u ON t.CreatedBy = u.Id
-            WHERE t.Id = @Id";
-
-        return await connection.QueryFirstOrDefaultAsync<FolderTemplate>(sql, new { Id = id });
+        return await _context.FolderTemplates.IgnoreQueryFilters().AsNoTracking()
+            .Where(t => t.Id == id)
+            .GroupJoin(_context.Users.AsNoTracking(), t => t.CreatedBy, u => u.Id, (t, users) => new { t, users })
+            .SelectMany(x => x.users.DefaultIfEmpty(), (x, u) => new { x.t, u })
+            .Select(x => new FolderTemplate
+            {
+                Id = x.t.Id,
+                Name = x.t.Name,
+                Description = x.t.Description,
+                Category = x.t.Category,
+                Icon = x.t.Icon,
+                IsActive = x.t.IsActive,
+                IsDefault = x.t.IsDefault,
+                CreatedBy = x.t.CreatedBy,
+                CreatedAt = x.t.CreatedAt,
+                ModifiedBy = x.t.ModifiedBy,
+                ModifiedAt = x.t.ModifiedAt,
+                CreatedByName = x.u != null ? x.u.DisplayName : null,
+                UsageCount = _context.FolderTemplateUsages.Count(fu => fu.TemplateId == x.t.Id)
+            })
+            .FirstOrDefaultAsync();
     }
 
     public async Task<FolderTemplate?> GetByIdWithNodesAsync(Guid id)
@@ -55,33 +81,54 @@ public class FolderTemplateRepository : IFolderTemplateRepository
         return template;
     }
 
-    public async Task<IEnumerable<FolderTemplate>> GetByCategoryAsync(string category)
-    {
-        using var connection = _connectionFactory.CreateConnection();
-        var sql = @"
-            SELECT t.*,
-                   u.DisplayName AS CreatedByName,
-                   (SELECT COUNT(*) FROM FolderTemplateUsage WHERE TemplateId = t.Id) AS UsageCount
-            FROM FolderTemplates t
-            LEFT JOIN Users u ON t.CreatedBy = u.Id
-            WHERE t.Category = @Category AND t.IsActive = 1
-            ORDER BY t.Name";
-
-        return await connection.QueryAsync<FolderTemplate>(sql, new { Category = category });
-    }
+    public async Task<IEnumerable<FolderTemplate>> GetByCategoryAsync(string category) =>
+        await _context.FolderTemplates.AsNoTracking()
+            .Where(t => t.Category == category)
+            .GroupJoin(_context.Users.AsNoTracking(), t => t.CreatedBy, u => u.Id, (t, users) => new { t, users })
+            .SelectMany(x => x.users.DefaultIfEmpty(), (x, u) => new { x.t, u })
+            .Select(x => new FolderTemplate
+            {
+                Id = x.t.Id,
+                Name = x.t.Name,
+                Description = x.t.Description,
+                Category = x.t.Category,
+                Icon = x.t.Icon,
+                IsActive = x.t.IsActive,
+                IsDefault = x.t.IsDefault,
+                CreatedBy = x.t.CreatedBy,
+                CreatedAt = x.t.CreatedAt,
+                ModifiedBy = x.t.ModifiedBy,
+                ModifiedAt = x.t.ModifiedAt,
+                CreatedByName = x.u != null ? x.u.DisplayName : null,
+                UsageCount = _context.FolderTemplateUsages.Count(fu => fu.TemplateId == x.t.Id)
+            })
+            .OrderBy(t => t.Name)
+            .ToListAsync();
 
     public async Task<FolderTemplate?> GetDefaultAsync()
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var sql = @"
-            SELECT t.*,
-                   u.DisplayName AS CreatedByName,
-                   (SELECT COUNT(*) FROM FolderTemplateUsage WHERE TemplateId = t.Id) AS UsageCount
-            FROM FolderTemplates t
-            LEFT JOIN Users u ON t.CreatedBy = u.Id
-            WHERE t.IsDefault = 1 AND t.IsActive = 1";
+        var template = await _context.FolderTemplates.AsNoTracking()
+            .Where(t => t.IsDefault)
+            .GroupJoin(_context.Users.AsNoTracking(), t => t.CreatedBy, u => u.Id, (t, users) => new { t, users })
+            .SelectMany(x => x.users.DefaultIfEmpty(), (x, u) => new { x.t, u })
+            .Select(x => new FolderTemplate
+            {
+                Id = x.t.Id,
+                Name = x.t.Name,
+                Description = x.t.Description,
+                Category = x.t.Category,
+                Icon = x.t.Icon,
+                IsActive = x.t.IsActive,
+                IsDefault = x.t.IsDefault,
+                CreatedBy = x.t.CreatedBy,
+                CreatedAt = x.t.CreatedAt,
+                ModifiedBy = x.t.ModifiedBy,
+                ModifiedAt = x.t.ModifiedAt,
+                CreatedByName = x.u != null ? x.u.DisplayName : null,
+                UsageCount = _context.FolderTemplateUsages.Count(fu => fu.TemplateId == x.t.Id)
+            })
+            .FirstOrDefaultAsync();
 
-        var template = await connection.QueryFirstOrDefaultAsync<FolderTemplate>(sql);
         if (template != null)
         {
             var nodes = await GetNodesByTemplateIdAsync(template.Id);
@@ -92,139 +139,126 @@ public class FolderTemplateRepository : IFolderTemplateRepository
 
     public async Task<Guid> CreateAsync(FolderTemplate template)
     {
-        using var connection = _connectionFactory.CreateConnection();
         template.Id = Guid.NewGuid();
         template.CreatedAt = DateTime.UtcNow;
 
         // If setting as default, clear other defaults first
         if (template.IsDefault)
         {
-            await connection.ExecuteAsync(
-                "UPDATE FolderTemplates SET IsDefault = 0 WHERE IsDefault = 1");
+            await _context.FolderTemplates
+                .Where(t => t.IsDefault)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(t => t.IsDefault, false));
         }
 
-        var sql = @"
-            INSERT INTO FolderTemplates
-                (Id, Name, Description, Category, Icon, IsActive, IsDefault, CreatedBy, CreatedAt)
-            VALUES
-                (@Id, @Name, @Description, @Category, @Icon, @IsActive, @IsDefault, @CreatedBy, @CreatedAt)";
+        _context.FolderTemplates.Add(template);
+        await _context.SaveChangesAsync();
 
-        await connection.ExecuteAsync(sql, template);
         return template.Id;
     }
 
     public async Task<bool> UpdateAsync(FolderTemplate template)
     {
-        using var connection = _connectionFactory.CreateConnection();
         template.ModifiedAt = DateTime.UtcNow;
 
         // If setting as default, clear other defaults first
         if (template.IsDefault)
         {
-            await connection.ExecuteAsync(
-                "UPDATE FolderTemplates SET IsDefault = 0 WHERE IsDefault = 1 AND Id != @Id",
-                new { template.Id });
+            await _context.FolderTemplates
+                .Where(t => t.IsDefault && t.Id != template.Id)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(t => t.IsDefault, false));
         }
 
-        var sql = @"
-            UPDATE FolderTemplates SET
-                Name = @Name,
-                Description = @Description,
-                Category = @Category,
-                Icon = @Icon,
-                IsActive = @IsActive,
-                IsDefault = @IsDefault,
-                ModifiedBy = @ModifiedBy,
-                ModifiedAt = @ModifiedAt
-            WHERE Id = @Id";
-
-        return await connection.ExecuteAsync(sql, template) > 0;
+        return await _context.FolderTemplates
+            .Where(t => t.Id == template.Id)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(t => t.Name, template.Name)
+                .SetProperty(t => t.Description, template.Description)
+                .SetProperty(t => t.Category, template.Category)
+                .SetProperty(t => t.Icon, template.Icon)
+                .SetProperty(t => t.IsActive, template.IsActive)
+                .SetProperty(t => t.IsDefault, template.IsDefault)
+                .SetProperty(t => t.ModifiedBy, template.ModifiedBy)
+                .SetProperty(t => t.ModifiedAt, template.ModifiedAt)) > 0;
     }
 
-    public async Task<bool> DeleteAsync(Guid id)
-    {
-        using var connection = _connectionFactory.CreateConnection();
+    public async Task<bool> DeleteAsync(Guid id) =>
         // Soft delete
-        return await connection.ExecuteAsync(
-            "UPDATE FolderTemplates SET IsActive = 0, ModifiedAt = @Now WHERE Id = @Id",
-            new { Id = id, Now = DateTime.UtcNow }) > 0;
-    }
+        await _context.FolderTemplates
+            .Where(t => t.Id == id)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(t => t.IsActive, false)
+                .SetProperty(t => t.ModifiedAt, DateTime.UtcNow)) > 0;
 
     #endregion
 
     #region Node Management
 
-    public async Task<IEnumerable<FolderTemplateNode>> GetNodesByTemplateIdAsync(Guid templateId)
-    {
-        using var connection = _connectionFactory.CreateConnection();
-        var sql = @"
-            SELECT n.*,
-                   ct.DisplayName AS ContentTypeName
-            FROM FolderTemplateNodes n
-            LEFT JOIN ContentTypes ct ON n.ContentTypeId = ct.Id
-            WHERE n.TemplateId = @TemplateId
-            ORDER BY n.SortOrder";
-
-        return await connection.QueryAsync<FolderTemplateNode>(sql, new { TemplateId = templateId });
-    }
+    public async Task<IEnumerable<FolderTemplateNode>> GetNodesByTemplateIdAsync(Guid templateId) =>
+        await _context.FolderTemplateNodes.AsNoTracking()
+            .Where(n => n.TemplateId == templateId)
+            .GroupJoin(_context.ContentTypes.AsNoTracking(), n => n.ContentTypeId, ct => ct.Id, (n, cts) => new { n, cts })
+            .SelectMany(x => x.cts.DefaultIfEmpty(), (x, ct) => new FolderTemplateNode
+            {
+                Id = x.n.Id,
+                TemplateId = x.n.TemplateId,
+                ParentNodeId = x.n.ParentNodeId,
+                Name = x.n.Name,
+                Description = x.n.Description,
+                ContentTypeId = x.n.ContentTypeId,
+                SortOrder = x.n.SortOrder,
+                BreakContentTypeInheritance = x.n.BreakContentTypeInheritance,
+                ContentTypeName = ct != null ? ct.DisplayName : null
+            })
+            .OrderBy(n => n.SortOrder)
+            .ToListAsync();
 
     public async Task<Guid> CreateNodeAsync(FolderTemplateNode node)
     {
-        using var connection = _connectionFactory.CreateConnection();
         node.Id = Guid.NewGuid();
 
-        var sql = @"
-            INSERT INTO FolderTemplateNodes
-                (Id, TemplateId, ParentNodeId, Name, Description, ContentTypeId, SortOrder, BreakContentTypeInheritance)
-            VALUES
-                (@Id, @TemplateId, @ParentNodeId, @Name, @Description, @ContentTypeId, @SortOrder, @BreakContentTypeInheritance)";
+        _context.FolderTemplateNodes.Add(node);
+        await _context.SaveChangesAsync();
 
-        await connection.ExecuteAsync(sql, node);
         return node.Id;
     }
 
-    public async Task<bool> UpdateNodeAsync(FolderTemplateNode node)
-    {
-        using var connection = _connectionFactory.CreateConnection();
-        var sql = @"
-            UPDATE FolderTemplateNodes SET
-                ParentNodeId = @ParentNodeId,
-                Name = @Name,
-                Description = @Description,
-                ContentTypeId = @ContentTypeId,
-                SortOrder = @SortOrder,
-                BreakContentTypeInheritance = @BreakContentTypeInheritance
-            WHERE Id = @Id";
-
-        return await connection.ExecuteAsync(sql, node) > 0;
-    }
+    public async Task<bool> UpdateNodeAsync(FolderTemplateNode node) =>
+        await _context.FolderTemplateNodes
+            .Where(n => n.Id == node.Id)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(n => n.ParentNodeId, node.ParentNodeId)
+                .SetProperty(n => n.Name, node.Name)
+                .SetProperty(n => n.Description, node.Description)
+                .SetProperty(n => n.ContentTypeId, node.ContentTypeId)
+                .SetProperty(n => n.SortOrder, node.SortOrder)
+                .SetProperty(n => n.BreakContentTypeInheritance, node.BreakContentTypeInheritance)) > 0;
 
     public async Task<bool> DeleteNodeAsync(Guid nodeId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-
         // First, update children to point to the deleted node's parent
-        var node = await connection.QueryFirstOrDefaultAsync<FolderTemplateNode>(
-            "SELECT * FROM FolderTemplateNodes WHERE Id = @Id", new { Id = nodeId });
+        var node = await _context.FolderTemplateNodes
+            .AsNoTracking()
+            .FirstOrDefaultAsync(n => n.Id == nodeId);
 
         if (node != null)
         {
-            await connection.ExecuteAsync(
-                "UPDATE FolderTemplateNodes SET ParentNodeId = @NewParentId WHERE ParentNodeId = @OldParentId",
-                new { NewParentId = node.ParentNodeId, OldParentId = nodeId });
+            await _context.FolderTemplateNodes
+                .Where(n => n.ParentNodeId == nodeId)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(n => n.ParentNodeId, node.ParentNodeId));
         }
 
-        return await connection.ExecuteAsync(
-            "DELETE FROM FolderTemplateNodes WHERE Id = @Id", new { Id = nodeId }) > 0;
+        return await _context.FolderTemplateNodes
+            .Where(n => n.Id == nodeId)
+            .ExecuteDeleteAsync() > 0;
     }
 
-    public async Task DeleteAllNodesByTemplateIdAsync(Guid templateId)
-    {
-        using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(
-            "DELETE FROM FolderTemplateNodes WHERE TemplateId = @TemplateId",
-            new { TemplateId = templateId });
-    }
+    public async Task DeleteAllNodesByTemplateIdAsync(Guid templateId) =>
+        await _context.FolderTemplateNodes
+            .Where(n => n.TemplateId == templateId)
+            .ExecuteDeleteAsync();
 
     #endregion
 
@@ -232,56 +266,54 @@ public class FolderTemplateRepository : IFolderTemplateRepository
 
     public async Task<Guid> RecordUsageAsync(FolderTemplateUsage usage)
     {
-        using var connection = _connectionFactory.CreateConnection();
         usage.Id = Guid.NewGuid();
         usage.AppliedAt = DateTime.UtcNow;
 
-        var sql = @"
-            INSERT INTO FolderTemplateUsage
-                (Id, TemplateId, RootFolderId, CabinetId, AppliedBy, AppliedAt, FoldersCreated)
-            VALUES
-                (@Id, @TemplateId, @RootFolderId, @CabinetId, @AppliedBy, @AppliedAt, @FoldersCreated)";
+        _context.FolderTemplateUsages.Add(usage);
+        await _context.SaveChangesAsync();
 
-        await connection.ExecuteAsync(sql, usage);
         return usage.Id;
     }
 
-    public async Task<IEnumerable<FolderTemplateUsage>> GetUsageByTemplateIdAsync(Guid templateId)
-    {
-        using var connection = _connectionFactory.CreateConnection();
-        var sql = @"
-            SELECT u.*,
-                   t.Name AS TemplateName,
-                   f.Name AS FolderName,
-                   usr.DisplayName AS AppliedByName
-            FROM FolderTemplateUsage u
-            LEFT JOIN FolderTemplates t ON u.TemplateId = t.Id
-            LEFT JOIN Folders f ON u.RootFolderId = f.Id
-            LEFT JOIN Users usr ON u.AppliedBy = usr.Id
-            WHERE u.TemplateId = @TemplateId
-            ORDER BY u.AppliedAt DESC";
+    public async Task<IEnumerable<FolderTemplateUsage>> GetUsageByTemplateIdAsync(Guid templateId) =>
+        await _context.FolderTemplateUsages.AsNoTracking()
+            .Where(u => u.TemplateId == templateId)
+            .GroupJoin(_context.FolderTemplates.IgnoreQueryFilters().AsNoTracking(), u => u.TemplateId, t => t.Id, (u, templates) => new { u, templates })
+            .SelectMany(x => x.templates.DefaultIfEmpty(), (x, t) => new { x.u, t })
+            .GroupJoin(_context.Folders.AsNoTracking(), x => x.u.RootFolderId, f => f.Id, (x, folders) => new { x.u, x.t, folders })
+            .SelectMany(x => x.folders.DefaultIfEmpty(), (x, f) => new { x.u, x.t, f })
+            .GroupJoin(_context.Users.AsNoTracking(), x => x.u.AppliedBy, usr => usr.Id, (x, users) => new { x.u, x.t, x.f, users })
+            .SelectMany(x => x.users.DefaultIfEmpty(), (x, usr) => new FolderTemplateUsage
+            {
+                Id = x.u.Id,
+                TemplateId = x.u.TemplateId,
+                RootFolderId = x.u.RootFolderId,
+                CabinetId = x.u.CabinetId,
+                AppliedBy = x.u.AppliedBy,
+                AppliedAt = x.u.AppliedAt,
+                FoldersCreated = x.u.FoldersCreated,
+                TemplateName = x.t != null ? x.t.Name : null,
+                FolderName = x.f != null ? x.f.Name : null,
+                AppliedByName = usr != null ? usr.DisplayName : null
+            })
+            .OrderByDescending(u => u.AppliedAt)
+            .ToListAsync();
 
-        return await connection.QueryAsync<FolderTemplateUsage>(sql, new { TemplateId = templateId });
-    }
-
-    public async Task<int> GetUsageCountAsync(Guid templateId)
-    {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.ExecuteScalarAsync<int>(
-            "SELECT COUNT(*) FROM FolderTemplateUsage WHERE TemplateId = @TemplateId",
-            new { TemplateId = templateId });
-    }
+    public async Task<int> GetUsageCountAsync(Guid templateId) =>
+        await _context.FolderTemplateUsages.AsNoTracking()
+            .CountAsync(u => u.TemplateId == templateId);
 
     #endregion
 
     #region Utilities
 
-    public async Task<IEnumerable<string>> GetCategoriesAsync()
-    {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<string>(
-            "SELECT DISTINCT Category FROM FolderTemplates WHERE Category IS NOT NULL AND IsActive = 1 ORDER BY Category");
-    }
+    public async Task<IEnumerable<string>> GetCategoriesAsync() =>
+        await _context.FolderTemplates.AsNoTracking()
+            .Where(t => t.Category != null)
+            .Select(t => t.Category!)
+            .Distinct()
+            .OrderBy(c => c)
+            .ToListAsync();
 
     private List<FolderTemplateNode> BuildNodeTree(List<FolderTemplateNode> flatNodes)
     {

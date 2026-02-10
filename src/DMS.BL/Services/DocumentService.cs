@@ -85,6 +85,20 @@ public class DocumentService : IDocumentService
         return ServiceResult<List<DocumentDto>>.Ok(dtos);
     }
 
+    public async Task<ServiceResult<PagedResultDto<DocumentDto>>> SearchPaginatedAsync(string? name, Guid? folderId, Guid? classificationId, Guid? documentTypeId, int page, int pageSize)
+    {
+        var (items, totalCount) = await _documentRepository.SearchWithNamesPaginatedAsync(name, folderId, classificationId, documentTypeId, page, pageSize);
+        var dtos = items.Select(MapToDtoWithNames).ToList();
+        await EnrichWithPasswordStatusAsync(dtos);
+        return ServiceResult<PagedResultDto<DocumentDto>>.Ok(new PagedResultDto<DocumentDto>
+        {
+            Items = dtos,
+            TotalCount = totalCount,
+            PageNumber = page,
+            PageSize = pageSize
+        });
+    }
+
     public async Task<ServiceResult<List<DocumentDto>>> GetCheckedOutByUserAsync(Guid userId)
     {
         var documents = await _documentRepository.GetCheckedOutByUserWithNamesAsync(userId);

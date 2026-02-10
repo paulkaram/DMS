@@ -7,10 +7,8 @@ namespace DMS.Api.Controllers;
 /// <summary>
 /// ISO 27001/15489 compliant integrity verification endpoints.
 /// </summary>
-[ApiController]
-[Route("api/[controller]")]
 [Authorize]
-public class IntegrityController : ControllerBase
+public class IntegrityController : BaseApiController
 {
     private readonly IIntegrityService _integrityService;
     private readonly ILogger<IntegrityController> _logger;
@@ -27,7 +25,7 @@ public class IntegrityController : ControllerBase
     [HttpPost("documents/{documentId}/verify")]
     public async Task<IActionResult> VerifyDocument(Guid documentId)
     {
-        var userId = GetUserId();
+        var userId = GetCurrentUserId();
         var result = await _integrityService.VerifyDocumentIntegrityAsync(documentId, userId);
 
         if (!result.Success)
@@ -42,7 +40,7 @@ public class IntegrityController : ControllerBase
     [HttpPost("documents/{documentId}/versions/{versionNumber}/verify")]
     public async Task<IActionResult> VerifyVersion(Guid documentId, int versionNumber)
     {
-        var userId = GetUserId();
+        var userId = GetCurrentUserId();
         var result = await _integrityService.VerifyVersionIntegrityAsync(documentId, versionNumber, userId);
 
         if (!result.Success)
@@ -72,14 +70,8 @@ public class IntegrityController : ControllerBase
     [Authorize(Roles = "Administrator")]
     public async Task<IActionResult> RunBatchVerification([FromQuery] int batchSize = 100)
     {
-        var userId = GetUserId();
+        var userId = GetCurrentUserId();
         var result = await _integrityService.RunScheduledVerificationAsync(batchSize, userId);
         return Ok(result);
-    }
-
-    private Guid GetUserId()
-    {
-        var claim = User.FindFirst("sub") ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
-        return claim != null ? Guid.Parse(claim.Value) : Guid.Empty;
     }
 }

@@ -63,7 +63,8 @@ async function loadData() {
       rolesApi.getAll(),
       structuresApi.getAll()
     ])
-    users.value = usersResponse.data
+    const usersData = usersResponse.data
+    users.value = Array.isArray(usersData) ? usersData : usersData.items ?? []
     roles.value = rolesResponse.data
     structures.value = structuresResponse.data
   } catch (error) {
@@ -80,7 +81,8 @@ async function handleSearch() {
   isLoading.value = true
   try {
     const response = await usersApi.search(searchQuery.value)
-    users.value = response.data
+    const data = response.data
+    users.value = Array.isArray(data) ? data : data.items ?? []
   } catch (error) {
   } finally {
     isLoading.value = false

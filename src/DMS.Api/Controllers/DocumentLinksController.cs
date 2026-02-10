@@ -2,14 +2,12 @@ using DMS.BL.DTOs;
 using DMS.BL.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace DMS.Api.Controllers;
 
-[ApiController]
 [Route("api/documents/{documentId}/links")]
 [Authorize]
-public class DocumentLinksController : ControllerBase
+public class DocumentLinksController : BaseApiController
 {
     private readonly IDocumentLinkService _linkService;
 
@@ -17,8 +15,6 @@ public class DocumentLinksController : ControllerBase
     {
         _linkService = linkService;
     }
-
-    private Guid GetUserId() => Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<DocumentLinkDto>>> GetLinks(Guid documentId)
@@ -56,7 +52,7 @@ public class DocumentLinksController : ControllerBase
 
         try
         {
-            var link = await _linkService.AddAsync(request, GetUserId());
+            var link = await _linkService.AddAsync(request, GetCurrentUserId());
             return CreatedAtAction(nameof(GetLink), new { documentId, id = link.Id }, link);
         }
         catch (InvalidOperationException ex)

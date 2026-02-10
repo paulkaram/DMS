@@ -188,14 +188,140 @@ public class ReferenceDataService : IReferenceDataService
     }
 
     // Lookups
+    public async Task<ServiceResult<List<LookupDto>>> GetLookupsAsync()
+    {
+        var lookups = await _lookupRepo.GetAllAsync();
+        var dtos = new List<LookupDto>();
+        foreach (var l in lookups)
+        {
+            var items = await _lookupRepo.GetItemsByLookupIdAsync(l.Id);
+            dtos.Add(new LookupDto
+            {
+                Id = l.Id,
+                Name = l.Name,
+                Description = l.Description,
+                ItemCount = items.Count()
+            });
+        }
+        return ServiceResult<List<LookupDto>>.Ok(dtos);
+    }
+
+    public async Task<ServiceResult<LookupDetailDto>> GetLookupByIdAsync(Guid id)
+    {
+        var lookup = await _lookupRepo.GetByIdAsync(id);
+        if (lookup == null) return ServiceResult<LookupDetailDto>.Fail("Lookup not found");
+        var items = await _lookupRepo.GetItemsByLookupIdAsync(id);
+        return ServiceResult<LookupDetailDto>.Ok(new LookupDetailDto
+        {
+            Id = lookup.Id,
+            Name = lookup.Name,
+            Description = lookup.Description,
+            Items = items.Select(x => new LookupItemDto
+            {
+                Id = x.Id,
+                LookupId = x.LookupId,
+                Value = x.Value,
+                DisplayText = x.DisplayText,
+                Language = x.Language,
+                SortOrder = x.SortOrder
+            }).ToList()
+        });
+    }
+
+    public async Task<ServiceResult<LookupDto>> CreateLookupAsync(LookupDto dto)
+    {
+        var entity = new Lookup
+        {
+            Name = dto.Name,
+            Description = dto.Description,
+            IsActive = true
+        };
+        var id = await _lookupRepo.CreateAsync(entity);
+        dto.Id = id;
+        return ServiceResult<LookupDto>.Ok(dto);
+    }
+
+    public async Task<ServiceResult<LookupDto>> UpdateLookupAsync(Guid id, LookupDto dto)
+    {
+        var entity = await _lookupRepo.GetByIdAsync(id);
+        if (entity == null) return ServiceResult<LookupDto>.Fail("Lookup not found");
+        entity.Name = dto.Name;
+        entity.Description = dto.Description;
+        await _lookupRepo.UpdateAsync(entity);
+        dto.Id = id;
+        return ServiceResult<LookupDto>.Ok(dto);
+    }
+
+    public async Task<ServiceResult> DeleteLookupAsync(Guid id)
+    {
+        await _lookupRepo.DeleteAsync(id);
+        return ServiceResult.Ok();
+    }
+
     public async Task<ServiceResult<List<LookupItemDto>>> GetLookupItemsAsync(string lookupName, string? language = null)
     {
         var items = await _lookupRepo.GetItemsByLookupNameAsync(lookupName, language);
         return ServiceResult<List<LookupItemDto>>.Ok(items.Select(x => new LookupItemDto
         {
             Id = x.Id,
+            LookupId = x.LookupId,
             Value = x.Value,
-            DisplayText = x.DisplayText
+            DisplayText = x.DisplayText,
+            Language = x.Language,
+            SortOrder = x.SortOrder
         }).ToList());
+    }
+
+    public async Task<ServiceResult<List<LookupItemDto>>> GetLookupItemsByIdAsync(Guid lookupId, string? language = null)
+    {
+        var items = await _lookupRepo.GetItemsByLookupIdAsync(lookupId, language);
+        return ServiceResult<List<LookupItemDto>>.Ok(items.Select(x => new LookupItemDto
+        {
+            Id = x.Id,
+            LookupId = x.LookupId,
+            Value = x.Value,
+            DisplayText = x.DisplayText,
+            Language = x.Language,
+            SortOrder = x.SortOrder
+        }).ToList());
+    }
+
+    public async Task<ServiceResult<LookupItemDto>> CreateLookupItemAsync(Guid lookupId, LookupItemDto dto)
+    {
+        var lookup = await _lookupRepo.GetByIdAsync(lookupId);
+        if (lookup == null) return ServiceResult<LookupItemDto>.Fail("Lookup not found");
+
+        var entity = new LookupItem
+        {
+            LookupId = lookupId,
+            Value = dto.Value,
+            DisplayText = dto.DisplayText,
+            Language = dto.Language,
+            SortOrder = dto.SortOrder,
+            IsActive = true
+        };
+        var id = await _lookupRepo.CreateItemAsync(entity);
+        dto.Id = id;
+        dto.LookupId = lookupId;
+        return ServiceResult<LookupItemDto>.Ok(dto);
+    }
+
+    public async Task<ServiceResult<LookupItemDto>> UpdateLookupItemAsync(Guid itemId, LookupItemDto dto)
+    {
+        var entity = await _lookupRepo.GetItemByIdAsync(itemId);
+        if (entity == null) return ServiceResult<LookupItemDto>.Fail("Lookup item not found");
+        entity.Value = dto.Value;
+        entity.DisplayText = dto.DisplayText;
+        entity.Language = dto.Language;
+        entity.SortOrder = dto.SortOrder;
+        await _lookupRepo.UpdateItemAsync(entity);
+        dto.Id = itemId;
+        return ServiceResult<LookupItemDto>.Ok(dto);
+    }
+
+    public async Task<ServiceResult> DeleteLookupItemAsync(Guid itemId)
+    {
+        await _lookupRepo.DeleteItemAsync(itemId);
+        return ServiceResult.Ok();
     }
 }

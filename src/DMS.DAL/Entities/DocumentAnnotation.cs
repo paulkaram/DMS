@@ -1,13 +1,15 @@
+using DMS.DAL.Data;
+
 namespace DMS.DAL.Entities;
 
-public class DocumentAnnotation
+public class DocumentAnnotation : IAuditable
 {
     public Guid Id { get; set; }
     public Guid DocumentId { get; set; }
     public int PageNumber { get; set; }
     public string AnnotationData { get; set; } = string.Empty;
     public int VersionNumber { get; set; } = 1;
-    public Guid CreatedBy { get; set; }
+    public Guid? CreatedBy { get; set; }
     public DateTime CreatedAt { get; set; }
     public Guid? ModifiedBy { get; set; }
     public DateTime? ModifiedAt { get; set; }

@@ -98,3 +98,8 @@ public class FolderTemplateUsageDto
     public DateTime AppliedAt { get; set; }
     public int FoldersCreated { get; set; }
 }
+
+public class DuplicateTemplateRequest
+{
+    public string NewName { get; set; } = string.Empty;
+}

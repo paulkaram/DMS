@@ -4,10 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace DMS.Api.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
 [Authorize]
-public class DashboardController : ControllerBase
+public class DashboardController : BaseApiController
 {
     private readonly IDashboardService _dashboardService;
 
@@ -19,7 +17,7 @@ public class DashboardController : ControllerBase
     [HttpGet("statistics")]
     public async Task<IActionResult> GetStatistics()
     {
-        var result = await _dashboardService.GetStatisticsAsync();
+        var result = await _dashboardService.GetStatisticsAsync(GetCurrentUserId());
         return result.Success ? Ok(result.Data) : BadRequest(result.Errors);
     }
 
@@ -36,11 +34,5 @@ public class DashboardController : ControllerBase
         var userId = GetCurrentUserId();
         var result = await _dashboardService.GetMyCheckedOutDocumentsAsync(userId);
         return result.Success ? Ok(result.Data) : BadRequest(result.Errors);
-    }
-
-    private Guid GetCurrentUserId()
-    {
-        var userIdClaim = User.FindFirst("sub")?.Value ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        return Guid.TryParse(userIdClaim, out var userId) ? userId : Guid.Empty;
     }
 }

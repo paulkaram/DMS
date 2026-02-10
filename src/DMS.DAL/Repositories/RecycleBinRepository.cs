@@ -1,88 +1,195 @@
-using Dapper;
 using DMS.DAL.Data;
 using DMS.DAL.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace DMS.DAL.Repositories;
 
 public class RecycleBinRepository : IRecycleBinRepository
 {
-    private readonly IDbConnectionFactory _connectionFactory;
+    private const int RetentionDays = 30;
+    private readonly DmsDbContext _context;
 
-    public RecycleBinRepository(IDbConnectionFactory connectionFactory)
+    public RecycleBinRepository(DmsDbContext context)
     {
-        _connectionFactory = connectionFactory;
+        _context = context;
     }
 
     public async Task<IEnumerable<RecycleBinItem>> GetByUserIdAsync(Guid userId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<RecycleBinItem>(@"
-            SELECT rb.*, u.DisplayName as DeletedByUserName
-            FROM RecycleBin rb
-            LEFT JOIN Users u ON rb.DeletedBy = u.Id
-            WHERE rb.DeletedBy = @UserId
-            ORDER BY rb.DeletedAt DESC",
-            new { UserId = userId });
+        return await _context.RecycleBinItems
+            .AsNoTracking()
+            .Where(rb => rb.DeletedBy == userId)
+            .OrderByDescending(rb => rb.DeletedAt)
+            .Select(rb => new RecycleBinItem
+            {
+                Id = rb.Id,
+                NodeType = rb.NodeType,
+                NodeId = rb.NodeId,
+                NodeName = rb.NodeName,
+                OriginalPath = rb.OriginalPath,
+                OriginalParentId = rb.OriginalParentId,
+                DeletedBy = rb.DeletedBy,
+                DeletedAt = rb.DeletedAt,
+                ExpiresAt = rb.ExpiresAt,
+                Metadata = rb.Metadata,
+                DeletedByUserName = _context.Users
+                    .Where(u => u.Id == rb.DeletedBy)
+                    .Select(u => u.DisplayName)
+                    .FirstOrDefault()
+            })
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<RecycleBinItem>> GetAllAsync(int? nodeType = null)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var sql = @"
-            SELECT rb.*, u.DisplayName as DeletedByUserName
-            FROM RecycleBin rb
-            LEFT JOIN Users u ON rb.DeletedBy = u.Id
-            WHERE 1=1";
+        var query = _context.RecycleBinItems.AsNoTracking().AsQueryable();
 
         if (nodeType.HasValue)
-            sql += " AND rb.NodeType = @NodeType";
+            query = query.Where(rb => rb.NodeType == nodeType.Value);
 
-        sql += " ORDER BY rb.DeletedAt DESC";
+        return await query
+            .OrderByDescending(rb => rb.DeletedAt)
+            .Select(rb => new RecycleBinItem
+            {
+                Id = rb.Id,
+                NodeType = rb.NodeType,
+                NodeId = rb.NodeId,
+                NodeName = rb.NodeName,
+                OriginalPath = rb.OriginalPath,
+                OriginalParentId = rb.OriginalParentId,
+                DeletedBy = rb.DeletedBy,
+                DeletedAt = rb.DeletedAt,
+                ExpiresAt = rb.ExpiresAt,
+                Metadata = rb.Metadata,
+                DeletedByUserName = _context.Users
+                    .Where(u => u.Id == rb.DeletedBy)
+                    .Select(u => u.DisplayName)
+                    .FirstOrDefault()
+            })
+            .ToListAsync();
+    }
 
-        return await connection.QueryAsync<RecycleBinItem>(sql, new { NodeType = nodeType });
+    public async Task<(List<RecycleBinItem> Items, int TotalCount)> GetByUserIdPaginatedAsync(Guid userId, int page, int pageSize)
+    {
+        var query = _context.RecycleBinItems
+            .AsNoTracking()
+            .Where(rb => rb.DeletedBy == userId);
+
+        var totalCount = await query.CountAsync();
+
+        var items = await query
+            .OrderByDescending(rb => rb.DeletedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(rb => new RecycleBinItem
+            {
+                Id = rb.Id,
+                NodeType = rb.NodeType,
+                NodeId = rb.NodeId,
+                NodeName = rb.NodeName,
+                OriginalPath = rb.OriginalPath,
+                OriginalParentId = rb.OriginalParentId,
+                DeletedBy = rb.DeletedBy,
+                DeletedAt = rb.DeletedAt,
+                ExpiresAt = rb.ExpiresAt,
+                Metadata = rb.Metadata,
+                DeletedByUserName = _context.Users
+                    .Where(u => u.Id == rb.DeletedBy)
+                    .Select(u => u.DisplayName)
+                    .FirstOrDefault()
+            })
+            .ToListAsync();
+
+        return (items, totalCount);
+    }
+
+    public async Task<(List<RecycleBinItem> Items, int TotalCount)> GetAllPaginatedAsync(int? nodeType, int page, int pageSize)
+    {
+        var query = _context.RecycleBinItems.AsNoTracking().AsQueryable();
+
+        if (nodeType.HasValue)
+            query = query.Where(rb => rb.NodeType == nodeType.Value);
+
+        var totalCount = await query.CountAsync();
+
+        var items = await query
+            .OrderByDescending(rb => rb.DeletedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(rb => new RecycleBinItem
+            {
+                Id = rb.Id,
+                NodeType = rb.NodeType,
+                NodeId = rb.NodeId,
+                NodeName = rb.NodeName,
+                OriginalPath = rb.OriginalPath,
+                OriginalParentId = rb.OriginalParentId,
+                DeletedBy = rb.DeletedBy,
+                DeletedAt = rb.DeletedAt,
+                ExpiresAt = rb.ExpiresAt,
+                Metadata = rb.Metadata,
+                DeletedByUserName = _context.Users
+                    .Where(u => u.Id == rb.DeletedBy)
+                    .Select(u => u.DisplayName)
+                    .FirstOrDefault()
+            })
+            .ToListAsync();
+
+        return (items, totalCount);
     }
 
     public async Task<RecycleBinItem?> GetByIdAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<RecycleBinItem>(@"
-            SELECT rb.*, u.DisplayName as DeletedByUserName
-            FROM RecycleBin rb
-            LEFT JOIN Users u ON rb.DeletedBy = u.Id
-            WHERE rb.Id = @Id",
-            new { Id = id });
+        return await _context.RecycleBinItems
+            .AsNoTracking()
+            .Where(rb => rb.Id == id)
+            .Select(rb => new RecycleBinItem
+            {
+                Id = rb.Id,
+                NodeType = rb.NodeType,
+                NodeId = rb.NodeId,
+                NodeName = rb.NodeName,
+                OriginalPath = rb.OriginalPath,
+                OriginalParentId = rb.OriginalParentId,
+                DeletedBy = rb.DeletedBy,
+                DeletedAt = rb.DeletedAt,
+                ExpiresAt = rb.ExpiresAt,
+                Metadata = rb.Metadata,
+                DeletedByUserName = _context.Users
+                    .Where(u => u.Id == rb.DeletedBy)
+                    .Select(u => u.DisplayName)
+                    .FirstOrDefault()
+            })
+            .FirstOrDefaultAsync();
     }
 
     public async Task<Guid> AddAsync(RecycleBinItem entity)
     {
         entity.Id = Guid.NewGuid();
         entity.DeletedAt = DateTime.UtcNow;
-        entity.ExpiresAt = DateTime.UtcNow.AddDays(30); // 30 days retention
+        entity.ExpiresAt = DateTime.UtcNow.AddDays(RetentionDays);
 
-        using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(@"
-            INSERT INTO RecycleBin (Id, NodeType, NodeId, NodeName, OriginalPath,
-                OriginalParentId, DeletedBy, DeletedAt, ExpiresAt, Metadata)
-            VALUES (@Id, @NodeType, @NodeId, @NodeName, @OriginalPath,
-                @OriginalParentId, @DeletedBy, @DeletedAt, @ExpiresAt, @Metadata)",
-            entity);
+        _context.RecycleBinItems.Add(entity);
+        await _context.SaveChangesAsync();
 
         return entity.Id;
     }
 
     public async Task<bool> RemoveAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var affected = await connection.ExecuteAsync(
-            "DELETE FROM RecycleBin WHERE Id = @Id", new { Id = id });
-        return affected > 0;
+        var entity = await _context.RecycleBinItems.FindAsync(id);
+        if (entity == null) return false;
+
+        _context.RecycleBinItems.Remove(entity);
+        return await _context.SaveChangesAsync() > 0;
     }
 
     public async Task<bool> PurgeExpiredAsync()
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var affected = await connection.ExecuteAsync(
-            "DELETE FROM RecycleBin WHERE ExpiresAt < GETUTCDATE()");
+        var affected = await _context.RecycleBinItems
+            .Where(rb => rb.ExpiresAt < DateTime.UtcNow)
+            .ExecuteDeleteAsync();
+
         return affected > 0;
     }
 }

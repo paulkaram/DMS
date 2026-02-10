@@ -1,3 +1,4 @@
+using DMS.BL.DTOs;
 using DMS.DAL.Entities;
 using DMS.DAL.Repositories;
 using Microsoft.AspNetCore.Authorization;
@@ -5,10 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace DMS.Api.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
 [Authorize]
-public class ContentTypesController : ControllerBase
+public class ContentTypesController : BaseApiController
 {
     private readonly IContentTypeRepository _contentTypeRepository;
 
@@ -86,20 +85,4 @@ public class ContentTypesController : ControllerBase
         if (!result) return NotFound();
         return Ok();
     }
-}
-
-public class CreateContentTypeRequest
-{
-    public string Extension { get; set; } = string.Empty;
-    public string MimeType { get; set; } = string.Empty;
-    public string? DisplayName { get; set; }
-    public string? Icon { get; set; }
-    public bool AllowPreview { get; set; } = true;
-    public bool AllowThumbnail { get; set; } = true;
-    public int MaxFileSizeMB { get; set; } = 100;
-}
-
-public class UpdateContentTypeRequest : CreateContentTypeRequest
-{
-    public bool IsActive { get; set; } = true;
 }

@@ -8,10 +8,8 @@ namespace DMS.Api.Controllers;
 /// <summary>
 /// ISO 15489 compliant legal hold management endpoints.
 /// </summary>
-[ApiController]
-[Route("api/[controller]")]
 [Authorize]
-public class LegalHoldsController : ControllerBase
+public class LegalHoldsController : BaseApiController
 {
     private readonly ILegalHoldService _legalHoldService;
     private readonly ILogger<LegalHoldsController> _logger;
@@ -59,7 +57,7 @@ public class LegalHoldsController : ControllerBase
     [Authorize(Roles = "Admin,Legal")]
     public async Task<IActionResult> Create([FromBody] CreateLegalHoldDto dto)
     {
-        var userId = GetUserId();
+        var userId = GetCurrentUserId();
         var result = await _legalHoldService.CreateHoldAsync(dto, userId);
 
         if (!result.Success)
@@ -75,7 +73,7 @@ public class LegalHoldsController : ControllerBase
     [Authorize(Roles = "Admin,Legal")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateLegalHoldDto dto)
     {
-        var userId = GetUserId();
+        var userId = GetCurrentUserId();
         var result = await _legalHoldService.UpdateHoldAsync(id, dto, userId);
 
         if (!result.Success)
@@ -91,7 +89,7 @@ public class LegalHoldsController : ControllerBase
     [Authorize(Roles = "Admin,Legal")]
     public async Task<IActionResult> AddDocuments(Guid id, [FromBody] AddDocumentsToHoldDto dto)
     {
-        var userId = GetUserId();
+        var userId = GetCurrentUserId();
         var result = await _legalHoldService.AddDocumentsToHoldAsync(id, dto.DocumentIds, userId, dto.Notes);
 
         if (!result.Success)
@@ -121,7 +119,7 @@ public class LegalHoldsController : ControllerBase
     [Authorize(Roles = "Admin,Legal")]
     public async Task<IActionResult> RemoveDocument(Guid id, Guid documentId)
     {
-        var userId = GetUserId();
+        var userId = GetCurrentUserId();
         var result = await _legalHoldService.RemoveDocumentFromHoldAsync(id, documentId, userId);
 
         if (!result.Success)
@@ -151,7 +149,7 @@ public class LegalHoldsController : ControllerBase
     [Authorize(Roles = "Admin,Legal")]
     public async Task<IActionResult> Release(Guid id, [FromBody] ReleaseHoldDto dto)
     {
-        var userId = GetUserId();
+        var userId = GetCurrentUserId();
         var result = await _legalHoldService.ReleaseHoldAsync(id, userId, dto.Reason);
 
         if (!result.Success)
@@ -159,21 +157,4 @@ public class LegalHoldsController : ControllerBase
 
         return Ok(new { message = result.Message });
     }
-
-    private Guid GetUserId()
-    {
-        var claim = User.FindFirst("sub") ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
-        return claim != null ? Guid.Parse(claim.Value) : Guid.Empty;
-    }
-}
-
-public class AddDocumentsToHoldDto
-{
-    public List<Guid> DocumentIds { get; set; } = new();
-    public string? Notes { get; set; }
-}
-
-public class ReleaseHoldDto
-{
-    public string Reason { get; set; } = string.Empty;
 }

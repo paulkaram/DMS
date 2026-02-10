@@ -1,15 +1,15 @@
+using DMS.Api.Constants;
+using DMS.BL.DTOs;
 using DMS.DAL.Entities;
 using DMS.DAL.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace DMS.Api.Controllers;
 
-[ApiController]
 [Route("api/retention-policies")]
 [Authorize]
-public class RetentionPoliciesController : ControllerBase
+public class RetentionPoliciesController : BaseApiController
 {
     private readonly IRetentionPolicyRepository _repository;
 
@@ -17,8 +17,6 @@ public class RetentionPoliciesController : ControllerBase
     {
         _repository = repository;
     }
-
-    private Guid GetUserId() => Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
 
     #region Retention Policies
 
@@ -61,7 +59,7 @@ public class RetentionPoliciesController : ControllerBase
             RequiresApproval = request.RequiresApproval,
             InheritToSubfolders = request.InheritToSubfolders,
             IsLegalHold = request.IsLegalHold,
-            CreatedBy = GetUserId()
+            CreatedBy = GetCurrentUserId()
         };
 
         var id = await _repository.CreateAsync(policy);
@@ -87,7 +85,7 @@ public class RetentionPoliciesController : ControllerBase
         policy.InheritToSubfolders = request.InheritToSubfolders;
         policy.IsLegalHold = request.IsLegalHold;
         policy.IsActive = request.IsActive;
-        policy.ModifiedBy = GetUserId();
+        policy.ModifiedBy = GetCurrentUserId();
 
         var result = await _repository.UpdateAsync(policy);
         if (!result) return BadRequest();
@@ -114,23 +112,40 @@ public class RetentionPoliciesController : ControllerBase
     }
 
     [HttpGet("expiring")]
-    public async Task<ActionResult<IEnumerable<DocumentRetention>>> GetExpiringDocuments([FromQuery] int daysAhead = 30)
+    public async Task<ActionResult<PagedResultDto<DocumentRetention>>> GetExpiringDocuments(
+        [FromQuery] int daysAhead = 30,
+        [FromQuery] int page = 1, [FromQuery] int pageSize = AppConstants.DefaultPageSize)
     {
-        var retentions = await _repository.GetExpiringDocumentsAsync(daysAhead);
-        return Ok(retentions);
+        pageSize = Math.Min(pageSize, AppConstants.MaxPageSize);
+        var (items, totalCount) = await _repository.GetExpiringDocumentsPaginatedAsync(daysAhead, page, pageSize);
+        return Ok(new PagedResultDto<DocumentRetention>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            PageNumber = page,
+            PageSize = pageSize
+        });
     }
 
     [HttpGet("pending-review")]
-    public async Task<ActionResult<IEnumerable<DocumentRetention>>> GetPendingReview()
+    public async Task<ActionResult<PagedResultDto<DocumentRetention>>> GetPendingReview(
+        [FromQuery] int page = 1, [FromQuery] int pageSize = AppConstants.DefaultPageSize)
     {
-        var retentions = await _repository.GetPendingReviewAsync();
-        return Ok(retentions);
+        pageSize = Math.Min(pageSize, AppConstants.MaxPageSize);
+        var (items, totalCount) = await _repository.GetPendingReviewPaginatedAsync(page, pageSize);
+        return Ok(new PagedResultDto<DocumentRetention>
+        {
+            Items = items,
+            TotalCount = totalCount,
+            PageNumber = page,
+            PageSize = pageSize
+        });
     }
 
     [HttpPost("documents/{documentId}/apply/{policyId}")]
     public async Task<ActionResult> ApplyPolicyToDocument(Guid documentId, Guid policyId)
     {
-        var result = await _repository.ApplyPolicyToDocumentAsync(documentId, policyId, GetUserId());
+        var result = await _repository.ApplyPolicyToDocumentAsync(documentId, policyId, GetCurrentUserId());
         if (!result) return BadRequest();
         return Ok();
     }
@@ -138,7 +153,7 @@ public class RetentionPoliciesController : ControllerBase
     [HttpPost("retentions/{retentionId}/approve")]
     public async Task<ActionResult> ApproveRetentionAction(Guid retentionId, [FromBody] ApproveRetentionRequest request)
     {
-        var result = await _repository.ApproveRetentionActionAsync(retentionId, GetUserId(), request.Notes);
+        var result = await _repository.ApproveRetentionActionAsync(retentionId, GetCurrentUserId(), request.Notes);
         if (!result) return BadRequest();
         return Ok();
     }
@@ -146,7 +161,7 @@ public class RetentionPoliciesController : ControllerBase
     [HttpPost("documents/{documentId}/hold")]
     public async Task<ActionResult> PlaceOnHold(Guid documentId, [FromBody] HoldRequest request)
     {
-        var result = await _repository.PlaceOnHoldAsync(documentId, GetUserId(), request.Notes);
+        var result = await _repository.PlaceOnHoldAsync(documentId, GetCurrentUserId(), request.Notes);
         if (!result) return BadRequest();
         return Ok();
     }
@@ -154,45 +169,10 @@ public class RetentionPoliciesController : ControllerBase
     [HttpPost("documents/{documentId}/release-hold")]
     public async Task<ActionResult> ReleaseHold(Guid documentId)
     {
-        var result = await _repository.ReleaseHoldAsync(documentId, GetUserId());
+        var result = await _repository.ReleaseHoldAsync(documentId, GetCurrentUserId());
         if (!result) return BadRequest();
         return Ok();
     }
 
     #endregion
 }
-
-#region Request DTOs
-
-public class CreateRetentionPolicyRequest
-{
-    public string Name { get; set; } = string.Empty;
-    public string? Description { get; set; }
-    public int RetentionDays { get; set; }
-    public string ExpirationAction { get; set; } = "Review";
-    public bool NotifyBeforeExpiration { get; set; } = true;
-    public int NotificationDays { get; set; } = 30;
-    public Guid? FolderId { get; set; }
-    public Guid? ClassificationId { get; set; }
-    public Guid? DocumentTypeId { get; set; }
-    public bool RequiresApproval { get; set; } = true;
-    public bool InheritToSubfolders { get; set; } = true;
-    public bool IsLegalHold { get; set; } = false;
-}
-
-public class UpdateRetentionPolicyRequest : CreateRetentionPolicyRequest
-{
-    public bool IsActive { get; set; } = true;
-}
-
-public class ApproveRetentionRequest
-{
-    public string? Notes { get; set; }
-}
-
-public class HoldRequest
-{
-    public string? Notes { get; set; }
-}
-
-#endregion

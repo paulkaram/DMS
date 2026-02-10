@@ -114,7 +114,7 @@ async function loadData() {
     const promises: Promise<any>[] = []
 
     if (allowedTypes.value.includes('User')) {
-      promises.push(usersApi.getAll().then(r => { users.value = r.data }))
+      promises.push(usersApi.getAll().then(r => { const d = r.data; users.value = Array.isArray(d) ? d : d.items ?? [] }))
     }
     if (allowedTypes.value.includes('Role')) {
       promises.push(rolesApi.getAll().then(r => { roles.value = r.data }))

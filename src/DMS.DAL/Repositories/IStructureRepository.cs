@@ -7,14 +7,14 @@ public interface IStructureRepository
     // Basic CRUD
     Task<Structure?> GetByIdAsync(Guid id);
     Task<Structure?> GetByCodeAsync(string code);
-    Task<IEnumerable<Structure>> GetAllAsync(bool includeInactive = false);
+    Task<IEnumerable<Structure>> GetAllAsync(bool includeInactive = false, int maxResults = 5000);
     Task<Guid> CreateAsync(Structure entity);
     Task<bool> UpdateAsync(Structure entity);
     Task<bool> DeleteAsync(Guid id);
 
     // Hierarchy operations
     Task<IEnumerable<Structure>> GetChildrenAsync(Guid parentId);
-    Task<IEnumerable<Structure>> GetDescendantsAsync(Guid parentId);
+    Task<IEnumerable<Structure>> GetDescendantsAsync(Guid parentId, int maxResults = 5000);
     Task<IEnumerable<Structure>> GetAncestorsAsync(Guid structureId);
     Task<IEnumerable<Structure>> GetRootStructuresAsync();
     Task<IEnumerable<Structure>> GetByTypeAsync(StructureType type);

@@ -1,32 +1,32 @@
-using Dapper;
 using DMS.DAL.Data;
 using DMS.DAL.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace DMS.DAL.Repositories;
 
 public class DocumentWorkingCopyRepository : IDocumentWorkingCopyRepository
 {
-    private readonly IDbConnectionFactory _connectionFactory;
+    private readonly DmsDbContext _context;
 
-    public DocumentWorkingCopyRepository(IDbConnectionFactory connectionFactory)
+    public DocumentWorkingCopyRepository(DmsDbContext context)
     {
-        _connectionFactory = connectionFactory;
+        _context = context;
     }
 
     public async Task<DocumentWorkingCopy?> GetByDocumentIdAsync(Guid documentId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<DocumentWorkingCopy>(
-            "SELECT * FROM DocumentWorkingCopies WHERE DocumentId = @DocumentId",
-            new { DocumentId = documentId });
+        return await _context.DocumentWorkingCopies
+            .AsNoTracking()
+            .FirstOrDefaultAsync(wc => wc.DocumentId == documentId);
     }
 
     public async Task<IEnumerable<DocumentWorkingCopy>> GetAllByUserAsync(Guid userId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<DocumentWorkingCopy>(
-            "SELECT * FROM DocumentWorkingCopies WHERE CheckedOutBy = @UserId ORDER BY CheckedOutAt DESC",
-            new { UserId = userId });
+        return await _context.DocumentWorkingCopies
+            .AsNoTracking()
+            .Where(wc => wc.CheckedOutBy == userId)
+            .OrderByDescending(wc => wc.CheckedOutAt)
+            .ToListAsync();
     }
 
     public async Task<Guid> CreateAsync(DocumentWorkingCopy workingCopy)
@@ -34,19 +34,8 @@ public class DocumentWorkingCopyRepository : IDocumentWorkingCopyRepository
         workingCopy.Id = Guid.NewGuid();
         workingCopy.CheckedOutAt = DateTime.UtcNow;
 
-        using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(@"
-            INSERT INTO DocumentWorkingCopies (
-                Id, DocumentId, CheckedOutBy, CheckedOutAt,
-                DraftStoragePath, DraftSize, DraftContentType, DraftOriginalFileName, DraftIntegrityHash,
-                DraftMetadataJson, DraftName, DraftDescription, DraftClassificationId,
-                DraftImportanceId, DraftDocumentTypeId, LastModifiedAt, AutoSaveEnabled)
-            VALUES (
-                @Id, @DocumentId, @CheckedOutBy, @CheckedOutAt,
-                @DraftStoragePath, @DraftSize, @DraftContentType, @DraftOriginalFileName, @DraftIntegrityHash,
-                @DraftMetadataJson, @DraftName, @DraftDescription, @DraftClassificationId,
-                @DraftImportanceId, @DraftDocumentTypeId, @LastModifiedAt, @AutoSaveEnabled)",
-            workingCopy);
+        _context.DocumentWorkingCopies.Add(workingCopy);
+        await _context.SaveChangesAsync();
 
         return workingCopy.Id;
     }
@@ -55,54 +44,50 @@ public class DocumentWorkingCopyRepository : IDocumentWorkingCopyRepository
     {
         workingCopy.LastModifiedAt = DateTime.UtcNow;
 
-        using var connection = _connectionFactory.CreateConnection();
-        var affected = await connection.ExecuteAsync(@"
-            UPDATE DocumentWorkingCopies
-            SET DraftStoragePath = @DraftStoragePath,
-                DraftSize = @DraftSize,
-                DraftContentType = @DraftContentType,
-                DraftOriginalFileName = @DraftOriginalFileName,
-                DraftIntegrityHash = @DraftIntegrityHash,
-                DraftMetadataJson = @DraftMetadataJson,
-                DraftName = @DraftName,
-                DraftDescription = @DraftDescription,
-                DraftClassificationId = @DraftClassificationId,
-                DraftImportanceId = @DraftImportanceId,
-                DraftDocumentTypeId = @DraftDocumentTypeId,
-                LastModifiedAt = @LastModifiedAt,
-                AutoSaveEnabled = @AutoSaveEnabled
-            WHERE Id = @Id",
-            workingCopy);
+        var affected = await _context.DocumentWorkingCopies
+            .Where(wc => wc.Id == workingCopy.Id)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(wc => wc.DraftStoragePath, workingCopy.DraftStoragePath)
+                .SetProperty(wc => wc.DraftSize, workingCopy.DraftSize)
+                .SetProperty(wc => wc.DraftContentType, workingCopy.DraftContentType)
+                .SetProperty(wc => wc.DraftOriginalFileName, workingCopy.DraftOriginalFileName)
+                .SetProperty(wc => wc.DraftIntegrityHash, workingCopy.DraftIntegrityHash)
+                .SetProperty(wc => wc.DraftMetadataJson, workingCopy.DraftMetadataJson)
+                .SetProperty(wc => wc.DraftName, workingCopy.DraftName)
+                .SetProperty(wc => wc.DraftDescription, workingCopy.DraftDescription)
+                .SetProperty(wc => wc.DraftClassificationId, workingCopy.DraftClassificationId)
+                .SetProperty(wc => wc.DraftImportanceId, workingCopy.DraftImportanceId)
+                .SetProperty(wc => wc.DraftDocumentTypeId, workingCopy.DraftDocumentTypeId)
+                .SetProperty(wc => wc.LastModifiedAt, workingCopy.LastModifiedAt)
+                .SetProperty(wc => wc.AutoSaveEnabled, workingCopy.AutoSaveEnabled));
 
         return affected > 0;
     }
 
     public async Task<bool> DeleteAsync(Guid documentId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var affected = await connection.ExecuteAsync(
-            "DELETE FROM DocumentWorkingCopies WHERE DocumentId = @DocumentId",
-            new { DocumentId = documentId });
+        var affected = await _context.DocumentWorkingCopies
+            .Where(wc => wc.DocumentId == documentId)
+            .ExecuteDeleteAsync();
 
         return affected > 0;
     }
 
     public async Task<IEnumerable<DocumentWorkingCopy>> GetStaleCheckoutsAsync(int staleHours)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<DocumentWorkingCopy>(@"
-            SELECT * FROM DocumentWorkingCopies
-            WHERE CheckedOutAt < DATEADD(HOUR, -@StaleHours, GETUTCDATE())
-            ORDER BY CheckedOutAt",
-            new { StaleHours = staleHours });
+        var cutoff = DateTime.UtcNow.AddHours(-staleHours);
+        return await _context.DocumentWorkingCopies
+            .AsNoTracking()
+            .Where(wc => wc.CheckedOutAt < cutoff)
+            .OrderBy(wc => wc.CheckedOutAt)
+            .ToListAsync();
     }
 
     public async Task<bool> DeleteAllByUserAsync(Guid userId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var affected = await connection.ExecuteAsync(
-            "DELETE FROM DocumentWorkingCopies WHERE CheckedOutBy = @UserId",
-            new { UserId = userId });
+        var affected = await _context.DocumentWorkingCopies
+            .Where(wc => wc.CheckedOutBy == userId)
+            .ExecuteDeleteAsync();
 
         return affected > 0;
     }

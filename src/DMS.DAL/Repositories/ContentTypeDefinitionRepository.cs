@@ -1,158 +1,150 @@
-using Dapper;
 using DMS.DAL.Data;
 using DMS.DAL.DTOs;
 using DMS.DAL.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace DMS.DAL.Repositories;
 
 public class ContentTypeDefinitionRepository : IContentTypeDefinitionRepository
 {
-    private readonly IDbConnectionFactory _connectionFactory;
+    private readonly DmsDbContext _context;
 
-    public ContentTypeDefinitionRepository(IDbConnectionFactory connectionFactory)
+    public ContentTypeDefinitionRepository(DmsDbContext context)
     {
-        _connectionFactory = connectionFactory;
-    }
-
-    private string GetContentTypesTableName()
-    {
-        // Always use ContentTypeDefinitions - the table with Name, SortOrder, etc.
-        // ContentTypes is the MIME types table (Extension, MimeType)
-        return "ContentTypeDefinitions";
+        _context = context;
     }
 
     #region Content Type Definitions
 
     public async Task<IEnumerable<ContentTypeDefinition>> GetAllAsync(bool includeInactive = false)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var tableName = GetContentTypesTableName();
-        var sql = $@"SELECT * FROM {tableName}
-                    WHERE (@IncludeInactive = 1 OR IsActive = 1)
-                    ORDER BY SortOrder, Name";
-        return await connection.QueryAsync<ContentTypeDefinition>(sql, new { IncludeInactive = includeInactive });
+        var query = _context.ContentTypeDefinitions.AsNoTracking();
+
+        if (includeInactive)
+            query = query.IgnoreQueryFilters();
+
+        return await query
+            .OrderBy(ct => ct.SortOrder)
+            .ThenBy(ct => ct.Name)
+            .ToListAsync();
     }
 
     public async Task<ContentTypeDefinition?> GetByIdAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var tableName = GetContentTypesTableName();
-        return await connection.QueryFirstOrDefaultAsync<ContentTypeDefinition>(
-            $"SELECT * FROM {tableName} WHERE Id = @Id", new { Id = id });
+        return await _context.ContentTypeDefinitions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(ct => ct.Id == id);
     }
 
     public async Task<ContentTypeDefinition?> GetByIdWithFieldsAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var tableName = GetContentTypesTableName();
-        var sql = $@"
-            SELECT * FROM {tableName} WHERE Id = @Id;
-            SELECT * FROM ContentTypeFields WHERE ContentTypeId = @Id AND IsActive = 1 ORDER BY SortOrder;";
-
-        using var multi = await connection.QueryMultipleAsync(sql, new { Id = id });
-        var contentType = await multi.ReadFirstOrDefaultAsync<ContentTypeDefinition>();
-        if (contentType != null)
-        {
-            contentType.Fields = (await multi.ReadAsync<ContentTypeField>()).ToList();
-        }
-        return contentType;
+        return await _context.ContentTypeDefinitions
+            .AsNoTracking()
+            .Include(ct => ct.Fields!.Where(f => f.IsActive).OrderBy(f => f.SortOrder))
+            .FirstOrDefaultAsync(ct => ct.Id == id);
     }
 
     public async Task<ContentTypeDefinition?> GetByNameAsync(string name)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var tableName = GetContentTypesTableName();
-        return await connection.QueryFirstOrDefaultAsync<ContentTypeDefinition>(
-            $"SELECT * FROM {tableName} WHERE Name = @Name", new { Name = name });
+        return await _context.ContentTypeDefinitions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(ct => ct.Name == name);
     }
 
     public async Task<ContentTypeDefinition?> GetSystemDefaultAsync()
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var tableName = GetContentTypesTableName();
-        return await connection.QueryFirstOrDefaultAsync<ContentTypeDefinition>(
-            $"SELECT * FROM {tableName} WHERE IsSystemDefault = 1 AND IsActive = 1");
+        return await _context.ContentTypeDefinitions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(ct => ct.IsSystemDefault);
     }
 
     public async Task<bool> SetSystemDefaultAsync(Guid contentTypeId, Guid userId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var tableName = GetContentTypesTableName();
-        connection.Open();
-        using var transaction = connection.BeginTransaction();
+        var strategy = _context.Database.CreateExecutionStrategy();
 
-        try
+        return await strategy.ExecuteAsync(async () =>
         {
-            // Clear existing system default
-            await connection.ExecuteAsync(
-                $"UPDATE {tableName} SET IsSystemDefault = 0, ModifiedBy = @UserId, ModifiedAt = @Now WHERE IsSystemDefault = 1",
-                new { UserId = userId, Now = DateTime.UtcNow },
-                transaction);
+            await using var transaction = await _context.Database.BeginTransactionAsync();
 
-            // Set new system default
-            var result = await connection.ExecuteAsync(
-                $"UPDATE {tableName} SET IsSystemDefault = 1, ModifiedBy = @UserId, ModifiedAt = @Now WHERE Id = @Id",
-                new { Id = contentTypeId, UserId = userId, Now = DateTime.UtcNow },
-                transaction);
+            try
+            {
+                var now = DateTime.UtcNow;
 
-            transaction.Commit();
-            return result > 0;
-        }
-        catch
-        {
-            transaction.Rollback();
-            return false;
-        }
+                // Clear existing system default
+                await _context.ContentTypeDefinitions
+                    .Where(ct => ct.IsSystemDefault)
+                    .ExecuteUpdateAsync(s => s
+                        .SetProperty(ct => ct.IsSystemDefault, false)
+                        .SetProperty(ct => ct.ModifiedBy, userId)
+                        .SetProperty(ct => ct.ModifiedAt, now));
+
+                // Set new system default
+                var target = await _context.ContentTypeDefinitions.FindAsync(contentTypeId);
+                if (target == null)
+                {
+                    await transaction.RollbackAsync();
+                    return false;
+                }
+
+                target.IsSystemDefault = true;
+                target.ModifiedBy = userId;
+                target.ModifiedAt = now;
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return true;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                return false;
+            }
+        });
     }
 
     public async Task<bool> ClearSystemDefaultAsync(Guid userId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var tableName = GetContentTypesTableName();
-        return await connection.ExecuteAsync(
-            $"UPDATE {tableName} SET IsSystemDefault = 0, ModifiedBy = @UserId, ModifiedAt = @Now WHERE IsSystemDefault = 1",
-            new { UserId = userId, Now = DateTime.UtcNow }) > 0;
+        var now = DateTime.UtcNow;
+        var affected = await _context.ContentTypeDefinitions
+            .Where(ct => ct.IsSystemDefault)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(ct => ct.IsSystemDefault, false)
+                .SetProperty(ct => ct.ModifiedBy, userId)
+                .SetProperty(ct => ct.ModifiedAt, now));
+
+        return affected > 0;
     }
 
     public async Task<Guid> CreateAsync(ContentTypeDefinition contentType)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var tableName = GetContentTypesTableName();
         contentType.Id = Guid.NewGuid();
         contentType.CreatedAt = DateTime.UtcNow;
 
-        var sql = $@"INSERT INTO {tableName}
-                    (Id, Name, Description, Icon, Color, Category, AllowOnFolders, AllowOnDocuments, IsRequired, IsSystemDefault, IsActive, SortOrder, CreatedBy, CreatedAt)
-                    VALUES (@Id, @Name, @Description, @Icon, @Color, @Category, @AllowOnFolders, @AllowOnDocuments, @IsRequired, @IsSystemDefault, @IsActive, @SortOrder, @CreatedBy, @CreatedAt)";
-
-        await connection.ExecuteAsync(sql, contentType);
+        _context.ContentTypeDefinitions.Add(contentType);
+        await _context.SaveChangesAsync();
         return contentType.Id;
     }
 
     public async Task<bool> UpdateAsync(ContentTypeDefinition contentType)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var tableName = GetContentTypesTableName();
         contentType.ModifiedAt = DateTime.UtcNow;
 
-        var sql = $@"UPDATE {tableName} SET
-                    Name = @Name, Description = @Description, Icon = @Icon, Color = @Color, Category = @Category,
-                    AllowOnFolders = @AllowOnFolders, AllowOnDocuments = @AllowOnDocuments,
-                    IsRequired = @IsRequired, IsSystemDefault = @IsSystemDefault, IsActive = @IsActive, SortOrder = @SortOrder,
-                    ModifiedBy = @ModifiedBy, ModifiedAt = @ModifiedAt
-                    WHERE Id = @Id";
+        var existing = await _context.ContentTypeDefinitions.FindAsync(contentType.Id);
+        if (existing == null) return false;
 
-        return await connection.ExecuteAsync(sql, contentType) > 0;
+        _context.Entry(existing).CurrentValues.SetValues(contentType);
+        return await _context.SaveChangesAsync() > 0;
     }
 
     public async Task<bool> DeleteAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var tableName = GetContentTypesTableName();
         // Soft delete - just mark as inactive
-        return await connection.ExecuteAsync(
-            $"UPDATE {tableName} SET IsActive = 0, ModifiedAt = @Now WHERE Id = @Id",
-            new { Id = id, Now = DateTime.UtcNow }) > 0;
+        var entity = await _context.ContentTypeDefinitions.FindAsync(id);
+        if (entity == null) return false;
+
+        entity.IsActive = false;
+        entity.ModifiedAt = DateTime.UtcNow;
+        return await _context.SaveChangesAsync() > 0;
     }
 
     #endregion
@@ -161,88 +153,103 @@ public class ContentTypeDefinitionRepository : IContentTypeDefinitionRepository
 
     public async Task<IEnumerable<ContentTypeField>> GetFieldsAsync(Guid contentTypeId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<ContentTypeField>(
-            "SELECT * FROM ContentTypeFields WHERE ContentTypeId = @ContentTypeId AND IsActive = 1 ORDER BY SortOrder",
-            new { ContentTypeId = contentTypeId });
+        return await _context.ContentTypeFields
+            .AsNoTracking()
+            .Where(f => f.ContentTypeId == contentTypeId && f.IsActive)
+            .OrderBy(f => f.SortOrder)
+            .ToListAsync();
     }
 
     public async Task<ContentTypeField?> GetFieldByIdAsync(Guid fieldId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<ContentTypeField>(
-            "SELECT * FROM ContentTypeFields WHERE Id = @Id", new { Id = fieldId });
+        return await _context.ContentTypeFields
+            .AsNoTracking()
+            .FirstOrDefaultAsync(f => f.Id == fieldId);
     }
 
     public async Task<Guid> CreateFieldAsync(ContentTypeField field)
     {
-        using var connection = _connectionFactory.CreateConnection();
         field.Id = Guid.NewGuid();
         field.CreatedAt = DateTime.UtcNow;
 
         // Get max sort order
-        var maxOrder = await connection.ExecuteScalarAsync<int?>(
-            "SELECT MAX(SortOrder) FROM ContentTypeFields WHERE ContentTypeId = @ContentTypeId",
-            new { field.ContentTypeId });
+        var maxOrder = await _context.ContentTypeFields
+            .Where(f => f.ContentTypeId == field.ContentTypeId)
+            .MaxAsync(f => (int?)f.SortOrder);
         field.SortOrder = (maxOrder ?? 0) + 1;
 
-        var sql = @"INSERT INTO ContentTypeFields
-                    (Id, ContentTypeId, FieldName, DisplayName, Description, FieldType, IsRequired, IsReadOnly,
-                     ShowInList, IsSearchable, DefaultValue, ValidationRules, LookupName, Options, SortOrder,
-                     GroupName, ColumnSpan, IsActive, CreatedAt)
-                    VALUES (@Id, @ContentTypeId, @FieldName, @DisplayName, @Description, @FieldType, @IsRequired, @IsReadOnly,
-                            @ShowInList, @IsSearchable, @DefaultValue, @ValidationRules, @LookupName, @Options, @SortOrder,
-                            @GroupName, @ColumnSpan, @IsActive, @CreatedAt)";
-
-        await connection.ExecuteAsync(sql, field);
+        _context.ContentTypeFields.Add(field);
+        await _context.SaveChangesAsync();
         return field.Id;
     }
 
     public async Task<bool> UpdateFieldAsync(ContentTypeField field)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var sql = @"UPDATE ContentTypeFields SET
-                    FieldName = @FieldName, DisplayName = @DisplayName, Description = @Description,
-                    FieldType = @FieldType, IsRequired = @IsRequired, IsReadOnly = @IsReadOnly,
-                    ShowInList = @ShowInList, IsSearchable = @IsSearchable, DefaultValue = @DefaultValue,
-                    ValidationRules = @ValidationRules, LookupName = @LookupName, Options = @Options,
-                    SortOrder = @SortOrder, GroupName = @GroupName, ColumnSpan = @ColumnSpan, IsActive = @IsActive
-                    WHERE Id = @Id";
+        var existing = await _context.ContentTypeFields.FindAsync(field.Id);
+        if (existing == null) return false;
 
-        return await connection.ExecuteAsync(sql, field) > 0;
+        existing.FieldName = field.FieldName;
+        existing.DisplayName = field.DisplayName;
+        existing.Description = field.Description;
+        existing.FieldType = field.FieldType;
+        existing.IsRequired = field.IsRequired;
+        existing.IsReadOnly = field.IsReadOnly;
+        existing.ShowInList = field.ShowInList;
+        existing.IsSearchable = field.IsSearchable;
+        existing.DefaultValue = field.DefaultValue;
+        existing.ValidationRules = field.ValidationRules;
+        existing.LookupName = field.LookupName;
+        existing.Options = field.Options;
+        existing.SortOrder = field.SortOrder;
+        existing.GroupName = field.GroupName;
+        existing.ColumnSpan = field.ColumnSpan;
+        existing.IsActive = field.IsActive;
+
+        return await _context.SaveChangesAsync() > 0;
     }
 
     public async Task<bool> DeleteFieldAsync(Guid fieldId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.ExecuteAsync(
-            "UPDATE ContentTypeFields SET IsActive = 0 WHERE Id = @Id",
-            new { Id = fieldId }) > 0;
+        var entity = await _context.ContentTypeFields.FindAsync(fieldId);
+        if (entity == null) return false;
+
+        entity.IsActive = false;
+        return await _context.SaveChangesAsync() > 0;
     }
 
     public async Task<bool> ReorderFieldsAsync(Guid contentTypeId, List<Guid> fieldIds)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
-        using var transaction = connection.BeginTransaction();
+        var strategy = _context.Database.CreateExecutionStrategy();
 
-        try
+        return await strategy.ExecuteAsync(async () =>
         {
-            for (int i = 0; i < fieldIds.Count; i++)
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
             {
-                await connection.ExecuteAsync(
-                    "UPDATE ContentTypeFields SET SortOrder = @Order WHERE Id = @Id AND ContentTypeId = @ContentTypeId",
-                    new { Id = fieldIds[i], ContentTypeId = contentTypeId, Order = i + 1 },
-                    transaction);
+                var fields = await _context.ContentTypeFields
+                    .Where(f => f.ContentTypeId == contentTypeId && fieldIds.Contains(f.Id))
+                    .ToListAsync();
+
+                var orderLookup = fieldIds.Select((id, idx) => (id, order: idx + 1))
+                    .ToDictionary(x => x.id, x => x.order);
+
+                foreach (var field in fields)
+                {
+                    if (orderLookup.TryGetValue(field.Id, out var newOrder))
+                        field.SortOrder = newOrder;
+                }
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return true;
             }
-            transaction.Commit();
-            return true;
-        }
-        catch
-        {
-            transaction.Rollback();
-            return false;
-        }
+            catch
+            {
+                await transaction.RollbackAsync();
+                return false;
+            }
+        });
     }
 
     #endregion
@@ -251,74 +258,71 @@ public class ContentTypeDefinitionRepository : IContentTypeDefinitionRepository
 
     public async Task<IEnumerable<DocumentMetadata>> GetDocumentMetadataAsync(Guid documentId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<DocumentMetadata>(
-            "SELECT * FROM DocumentMetadata WHERE DocumentId = @DocumentId",
-            new { DocumentId = documentId });
+        return await _context.DocumentMetadata
+            .AsNoTracking()
+            .Where(dm => dm.DocumentId == documentId)
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<DocumentMetadata>> GetDocumentMetadataByContentTypeAsync(Guid documentId, Guid contentTypeId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<DocumentMetadata>(
-            "SELECT * FROM DocumentMetadata WHERE DocumentId = @DocumentId AND ContentTypeId = @ContentTypeId",
-            new { DocumentId = documentId, ContentTypeId = contentTypeId });
+        return await _context.DocumentMetadata
+            .AsNoTracking()
+            .Where(dm => dm.DocumentId == documentId && dm.ContentTypeId == contentTypeId)
+            .ToListAsync();
     }
 
     public async Task<bool> SaveDocumentMetadataAsync(Guid documentId, Guid contentTypeId, List<DocumentMetadata> metadata, Guid userId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
-        using var transaction = connection.BeginTransaction();
+        var strategy = _context.Database.CreateExecutionStrategy();
 
-        try
+        return await strategy.ExecuteAsync(async () =>
         {
-            // Delete existing metadata for this document/content type
-            await connection.ExecuteAsync(
-                "DELETE FROM DocumentMetadata WHERE DocumentId = @DocumentId AND ContentTypeId = @ContentTypeId",
-                new { DocumentId = documentId, ContentTypeId = contentTypeId },
-                transaction);
+            await using var transaction = await _context.Database.BeginTransactionAsync();
 
-            // Insert new metadata
-            foreach (var item in metadata)
+            try
             {
-                item.Id = Guid.NewGuid();
-                item.DocumentId = documentId;
-                item.ContentTypeId = contentTypeId;
-                item.CreatedBy = userId;
-                item.CreatedAt = DateTime.UtcNow;
+                // Delete existing metadata for this document/content type
+                await _context.DocumentMetadata
+                    .Where(dm => dm.DocumentId == documentId && dm.ContentTypeId == contentTypeId)
+                    .ExecuteDeleteAsync();
 
-                var sql = @"INSERT INTO DocumentMetadata
-                            (Id, DocumentId, ContentTypeId, FieldId, FieldName, Value, NumericValue, DateValue, CreatedBy, CreatedAt)
-                            VALUES (@Id, @DocumentId, @ContentTypeId, @FieldId, @FieldName, @Value, @NumericValue, @DateValue, @CreatedBy, @CreatedAt)";
+                // Insert new metadata
+                foreach (var item in metadata)
+                {
+                    item.Id = Guid.NewGuid();
+                    item.DocumentId = documentId;
+                    item.ContentTypeId = contentTypeId;
+                    item.CreatedBy = userId;
+                    item.CreatedAt = DateTime.UtcNow;
 
-                await connection.ExecuteAsync(sql, item, transaction);
+                    _context.DocumentMetadata.Add(item);
+                }
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return true;
             }
-
-            transaction.Commit();
-            return true;
-        }
-        catch
-        {
-            transaction.Rollback();
-            return false;
-        }
+            catch
+            {
+                await transaction.RollbackAsync();
+                return false;
+            }
+        });
     }
 
     public async Task<bool> DeleteDocumentMetadataAsync(Guid documentId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.ExecuteAsync(
-            "DELETE FROM DocumentMetadata WHERE DocumentId = @DocumentId",
-            new { DocumentId = documentId }) > 0;
+        return await _context.DocumentMetadata
+            .Where(dm => dm.DocumentId == documentId)
+            .ExecuteDeleteAsync() > 0;
     }
 
     public async Task<bool> DeleteDocumentMetadataByContentTypeAsync(Guid documentId, Guid contentTypeId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.ExecuteAsync(
-            "DELETE FROM DocumentMetadata WHERE DocumentId = @DocumentId AND ContentTypeId = @ContentTypeId",
-            new { DocumentId = documentId, ContentTypeId = contentTypeId }) > 0;
+        return await _context.DocumentMetadata
+            .Where(dm => dm.DocumentId == documentId && dm.ContentTypeId == contentTypeId)
+            .ExecuteDeleteAsync() > 0;
     }
 
     #endregion
@@ -327,145 +331,173 @@ public class ContentTypeDefinitionRepository : IContentTypeDefinitionRepository
 
     public async Task<IEnumerable<FolderContentTypeAssignment>> GetFolderContentTypesAsync(Guid folderId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var tableName = GetContentTypesTableName();
-        var sql = $@"SELECT a.*, ct.Name as ContentTypeName, ct.Description as ContentTypeDescription,
-                           ct.Icon as ContentTypeIcon, ct.Color as ContentTypeColor
-                    FROM FolderContentTypeAssignments a
-                    INNER JOIN {tableName} ct ON a.ContentTypeId = ct.Id
-                    WHERE a.FolderId = @FolderId AND ct.IsActive = 1
-                    ORDER BY a.DisplayOrder, ct.Name";
+        var assignments = await _context.FolderContentTypeAssignments
+            .AsNoTracking()
+            .Include(a => a.ContentType)
+            .Where(a => a.FolderId == folderId && a.ContentType!.IsActive)
+            .OrderBy(a => a.DisplayOrder)
+            .ThenBy(a => a.ContentType!.Name)
+            .ToListAsync();
 
-        return await connection.QueryAsync<FolderContentTypeAssignment>(sql, new { FolderId = folderId });
+        // Populate denormalized fields from navigation
+        foreach (var a in assignments)
+        {
+            if (a.ContentType != null)
+            {
+                a.ContentTypeName = a.ContentType.Name;
+                a.ContentTypeDescription = a.ContentType.Description;
+                a.ContentTypeIcon = a.ContentType.Icon;
+                a.ContentTypeColor = a.ContentType.Color;
+            }
+        }
+
+        return assignments;
     }
 
     public async Task<IEnumerable<ContentTypeDefinition>> GetAvailableContentTypesForFolderAsync(Guid folderId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var tableName = GetContentTypesTableName();
-        // Get content types that allow folders and aren't already assigned
-        var sql = $@"SELECT * FROM {tableName}
-                    WHERE IsActive = 1 AND AllowOnFolders = 1
-                    AND Id NOT IN (SELECT ContentTypeId FROM FolderContentTypeAssignments WHERE FolderId = @FolderId)
-                    ORDER BY SortOrder, Name";
+        var assignedIds = await _context.FolderContentTypeAssignments
+            .AsNoTracking()
+            .Where(a => a.FolderId == folderId)
+            .Select(a => a.ContentTypeId)
+            .ToListAsync();
 
-        return await connection.QueryAsync<ContentTypeDefinition>(sql, new { FolderId = folderId });
+        return await _context.ContentTypeDefinitions
+            .AsNoTracking()
+            .Where(ct => ct.AllowOnFolders && !assignedIds.Contains(ct.Id))
+            .OrderBy(ct => ct.SortOrder)
+            .ThenBy(ct => ct.Name)
+            .ToListAsync();
     }
 
     public async Task<Guid> AssignContentTypeToFolderAsync(FolderContentTypeAssignment assignment)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
-        using var transaction = connection.BeginTransaction();
+        var strategy = _context.Database.CreateExecutionStrategy();
 
-        try
+        return await strategy.ExecuteAsync(async () =>
         {
-            assignment.Id = Guid.NewGuid();
-            assignment.CreatedAt = DateTime.UtcNow;
+            await using var transaction = await _context.Database.BeginTransactionAsync();
 
-            // If setting as default, clear existing default first
-            if (assignment.IsDefault)
+            try
             {
-                await connection.ExecuteAsync(
-                    "UPDATE FolderContentTypeAssignments SET IsDefault = 0 WHERE FolderId = @FolderId AND IsDefault = 1",
-                    new { assignment.FolderId },
-                    transaction);
+                assignment.Id = Guid.NewGuid();
+                assignment.CreatedAt = DateTime.UtcNow;
+
+                // If setting as default, clear existing default first
+                if (assignment.IsDefault)
+                {
+                    await _context.FolderContentTypeAssignments
+                        .Where(a => a.FolderId == assignment.FolderId && a.IsDefault)
+                        .ExecuteUpdateAsync(s => s.SetProperty(a => a.IsDefault, false));
+                }
+
+                _context.FolderContentTypeAssignments.Add(assignment);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return assignment.Id;
             }
-
-            var sql = @"INSERT INTO FolderContentTypeAssignments
-                        (Id, FolderId, ContentTypeId, IsRequired, IsDefault, InheritToChildren, DisplayOrder, CreatedBy, CreatedAt)
-                        VALUES (@Id, @FolderId, @ContentTypeId, @IsRequired, @IsDefault, @InheritToChildren, @DisplayOrder, @CreatedBy, @CreatedAt)";
-
-            await connection.ExecuteAsync(sql, assignment, transaction);
-            transaction.Commit();
-            return assignment.Id;
-        }
-        catch
-        {
-            transaction.Rollback();
-            throw;
-        }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        });
     }
 
     public async Task<bool> RemoveContentTypeFromFolderAsync(Guid assignmentId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.ExecuteAsync(
-            "DELETE FROM FolderContentTypeAssignments WHERE Id = @Id",
-            new { Id = assignmentId }) > 0;
+        return await _context.FolderContentTypeAssignments
+            .Where(a => a.Id == assignmentId)
+            .ExecuteDeleteAsync() > 0;
     }
 
     public async Task<bool> RemoveContentTypeFromFolderAsync(Guid folderId, Guid contentTypeId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.ExecuteAsync(
-            "DELETE FROM FolderContentTypeAssignments WHERE FolderId = @FolderId AND ContentTypeId = @ContentTypeId",
-            new { FolderId = folderId, ContentTypeId = contentTypeId }) > 0;
+        return await _context.FolderContentTypeAssignments
+            .Where(a => a.FolderId == folderId && a.ContentTypeId == contentTypeId)
+            .ExecuteDeleteAsync() > 0;
     }
 
     public async Task<bool> UpdateFolderAssignmentAsync(Guid folderId, Guid contentTypeId, bool isRequired, bool isDefault, bool inheritToChildren, int displayOrder)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
-        using var transaction = connection.BeginTransaction();
+        var strategy = _context.Database.CreateExecutionStrategy();
 
-        try
+        return await strategy.ExecuteAsync(async () =>
         {
-            // If setting as default, clear existing default first
-            if (isDefault)
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
             {
-                await connection.ExecuteAsync(
-                    "UPDATE FolderContentTypeAssignments SET IsDefault = 0 WHERE FolderId = @FolderId AND ContentTypeId != @ContentTypeId",
-                    new { FolderId = folderId, ContentTypeId = contentTypeId },
-                    transaction);
+                // If setting as default, clear existing default first
+                if (isDefault)
+                {
+                    await _context.FolderContentTypeAssignments
+                        .Where(a => a.FolderId == folderId && a.ContentTypeId != contentTypeId && a.IsDefault)
+                        .ExecuteUpdateAsync(s => s.SetProperty(a => a.IsDefault, false));
+                }
+
+                var assignment = await _context.FolderContentTypeAssignments
+                    .FirstOrDefaultAsync(a => a.FolderId == folderId && a.ContentTypeId == contentTypeId);
+
+                if (assignment == null)
+                {
+                    await transaction.RollbackAsync();
+                    return false;
+                }
+
+                assignment.IsRequired = isRequired;
+                assignment.IsDefault = isDefault;
+                assignment.InheritToChildren = inheritToChildren;
+                assignment.DisplayOrder = displayOrder;
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return true;
             }
-
-            var result = await connection.ExecuteAsync(
-                @"UPDATE FolderContentTypeAssignments SET
-                    IsRequired = @IsRequired, IsDefault = @IsDefault,
-                    InheritToChildren = @InheritToChildren, DisplayOrder = @DisplayOrder
-                  WHERE FolderId = @FolderId AND ContentTypeId = @ContentTypeId",
-                new { FolderId = folderId, ContentTypeId = contentTypeId, IsRequired = isRequired, IsDefault = isDefault, InheritToChildren = inheritToChildren, DisplayOrder = displayOrder },
-                transaction);
-
-            transaction.Commit();
-            return result > 0;
-        }
-        catch
-        {
-            transaction.Rollback();
-            return false;
-        }
+            catch
+            {
+                await transaction.RollbackAsync();
+                return false;
+            }
+        });
     }
 
     public async Task<bool> SetFolderDefaultContentTypeAsync(Guid folderId, Guid contentTypeId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
-        using var transaction = connection.BeginTransaction();
+        var strategy = _context.Database.CreateExecutionStrategy();
 
-        try
+        return await strategy.ExecuteAsync(async () =>
         {
-            // Clear existing default
-            await connection.ExecuteAsync(
-                "UPDATE FolderContentTypeAssignments SET IsDefault = 0 WHERE FolderId = @FolderId",
-                new { FolderId = folderId },
-                transaction);
+            await using var transaction = await _context.Database.BeginTransactionAsync();
 
-            // Set new default
-            var result = await connection.ExecuteAsync(
-                "UPDATE FolderContentTypeAssignments SET IsDefault = 1 WHERE FolderId = @FolderId AND ContentTypeId = @ContentTypeId",
-                new { FolderId = folderId, ContentTypeId = contentTypeId },
-                transaction);
+            try
+            {
+                // Clear existing default
+                await _context.FolderContentTypeAssignments
+                    .Where(a => a.FolderId == folderId && a.IsDefault)
+                    .ExecuteUpdateAsync(s => s.SetProperty(a => a.IsDefault, false));
 
-            transaction.Commit();
-            return result > 0;
-        }
-        catch
-        {
-            transaction.Rollback();
-            return false;
-        }
+                // Set new default
+                var target = await _context.FolderContentTypeAssignments
+                    .FirstOrDefaultAsync(a => a.FolderId == folderId && a.ContentTypeId == contentTypeId);
+
+                if (target == null)
+                {
+                    await transaction.RollbackAsync();
+                    return false;
+                }
+
+                target.IsDefault = true;
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return true;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                return false;
+            }
+        });
     }
 
     #endregion
@@ -474,124 +506,150 @@ public class ContentTypeDefinitionRepository : IContentTypeDefinitionRepository
 
     public async Task<IEnumerable<CabinetContentTypeAssignment>> GetCabinetContentTypesAsync(Guid cabinetId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var tableName = GetContentTypesTableName();
-        var sql = $@"SELECT a.*, ct.Name as ContentTypeName, ct.Description as ContentTypeDescription,
-                           ct.Icon as ContentTypeIcon, ct.Color as ContentTypeColor
-                    FROM CabinetContentTypeAssignments a
-                    INNER JOIN {tableName} ct ON a.ContentTypeId = ct.Id
-                    WHERE a.CabinetId = @CabinetId AND ct.IsActive = 1
-                    ORDER BY a.DisplayOrder, ct.Name";
+        var assignments = await _context.CabinetContentTypeAssignments
+            .AsNoTracking()
+            .Include(a => a.ContentType)
+            .Where(a => a.CabinetId == cabinetId && a.ContentType!.IsActive)
+            .OrderBy(a => a.DisplayOrder)
+            .ThenBy(a => a.ContentType!.Name)
+            .ToListAsync();
 
-        return await connection.QueryAsync<CabinetContentTypeAssignment>(sql, new { CabinetId = cabinetId });
+        // Populate denormalized fields from navigation
+        foreach (var a in assignments)
+        {
+            if (a.ContentType != null)
+            {
+                a.ContentTypeName = a.ContentType.Name;
+                a.ContentTypeDescription = a.ContentType.Description;
+                a.ContentTypeIcon = a.ContentType.Icon;
+                a.ContentTypeColor = a.ContentType.Color;
+            }
+        }
+
+        return assignments;
     }
 
     public async Task<Guid> AssignContentTypeToCabinetAsync(CabinetContentTypeAssignment assignment)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
-        using var transaction = connection.BeginTransaction();
+        var strategy = _context.Database.CreateExecutionStrategy();
 
-        try
+        return await strategy.ExecuteAsync(async () =>
         {
-            assignment.Id = Guid.NewGuid();
-            assignment.CreatedAt = DateTime.UtcNow;
+            await using var transaction = await _context.Database.BeginTransactionAsync();
 
-            // If setting as default, clear existing default first
-            if (assignment.IsDefault)
+            try
             {
-                await connection.ExecuteAsync(
-                    "UPDATE CabinetContentTypeAssignments SET IsDefault = 0 WHERE CabinetId = @CabinetId AND IsDefault = 1",
-                    new { assignment.CabinetId },
-                    transaction);
+                assignment.Id = Guid.NewGuid();
+                assignment.CreatedAt = DateTime.UtcNow;
+
+                // If setting as default, clear existing default first
+                if (assignment.IsDefault)
+                {
+                    await _context.CabinetContentTypeAssignments
+                        .Where(a => a.CabinetId == assignment.CabinetId && a.IsDefault)
+                        .ExecuteUpdateAsync(s => s.SetProperty(a => a.IsDefault, false));
+                }
+
+                _context.CabinetContentTypeAssignments.Add(assignment);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return assignment.Id;
             }
-
-            var sql = @"INSERT INTO CabinetContentTypeAssignments
-                        (Id, CabinetId, ContentTypeId, IsRequired, IsDefault, InheritToChildren, DisplayOrder, CreatedBy, CreatedAt)
-                        VALUES (@Id, @CabinetId, @ContentTypeId, @IsRequired, @IsDefault, @InheritToChildren, @DisplayOrder, @CreatedBy, @CreatedAt)";
-
-            await connection.ExecuteAsync(sql, assignment, transaction);
-            transaction.Commit();
-            return assignment.Id;
-        }
-        catch
-        {
-            transaction.Rollback();
-            throw;
-        }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        });
     }
 
     public async Task<bool> RemoveContentTypeFromCabinetAsync(Guid cabinetId, Guid contentTypeId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.ExecuteAsync(
-            "DELETE FROM CabinetContentTypeAssignments WHERE CabinetId = @CabinetId AND ContentTypeId = @ContentTypeId",
-            new { CabinetId = cabinetId, ContentTypeId = contentTypeId }) > 0;
+        return await _context.CabinetContentTypeAssignments
+            .Where(a => a.CabinetId == cabinetId && a.ContentTypeId == contentTypeId)
+            .ExecuteDeleteAsync() > 0;
     }
 
     public async Task<bool> UpdateCabinetAssignmentAsync(Guid cabinetId, Guid contentTypeId, bool isRequired, bool isDefault, bool inheritToChildren, int displayOrder)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
-        using var transaction = connection.BeginTransaction();
+        var strategy = _context.Database.CreateExecutionStrategy();
 
-        try
+        return await strategy.ExecuteAsync(async () =>
         {
-            // If setting as default, clear existing default first
-            if (isDefault)
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
             {
-                await connection.ExecuteAsync(
-                    "UPDATE CabinetContentTypeAssignments SET IsDefault = 0 WHERE CabinetId = @CabinetId AND ContentTypeId != @ContentTypeId",
-                    new { CabinetId = cabinetId, ContentTypeId = contentTypeId },
-                    transaction);
+                // If setting as default, clear existing default first
+                if (isDefault)
+                {
+                    await _context.CabinetContentTypeAssignments
+                        .Where(a => a.CabinetId == cabinetId && a.ContentTypeId != contentTypeId && a.IsDefault)
+                        .ExecuteUpdateAsync(s => s.SetProperty(a => a.IsDefault, false));
+                }
+
+                var assignment = await _context.CabinetContentTypeAssignments
+                    .FirstOrDefaultAsync(a => a.CabinetId == cabinetId && a.ContentTypeId == contentTypeId);
+
+                if (assignment == null)
+                {
+                    await transaction.RollbackAsync();
+                    return false;
+                }
+
+                assignment.IsRequired = isRequired;
+                assignment.IsDefault = isDefault;
+                assignment.InheritToChildren = inheritToChildren;
+                assignment.DisplayOrder = displayOrder;
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return true;
             }
-
-            var result = await connection.ExecuteAsync(
-                @"UPDATE CabinetContentTypeAssignments SET
-                    IsRequired = @IsRequired, IsDefault = @IsDefault,
-                    InheritToChildren = @InheritToChildren, DisplayOrder = @DisplayOrder
-                  WHERE CabinetId = @CabinetId AND ContentTypeId = @ContentTypeId",
-                new { CabinetId = cabinetId, ContentTypeId = contentTypeId, IsRequired = isRequired, IsDefault = isDefault, InheritToChildren = inheritToChildren, DisplayOrder = displayOrder },
-                transaction);
-
-            transaction.Commit();
-            return result > 0;
-        }
-        catch
-        {
-            transaction.Rollback();
-            return false;
-        }
+            catch
+            {
+                await transaction.RollbackAsync();
+                return false;
+            }
+        });
     }
 
     public async Task<bool> SetCabinetDefaultContentTypeAsync(Guid cabinetId, Guid contentTypeId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
-        using var transaction = connection.BeginTransaction();
+        var strategy = _context.Database.CreateExecutionStrategy();
 
-        try
+        return await strategy.ExecuteAsync(async () =>
         {
-            // Clear existing default
-            await connection.ExecuteAsync(
-                "UPDATE CabinetContentTypeAssignments SET IsDefault = 0 WHERE CabinetId = @CabinetId",
-                new { CabinetId = cabinetId },
-                transaction);
+            await using var transaction = await _context.Database.BeginTransactionAsync();
 
-            // Set new default
-            var result = await connection.ExecuteAsync(
-                "UPDATE CabinetContentTypeAssignments SET IsDefault = 1 WHERE CabinetId = @CabinetId AND ContentTypeId = @ContentTypeId",
-                new { CabinetId = cabinetId, ContentTypeId = contentTypeId },
-                transaction);
+            try
+            {
+                // Clear existing default
+                await _context.CabinetContentTypeAssignments
+                    .Where(a => a.CabinetId == cabinetId && a.IsDefault)
+                    .ExecuteUpdateAsync(s => s.SetProperty(a => a.IsDefault, false));
 
-            transaction.Commit();
-            return result > 0;
-        }
-        catch
-        {
-            transaction.Rollback();
-            return false;
-        }
+                // Set new default
+                var target = await _context.CabinetContentTypeAssignments
+                    .FirstOrDefaultAsync(a => a.CabinetId == cabinetId && a.ContentTypeId == contentTypeId);
+
+                if (target == null)
+                {
+                    await transaction.RollbackAsync();
+                    return false;
+                }
+
+                target.IsDefault = true;
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return true;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                return false;
+            }
+        });
     }
 
     #endregion
@@ -600,13 +658,12 @@ public class ContentTypeDefinitionRepository : IContentTypeDefinitionRepository
 
     public async Task<IEnumerable<EffectiveContentTypeDto>> GetEffectiveContentTypesAsync(Guid folderId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var tableName = GetContentTypesTableName();
-
         // Get folder info including cabinet and parent chain
-        var folder = await connection.QueryFirstOrDefaultAsync<dynamic>(
-            "SELECT Id, CabinetId, ParentFolderId, Name, BreakContentTypeInheritance FROM Folders WHERE Id = @FolderId",
-            new { FolderId = folderId });
+        var folder = await _context.Folders
+            .AsNoTracking()
+            .Where(f => f.Id == folderId)
+            .Select(f => new { f.Id, f.CabinetId, f.ParentFolderId, f.Name, f.BreakContentTypeInheritance })
+            .FirstOrDefaultAsync();
 
         if (folder == null)
             return Enumerable.Empty<EffectiveContentTypeDto>();
@@ -615,15 +672,28 @@ public class ContentTypeDefinitionRepository : IContentTypeDefinitionRepository
         var addedContentTypeIds = new HashSet<Guid>();
 
         // 1. Get direct folder assignments (highest priority)
-        var directAssignments = await connection.QueryAsync<EffectiveContentTypeDto>($@"
-            SELECT a.ContentTypeId, ct.Name, ct.Description, ct.Icon, ct.Color, ct.Category,
-                   a.IsRequired, a.IsDefault, a.DisplayOrder,
-                   'Direct' as Source, NULL as SourceName, NULL as SourceId
-            FROM FolderContentTypeAssignments a
-            INNER JOIN {tableName} ct ON a.ContentTypeId = ct.Id
-            WHERE a.FolderId = @FolderId AND ct.IsActive = 1
-            ORDER BY a.DisplayOrder, ct.Name",
-            new { FolderId = folderId });
+        var directAssignments = await _context.FolderContentTypeAssignments
+            .AsNoTracking()
+            .Include(a => a.ContentType)
+            .Where(a => a.FolderId == folderId && a.ContentType!.IsActive)
+            .OrderBy(a => a.DisplayOrder)
+            .ThenBy(a => a.ContentType!.Name)
+            .Select(a => new EffectiveContentTypeDto
+            {
+                ContentTypeId = a.ContentTypeId,
+                Name = a.ContentType!.Name,
+                Description = a.ContentType.Description,
+                Icon = a.ContentType.Icon,
+                Color = a.ContentType.Color,
+                Category = a.ContentType.Category,
+                IsRequired = a.IsRequired,
+                IsDefault = a.IsDefault,
+                DisplayOrder = a.DisplayOrder,
+                Source = "Direct",
+                SourceName = null,
+                SourceId = null
+            })
+            .ToListAsync();
 
         foreach (var assignment in directAssignments)
         {
@@ -632,30 +702,45 @@ public class ContentTypeDefinitionRepository : IContentTypeDefinitionRepository
         }
 
         // Check if folder breaks inheritance
-        bool breakInheritance = folder.BreakContentTypeInheritance == true;
+        bool breakInheritance = folder.BreakContentTypeInheritance;
 
         if (!breakInheritance)
         {
             // 2. Get inherited from parent folders
-            var currentParentId = (Guid?)folder.ParentFolderId;
+            var currentParentId = folder.ParentFolderId;
             while (currentParentId.HasValue)
             {
-                var parentFolder = await connection.QueryFirstOrDefaultAsync<dynamic>(
-                    "SELECT Id, Name, ParentFolderId, BreakContentTypeInheritance FROM Folders WHERE Id = @Id",
-                    new { Id = currentParentId.Value });
+                var parentFolder = await _context.Folders
+                    .AsNoTracking()
+                    .Where(f => f.Id == currentParentId.Value)
+                    .Select(f => new { f.Id, f.Name, f.ParentFolderId, f.BreakContentTypeInheritance })
+                    .FirstOrDefaultAsync();
 
-                if (parentFolder == null || parentFolder.BreakContentTypeInheritance == true)
+                if (parentFolder == null || parentFolder.BreakContentTypeInheritance)
                     break;
 
-                var inheritedAssignments = await connection.QueryAsync<EffectiveContentTypeDto>($@"
-                    SELECT a.ContentTypeId, ct.Name, ct.Description, ct.Icon, ct.Color, ct.Category,
-                           a.IsRequired, a.IsDefault, a.DisplayOrder,
-                           'Inherited' as Source, @ParentName as SourceName, @ParentId as SourceId
-                    FROM FolderContentTypeAssignments a
-                    INNER JOIN {tableName} ct ON a.ContentTypeId = ct.Id
-                    WHERE a.FolderId = @ParentFolderId AND a.InheritToChildren = 1 AND ct.IsActive = 1
-                    ORDER BY a.DisplayOrder, ct.Name",
-                    new { ParentFolderId = currentParentId.Value, ParentName = (string)parentFolder.Name, ParentId = currentParentId.Value });
+                var inheritedAssignments = await _context.FolderContentTypeAssignments
+                    .AsNoTracking()
+                    .Include(a => a.ContentType)
+                    .Where(a => a.FolderId == currentParentId.Value && a.InheritToChildren && a.ContentType!.IsActive)
+                    .OrderBy(a => a.DisplayOrder)
+                    .ThenBy(a => a.ContentType!.Name)
+                    .Select(a => new EffectiveContentTypeDto
+                    {
+                        ContentTypeId = a.ContentTypeId,
+                        Name = a.ContentType!.Name,
+                        Description = a.ContentType.Description,
+                        Icon = a.ContentType.Icon,
+                        Color = a.ContentType.Color,
+                        Category = a.ContentType.Category,
+                        IsRequired = a.IsRequired,
+                        IsDefault = a.IsDefault,
+                        DisplayOrder = a.DisplayOrder,
+                        Source = "Inherited",
+                        SourceName = parentFolder.Name,
+                        SourceId = parentFolder.Id
+                    })
+                    .ToListAsync();
 
                 foreach (var assignment in inheritedAssignments)
                 {
@@ -666,26 +751,40 @@ public class ContentTypeDefinitionRepository : IContentTypeDefinitionRepository
                     }
                 }
 
-                currentParentId = (Guid?)parentFolder.ParentFolderId;
+                currentParentId = parentFolder.ParentFolderId;
             }
 
             // 3. Get cabinet assignments (lowest priority)
-            var cabinetId = (Guid)folder.CabinetId;
-            var cabinet = await connection.QueryFirstOrDefaultAsync<dynamic>(
-                "SELECT Id, Name FROM Cabinets WHERE Id = @Id",
-                new { Id = cabinetId });
+            var cabinet = await _context.Cabinets
+                .AsNoTracking()
+                .Where(c => c.Id == folder.CabinetId)
+                .Select(c => new { c.Id, c.Name })
+                .FirstOrDefaultAsync();
 
             if (cabinet != null)
             {
-                var cabinetAssignments = await connection.QueryAsync<EffectiveContentTypeDto>($@"
-                    SELECT a.ContentTypeId, ct.Name, ct.Description, ct.Icon, ct.Color, ct.Category,
-                           a.IsRequired, a.IsDefault, a.DisplayOrder,
-                           'Cabinet' as Source, @CabinetName as SourceName, @CabinetId as SourceId
-                    FROM CabinetContentTypeAssignments a
-                    INNER JOIN {tableName} ct ON a.ContentTypeId = ct.Id
-                    WHERE a.CabinetId = @CabinetId AND a.InheritToChildren = 1 AND ct.IsActive = 1
-                    ORDER BY a.DisplayOrder, ct.Name",
-                    new { CabinetId = cabinetId, CabinetName = (string)cabinet.Name });
+                var cabinetAssignments = await _context.CabinetContentTypeAssignments
+                    .AsNoTracking()
+                    .Include(a => a.ContentType)
+                    .Where(a => a.CabinetId == folder.CabinetId && a.InheritToChildren && a.ContentType!.IsActive)
+                    .OrderBy(a => a.DisplayOrder)
+                    .ThenBy(a => a.ContentType!.Name)
+                    .Select(a => new EffectiveContentTypeDto
+                    {
+                        ContentTypeId = a.ContentTypeId,
+                        Name = a.ContentType!.Name,
+                        Description = a.ContentType.Description,
+                        Icon = a.ContentType.Icon,
+                        Color = a.ContentType.Color,
+                        Category = a.ContentType.Category,
+                        IsRequired = a.IsRequired,
+                        IsDefault = a.IsDefault,
+                        DisplayOrder = a.DisplayOrder,
+                        Source = "Cabinet",
+                        SourceName = cabinet.Name,
+                        SourceId = cabinet.Id
+                    })
+                    .ToListAsync();
 
                 foreach (var assignment in cabinetAssignments)
                 {
@@ -701,12 +800,25 @@ public class ContentTypeDefinitionRepository : IContentTypeDefinitionRepository
         // 4. If no content types found, add system default
         if (results.Count == 0)
         {
-            var systemDefault = await connection.QueryFirstOrDefaultAsync<EffectiveContentTypeDto>($@"
-                SELECT Id as ContentTypeId, Name, Description, Icon, Color, Category,
-                       0 as IsRequired, 1 as IsDefault, 0 as DisplayOrder,
-                       'SystemDefault' as Source, 'System' as SourceName, NULL as SourceId
-                FROM {tableName}
-                WHERE IsSystemDefault = 1 AND IsActive = 1");
+            var systemDefault = await _context.ContentTypeDefinitions
+                .AsNoTracking()
+                .Where(ct => ct.IsSystemDefault)
+                .Select(ct => new EffectiveContentTypeDto
+                {
+                    ContentTypeId = ct.Id,
+                    Name = ct.Name,
+                    Description = ct.Description,
+                    Icon = ct.Icon,
+                    Color = ct.Color,
+                    Category = ct.Category,
+                    IsRequired = false,
+                    IsDefault = true,
+                    DisplayOrder = 0,
+                    Source = "SystemDefault",
+                    SourceName = "System",
+                    SourceId = null
+                })
+                .FirstOrDefaultAsync();
 
             if (systemDefault != null)
             {
@@ -716,17 +828,38 @@ public class ContentTypeDefinitionRepository : IContentTypeDefinitionRepository
         }
 
         // Load fields for each content type
+        var contentTypeIds = results.Select(r => r.ContentTypeId).ToList();
+        var allFields = await _context.ContentTypeFields
+            .AsNoTracking()
+            .Where(f => contentTypeIds.Contains(f.ContentTypeId) && f.IsActive)
+            .OrderBy(f => f.SortOrder)
+            .Select(f => new ContentTypeFieldDto
+            {
+                Id = f.Id,
+                ContentTypeId = f.ContentTypeId,
+                FieldName = f.FieldName,
+                DisplayName = f.DisplayName,
+                Description = f.Description,
+                FieldType = f.FieldType,
+                IsRequired = f.IsRequired,
+                IsReadOnly = f.IsReadOnly,
+                ShowInList = f.ShowInList,
+                IsSearchable = f.IsSearchable,
+                DefaultValue = f.DefaultValue,
+                ValidationRules = f.ValidationRules,
+                LookupName = f.LookupName,
+                Options = f.Options,
+                SortOrder = f.SortOrder,
+                GroupName = f.GroupName,
+                ColumnSpan = f.ColumnSpan
+            })
+            .ToListAsync();
+
+        var fieldsByContentType = allFields.GroupBy(f => f.ContentTypeId).ToDictionary(g => g.Key, g => g.ToList());
+
         foreach (var ct in results)
         {
-            var fields = await connection.QueryAsync<ContentTypeFieldDto>(
-                @"SELECT Id, ContentTypeId, FieldName, DisplayName, Description, FieldType,
-                         IsRequired, IsReadOnly, ShowInList, IsSearchable, DefaultValue,
-                         ValidationRules, LookupName, Options, SortOrder, GroupName, ColumnSpan
-                  FROM ContentTypeFields
-                  WHERE ContentTypeId = @Id AND IsActive = 1
-                  ORDER BY SortOrder",
-                new { Id = ct.ContentTypeId });
-            ct.Fields = fields.ToList();
+            ct.Fields = fieldsByContentType.TryGetValue(ct.ContentTypeId, out var fields) ? fields : new List<ContentTypeFieldDto>();
         }
 
         return results.OrderBy(x => x.DisplayOrder).ThenBy(x => x.Name);
@@ -734,12 +867,12 @@ public class ContentTypeDefinitionRepository : IContentTypeDefinitionRepository
 
     public async Task<FolderContentTypeInfoDto?> GetFolderContentTypeInfoAsync(Guid folderId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-
         // Get folder info
-        var folder = await connection.QueryFirstOrDefaultAsync<dynamic>(
-            "SELECT Id, Name, BreakContentTypeInheritance FROM Folders WHERE Id = @FolderId",
-            new { FolderId = folderId });
+        var folder = await _context.Folders
+            .AsNoTracking()
+            .Where(f => f.Id == folderId)
+            .Select(f => new { f.Id, f.Name, f.BreakContentTypeInheritance })
+            .FirstOrDefaultAsync();
 
         if (folder == null)
             return null;
@@ -759,7 +892,7 @@ public class ContentTypeDefinitionRepository : IContentTypeDefinitionRepository
             DefaultContentTypeId = defaultCt?.ContentTypeId,
             DefaultContentTypeName = defaultCt?.Name,
             TotalContentTypes = contentTypes.Count,
-            BreaksInheritance = folder.BreakContentTypeInheritance == true,
+            BreaksInheritance = folder.BreakContentTypeInheritance,
             ContentTypes = contentTypes
         };
     }

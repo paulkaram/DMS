@@ -1,9 +1,11 @@
+using DMS.DAL.Data;
+
 namespace DMS.DAL.Entities;
 
 /// <summary>
 /// Defines document retention policies for compliance and records management
 /// </summary>
-public class RetentionPolicy
+public class RetentionPolicy : IAuditable, ISoftDeletable
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;

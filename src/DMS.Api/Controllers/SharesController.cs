@@ -2,14 +2,11 @@ using DMS.BL.DTOs;
 using DMS.BL.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace DMS.Api.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
 [Authorize]
-public class SharesController : ControllerBase
+public class SharesController : BaseApiController
 {
     private readonly IShareService _shareService;
 
@@ -18,19 +15,17 @@ public class SharesController : ControllerBase
         _shareService = shareService;
     }
 
-    private Guid GetUserId() => Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
-
     [HttpGet("shared-with-me")]
     public async Task<ActionResult<IEnumerable<SharedDocumentDto>>> GetSharedWithMe()
     {
-        var items = await _shareService.GetSharedWithMeAsync(GetUserId());
+        var items = await _shareService.GetSharedWithMeAsync(GetCurrentUserId());
         return Ok(items);
     }
 
     [HttpGet("my-shared-items")]
     public async Task<ActionResult<IEnumerable<MySharedItemDto>>> GetMySharedItems()
     {
-        var items = await _shareService.GetMySharedItemsAsync(GetUserId());
+        var items = await _shareService.GetMySharedItemsAsync(GetCurrentUserId());
         return Ok(items);
     }
 
@@ -44,7 +39,7 @@ public class SharesController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Guid>> ShareDocument([FromBody] ShareDocumentRequest request)
     {
-        var shareId = await _shareService.ShareDocumentAsync(GetUserId(), request);
+        var shareId = await _shareService.ShareDocumentAsync(GetCurrentUserId(), request);
         return Ok(shareId);
     }
 
@@ -63,10 +58,4 @@ public class SharesController : ControllerBase
         if (!result) return NotFound();
         return Ok();
     }
-}
-
-public class UpdateShareRequest
-{
-    public int PermissionLevel { get; set; }
-    public DateTime? ExpiresAt { get; set; }
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 
 interface Option {
   value: string | number | null
@@ -37,8 +37,13 @@ const emit = defineEmits<{
 
 const isOpen = ref(false)
 const searchQuery = ref('')
-const containerRef = ref<HTMLElement>()
+const triggerRef = ref<HTMLElement>()
 const searchInputRef = ref<HTMLInputElement>()
+const dropdownRef = ref<HTMLElement>()
+
+// Dropdown positioning
+const dropdownStyle = ref<Record<string, string>>({})
+const openDirection = ref<'down' | 'up'>('down')
 
 const selectedOption = computed(() => {
   return props.options.find(opt => opt.value === props.modelValue)
@@ -76,19 +81,63 @@ const sizeClasses = computed(() => {
   }
 })
 
+function updatePosition() {
+  if (!triggerRef.value) return
+
+  const rect = triggerRef.value.getBoundingClientRect()
+  const viewportHeight = window.innerHeight
+  const spaceBelow = viewportHeight - rect.bottom
+  const spaceAbove = rect.top
+  const dropdownMaxH = 280 // max-h-60 + search + padding ≈ 280px
+
+  // Open upward if not enough space below but enough above
+  if (spaceBelow < dropdownMaxH && spaceAbove > spaceBelow) {
+    openDirection.value = 'up'
+    dropdownStyle.value = {
+      position: 'fixed',
+      bottom: `${viewportHeight - rect.top + 4}px`,
+      left: `${rect.left}px`,
+      width: `${rect.width}px`,
+      zIndex: '9999'
+    }
+  } else {
+    openDirection.value = 'down'
+    dropdownStyle.value = {
+      position: 'fixed',
+      top: `${rect.bottom + 4}px`,
+      left: `${rect.left}px`,
+      width: `${rect.width}px`,
+      zIndex: '9999'
+    }
+  }
+}
+
 function toggle() {
   if (props.disabled) return
-  isOpen.value = !isOpen.value
-  if (isOpen.value && props.searchable) {
-    setTimeout(() => searchInputRef.value?.focus(), 50)
+  if (isOpen.value) {
+    close()
+  } else {
+    open()
   }
+}
+
+function open() {
+  isOpen.value = true
+  updatePosition()
+  if (props.searchable) {
+    nextTick(() => searchInputRef.value?.focus())
+  }
+}
+
+function close() {
+  isOpen.value = false
+  searchQuery.value = ''
 }
 
 function select(option: Option) {
   if (option.disabled) return
   emit('update:modelValue', option.value)
-  isOpen.value = false
-  searchQuery.value = ''
+  close()
 }
 
 function clear(e: Event) {
@@ -97,27 +146,50 @@ function clear(e: Event) {
 }
 
 function handleClickOutside(event: MouseEvent) {
-  if (containerRef.value && !containerRef.value.contains(event.target as Node)) {
-    isOpen.value = false
-    searchQuery.value = ''
+  const target = event.target as Node
+  if (
+    triggerRef.value && !triggerRef.value.contains(target) &&
+    dropdownRef.value && !dropdownRef.value.contains(target)
+  ) {
+    close()
   }
 }
 
+function handleScroll() {
+  if (isOpen.value) {
+    updatePosition()
+  }
+}
+
+// Watch for open state to add/remove scroll listener
+watch(isOpen, (open) => {
+  if (open) {
+    window.addEventListener('scroll', handleScroll, true)
+    window.addEventListener('resize', handleScroll)
+  } else {
+    window.removeEventListener('scroll', handleScroll, true)
+    window.removeEventListener('resize', handleScroll)
+  }
+})
+
 onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
+  document.addEventListener('mousedown', handleClickOutside)
 })
 
 onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
+  document.removeEventListener('mousedown', handleClickOutside)
+  window.removeEventListener('scroll', handleScroll, true)
+  window.removeEventListener('resize', handleScroll)
 })
 </script>
 
 <template>
-  <div ref="containerRef" class="relative">
+  <div class="relative">
     <label v-if="label" class="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1.5">{{ label }}</label>
 
     <!-- Trigger Button -->
     <button
+      ref="triggerRef"
       type="button"
       :disabled="disabled"
       class="relative w-full bg-white dark:bg-surface-dark border rounded-lg text-left cursor-pointer
@@ -131,10 +203,10 @@ onUnmounted(() => {
       ]"
       @click="toggle"
     >
-      <span :class="selectedOption ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-zinc-500'">
+      <span class="truncate" :class="selectedOption ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-zinc-500'">
         {{ selectedOption?.label || placeholder }}
       </span>
-      <div class="flex items-center gap-1">
+      <div class="flex items-center gap-1 flex-shrink-0">
         <!-- Clear Button -->
         <button
           v-if="clearable && selectedOption"
@@ -162,71 +234,48 @@ onUnmounted(() => {
     <!-- Error Message -->
     <p v-if="error" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ error }}</p>
 
-    <!-- Dropdown Panel -->
-    <Transition
-      enter-active-class="transition duration-100 ease-out"
-      enter-from-class="transform scale-95 opacity-0"
-      enter-to-class="transform scale-100 opacity-100"
-      leave-active-class="transition duration-75 ease-in"
-      leave-from-class="transform scale-100 opacity-100"
-      leave-to-class="transform scale-95 opacity-0"
-    >
-      <div
-        v-if="isOpen"
-        class="absolute z-50 w-full mt-1 bg-white dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-lg shadow-lg overflow-hidden"
+    <!-- Dropdown Panel (Teleported to body) -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition duration-100 ease-out"
+        enter-from-class="opacity-0 scale-95"
+        enter-to-class="opacity-100 scale-100"
+        leave-active-class="transition duration-75 ease-in"
+        leave-from-class="opacity-100 scale-100"
+        leave-to-class="opacity-0 scale-95"
       >
-        <!-- Search Input -->
-        <div v-if="searchable" class="p-2 border-b border-gray-100 dark:border-border-dark">
-          <div class="relative">
-            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input
-              ref="searchInputRef"
-              v-model="searchQuery"
-              type="text"
-              placeholder="Search..."
-              class="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-border-dark rounded-lg bg-white dark:bg-background-dark text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-teal/50 focus:border-teal"
-            />
+        <div
+          v-if="isOpen"
+          ref="dropdownRef"
+          class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-lg shadow-xl overflow-hidden"
+          :class="openDirection === 'up' ? 'origin-bottom' : 'origin-top'"
+          :style="dropdownStyle"
+        >
+          <!-- Search Input -->
+          <div v-if="searchable" class="p-2 border-b border-gray-100 dark:border-border-dark">
+            <div class="relative">
+              <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                ref="searchInputRef"
+                v-model="searchQuery"
+                type="text"
+                placeholder="Search..."
+                class="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 dark:border-border-dark rounded-lg bg-white dark:bg-background-dark text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-teal/50 focus:border-teal"
+              />
+            </div>
           </div>
-        </div>
 
-        <!-- Options List -->
-        <ul class="max-h-60 overflow-auto py-1">
-          <template v-if="filteredOptions.length === 0">
-            <li class="px-4 py-3 text-sm text-gray-500 dark:text-zinc-500 text-center">No options found</li>
-          </template>
+          <!-- Options List -->
+          <ul class="max-h-60 overflow-auto py-1">
+            <template v-if="filteredOptions.length === 0">
+              <li class="px-4 py-3 text-sm text-gray-500 dark:text-zinc-500 text-center">No options found</li>
+            </template>
 
-          <!-- Ungrouped Options -->
-          <li
-            v-for="option in groupedOptions.ungrouped"
-            :key="String(option.value)"
-            class="px-4 py-2.5 text-sm cursor-pointer transition-colors flex items-center gap-2"
-            :class="[
-              option.disabled ? 'text-gray-400 dark:text-zinc-600 cursor-not-allowed' : 'text-gray-900 dark:text-zinc-100 hover:bg-teal/10',
-              option.value === modelValue ? 'bg-teal/10 text-teal' : ''
-            ]"
-            @click="select(option)"
-          >
-            <svg
-              v-if="option.value === modelValue"
-              class="w-4 h-4 text-teal flex-shrink-0"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-            <span :class="{ 'ml-6': option.value !== modelValue }">{{ option.label }}</span>
-          </li>
-
-          <!-- Grouped Options -->
-          <template v-for="(options, group) in groupedOptions.groups" :key="group">
-            <li class="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider bg-gray-50 dark:bg-background-dark">
-              {{ group }}
-            </li>
+            <!-- Ungrouped Options -->
             <li
-              v-for="option in options"
+              v-for="option in groupedOptions.ungrouped"
               :key="String(option.value)"
               class="px-4 py-2.5 text-sm cursor-pointer transition-colors flex items-center gap-2"
               :class="[
@@ -246,9 +295,37 @@ onUnmounted(() => {
               </svg>
               <span :class="{ 'ml-6': option.value !== modelValue }">{{ option.label }}</span>
             </li>
-          </template>
-        </ul>
-      </div>
-    </Transition>
+
+            <!-- Grouped Options -->
+            <template v-for="(options, group) in groupedOptions.groups" :key="group">
+              <li class="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider bg-gray-50 dark:bg-background-dark">
+                {{ group }}
+              </li>
+              <li
+                v-for="option in options"
+                :key="String(option.value)"
+                class="px-4 py-2.5 text-sm cursor-pointer transition-colors flex items-center gap-2"
+                :class="[
+                  option.disabled ? 'text-gray-400 dark:text-zinc-600 cursor-not-allowed' : 'text-gray-900 dark:text-zinc-100 hover:bg-teal/10',
+                  option.value === modelValue ? 'bg-teal/10 text-teal' : ''
+                ]"
+                @click="select(option)"
+              >
+                <svg
+                  v-if="option.value === modelValue"
+                  class="w-4 h-4 text-teal flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span :class="{ 'ml-6': option.value !== modelValue }">{{ option.label }}</span>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>

@@ -51,7 +51,8 @@ async function loadUsers() {
   isLoading.value = true
   try {
     const response = await usersApi.getAll()
-    users.value = response.data || []
+    const data = response.data
+    users.value = Array.isArray(data) ? data : data.items ?? []
   } catch (err) {
   } finally {
     isLoading.value = false

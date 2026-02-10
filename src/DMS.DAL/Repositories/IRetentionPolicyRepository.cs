@@ -17,6 +17,8 @@ public interface IRetentionPolicyRepository
     Task<IEnumerable<DocumentRetention>> GetDocumentRetentionsAsync(Guid documentId);
     Task<IEnumerable<DocumentRetention>> GetExpiringDocumentsAsync(int daysAhead = 30);
     Task<IEnumerable<DocumentRetention>> GetPendingReviewAsync();
+    Task<(List<DocumentRetention> Items, int TotalCount)> GetExpiringDocumentsPaginatedAsync(int daysAhead, int page, int pageSize);
+    Task<(List<DocumentRetention> Items, int TotalCount)> GetPendingReviewPaginatedAsync(int page, int pageSize);
     Task<Guid> CreateDocumentRetentionAsync(DocumentRetention retention);
     Task<bool> UpdateDocumentRetentionAsync(DocumentRetention retention);
     Task<bool> ApplyPolicyToDocumentAsync(Guid documentId, Guid policyId, Guid userId);

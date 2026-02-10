@@ -36,6 +36,30 @@ public class RecycleBinService : IRecycleBinService
         return items.Select(MapToDto);
     }
 
+    public async Task<PagedResultDto<RecycleBinItemDto>> GetUserRecycleBinPaginatedAsync(Guid userId, int page, int pageSize)
+    {
+        var (items, totalCount) = await _recycleBinRepository.GetByUserIdPaginatedAsync(userId, page, pageSize);
+        return new PagedResultDto<RecycleBinItemDto>
+        {
+            Items = items.Select(MapToDto).ToList(),
+            TotalCount = totalCount,
+            PageNumber = page,
+            PageSize = pageSize
+        };
+    }
+
+    public async Task<PagedResultDto<RecycleBinItemDto>> GetAllPaginatedAsync(int? nodeType, int page, int pageSize)
+    {
+        var (items, totalCount) = await _recycleBinRepository.GetAllPaginatedAsync(nodeType, page, pageSize);
+        return new PagedResultDto<RecycleBinItemDto>
+        {
+            Items = items.Select(MapToDto).ToList(),
+            TotalCount = totalCount,
+            PageNumber = page,
+            PageSize = pageSize
+        };
+    }
+
     public async Task<bool> RestoreItemAsync(Guid id, Guid? restoreToFolderId = null)
     {
         var item = await _recycleBinRepository.GetByIdAsync(id);

@@ -54,3 +54,9 @@ public class MySharedItemDto
     public DateTime? ExpiresAt { get; set; }
     public bool HasPassword { get; set; }
 }
+
+public class UpdateShareRequest
+{
+    public int PermissionLevel { get; set; }
+    public DateTime? ExpiresAt { get; set; }
+}

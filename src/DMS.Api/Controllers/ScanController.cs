@@ -1,3 +1,4 @@
+using DMS.Api.Constants;
 using DMS.BL.DTOs;
 using DMS.BL.Interfaces;
 using DMS.DAL.Entities;
@@ -6,18 +7,14 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace DMS.Api.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
 [Authorize]
-public class ScanController : ControllerBase
+public class ScanController : BaseApiController
 {
     private readonly IScanService _scanService;
-    private readonly IPermissionService _permissionService;
 
-    public ScanController(IScanService scanService, IPermissionService permissionService)
+    public ScanController(IScanService scanService)
     {
         _scanService = scanService;
-        _permissionService = permissionService;
     }
 
     [HttpPost("process")]
@@ -27,13 +24,13 @@ public class ScanController : ControllerBase
         [FromForm] List<IFormFile> images)
     {
         if (images == null || images.Count == 0)
-            return BadRequest(new[] { "At least one image is required" });
+            return BadRequest(new[] { ErrorMessages.AtLeastOneImageRequired });
 
         var userId = GetCurrentUserId();
 
         // Check write permission on target folder
         if (!await HasPermissionAsync(userId, "Folder", request.TargetFolderId, (int)PermissionLevel.Write))
-            return Forbid("You don't have permission to upload to this folder");
+            return Forbid(ErrorMessages.Permissions.UploadToFolder);
 
         var streams = new List<Stream>();
         var fileNames = new List<string>();
@@ -59,20 +56,5 @@ public class ScanController : ControllerBase
             foreach (var stream in streams)
                 await stream.DisposeAsync();
         }
-    }
-
-    private Guid GetCurrentUserId()
-    {
-        var userIdClaim = User.FindFirst("sub")?.Value ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        return Guid.TryParse(userIdClaim, out var userId) ? userId : Guid.Empty;
-    }
-
-    private bool IsAdmin() => User.IsInRole("Admin");
-
-    private async Task<bool> HasPermissionAsync(Guid userId, string nodeType, Guid nodeId, int requiredLevel)
-    {
-        if (IsAdmin()) return true;
-        var result = await _permissionService.HasPermissionAsync(userId, nodeType, nodeId, requiredLevel);
-        return result.Success && result.Data;
     }
 }

@@ -1,118 +1,89 @@
-using Dapper;
 using DMS.DAL.Data;
 using DMS.DAL.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace DMS.DAL.Repositories;
 
 public class DocumentLinkRepository : IDocumentLinkRepository
 {
-    private readonly IDbConnectionFactory _connectionFactory;
+    private readonly DmsDbContext _context;
 
-    public DocumentLinkRepository(IDbConnectionFactory connectionFactory)
+    public DocumentLinkRepository(DmsDbContext context)
     {
-        _connectionFactory = connectionFactory;
+        _context = context;
     }
 
-    public async Task<IEnumerable<DocumentLink>> GetByDocumentIdAsync(Guid documentId)
-    {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<DocumentLink>(@"
-            SELECT l.*,
-                   sd.Name as SourceDocumentName,
-                   td.Name as TargetDocumentName,
-                   u.DisplayName as CreatedByName
-            FROM DocumentLinks l
-            LEFT JOIN Documents sd ON l.SourceDocumentId = sd.Id
-            LEFT JOIN Documents td ON l.TargetDocumentId = td.Id
-            LEFT JOIN Users u ON l.CreatedBy = u.Id
-            WHERE l.SourceDocumentId = @DocumentId
-            ORDER BY l.CreatedAt DESC",
-            new { DocumentId = documentId });
-    }
+    public async Task<IEnumerable<DocumentLink>> GetByDocumentIdAsync(Guid documentId) =>
+        await BuildLinkQuery()
+            .Where(l => l.SourceDocumentId == documentId)
+            .OrderByDescending(l => l.CreatedAt)
+            .ToListAsync();
 
-    public async Task<IEnumerable<DocumentLink>> GetIncomingLinksAsync(Guid documentId)
-    {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<DocumentLink>(@"
-            SELECT l.*,
-                   sd.Name as SourceDocumentName,
-                   td.Name as TargetDocumentName,
-                   u.DisplayName as CreatedByName
-            FROM DocumentLinks l
-            LEFT JOIN Documents sd ON l.SourceDocumentId = sd.Id
-            LEFT JOIN Documents td ON l.TargetDocumentId = td.Id
-            LEFT JOIN Users u ON l.CreatedBy = u.Id
-            WHERE l.TargetDocumentId = @DocumentId
-            ORDER BY l.CreatedAt DESC",
-            new { DocumentId = documentId });
-    }
+    public async Task<IEnumerable<DocumentLink>> GetIncomingLinksAsync(Guid documentId) =>
+        await BuildLinkQuery()
+            .Where(l => l.TargetDocumentId == documentId)
+            .OrderByDescending(l => l.CreatedAt)
+            .ToListAsync();
 
-    public async Task<DocumentLink?> GetByIdAsync(Guid id)
-    {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<DocumentLink>(@"
-            SELECT l.*,
-                   sd.Name as SourceDocumentName,
-                   td.Name as TargetDocumentName,
-                   u.DisplayName as CreatedByName
-            FROM DocumentLinks l
-            LEFT JOIN Documents sd ON l.SourceDocumentId = sd.Id
-            LEFT JOIN Documents td ON l.TargetDocumentId = td.Id
-            LEFT JOIN Users u ON l.CreatedBy = u.Id
-            WHERE l.Id = @Id",
-            new { Id = id });
-    }
+    public async Task<DocumentLink?> GetByIdAsync(Guid id) =>
+        await BuildLinkQuery()
+            .FirstOrDefaultAsync(l => l.Id == id);
 
-    public async Task<DocumentLink?> GetExistingLinkAsync(Guid sourceDocumentId, Guid targetDocumentId)
-    {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<DocumentLink>(
-            "SELECT * FROM DocumentLinks WHERE SourceDocumentId = @SourceDocumentId AND TargetDocumentId = @TargetDocumentId",
-            new { SourceDocumentId = sourceDocumentId, TargetDocumentId = targetDocumentId });
-    }
+    public async Task<DocumentLink?> GetExistingLinkAsync(Guid sourceDocumentId, Guid targetDocumentId) =>
+        await _context.DocumentLinks.AsNoTracking()
+            .FirstOrDefaultAsync(l => l.SourceDocumentId == sourceDocumentId
+                                   && l.TargetDocumentId == targetDocumentId);
 
     public async Task<Guid> AddAsync(DocumentLink link)
     {
         link.Id = Guid.NewGuid();
         link.CreatedAt = DateTime.UtcNow;
 
-        using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(@"
-            INSERT INTO DocumentLinks (Id, SourceDocumentId, TargetDocumentId, LinkType, Description, CreatedBy, CreatedAt)
-            VALUES (@Id, @SourceDocumentId, @TargetDocumentId, @LinkType, @Description, @CreatedBy, @CreatedAt)",
-            link);
+        _context.DocumentLinks.Add(link);
+        await _context.SaveChangesAsync();
 
         return link.Id;
     }
 
     public async Task<bool> UpdateAsync(DocumentLink link)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var affected = await connection.ExecuteAsync(@"
-            UPDATE DocumentLinks
-            SET LinkType = @LinkType, Description = @Description
-            WHERE Id = @Id",
-            link);
-
-        return affected > 0;
+        return await _context.DocumentLinks.Where(l => l.Id == link.Id)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(l => l.LinkType, link.LinkType)
+                .SetProperty(l => l.Description, link.Description)) > 0;
     }
 
-    public async Task<bool> DeleteAsync(Guid id)
-    {
-        using var connection = _connectionFactory.CreateConnection();
-        var affected = await connection.ExecuteAsync(
-            "DELETE FROM DocumentLinks WHERE Id = @Id",
-            new { Id = id });
+    public async Task<bool> DeleteAsync(Guid id) =>
+        await _context.DocumentLinks.Where(l => l.Id == id)
+            .ExecuteDeleteAsync() > 0;
 
-        return affected > 0;
-    }
+    public async Task<int> GetLinkCountAsync(Guid documentId) =>
+        await _context.DocumentLinks.AsNoTracking()
+            .CountAsync(l => l.SourceDocumentId == documentId
+                          || l.TargetDocumentId == documentId);
 
-    public async Task<int> GetLinkCountAsync(Guid documentId)
-    {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.ExecuteScalarAsync<int>(@"
-            SELECT COUNT(*) FROM DocumentLinks
-            WHERE SourceDocumentId = @DocumentId OR TargetDocumentId = @DocumentId",
-            new { DocumentId = documentId });
-    }
+    /// <summary>
+    /// Builds the common link query with JOINs for source/target document names and creator name.
+    /// </summary>
+    private IQueryable<DocumentLink> BuildLinkQuery() =>
+        from l in _context.DocumentLinks.AsNoTracking()
+        join sd in _context.Documents.AsNoTracking() on l.SourceDocumentId equals sd.Id into sds
+        from sd in sds.DefaultIfEmpty()
+        join td in _context.Documents.AsNoTracking() on l.TargetDocumentId equals td.Id into tds
+        from td in tds.DefaultIfEmpty()
+        join u in _context.Users.AsNoTracking() on l.CreatedBy equals u.Id into us
+        from u in us.DefaultIfEmpty()
+        select new DocumentLink
+        {
+            Id = l.Id,
+            SourceDocumentId = l.SourceDocumentId,
+            TargetDocumentId = l.TargetDocumentId,
+            LinkType = l.LinkType,
+            Description = l.Description,
+            CreatedBy = l.CreatedBy,
+            CreatedAt = l.CreatedAt,
+            SourceDocumentName = sd != null ? sd.Name : null,
+            TargetDocumentName = td != null ? td.Name : null,
+            CreatedByName = u != null ? u.DisplayName : null
+        };
 }

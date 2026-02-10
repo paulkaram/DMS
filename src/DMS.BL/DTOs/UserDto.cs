@@ -36,33 +36,3 @@ public class RoleDto
     public string? Description { get; set; }
 }
 
-public class DelegationDto
-{
-    public Guid Id { get; set; }
-    public Guid FromUserId { get; set; }
-    public string? FromUserName { get; set; }
-    public Guid ToUserId { get; set; }
-    public string? ToUserName { get; set; }
-    public Guid? RoleId { get; set; }
-    public string? RoleName { get; set; }
-    public DateTime StartDate { get; set; }
-    public DateTime? EndDate { get; set; }
-    public bool IsActive { get; set; }
-}
-
-public class CreateDelegationDto
-{
-    public Guid ToUserId { get; set; }
-    public Guid? RoleId { get; set; }
-    public DateTime StartDate { get; set; }
-    public DateTime? EndDate { get; set; }
-}
-
-public class UpdateDelegationDto
-{
-    public Guid ToUserId { get; set; }
-    public Guid? RoleId { get; set; }
-    public DateTime StartDate { get; set; }
-    public DateTime? EndDate { get; set; }
-    public bool IsActive { get; set; }
-}

@@ -1,21 +1,19 @@
+using DMS.BL.DTOs;
 using DMS.DAL.Entities;
 using DMS.DAL.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace DMS.Api.Controllers;
 
 #region Bookmarks Controller
 
-[ApiController]
 [Route("api/bookmarks")]
 [Authorize]
-public class BookmarksController : ControllerBase
+public class BookmarksController : BaseApiController
 {
     private readonly IBookmarkRepository _repository;
     public BookmarksController(IBookmarkRepository repository) => _repository = repository;
-    private Guid GetUserId() => Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Bookmark>>> GetAll([FromQuery] bool includeInactive = false) =>
@@ -31,7 +29,7 @@ public class BookmarksController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Guid>> Create([FromBody] Bookmark request)
     {
-        request.CreatedBy = GetUserId();
+        request.CreatedBy = GetCurrentUserId();
         return Ok(await _repository.CreateAsync(request));
     }
 
@@ -39,7 +37,7 @@ public class BookmarksController : ControllerBase
     public async Task<ActionResult> Update(Guid id, [FromBody] Bookmark request)
     {
         request.Id = id;
-        request.ModifiedBy = GetUserId();
+        request.ModifiedBy = GetCurrentUserId();
         return await _repository.UpdateAsync(request) ? Ok() : NotFound();
     }
 
@@ -52,14 +50,12 @@ public class BookmarksController : ControllerBase
 
 #region Cases Controller
 
-[ApiController]
 [Route("api/cases")]
 [Authorize]
-public class CasesController : ControllerBase
+public class CasesController : BaseApiController
 {
     private readonly ICaseRepository _repository;
     public CasesController(ICaseRepository repository) => _repository = repository;
-    private Guid GetUserId() => Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Case>>> GetAll([FromQuery] bool includeInactive = false) =>
@@ -78,12 +74,12 @@ public class CasesController : ControllerBase
 
     [HttpGet("my-cases")]
     public async Task<ActionResult<IEnumerable<Case>>> GetMyCases() =>
-        Ok(await _repository.GetByAssigneeAsync(GetUserId()));
+        Ok(await _repository.GetByAssigneeAsync(GetCurrentUserId()));
 
     [HttpPost]
     public async Task<ActionResult<Guid>> Create([FromBody] Case request)
     {
-        request.CreatedBy = GetUserId();
+        request.CreatedBy = GetCurrentUserId();
         return Ok(await _repository.CreateAsync(request));
     }
 
@@ -91,33 +87,29 @@ public class CasesController : ControllerBase
     public async Task<ActionResult> Update(Guid id, [FromBody] Case request)
     {
         request.Id = id;
-        request.ModifiedBy = GetUserId();
+        request.ModifiedBy = GetCurrentUserId();
         return await _repository.UpdateAsync(request) ? Ok() : NotFound();
     }
 
     [HttpPut("{id}/status")]
     public async Task<ActionResult> UpdateStatus(Guid id, [FromBody] UpdateStatusRequest request) =>
-        await _repository.UpdateStatusAsync(id, request.Status, GetUserId()) ? Ok() : NotFound();
+        await _repository.UpdateStatusAsync(id, request.Status, GetCurrentUserId()) ? Ok() : NotFound();
 
     [HttpDelete("{id}")]
     public async Task<ActionResult> Delete(Guid id) =>
         await _repository.DeleteAsync(id) ? Ok() : NotFound();
 }
 
-public class UpdateStatusRequest { public string Status { get; set; } = string.Empty; }
-
 #endregion
 
 #region Endpoints Controller
 
-[ApiController]
 [Route("api/endpoints")]
 [Authorize]
-public class EndpointsController : ControllerBase
+public class EndpointsController : BaseApiController
 {
     private readonly IEndpointRepository _repository;
     public EndpointsController(IEndpointRepository repository) => _repository = repository;
-    private Guid GetUserId() => Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ServiceEndpoint>>> GetAll([FromQuery] bool includeInactive = false) =>
@@ -137,7 +129,7 @@ public class EndpointsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Guid>> Create([FromBody] ServiceEndpoint request)
     {
-        request.CreatedBy = GetUserId();
+        request.CreatedBy = GetCurrentUserId();
         return Ok(await _repository.CreateAsync(request));
     }
 
@@ -145,7 +137,7 @@ public class EndpointsController : ControllerBase
     public async Task<ActionResult> Update(Guid id, [FromBody] ServiceEndpoint request)
     {
         request.Id = id;
-        request.ModifiedBy = GetUserId();
+        request.ModifiedBy = GetCurrentUserId();
         return await _repository.UpdateAsync(request) ? Ok() : NotFound();
     }
 
@@ -166,14 +158,12 @@ public class EndpointsController : ControllerBase
 
 #region Export Config Controller
 
-[ApiController]
 [Route("api/export-configs")]
 [Authorize]
-public class ExportConfigsController : ControllerBase
+public class ExportConfigsController : BaseApiController
 {
     private readonly IExportConfigRepository _repository;
     public ExportConfigsController(IExportConfigRepository repository) => _repository = repository;
-    private Guid GetUserId() => Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ExportConfig>>> GetAll([FromQuery] bool includeInactive = false) =>
@@ -196,7 +186,7 @@ public class ExportConfigsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Guid>> Create([FromBody] ExportConfig request)
     {
-        request.CreatedBy = GetUserId();
+        request.CreatedBy = GetCurrentUserId();
         return Ok(await _repository.CreateAsync(request));
     }
 
@@ -204,7 +194,7 @@ public class ExportConfigsController : ControllerBase
     public async Task<ActionResult> Update(Guid id, [FromBody] ExportConfig request)
     {
         request.Id = id;
-        request.ModifiedBy = GetUserId();
+        request.ModifiedBy = GetCurrentUserId();
         return await _repository.UpdateAsync(request) ? Ok() : NotFound();
     }
 
@@ -221,14 +211,12 @@ public class ExportConfigsController : ControllerBase
 
 #region Naming Conventions Controller
 
-[ApiController]
 [Route("api/naming-conventions")]
 [Authorize]
-public class NamingConventionsController : ControllerBase
+public class NamingConventionsController : BaseApiController
 {
     private readonly INamingConventionRepository _repository;
     public NamingConventionsController(INamingConventionRepository repository) => _repository = repository;
-    private Guid GetUserId() => Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<NamingConvention>>> GetAll([FromQuery] bool includeInactive = false) =>
@@ -248,7 +236,7 @@ public class NamingConventionsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Guid>> Create([FromBody] NamingConvention request)
     {
-        request.CreatedBy = GetUserId();
+        request.CreatedBy = GetCurrentUserId();
         return Ok(await _repository.CreateAsync(request));
     }
 
@@ -256,7 +244,7 @@ public class NamingConventionsController : ControllerBase
     public async Task<ActionResult> Update(Guid id, [FromBody] NamingConvention request)
     {
         request.Id = id;
-        request.ModifiedBy = GetUserId();
+        request.ModifiedBy = GetCurrentUserId();
         return await _repository.UpdateAsync(request) ? Ok() : NotFound();
     }
 
@@ -269,14 +257,12 @@ public class NamingConventionsController : ControllerBase
 
 #region Organization Templates Controller
 
-[ApiController]
 [Route("api/organization-templates")]
 [Authorize]
-public class OrganizationTemplatesController : ControllerBase
+public class OrganizationTemplatesController : BaseApiController
 {
     private readonly IOrganizationTemplateRepository _repository;
     public OrganizationTemplatesController(IOrganizationTemplateRepository repository) => _repository = repository;
-    private Guid GetUserId() => Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<OrganizationTemplate>>> GetAll([FromQuery] bool includeInactive = false) =>
@@ -299,7 +285,7 @@ public class OrganizationTemplatesController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Guid>> Create([FromBody] OrganizationTemplate request)
     {
-        request.CreatedBy = GetUserId();
+        request.CreatedBy = GetCurrentUserId();
         return Ok(await _repository.CreateAsync(request));
     }
 
@@ -307,7 +293,7 @@ public class OrganizationTemplatesController : ControllerBase
     public async Task<ActionResult> Update(Guid id, [FromBody] OrganizationTemplate request)
     {
         request.Id = id;
-        request.ModifiedBy = GetUserId();
+        request.ModifiedBy = GetCurrentUserId();
         return await _repository.UpdateAsync(request) ? Ok() : NotFound();
     }
 
@@ -324,14 +310,12 @@ public class OrganizationTemplatesController : ControllerBase
 
 #region Permission Level Definitions Controller
 
-[ApiController]
 [Route("api/permission-levels")]
 [Authorize]
-public class PermissionLevelsController : ControllerBase
+public class PermissionLevelsController : BaseApiController
 {
     private readonly IPermissionLevelDefinitionRepository _repository;
     public PermissionLevelsController(IPermissionLevelDefinitionRepository repository) => _repository = repository;
-    private Guid GetUserId() => Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<PermissionLevelDefinition>>> GetAll([FromQuery] bool includeInactive = false) =>
@@ -354,7 +338,7 @@ public class PermissionLevelsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Guid>> Create([FromBody] PermissionLevelDefinition request)
     {
-        request.CreatedBy = GetUserId();
+        request.CreatedBy = GetCurrentUserId();
         return Ok(await _repository.CreateAsync(request));
     }
 
@@ -362,7 +346,7 @@ public class PermissionLevelsController : ControllerBase
     public async Task<ActionResult> Update(Guid id, [FromBody] PermissionLevelDefinition request)
     {
         request.Id = id;
-        request.ModifiedBy = GetUserId();
+        request.ModifiedBy = GetCurrentUserId();
         return await _repository.UpdateAsync(request) ? Ok() : NotFound();
     }
 
@@ -375,14 +359,12 @@ public class PermissionLevelsController : ControllerBase
 
 #region Purposes Controller
 
-[ApiController]
 [Route("api/purposes")]
 [Authorize]
-public class PurposesController : ControllerBase
+public class PurposesController : BaseApiController
 {
     private readonly IPurposeRepository _repository;
     public PurposesController(IPurposeRepository repository) => _repository = repository;
-    private Guid GetUserId() => Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Purpose>>> GetAll([FromQuery] bool includeInactive = false) =>
@@ -402,7 +384,7 @@ public class PurposesController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Guid>> Create([FromBody] Purpose request)
     {
-        request.CreatedBy = GetUserId();
+        request.CreatedBy = GetCurrentUserId();
         return Ok(await _repository.CreateAsync(request));
     }
 
@@ -410,7 +392,7 @@ public class PurposesController : ControllerBase
     public async Task<ActionResult> Update(Guid id, [FromBody] Purpose request)
     {
         request.Id = id;
-        request.ModifiedBy = GetUserId();
+        request.ModifiedBy = GetCurrentUserId();
         return await _repository.UpdateAsync(request) ? Ok() : NotFound();
     }
 
@@ -423,14 +405,12 @@ public class PurposesController : ControllerBase
 
 #region Scan Config Controller
 
-[ApiController]
 [Route("api/scan-configs")]
 [Authorize]
-public class ScanConfigsController : ControllerBase
+public class ScanConfigsController : BaseApiController
 {
     private readonly IScanConfigRepository _repository;
     public ScanConfigsController(IScanConfigRepository repository) => _repository = repository;
-    private Guid GetUserId() => Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ScanConfig>>> GetAll([FromQuery] bool includeInactive = false) =>
@@ -453,7 +433,7 @@ public class ScanConfigsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Guid>> Create([FromBody] ScanConfig request)
     {
-        request.CreatedBy = GetUserId();
+        request.CreatedBy = GetCurrentUserId();
         return Ok(await _repository.CreateAsync(request));
     }
 
@@ -461,7 +441,7 @@ public class ScanConfigsController : ControllerBase
     public async Task<ActionResult> Update(Guid id, [FromBody] ScanConfig request)
     {
         request.Id = id;
-        request.ModifiedBy = GetUserId();
+        request.ModifiedBy = GetCurrentUserId();
         return await _repository.UpdateAsync(request) ? Ok() : NotFound();
     }
 
@@ -478,14 +458,12 @@ public class ScanConfigsController : ControllerBase
 
 #region Search Config Controller
 
-[ApiController]
 [Route("api/search-configs")]
 [Authorize]
-public class SearchConfigsController : ControllerBase
+public class SearchConfigsController : BaseApiController
 {
     private readonly ISearchConfigRepository _repository;
     public SearchConfigsController(ISearchConfigRepository repository) => _repository = repository;
-    private Guid GetUserId() => Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
 
     [HttpGet]
     public async Task<ActionResult<IEnumerable<SearchConfig>>> GetAll([FromQuery] bool includeInactive = false) =>
@@ -497,7 +475,7 @@ public class SearchConfigsController : ControllerBase
 
     [HttpGet("my-configs")]
     public async Task<ActionResult<IEnumerable<SearchConfig>>> GetMyConfigs() =>
-        Ok(await _repository.GetByUserAsync(GetUserId()));
+        Ok(await _repository.GetByUserAsync(GetCurrentUserId()));
 
     [HttpGet("{id}")]
     public async Task<ActionResult<SearchConfig>> GetById(Guid id)
@@ -516,7 +494,7 @@ public class SearchConfigsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Guid>> Create([FromBody] SearchConfig request)
     {
-        request.CreatedBy = GetUserId();
+        request.CreatedBy = GetCurrentUserId();
         return Ok(await _repository.CreateAsync(request));
     }
 
@@ -524,7 +502,7 @@ public class SearchConfigsController : ControllerBase
     public async Task<ActionResult> Update(Guid id, [FromBody] SearchConfig request)
     {
         request.Id = id;
-        request.ModifiedBy = GetUserId();
+        request.ModifiedBy = GetCurrentUserId();
         return await _repository.UpdateAsync(request) ? Ok() : NotFound();
     }
 

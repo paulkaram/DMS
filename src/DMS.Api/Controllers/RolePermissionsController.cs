@@ -8,10 +8,9 @@ namespace DMS.Api.Controllers;
 /// <summary>
 /// Role-based permission matrix management.
 /// </summary>
-[ApiController]
 [Route("api/role-permissions")]
 [Authorize]
-public class RolePermissionsController : ControllerBase
+public class RolePermissionsController : BaseApiController
 {
     private readonly IRolePermissionService _rolePermissionService;
 
@@ -139,10 +138,4 @@ public class RolePermissionsController : ControllerBase
     }
 
     #endregion
-
-    private Guid GetCurrentUserId()
-    {
-        var claim = User.FindFirst("sub") ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
-        return claim != null ? Guid.Parse(claim.Value) : Guid.Empty;
-    }
 }

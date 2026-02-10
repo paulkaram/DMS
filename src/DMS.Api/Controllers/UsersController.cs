@@ -1,3 +1,4 @@
+using DMS.Api.Constants;
 using DMS.BL.DTOs;
 using DMS.BL.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -5,10 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace DMS.Api.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
 [Authorize]
-public class UsersController : ControllerBase
+public class UsersController : BaseApiController
 {
     private readonly IUserService _userService;
 
@@ -18,11 +17,14 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] string? search)
+    public async Task<IActionResult> GetAll(
+        [FromQuery] string? search,
+        [FromQuery] int page = 1, [FromQuery] int pageSize = AppConstants.DefaultPageSize)
     {
+        pageSize = Math.Min(pageSize, AppConstants.MaxPageSize);
         var result = string.IsNullOrEmpty(search)
-            ? await _userService.GetAllAsync()
-            : await _userService.SearchAsync(search);
+            ? await _userService.GetAllPaginatedAsync(page, pageSize)
+            : await _userService.SearchPaginatedAsync(search, page, pageSize);
         return result.Success ? Ok(result.Data) : BadRequest(result.Errors);
     }
 

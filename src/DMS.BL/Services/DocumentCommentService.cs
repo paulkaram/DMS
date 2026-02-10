@@ -146,7 +146,7 @@ public class DocumentCommentService : IDocumentCommentService
             DocumentId = comment.DocumentId,
             ParentCommentId = comment.ParentCommentId,
             Content = comment.Content,
-            CreatedBy = comment.CreatedBy,
+            CreatedBy = comment.CreatedBy ?? Guid.Empty,
             CreatedByName = comment.CreatedByName,
             CreatedAt = comment.CreatedAt,
             ModifiedAt = comment.ModifiedAt,

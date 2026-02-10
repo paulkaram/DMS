@@ -15,7 +15,7 @@ public class DashboardService : IDashboardService
         _documentRepo = documentRepo;
     }
 
-    public async Task<ServiceResult<DashboardStatisticsDto>> GetStatisticsAsync()
+    public async Task<ServiceResult<DashboardStatisticsDto>> GetStatisticsAsync(Guid userId)
     {
         var stats = new DashboardStatisticsDto
         {
@@ -25,7 +25,8 @@ public class DashboardService : IDashboardService
             TotalUsers = await _dashboardRepo.GetUserCountAsync(),
             DocumentsThisMonth = await _dashboardRepo.GetDocumentsThisMonthAsync(),
             DocumentsThisYear = await _dashboardRepo.GetDocumentsThisYearAsync(),
-            TotalStorageUsed = await _dashboardRepo.GetTotalStorageUsedAsync()
+            TotalStorageUsed = await _dashboardRepo.GetTotalStorageUsedAsync(),
+            MyCheckoutsCount = await _dashboardRepo.GetCheckedOutCountAsync(userId)
         };
 
         var contentTypes = await _dashboardRepo.GetContentTypeDistributionAsync();

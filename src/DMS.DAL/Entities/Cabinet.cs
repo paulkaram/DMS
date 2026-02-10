@@ -1,6 +1,8 @@
+using DMS.DAL.Data;
+
 namespace DMS.DAL.Entities;
 
-public class Cabinet
+public class Cabinet : IAuditable, ISoftDeletable
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;

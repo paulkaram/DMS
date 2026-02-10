@@ -26,5 +26,14 @@ public interface IReferenceDataService
     Task<ServiceResult> DeleteDocumentTypeAsync(Guid id);
 
     // Lookups
+    Task<ServiceResult<List<LookupDto>>> GetLookupsAsync();
+    Task<ServiceResult<LookupDetailDto>> GetLookupByIdAsync(Guid id);
+    Task<ServiceResult<LookupDto>> CreateLookupAsync(LookupDto dto);
+    Task<ServiceResult<LookupDto>> UpdateLookupAsync(Guid id, LookupDto dto);
+    Task<ServiceResult> DeleteLookupAsync(Guid id);
     Task<ServiceResult<List<LookupItemDto>>> GetLookupItemsAsync(string lookupName, string? language = null);
+    Task<ServiceResult<List<LookupItemDto>>> GetLookupItemsByIdAsync(Guid lookupId, string? language = null);
+    Task<ServiceResult<LookupItemDto>> CreateLookupItemAsync(Guid lookupId, LookupItemDto dto);
+    Task<ServiceResult<LookupItemDto>> UpdateLookupItemAsync(Guid itemId, LookupItemDto dto);
+    Task<ServiceResult> DeleteLookupItemAsync(Guid itemId);
 }

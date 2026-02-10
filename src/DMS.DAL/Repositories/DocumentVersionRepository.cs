@@ -1,39 +1,41 @@
-using Dapper;
 using DMS.DAL.Data;
 using DMS.DAL.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace DMS.DAL.Repositories;
 
 public class DocumentVersionRepository : IDocumentVersionRepository
 {
-    private readonly IDbConnectionFactory _connectionFactory;
+    private readonly DmsDbContext _context;
 
-    public DocumentVersionRepository(IDbConnectionFactory connectionFactory)
+    public DocumentVersionRepository(DmsDbContext context)
     {
-        _connectionFactory = connectionFactory;
+        _context = context;
     }
 
     public async Task<DocumentVersion?> GetByIdAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<DocumentVersion>(
-            "SELECT * FROM DocumentVersions WHERE Id = @Id", new { Id = id });
+        return await _context.DocumentVersions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(v => v.Id == id);
     }
 
     public async Task<IEnumerable<DocumentVersion>> GetByDocumentIdAsync(Guid documentId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<DocumentVersion>(
-            "SELECT * FROM DocumentVersions WHERE DocumentId = @DocumentId ORDER BY VersionNumber DESC",
-            new { DocumentId = documentId });
+        return await _context.DocumentVersions
+            .AsNoTracking()
+            .Where(v => v.DocumentId == documentId)
+            .OrderByDescending(v => v.VersionNumber)
+            .ToListAsync();
     }
 
     public async Task<DocumentVersion?> GetLatestVersionAsync(Guid documentId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<DocumentVersion>(
-            "SELECT TOP 1 * FROM DocumentVersions WHERE DocumentId = @DocumentId ORDER BY VersionNumber DESC",
-            new { DocumentId = documentId });
+        return await _context.DocumentVersions
+            .AsNoTracking()
+            .Where(v => v.DocumentId == documentId)
+            .OrderByDescending(v => v.VersionNumber)
+            .FirstOrDefaultAsync();
     }
 
     public async Task<Guid> CreateAsync(DocumentVersion entity)
@@ -47,84 +49,59 @@ public class DocumentVersionRepository : IDocumentVersionRepository
             entity.VersionLabel = $"{entity.MajorVersion}.{entity.MinorVersion}";
         }
 
-        using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(@"
-            INSERT INTO DocumentVersions (
-                Id, DocumentId, VersionNumber, StoragePath, Size, Comment,
-                IntegrityHash, HashAlgorithm, IntegrityVerifiedAt,
-                ContentType, OriginalFileName, IsOriginalRecord, ContentCategory,
-                VersionType, VersionLabel, MajorVersion, MinorVersion,
-                IsContentChanged, IsMetadataChanged, PreviousVersionId, ChangeDescription,
-                CreatedBy, CreatedAt)
-            VALUES (
-                @Id, @DocumentId, @VersionNumber, @StoragePath, @Size, @Comment,
-                @IntegrityHash, @HashAlgorithm, @IntegrityVerifiedAt,
-                @ContentType, @OriginalFileName, @IsOriginalRecord, @ContentCategory,
-                @VersionType, @VersionLabel, @MajorVersion, @MinorVersion,
-                @IsContentChanged, @IsMetadataChanged, @PreviousVersionId, @ChangeDescription,
-                @CreatedBy, @CreatedAt)",
-            entity);
+        _context.DocumentVersions.Add(entity);
+        await _context.SaveChangesAsync();
 
         return entity.Id;
     }
 
     public async Task<bool> UpdateAsync(DocumentVersion entity)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var affected = await connection.ExecuteAsync(@"
-            UPDATE DocumentVersions
-            SET IntegrityHash = @IntegrityHash,
-                HashAlgorithm = @HashAlgorithm,
-                IntegrityVerifiedAt = @IntegrityVerifiedAt,
-                Comment = @Comment,
-                ChangeDescription = @ChangeDescription
-            WHERE Id = @Id",
-            entity);
+        var affected = await _context.DocumentVersions
+            .Where(v => v.Id == entity.Id)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(v => v.IntegrityHash, entity.IntegrityHash)
+                .SetProperty(v => v.HashAlgorithm, entity.HashAlgorithm)
+                .SetProperty(v => v.IntegrityVerifiedAt, entity.IntegrityVerifiedAt)
+                .SetProperty(v => v.Comment, entity.Comment)
+                .SetProperty(v => v.ChangeDescription, entity.ChangeDescription));
 
         return affected > 0;
     }
 
     public async Task<DocumentVersion?> GetByVersionNumberAsync(Guid documentId, int majorVersion, int minorVersion)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<DocumentVersion>(@"
-            SELECT * FROM DocumentVersions
-            WHERE DocumentId = @DocumentId
-              AND MajorVersion = @MajorVersion
-              AND MinorVersion = @MinorVersion",
-            new { DocumentId = documentId, MajorVersion = majorVersion, MinorVersion = minorVersion });
+        return await _context.DocumentVersions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(v => v.DocumentId == documentId
+                && v.MajorVersion == majorVersion
+                && v.MinorVersion == minorVersion);
     }
 
     public async Task<DocumentVersion?> GetLatestMajorVersionAsync(Guid documentId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<DocumentVersion>(@"
-            SELECT TOP 1 * FROM DocumentVersions
-            WHERE DocumentId = @DocumentId
-              AND VersionType = 'Major'
-            ORDER BY MajorVersion DESC",
-            new { DocumentId = documentId });
+        return await _context.DocumentVersions
+            .AsNoTracking()
+            .Where(v => v.DocumentId == documentId && v.VersionType == "Major")
+            .OrderByDescending(v => v.MajorVersion)
+            .FirstOrDefaultAsync();
     }
 
     public async Task<IEnumerable<DocumentVersion>> GetMajorVersionsAsync(Guid documentId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<DocumentVersion>(@"
-            SELECT * FROM DocumentVersions
-            WHERE DocumentId = @DocumentId
-              AND VersionType = 'Major'
-            ORDER BY MajorVersion DESC",
-            new { DocumentId = documentId });
+        return await _context.DocumentVersions
+            .AsNoTracking()
+            .Where(v => v.DocumentId == documentId && v.VersionType == "Major")
+            .OrderByDescending(v => v.MajorVersion)
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<DocumentVersion>> GetMinorVersionsAsync(Guid documentId, int majorVersion)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<DocumentVersion>(@"
-            SELECT * FROM DocumentVersions
-            WHERE DocumentId = @DocumentId
-              AND MajorVersion = @MajorVersion
-            ORDER BY MinorVersion DESC",
-            new { DocumentId = documentId, MajorVersion = majorVersion });
+        return await _context.DocumentVersions
+            .AsNoTracking()
+            .Where(v => v.DocumentId == documentId && v.MajorVersion == majorVersion)
+            .OrderByDescending(v => v.MinorVersion)
+            .ToListAsync();
     }
 }

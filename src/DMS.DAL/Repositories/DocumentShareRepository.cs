@@ -1,75 +1,148 @@
-using Dapper;
 using DMS.DAL.Data;
 using DMS.DAL.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace DMS.DAL.Repositories;
 
 public class DocumentShareRepository : IDocumentShareRepository
 {
-    private readonly IDbConnectionFactory _connectionFactory;
+    private readonly DmsDbContext _context;
 
-    public DocumentShareRepository(IDbConnectionFactory connectionFactory)
+    public DocumentShareRepository(DmsDbContext context)
     {
-        _connectionFactory = connectionFactory;
+        _context = context;
     }
 
     public async Task<DocumentShare?> GetByIdAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<DocumentShare>(@"
-            SELECT ds.*, d.Name as DocumentName,
-                   sw.DisplayName as SharedWithUserName, sb.DisplayName as SharedByUserName
-            FROM DocumentShares ds
-            LEFT JOIN Documents d ON ds.DocumentId = d.Id
-            LEFT JOIN Users sw ON ds.SharedWithUserId = sw.Id
-            LEFT JOIN Users sb ON ds.SharedByUserId = sb.Id
-            WHERE ds.Id = @Id", new { Id = id });
+        return await _context.DocumentShares
+            .AsNoTracking()
+            .Where(s => s.Id == id)
+            .Select(s => new DocumentShare
+            {
+                Id = s.Id,
+                DocumentId = s.DocumentId,
+                SharedWithUserId = s.SharedWithUserId,
+                SharedByUserId = s.SharedByUserId,
+                PermissionLevel = s.PermissionLevel,
+                ExpiresAt = s.ExpiresAt,
+                Message = s.Message,
+                IsActive = s.IsActive,
+                CreatedAt = s.CreatedAt,
+                DocumentName = _context.Documents
+                    .Where(d => d.Id == s.DocumentId)
+                    .Select(d => d.Name)
+                    .FirstOrDefault(),
+                SharedWithUserName = _context.Users
+                    .Where(u => u.Id == s.SharedWithUserId)
+                    .Select(u => u.DisplayName)
+                    .FirstOrDefault(),
+                SharedByUserName = _context.Users
+                    .Where(u => u.Id == s.SharedByUserId)
+                    .Select(u => u.DisplayName)
+                    .FirstOrDefault()
+            })
+            .FirstOrDefaultAsync();
     }
 
     public async Task<IEnumerable<DocumentShare>> GetByDocumentIdAsync(Guid documentId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<DocumentShare>(@"
-            SELECT ds.*, d.Name as DocumentName,
-                   sw.DisplayName as SharedWithUserName, sb.DisplayName as SharedByUserName
-            FROM DocumentShares ds
-            LEFT JOIN Documents d ON ds.DocumentId = d.Id
-            LEFT JOIN Users sw ON ds.SharedWithUserId = sw.Id
-            LEFT JOIN Users sb ON ds.SharedByUserId = sb.Id
-            WHERE ds.DocumentId = @DocumentId AND ds.IsActive = 1
-            ORDER BY ds.CreatedAt DESC",
-            new { DocumentId = documentId });
+        return await _context.DocumentShares
+            .AsNoTracking()
+            .Where(s => s.DocumentId == documentId)
+            .OrderByDescending(s => s.CreatedAt)
+            .Select(s => new DocumentShare
+            {
+                Id = s.Id,
+                DocumentId = s.DocumentId,
+                SharedWithUserId = s.SharedWithUserId,
+                SharedByUserId = s.SharedByUserId,
+                PermissionLevel = s.PermissionLevel,
+                ExpiresAt = s.ExpiresAt,
+                Message = s.Message,
+                IsActive = s.IsActive,
+                CreatedAt = s.CreatedAt,
+                DocumentName = _context.Documents
+                    .Where(d => d.Id == s.DocumentId)
+                    .Select(d => d.Name)
+                    .FirstOrDefault(),
+                SharedWithUserName = _context.Users
+                    .Where(u => u.Id == s.SharedWithUserId)
+                    .Select(u => u.DisplayName)
+                    .FirstOrDefault(),
+                SharedByUserName = _context.Users
+                    .Where(u => u.Id == s.SharedByUserId)
+                    .Select(u => u.DisplayName)
+                    .FirstOrDefault()
+            })
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<DocumentShare>> GetSharedWithUserAsync(Guid userId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<DocumentShare>(@"
-            SELECT ds.*, d.Name as DocumentName,
-                   sw.DisplayName as SharedWithUserName, sb.DisplayName as SharedByUserName
-            FROM DocumentShares ds
-            LEFT JOIN Documents d ON ds.DocumentId = d.Id
-            LEFT JOIN Users sw ON ds.SharedWithUserId = sw.Id
-            LEFT JOIN Users sb ON ds.SharedByUserId = sb.Id
-            WHERE ds.SharedWithUserId = @UserId AND ds.IsActive = 1
-            AND (ds.ExpiresAt IS NULL OR ds.ExpiresAt > GETUTCDATE())
-            ORDER BY ds.CreatedAt DESC",
-            new { UserId = userId });
+        return await _context.DocumentShares
+            .AsNoTracking()
+            .Where(s => s.SharedWithUserId == userId
+                && (s.ExpiresAt == null || s.ExpiresAt > DateTime.UtcNow))
+            .OrderByDescending(s => s.CreatedAt)
+            .Select(s => new DocumentShare
+            {
+                Id = s.Id,
+                DocumentId = s.DocumentId,
+                SharedWithUserId = s.SharedWithUserId,
+                SharedByUserId = s.SharedByUserId,
+                PermissionLevel = s.PermissionLevel,
+                ExpiresAt = s.ExpiresAt,
+                Message = s.Message,
+                IsActive = s.IsActive,
+                CreatedAt = s.CreatedAt,
+                DocumentName = _context.Documents
+                    .Where(d => d.Id == s.DocumentId)
+                    .Select(d => d.Name)
+                    .FirstOrDefault(),
+                SharedWithUserName = _context.Users
+                    .Where(u => u.Id == s.SharedWithUserId)
+                    .Select(u => u.DisplayName)
+                    .FirstOrDefault(),
+                SharedByUserName = _context.Users
+                    .Where(u => u.Id == s.SharedByUserId)
+                    .Select(u => u.DisplayName)
+                    .FirstOrDefault()
+            })
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<DocumentShare>> GetSharedByUserAsync(Guid userId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<DocumentShare>(@"
-            SELECT ds.*, d.Name as DocumentName,
-                   sw.DisplayName as SharedWithUserName, sb.DisplayName as SharedByUserName
-            FROM DocumentShares ds
-            LEFT JOIN Documents d ON ds.DocumentId = d.Id
-            LEFT JOIN Users sw ON ds.SharedWithUserId = sw.Id
-            LEFT JOIN Users sb ON ds.SharedByUserId = sb.Id
-            WHERE ds.SharedByUserId = @UserId AND ds.IsActive = 1
-            ORDER BY ds.CreatedAt DESC",
-            new { UserId = userId });
+        return await _context.DocumentShares
+            .AsNoTracking()
+            .Where(s => s.SharedByUserId == userId)
+            .OrderByDescending(s => s.CreatedAt)
+            .Select(s => new DocumentShare
+            {
+                Id = s.Id,
+                DocumentId = s.DocumentId,
+                SharedWithUserId = s.SharedWithUserId,
+                SharedByUserId = s.SharedByUserId,
+                PermissionLevel = s.PermissionLevel,
+                ExpiresAt = s.ExpiresAt,
+                Message = s.Message,
+                IsActive = s.IsActive,
+                CreatedAt = s.CreatedAt,
+                DocumentName = _context.Documents
+                    .Where(d => d.Id == s.DocumentId)
+                    .Select(d => d.Name)
+                    .FirstOrDefault(),
+                SharedWithUserName = _context.Users
+                    .Where(u => u.Id == s.SharedWithUserId)
+                    .Select(u => u.DisplayName)
+                    .FirstOrDefault(),
+                SharedByUserName = _context.Users
+                    .Where(u => u.Id == s.SharedByUserId)
+                    .Select(u => u.DisplayName)
+                    .FirstOrDefault()
+            })
+            .ToListAsync();
     }
 
     public async Task<Guid> CreateAsync(DocumentShare entity)
@@ -77,34 +150,31 @@ public class DocumentShareRepository : IDocumentShareRepository
         entity.Id = Guid.NewGuid();
         entity.CreatedAt = DateTime.UtcNow;
 
-        using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(@"
-            INSERT INTO DocumentShares (Id, DocumentId, SharedWithUserId, SharedByUserId,
-                PermissionLevel, ExpiresAt, Message, IsActive, CreatedAt)
-            VALUES (@Id, @DocumentId, @SharedWithUserId, @SharedByUserId,
-                @PermissionLevel, @ExpiresAt, @Message, @IsActive, @CreatedAt)",
-            entity);
+        _context.DocumentShares.Add(entity);
+        await _context.SaveChangesAsync();
 
         return entity.Id;
     }
 
     public async Task<bool> UpdateAsync(DocumentShare entity)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var affected = await connection.ExecuteAsync(@"
-            UPDATE DocumentShares
-            SET PermissionLevel = @PermissionLevel, ExpiresAt = @ExpiresAt,
-                Message = @Message, IsActive = @IsActive
-            WHERE Id = @Id",
-            entity);
-        return affected > 0;
+        var existing = await _context.DocumentShares.FindAsync(entity.Id);
+        if (existing == null) return false;
+
+        existing.PermissionLevel = entity.PermissionLevel;
+        existing.ExpiresAt = entity.ExpiresAt;
+        existing.Message = entity.Message;
+        existing.IsActive = entity.IsActive;
+
+        return await _context.SaveChangesAsync() > 0;
     }
 
     public async Task<bool> DeleteAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var affected = await connection.ExecuteAsync(
-            "UPDATE DocumentShares SET IsActive = 0 WHERE Id = @Id", new { Id = id });
-        return affected > 0;
+        var entity = await _context.DocumentShares.FindAsync(id);
+        if (entity == null) return false;
+
+        entity.IsActive = false;
+        return await _context.SaveChangesAsync() > 0;
     }
 }

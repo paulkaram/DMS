@@ -71,7 +71,8 @@ async function performSearch() {
     }
 
     const response = await documentsApi.search(params)
-    results.value = response.data
+    const data = response.data
+    results.value = Array.isArray(data) ? data : data.items ?? []
   } catch (err) {
   } finally {
     isLoading.value = false

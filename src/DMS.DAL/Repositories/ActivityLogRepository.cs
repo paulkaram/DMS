@@ -1,53 +1,98 @@
-using Dapper;
 using DMS.DAL.Data;
 using DMS.DAL.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace DMS.DAL.Repositories;
 
 public class ActivityLogRepository : IActivityLogRepository
 {
-    private readonly IDbConnectionFactory _connectionFactory;
+    private readonly DmsDbContext _context;
 
-    public ActivityLogRepository(IDbConnectionFactory connectionFactory)
+    public ActivityLogRepository(DmsDbContext context)
     {
-        _connectionFactory = connectionFactory;
+        _context = context;
     }
 
     public async Task<IEnumerable<ActivityLog>> GetByNodeAsync(NodeType nodeType, Guid nodeId, int skip = 0, int take = 50)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<ActivityLog>(@"
-            SELECT a.*, COALESCE(a.UserName, u.DisplayName, u.Username) AS UserName
-            FROM ActivityLogs a
-            LEFT JOIN Users u ON a.UserId = u.Id
-            WHERE a.NodeType = @NodeType AND a.NodeId = @NodeId
-            ORDER BY a.CreatedAt DESC
-            OFFSET @Skip ROWS FETCH NEXT @Take ROWS ONLY",
-            new { NodeType = (int)nodeType, NodeId = nodeId, Skip = skip, Take = take });
+        return await _context.ActivityLogs
+            .AsNoTracking()
+            .Join(_context.Users,
+                a => a.UserId,
+                u => u.Id,
+                (a, u) => new { Activity = a, User = u })
+            .Select(x => new ActivityLog
+            {
+                Id = x.Activity.Id,
+                Action = x.Activity.Action,
+                NodeType = x.Activity.NodeType,
+                NodeId = x.Activity.NodeId,
+                NodeName = x.Activity.NodeName,
+                Details = x.Activity.Details,
+                UserId = x.Activity.UserId,
+                UserName = x.Activity.UserName ?? x.User.DisplayName ?? x.User.Username,
+                IpAddress = x.Activity.IpAddress,
+                CreatedAt = x.Activity.CreatedAt
+            })
+            .Where(a => a.NodeType == nodeType && a.NodeId == nodeId)
+            .OrderByDescending(a => a.CreatedAt)
+            .Skip(skip)
+            .Take(take)
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<ActivityLog>> GetByUserAsync(Guid userId, int skip = 0, int take = 50)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<ActivityLog>(@"
-            SELECT a.*, COALESCE(a.UserName, u.DisplayName, u.Username) AS UserName
-            FROM ActivityLogs a
-            LEFT JOIN Users u ON a.UserId = u.Id
-            WHERE a.UserId = @UserId
-            ORDER BY a.CreatedAt DESC
-            OFFSET @Skip ROWS FETCH NEXT @Take ROWS ONLY",
-            new { UserId = userId, Skip = skip, Take = take });
+        return await _context.ActivityLogs
+            .AsNoTracking()
+            .Join(_context.Users,
+                a => a.UserId,
+                u => u.Id,
+                (a, u) => new { Activity = a, User = u })
+            .Where(x => x.Activity.UserId == userId)
+            .Select(x => new ActivityLog
+            {
+                Id = x.Activity.Id,
+                Action = x.Activity.Action,
+                NodeType = x.Activity.NodeType,
+                NodeId = x.Activity.NodeId,
+                NodeName = x.Activity.NodeName,
+                Details = x.Activity.Details,
+                UserId = x.Activity.UserId,
+                UserName = x.Activity.UserName ?? x.User.DisplayName ?? x.User.Username,
+                IpAddress = x.Activity.IpAddress,
+                CreatedAt = x.Activity.CreatedAt
+            })
+            .OrderByDescending(a => a.CreatedAt)
+            .Skip(skip)
+            .Take(take)
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<ActivityLog>> GetRecentAsync(int take = 100)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<ActivityLog>(@"
-            SELECT TOP (@Take) a.*, COALESCE(a.UserName, u.DisplayName, u.Username) AS UserName
-            FROM ActivityLogs a
-            LEFT JOIN Users u ON a.UserId = u.Id
-            ORDER BY a.CreatedAt DESC",
-            new { Take = take });
+        return await _context.ActivityLogs
+            .AsNoTracking()
+            .Join(_context.Users,
+                a => a.UserId,
+                u => u.Id,
+                (a, u) => new { Activity = a, User = u })
+            .Select(x => new ActivityLog
+            {
+                Id = x.Activity.Id,
+                Action = x.Activity.Action,
+                NodeType = x.Activity.NodeType,
+                NodeId = x.Activity.NodeId,
+                NodeName = x.Activity.NodeName,
+                Details = x.Activity.Details,
+                UserId = x.Activity.UserId,
+                UserName = x.Activity.UserName ?? x.User.DisplayName ?? x.User.Username,
+                IpAddress = x.Activity.IpAddress,
+                CreatedAt = x.Activity.CreatedAt
+            })
+            .OrderByDescending(a => a.CreatedAt)
+            .Take(take)
+            .ToListAsync();
     }
 
     public async Task<Guid> CreateAsync(ActivityLog entity)
@@ -55,23 +100,8 @@ public class ActivityLogRepository : IActivityLogRepository
         entity.Id = Guid.NewGuid();
         entity.CreatedAt = DateTime.UtcNow;
 
-        using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(@"
-            INSERT INTO ActivityLogs (Id, Action, NodeType, NodeId, NodeName, Details, UserId, UserName, IpAddress, CreatedAt)
-            VALUES (@Id, @Action, @NodeType, @NodeId, @NodeName, @Details, @UserId, @UserName, @IpAddress, @CreatedAt)",
-            new
-            {
-                entity.Id,
-                entity.Action,
-                NodeType = entity.NodeType.HasValue ? (int?)entity.NodeType : null,
-                entity.NodeId,
-                entity.NodeName,
-                entity.Details,
-                entity.UserId,
-                entity.UserName,
-                entity.IpAddress,
-                entity.CreatedAt
-            });
+        _context.ActivityLogs.Add(entity);
+        await _context.SaveChangesAsync();
 
         return entity.Id;
     }

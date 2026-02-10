@@ -69,7 +69,8 @@ async function loadData() {
       usersApi.getAll()
     ])
     roles.value = rolesRes.data
-    users.value = usersRes.data
+    const usersData = usersRes.data
+    users.value = Array.isArray(usersData) ? usersData : usersData.items ?? []
   } catch (err: any) {
     error.value = err.response?.data?.message || 'Failed to load roles'
   } finally {

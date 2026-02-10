@@ -9,6 +9,7 @@ public class DashboardStatisticsDto
     public int DocumentsThisMonth { get; set; }
     public int DocumentsThisYear { get; set; }
     public long TotalStorageUsed { get; set; }
+    public int MyCheckoutsCount { get; set; }
     public List<ContentTypeStatDto> ContentTypeDistribution { get; set; } = new();
 }
 

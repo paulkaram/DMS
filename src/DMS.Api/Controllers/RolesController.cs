@@ -4,10 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace DMS.Api.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
 [Authorize]
-public class RolesController : ControllerBase
+public class RolesController : BaseApiController
 {
     private readonly IUserService _userService;
 

@@ -4,10 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace DMS.Api.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
 [Authorize]
-public class ActivityLogsController : ControllerBase
+public class ActivityLogsController : BaseApiController
 {
     private readonly IActivityLogService _activityLogService;
 
@@ -43,11 +41,5 @@ public class ActivityLogsController : ControllerBase
         var userId = GetCurrentUserId();
         var result = await _activityLogService.GetByUserAsync(userId, skip, take);
         return result.Success ? Ok(result.Data) : BadRequest(result.Errors);
-    }
-
-    private Guid GetCurrentUserId()
-    {
-        var userIdClaim = User.FindFirst("sub")?.Value ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        return Guid.TryParse(userIdClaim, out var userId) ? userId : Guid.Empty;
     }
 }

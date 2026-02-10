@@ -1,312 +1,570 @@
-using Dapper;
 using DMS.DAL.Data;
 using DMS.DAL.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace DMS.DAL.Repositories;
 
 public class BookmarkRepository : IBookmarkRepository
 {
-    private readonly IDbConnectionFactory _connectionFactory;
+    private readonly DmsDbContext _context;
 
-    public BookmarkRepository(IDbConnectionFactory connectionFactory) => _connectionFactory = connectionFactory;
+    public BookmarkRepository(DmsDbContext context) => _context = context;
 
     public async Task<IEnumerable<Bookmark>> GetAllAsync(bool includeInactive = false)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<Bookmark>(
-            "SELECT * FROM Bookmarks WHERE (@IncludeInactive = 1 OR IsActive = 1) ORDER BY SortOrder, Name",
-            new { IncludeInactive = includeInactive });
+        var query = includeInactive
+            ? _context.Bookmarks.IgnoreQueryFilters()
+            : _context.Bookmarks.AsQueryable();
+
+        return await query
+            .AsNoTracking()
+            .OrderBy(b => b.SortOrder)
+            .ThenBy(b => b.Name)
+            .ToListAsync();
     }
 
     public async Task<Bookmark?> GetByIdAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<Bookmark>("SELECT * FROM Bookmarks WHERE Id = @Id", new { Id = id });
+        return await _context.Bookmarks
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(b => b.Id == id);
     }
 
     public async Task<Bookmark?> GetByPlaceholderAsync(string placeholder)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<Bookmark>(
-            "SELECT * FROM Bookmarks WHERE Placeholder = @Placeholder AND IsActive = 1", new { Placeholder = placeholder });
+        return await _context.Bookmarks
+            .AsNoTracking()
+            .FirstOrDefaultAsync(b => b.Placeholder == placeholder);
     }
 
     public async Task<Guid> CreateAsync(Bookmark bookmark)
     {
-        using var connection = _connectionFactory.CreateConnection();
         bookmark.Id = Guid.NewGuid();
         bookmark.CreatedAt = DateTime.UtcNow;
-        await connection.ExecuteAsync(@"INSERT INTO Bookmarks (Id, Name, Placeholder, Description, DefaultValue, DataType, LookupName, IsSystem, IsActive, SortOrder, CreatedBy, CreatedAt)
-            VALUES (@Id, @Name, @Placeholder, @Description, @DefaultValue, @DataType, @LookupName, @IsSystem, @IsActive, @SortOrder, @CreatedBy, @CreatedAt)", bookmark);
+
+        _context.Bookmarks.Add(bookmark);
+        await _context.SaveChangesAsync();
         return bookmark.Id;
     }
 
     public async Task<bool> UpdateAsync(Bookmark bookmark)
     {
-        using var connection = _connectionFactory.CreateConnection();
         bookmark.ModifiedAt = DateTime.UtcNow;
-        return await connection.ExecuteAsync(@"UPDATE Bookmarks SET Name=@Name, Placeholder=@Placeholder, Description=@Description, DefaultValue=@DefaultValue,
-            DataType=@DataType, LookupName=@LookupName, IsSystem=@IsSystem, IsActive=@IsActive, SortOrder=@SortOrder, ModifiedBy=@ModifiedBy, ModifiedAt=@ModifiedAt WHERE Id=@Id", bookmark) > 0;
+
+        var existing = await _context.Bookmarks.FindAsync(bookmark.Id);
+        if (existing == null) return false;
+
+        existing.Name = bookmark.Name;
+        existing.Placeholder = bookmark.Placeholder;
+        existing.Description = bookmark.Description;
+        existing.DefaultValue = bookmark.DefaultValue;
+        existing.DataType = bookmark.DataType;
+        existing.LookupName = bookmark.LookupName;
+        existing.IsSystem = bookmark.IsSystem;
+        existing.IsActive = bookmark.IsActive;
+        existing.SortOrder = bookmark.SortOrder;
+        existing.ModifiedBy = bookmark.ModifiedBy;
+        existing.ModifiedAt = bookmark.ModifiedAt;
+
+        return await _context.SaveChangesAsync() > 0;
     }
 
     public async Task<bool> DeleteAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.ExecuteAsync("UPDATE Bookmarks SET IsActive=0, ModifiedAt=@Now WHERE Id=@Id", new { Id = id, Now = DateTime.UtcNow }) > 0;
+        return await _context.Bookmarks
+            .Where(b => b.Id == id)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(b => b.IsActive, false)
+                .SetProperty(b => b.ModifiedAt, DateTime.UtcNow)) > 0;
     }
 }
 
 public class CaseRepository : ICaseRepository
 {
-    private readonly IDbConnectionFactory _connectionFactory;
+    private readonly DmsDbContext _context;
 
-    public CaseRepository(IDbConnectionFactory connectionFactory) => _connectionFactory = connectionFactory;
+    public CaseRepository(DmsDbContext context) => _context = context;
 
     public async Task<IEnumerable<Case>> GetAllAsync(bool includeInactive = false)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<Case>(@"SELECT c.*, u.DisplayName as AssignedToUserName, f.Name as FolderName
-            FROM Cases c LEFT JOIN Users u ON c.AssignedToUserId = u.Id LEFT JOIN Folders f ON c.FolderId = f.Id
-            WHERE (@IncludeInactive = 1 OR c.IsActive = 1) ORDER BY c.CreatedAt DESC", new { IncludeInactive = includeInactive });
+        var query = includeInactive
+            ? _context.Cases.IgnoreQueryFilters()
+            : _context.Cases.AsQueryable();
+
+        return await query
+            .AsNoTracking()
+            .GroupJoin(_context.Users.AsNoTracking(), c => c.AssignedToUserId, u => u.Id, (c, users) => new { c, users })
+            .SelectMany(x => x.users.DefaultIfEmpty(), (x, u) => new { x.c, u })
+            .GroupJoin(_context.Folders.AsNoTracking(), x => x.c.FolderId, f => f.Id, (x, folders) => new { x.c, x.u, folders })
+            .SelectMany(x => x.folders.DefaultIfEmpty(), (x, f) => new Case
+            {
+                Id = x.c.Id,
+                CaseNumber = x.c.CaseNumber,
+                Title = x.c.Title,
+                Description = x.c.Description,
+                Status = x.c.Status,
+                Priority = x.c.Priority,
+                AssignedToUserId = x.c.AssignedToUserId,
+                FolderId = x.c.FolderId,
+                DueDate = x.c.DueDate,
+                ClosedDate = x.c.ClosedDate,
+                IsActive = x.c.IsActive,
+                CreatedBy = x.c.CreatedBy,
+                CreatedAt = x.c.CreatedAt,
+                ModifiedBy = x.c.ModifiedBy,
+                ModifiedAt = x.c.ModifiedAt,
+                AssignedToUserName = x.u != null ? x.u.DisplayName : null,
+                FolderName = f != null ? f.Name : null
+            })
+            .OrderByDescending(c => c.CreatedAt)
+            .ToListAsync();
     }
 
     public async Task<Case?> GetByIdAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<Case>(@"SELECT c.*, u.DisplayName as AssignedToUserName, f.Name as FolderName
-            FROM Cases c LEFT JOIN Users u ON c.AssignedToUserId = u.Id LEFT JOIN Folders f ON c.FolderId = f.Id WHERE c.Id = @Id", new { Id = id });
+        return await _context.Cases
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(c => c.Id == id)
+            .GroupJoin(_context.Users.AsNoTracking(), c => c.AssignedToUserId, u => u.Id, (c, users) => new { c, users })
+            .SelectMany(x => x.users.DefaultIfEmpty(), (x, u) => new { x.c, u })
+            .GroupJoin(_context.Folders.AsNoTracking(), x => x.c.FolderId, f => f.Id, (x, folders) => new { x.c, x.u, folders })
+            .SelectMany(x => x.folders.DefaultIfEmpty(), (x, f) => new Case
+            {
+                Id = x.c.Id,
+                CaseNumber = x.c.CaseNumber,
+                Title = x.c.Title,
+                Description = x.c.Description,
+                Status = x.c.Status,
+                Priority = x.c.Priority,
+                AssignedToUserId = x.c.AssignedToUserId,
+                FolderId = x.c.FolderId,
+                DueDate = x.c.DueDate,
+                ClosedDate = x.c.ClosedDate,
+                IsActive = x.c.IsActive,
+                CreatedBy = x.c.CreatedBy,
+                CreatedAt = x.c.CreatedAt,
+                ModifiedBy = x.c.ModifiedBy,
+                ModifiedAt = x.c.ModifiedAt,
+                AssignedToUserName = x.u != null ? x.u.DisplayName : null,
+                FolderName = f != null ? f.Name : null
+            })
+            .FirstOrDefaultAsync();
     }
 
     public async Task<Case?> GetByCaseNumberAsync(string caseNumber)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<Case>("SELECT * FROM Cases WHERE CaseNumber = @CaseNumber", new { CaseNumber = caseNumber });
+        return await _context.Cases
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.CaseNumber == caseNumber);
     }
 
     public async Task<IEnumerable<Case>> GetByStatusAsync(string status)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<Case>("SELECT * FROM Cases WHERE Status = @Status AND IsActive = 1 ORDER BY CreatedAt DESC", new { Status = status });
+        return await _context.Cases
+            .AsNoTracking()
+            .Where(c => c.Status == status)
+            .OrderByDescending(c => c.CreatedAt)
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<Case>> GetByAssigneeAsync(Guid userId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<Case>("SELECT * FROM Cases WHERE AssignedToUserId = @UserId AND IsActive = 1 ORDER BY CreatedAt DESC", new { UserId = userId });
+        return await _context.Cases
+            .AsNoTracking()
+            .Where(c => c.AssignedToUserId == userId)
+            .OrderByDescending(c => c.CreatedAt)
+            .ToListAsync();
     }
 
     public async Task<Guid> CreateAsync(Case caseEntity)
     {
-        using var connection = _connectionFactory.CreateConnection();
         caseEntity.Id = Guid.NewGuid();
         caseEntity.CreatedAt = DateTime.UtcNow;
-        await connection.ExecuteAsync(@"INSERT INTO Cases (Id, CaseNumber, Title, Description, Status, Priority, AssignedToUserId, FolderId, DueDate, IsActive, CreatedBy, CreatedAt)
-            VALUES (@Id, @CaseNumber, @Title, @Description, @Status, @Priority, @AssignedToUserId, @FolderId, @DueDate, @IsActive, @CreatedBy, @CreatedAt)", caseEntity);
+
+        _context.Cases.Add(caseEntity);
+        await _context.SaveChangesAsync();
         return caseEntity.Id;
     }
 
     public async Task<bool> UpdateAsync(Case caseEntity)
     {
-        using var connection = _connectionFactory.CreateConnection();
         caseEntity.ModifiedAt = DateTime.UtcNow;
-        return await connection.ExecuteAsync(@"UPDATE Cases SET CaseNumber=@CaseNumber, Title=@Title, Description=@Description, Status=@Status, Priority=@Priority,
-            AssignedToUserId=@AssignedToUserId, FolderId=@FolderId, DueDate=@DueDate, ClosedDate=@ClosedDate, IsActive=@IsActive, ModifiedBy=@ModifiedBy, ModifiedAt=@ModifiedAt WHERE Id=@Id", caseEntity) > 0;
+
+        var existing = await _context.Cases.FindAsync(caseEntity.Id);
+        if (existing == null) return false;
+
+        existing.CaseNumber = caseEntity.CaseNumber;
+        existing.Title = caseEntity.Title;
+        existing.Description = caseEntity.Description;
+        existing.Status = caseEntity.Status;
+        existing.Priority = caseEntity.Priority;
+        existing.AssignedToUserId = caseEntity.AssignedToUserId;
+        existing.FolderId = caseEntity.FolderId;
+        existing.DueDate = caseEntity.DueDate;
+        existing.ClosedDate = caseEntity.ClosedDate;
+        existing.IsActive = caseEntity.IsActive;
+        existing.ModifiedBy = caseEntity.ModifiedBy;
+        existing.ModifiedAt = caseEntity.ModifiedAt;
+
+        return await _context.SaveChangesAsync() > 0;
     }
 
     public async Task<bool> UpdateStatusAsync(Guid id, string status, Guid userId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var closedDate = status == "Closed" || status == "Archived" ? DateTime.UtcNow : (DateTime?)null;
-        return await connection.ExecuteAsync("UPDATE Cases SET Status=@Status, ClosedDate=@ClosedDate, ModifiedBy=@UserId, ModifiedAt=@Now WHERE Id=@Id",
-            new { Id = id, Status = status, ClosedDate = closedDate, UserId = userId, Now = DateTime.UtcNow }) > 0;
+        var now = DateTime.UtcNow;
+        var closedDate = status == "Closed" || status == "Archived" ? now : (DateTime?)null;
+
+        return await _context.Cases
+            .Where(c => c.Id == id)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(c => c.Status, status)
+                .SetProperty(c => c.ClosedDate, closedDate)
+                .SetProperty(c => c.ModifiedBy, userId)
+                .SetProperty(c => c.ModifiedAt, now)) > 0;
     }
 
     public async Task<bool> DeleteAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.ExecuteAsync("UPDATE Cases SET IsActive=0, ModifiedAt=@Now WHERE Id=@Id", new { Id = id, Now = DateTime.UtcNow }) > 0;
+        return await _context.Cases
+            .Where(c => c.Id == id)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(c => c.IsActive, false)
+                .SetProperty(c => c.ModifiedAt, DateTime.UtcNow)) > 0;
     }
 }
 
 public class EndpointRepository : IEndpointRepository
 {
-    private readonly IDbConnectionFactory _connectionFactory;
+    private readonly DmsDbContext _context;
 
-    public EndpointRepository(IDbConnectionFactory connectionFactory) => _connectionFactory = connectionFactory;
+    public EndpointRepository(DmsDbContext context) => _context = context;
 
     public async Task<IEnumerable<ServiceEndpoint>> GetAllAsync(bool includeInactive = false)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<ServiceEndpoint>("SELECT * FROM Endpoints WHERE (@IncludeInactive = 1 OR IsActive = 1) ORDER BY Name", new { IncludeInactive = includeInactive });
+        var query = includeInactive
+            ? _context.ServiceEndpoints.IgnoreQueryFilters()
+            : _context.ServiceEndpoints.AsQueryable();
+
+        return await query
+            .AsNoTracking()
+            .OrderBy(e => e.Name)
+            .ToListAsync();
     }
 
     public async Task<ServiceEndpoint?> GetByIdAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<ServiceEndpoint>("SELECT * FROM Endpoints WHERE Id = @Id", new { Id = id });
+        return await _context.ServiceEndpoints
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Id == id);
     }
 
     public async Task<IEnumerable<ServiceEndpoint>> GetByTypeAsync(string endpointType)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<ServiceEndpoint>("SELECT * FROM Endpoints WHERE EndpointType = @EndpointType AND IsActive = 1", new { EndpointType = endpointType });
+        return await _context.ServiceEndpoints
+            .AsNoTracking()
+            .Where(e => e.EndpointType == endpointType)
+            .ToListAsync();
     }
 
     public async Task<Guid> CreateAsync(ServiceEndpoint endpoint)
     {
-        using var connection = _connectionFactory.CreateConnection();
         endpoint.Id = Guid.NewGuid();
         endpoint.CreatedAt = DateTime.UtcNow;
-        await connection.ExecuteAsync(@"INSERT INTO Endpoints (Id, Name, Url, Description, EndpointType, AuthType, AuthConfig, TimeoutSeconds, RetryCount, Headers, IsActive, CreatedBy, CreatedAt)
-            VALUES (@Id, @Name, @Url, @Description, @EndpointType, @AuthType, @AuthConfig, @TimeoutSeconds, @RetryCount, @Headers, @IsActive, @CreatedBy, @CreatedAt)", endpoint);
+
+        _context.ServiceEndpoints.Add(endpoint);
+        await _context.SaveChangesAsync();
         return endpoint.Id;
     }
 
     public async Task<bool> UpdateAsync(ServiceEndpoint endpoint)
     {
-        using var connection = _connectionFactory.CreateConnection();
         endpoint.ModifiedAt = DateTime.UtcNow;
-        return await connection.ExecuteAsync(@"UPDATE Endpoints SET Name=@Name, Url=@Url, Description=@Description, EndpointType=@EndpointType, AuthType=@AuthType,
-            AuthConfig=@AuthConfig, TimeoutSeconds=@TimeoutSeconds, RetryCount=@RetryCount, Headers=@Headers, IsActive=@IsActive, ModifiedBy=@ModifiedBy, ModifiedAt=@ModifiedAt WHERE Id=@Id", endpoint) > 0;
+
+        var existing = await _context.ServiceEndpoints.FindAsync(endpoint.Id);
+        if (existing == null) return false;
+
+        existing.Name = endpoint.Name;
+        existing.Url = endpoint.Url;
+        existing.Description = endpoint.Description;
+        existing.EndpointType = endpoint.EndpointType;
+        existing.AuthType = endpoint.AuthType;
+        existing.AuthConfig = endpoint.AuthConfig;
+        existing.TimeoutSeconds = endpoint.TimeoutSeconds;
+        existing.RetryCount = endpoint.RetryCount;
+        existing.Headers = endpoint.Headers;
+        existing.IsActive = endpoint.IsActive;
+        existing.ModifiedBy = endpoint.ModifiedBy;
+        existing.ModifiedAt = endpoint.ModifiedAt;
+
+        return await _context.SaveChangesAsync() > 0;
     }
 
     public async Task<bool> UpdateHealthStatusAsync(Guid id, string status)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.ExecuteAsync("UPDATE Endpoints SET LastHealthCheck=@Now, LastHealthStatus=@Status WHERE Id=@Id",
-            new { Id = id, Status = status, Now = DateTime.UtcNow }) > 0;
+        return await _context.ServiceEndpoints
+            .Where(e => e.Id == id)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(e => e.LastHealthCheck, DateTime.UtcNow)
+                .SetProperty(e => e.LastHealthStatus, status)) > 0;
     }
 
     public async Task<bool> DeleteAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.ExecuteAsync("UPDATE Endpoints SET IsActive=0, ModifiedAt=@Now WHERE Id=@Id", new { Id = id, Now = DateTime.UtcNow }) > 0;
+        return await _context.ServiceEndpoints
+            .Where(e => e.Id == id)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(e => e.IsActive, false)
+                .SetProperty(e => e.ModifiedAt, DateTime.UtcNow)) > 0;
     }
 }
 
 public class ExportConfigRepository : IExportConfigRepository
 {
-    private readonly IDbConnectionFactory _connectionFactory;
+    private readonly DmsDbContext _context;
 
-    public ExportConfigRepository(IDbConnectionFactory connectionFactory) => _connectionFactory = connectionFactory;
+    public ExportConfigRepository(DmsDbContext context) => _context = context;
 
     public async Task<IEnumerable<ExportConfig>> GetAllAsync(bool includeInactive = false)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<ExportConfig>("SELECT * FROM ExportConfigs WHERE (@IncludeInactive = 1 OR IsActive = 1) ORDER BY Name", new { IncludeInactive = includeInactive });
+        var query = includeInactive
+            ? _context.ExportConfigs.IgnoreQueryFilters()
+            : _context.ExportConfigs.AsQueryable();
+
+        return await query
+            .AsNoTracking()
+            .OrderBy(e => e.Name)
+            .ToListAsync();
     }
 
     public async Task<ExportConfig?> GetByIdAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<ExportConfig>("SELECT * FROM ExportConfigs WHERE Id = @Id", new { Id = id });
+        return await _context.ExportConfigs
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.Id == id);
     }
 
     public async Task<ExportConfig?> GetDefaultAsync()
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<ExportConfig>("SELECT * FROM ExportConfigs WHERE IsDefault = 1 AND IsActive = 1");
+        return await _context.ExportConfigs
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.IsDefault);
     }
 
     public async Task<Guid> CreateAsync(ExportConfig config)
     {
-        using var connection = _connectionFactory.CreateConnection();
         config.Id = Guid.NewGuid();
         config.CreatedAt = DateTime.UtcNow;
-        await connection.ExecuteAsync(@"INSERT INTO ExportConfigs (Id, Name, Description, ExportFormat, IncludeMetadata, IncludeVersions, IncludeAuditTrail, FlattenFolders, NamingPattern, WatermarkText, MaxFileSizeMB, IsDefault, IsActive, CreatedBy, CreatedAt)
-            VALUES (@Id, @Name, @Description, @ExportFormat, @IncludeMetadata, @IncludeVersions, @IncludeAuditTrail, @FlattenFolders, @NamingPattern, @WatermarkText, @MaxFileSizeMB, @IsDefault, @IsActive, @CreatedBy, @CreatedAt)", config);
+
+        _context.ExportConfigs.Add(config);
+        await _context.SaveChangesAsync();
         return config.Id;
     }
 
     public async Task<bool> UpdateAsync(ExportConfig config)
     {
-        using var connection = _connectionFactory.CreateConnection();
         config.ModifiedAt = DateTime.UtcNow;
-        return await connection.ExecuteAsync(@"UPDATE ExportConfigs SET Name=@Name, Description=@Description, ExportFormat=@ExportFormat, IncludeMetadata=@IncludeMetadata, IncludeVersions=@IncludeVersions,
-            IncludeAuditTrail=@IncludeAuditTrail, FlattenFolders=@FlattenFolders, NamingPattern=@NamingPattern, WatermarkText=@WatermarkText, MaxFileSizeMB=@MaxFileSizeMB, IsDefault=@IsDefault, IsActive=@IsActive, ModifiedBy=@ModifiedBy, ModifiedAt=@ModifiedAt WHERE Id=@Id", config) > 0;
+
+        var existing = await _context.ExportConfigs.FindAsync(config.Id);
+        if (existing == null) return false;
+
+        existing.Name = config.Name;
+        existing.Description = config.Description;
+        existing.ExportFormat = config.ExportFormat;
+        existing.IncludeMetadata = config.IncludeMetadata;
+        existing.IncludeVersions = config.IncludeVersions;
+        existing.IncludeAuditTrail = config.IncludeAuditTrail;
+        existing.FlattenFolders = config.FlattenFolders;
+        existing.NamingPattern = config.NamingPattern;
+        existing.WatermarkText = config.WatermarkText;
+        existing.MaxFileSizeMB = config.MaxFileSizeMB;
+        existing.IsDefault = config.IsDefault;
+        existing.IsActive = config.IsActive;
+        existing.ModifiedBy = config.ModifiedBy;
+        existing.ModifiedAt = config.ModifiedAt;
+
+        return await _context.SaveChangesAsync() > 0;
     }
 
     public async Task<bool> SetDefaultAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
-        using var transaction = connection.BeginTransaction();
-        try
+        var strategy = _context.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
         {
-            await connection.ExecuteAsync("UPDATE ExportConfigs SET IsDefault=0", transaction: transaction);
-            await connection.ExecuteAsync("UPDATE ExportConfigs SET IsDefault=1 WHERE Id=@Id", new { Id = id }, transaction);
-            transaction.Commit();
-            return true;
-        }
-        catch { transaction.Rollback(); return false; }
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                await _context.ExportConfigs
+                    .IgnoreQueryFilters()
+                    .ExecuteUpdateAsync(s => s.SetProperty(x => x.IsDefault, false));
+                await _context.ExportConfigs
+                    .IgnoreQueryFilters()
+                    .Where(x => x.Id == id)
+                    .ExecuteUpdateAsync(s => s.SetProperty(x => x.IsDefault, true));
+                await transaction.CommitAsync();
+                return true;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                return false;
+            }
+        });
     }
 
     public async Task<bool> DeleteAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.ExecuteAsync("UPDATE ExportConfigs SET IsActive=0, ModifiedAt=@Now WHERE Id=@Id", new { Id = id, Now = DateTime.UtcNow }) > 0;
+        return await _context.ExportConfigs
+            .Where(e => e.Id == id)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(e => e.IsActive, false)
+                .SetProperty(e => e.ModifiedAt, DateTime.UtcNow)) > 0;
     }
 }
 
 public class NamingConventionRepository : INamingConventionRepository
 {
-    private readonly IDbConnectionFactory _connectionFactory;
+    private readonly DmsDbContext _context;
 
-    public NamingConventionRepository(IDbConnectionFactory connectionFactory) => _connectionFactory = connectionFactory;
+    public NamingConventionRepository(DmsDbContext context) => _context = context;
 
     public async Task<IEnumerable<NamingConvention>> GetAllAsync(bool includeInactive = false)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<NamingConvention>(@"SELECT nc.*, f.Name as FolderName, dt.Name as DocumentTypeName
-            FROM NamingConventions nc LEFT JOIN Folders f ON nc.FolderId = f.Id LEFT JOIN DocumentTypes dt ON nc.DocumentTypeId = dt.Id
-            WHERE (@IncludeInactive = 1 OR nc.IsActive = 1) ORDER BY nc.SortOrder, nc.Name", new { IncludeInactive = includeInactive });
+        var query = includeInactive
+            ? _context.NamingConventions.IgnoreQueryFilters()
+            : _context.NamingConventions.AsQueryable();
+
+        return await query
+            .AsNoTracking()
+            .GroupJoin(_context.Folders.AsNoTracking(), nc => nc.FolderId, f => f.Id, (nc, folders) => new { nc, folders })
+            .SelectMany(x => x.folders.DefaultIfEmpty(), (x, f) => new { x.nc, f })
+            .GroupJoin(_context.DocumentTypes.AsNoTracking(), x => x.nc.DocumentTypeId, dt => dt.Id, (x, dts) => new { x.nc, x.f, dts })
+            .SelectMany(x => x.dts.DefaultIfEmpty(), (x, dt) => new NamingConvention
+            {
+                Id = x.nc.Id,
+                Name = x.nc.Name,
+                Description = x.nc.Description,
+                Pattern = x.nc.Pattern,
+                AppliesTo = x.nc.AppliesTo,
+                FolderId = x.nc.FolderId,
+                DocumentTypeId = x.nc.DocumentTypeId,
+                IsRequired = x.nc.IsRequired,
+                AutoGenerate = x.nc.AutoGenerate,
+                Separator = x.nc.Separator,
+                IsActive = x.nc.IsActive,
+                SortOrder = x.nc.SortOrder,
+                CreatedBy = x.nc.CreatedBy,
+                CreatedAt = x.nc.CreatedAt,
+                ModifiedBy = x.nc.ModifiedBy,
+                ModifiedAt = x.nc.ModifiedAt,
+                FolderName = x.f != null ? x.f.Name : null,
+                DocumentTypeName = dt != null ? dt.Name : null
+            })
+            .OrderBy(nc => nc.SortOrder)
+            .ThenBy(nc => nc.Name)
+            .ToListAsync();
     }
 
     public async Task<NamingConvention?> GetByIdAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<NamingConvention>(@"SELECT nc.*, f.Name as FolderName, dt.Name as DocumentTypeName
-            FROM NamingConventions nc LEFT JOIN Folders f ON nc.FolderId = f.Id LEFT JOIN DocumentTypes dt ON nc.DocumentTypeId = dt.Id WHERE nc.Id = @Id", new { Id = id });
+        return await _context.NamingConventions
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(nc => nc.Id == id)
+            .GroupJoin(_context.Folders.AsNoTracking(), nc => nc.FolderId, f => f.Id, (nc, folders) => new { nc, folders })
+            .SelectMany(x => x.folders.DefaultIfEmpty(), (x, f) => new { x.nc, f })
+            .GroupJoin(_context.DocumentTypes.AsNoTracking(), x => x.nc.DocumentTypeId, dt => dt.Id, (x, dts) => new { x.nc, x.f, dts })
+            .SelectMany(x => x.dts.DefaultIfEmpty(), (x, dt) => new NamingConvention
+            {
+                Id = x.nc.Id,
+                Name = x.nc.Name,
+                Description = x.nc.Description,
+                Pattern = x.nc.Pattern,
+                AppliesTo = x.nc.AppliesTo,
+                FolderId = x.nc.FolderId,
+                DocumentTypeId = x.nc.DocumentTypeId,
+                IsRequired = x.nc.IsRequired,
+                AutoGenerate = x.nc.AutoGenerate,
+                Separator = x.nc.Separator,
+                IsActive = x.nc.IsActive,
+                SortOrder = x.nc.SortOrder,
+                CreatedBy = x.nc.CreatedBy,
+                CreatedAt = x.nc.CreatedAt,
+                ModifiedBy = x.nc.ModifiedBy,
+                ModifiedAt = x.nc.ModifiedAt,
+                FolderName = x.f != null ? x.f.Name : null,
+                DocumentTypeName = dt != null ? dt.Name : null
+            })
+            .FirstOrDefaultAsync();
     }
 
     public async Task<IEnumerable<NamingConvention>> GetByFolderAsync(Guid folderId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<NamingConvention>("SELECT * FROM NamingConventions WHERE FolderId = @FolderId AND IsActive = 1 ORDER BY SortOrder", new { FolderId = folderId });
+        return await _context.NamingConventions
+            .AsNoTracking()
+            .Where(nc => nc.FolderId == folderId)
+            .OrderBy(nc => nc.SortOrder)
+            .ToListAsync();
     }
 
     public async Task<NamingConvention?> GetApplicableAsync(Guid? folderId, Guid? documentTypeId, string appliesTo)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<NamingConvention>(@"SELECT TOP 1 * FROM NamingConventions
-            WHERE IsActive = 1 AND (AppliesTo = @AppliesTo OR AppliesTo = 'Both')
-            AND (FolderId = @FolderId OR FolderId IS NULL) AND (DocumentTypeId = @DocumentTypeId OR DocumentTypeId IS NULL)
-            ORDER BY CASE WHEN FolderId = @FolderId THEN 0 ELSE 1 END, CASE WHEN DocumentTypeId = @DocumentTypeId THEN 0 ELSE 1 END, SortOrder",
-            new { FolderId = folderId, DocumentTypeId = documentTypeId, AppliesTo = appliesTo });
+        return await _context.NamingConventions
+            .AsNoTracking()
+            .Where(nc => (nc.AppliesTo == appliesTo || nc.AppliesTo == "Both")
+                && (nc.FolderId == folderId || nc.FolderId == null)
+                && (nc.DocumentTypeId == documentTypeId || nc.DocumentTypeId == null))
+            .OrderBy(nc => nc.FolderId == folderId ? 0 : 1)
+            .ThenBy(nc => nc.DocumentTypeId == documentTypeId ? 0 : 1)
+            .ThenBy(nc => nc.SortOrder)
+            .FirstOrDefaultAsync();
     }
 
     public async Task<Guid> CreateAsync(NamingConvention convention)
     {
-        using var connection = _connectionFactory.CreateConnection();
         convention.Id = Guid.NewGuid();
         convention.CreatedAt = DateTime.UtcNow;
-        await connection.ExecuteAsync(@"INSERT INTO NamingConventions (Id, Name, Description, Pattern, AppliesTo, FolderId, DocumentTypeId, IsRequired, AutoGenerate, Separator, IsActive, SortOrder, CreatedBy, CreatedAt)
-            VALUES (@Id, @Name, @Description, @Pattern, @AppliesTo, @FolderId, @DocumentTypeId, @IsRequired, @AutoGenerate, @Separator, @IsActive, @SortOrder, @CreatedBy, @CreatedAt)", convention);
+
+        _context.NamingConventions.Add(convention);
+        await _context.SaveChangesAsync();
         return convention.Id;
     }
 
     public async Task<bool> UpdateAsync(NamingConvention convention)
     {
-        using var connection = _connectionFactory.CreateConnection();
         convention.ModifiedAt = DateTime.UtcNow;
-        return await connection.ExecuteAsync(@"UPDATE NamingConventions SET Name=@Name, Description=@Description, Pattern=@Pattern, AppliesTo=@AppliesTo, FolderId=@FolderId,
-            DocumentTypeId=@DocumentTypeId, IsRequired=@IsRequired, AutoGenerate=@AutoGenerate, Separator=@Separator, IsActive=@IsActive, SortOrder=@SortOrder, ModifiedBy=@ModifiedBy, ModifiedAt=@ModifiedAt WHERE Id=@Id", convention) > 0;
+
+        var existing = await _context.NamingConventions.FindAsync(convention.Id);
+        if (existing == null) return false;
+
+        existing.Name = convention.Name;
+        existing.Description = convention.Description;
+        existing.Pattern = convention.Pattern;
+        existing.AppliesTo = convention.AppliesTo;
+        existing.FolderId = convention.FolderId;
+        existing.DocumentTypeId = convention.DocumentTypeId;
+        existing.IsRequired = convention.IsRequired;
+        existing.AutoGenerate = convention.AutoGenerate;
+        existing.Separator = convention.Separator;
+        existing.IsActive = convention.IsActive;
+        existing.SortOrder = convention.SortOrder;
+        existing.ModifiedBy = convention.ModifiedBy;
+        existing.ModifiedAt = convention.ModifiedAt;
+
+        return await _context.SaveChangesAsync() > 0;
     }
 
     public async Task<bool> DeleteAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.ExecuteAsync("UPDATE NamingConventions SET IsActive=0, ModifiedAt=@Now WHERE Id=@Id", new { Id = id, Now = DateTime.UtcNow }) > 0;
+        return await _context.NamingConventions
+            .Where(nc => nc.Id == id)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(nc => nc.IsActive, false)
+                .SetProperty(nc => nc.ModifiedAt, DateTime.UtcNow)) > 0;
     }
 
     public Task<string> GenerateNameAsync(Guid conventionId, Dictionary<string, string> values)
@@ -318,312 +576,544 @@ public class NamingConventionRepository : INamingConventionRepository
 
 public class OrganizationTemplateRepository : IOrganizationTemplateRepository
 {
-    private readonly IDbConnectionFactory _connectionFactory;
+    private readonly DmsDbContext _context;
 
-    public OrganizationTemplateRepository(IDbConnectionFactory connectionFactory) => _connectionFactory = connectionFactory;
+    public OrganizationTemplateRepository(DmsDbContext context) => _context = context;
 
     public async Task<IEnumerable<OrganizationTemplate>> GetAllAsync(bool includeInactive = false)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<OrganizationTemplate>("SELECT * FROM OrganizationTemplates WHERE (@IncludeInactive = 1 OR IsActive = 1) ORDER BY Name", new { IncludeInactive = includeInactive });
+        var query = includeInactive
+            ? _context.OrganizationTemplates.IgnoreQueryFilters()
+            : _context.OrganizationTemplates.AsQueryable();
+
+        return await query
+            .AsNoTracking()
+            .OrderBy(t => t.Name)
+            .ToListAsync();
     }
 
     public async Task<OrganizationTemplate?> GetByIdAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<OrganizationTemplate>("SELECT * FROM OrganizationTemplates WHERE Id = @Id", new { Id = id });
+        return await _context.OrganizationTemplates
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Id == id);
     }
 
     public async Task<OrganizationTemplate?> GetDefaultAsync()
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<OrganizationTemplate>("SELECT * FROM OrganizationTemplates WHERE IsDefault = 1 AND IsActive = 1");
+        return await _context.OrganizationTemplates
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.IsDefault);
     }
 
     public async Task<Guid> CreateAsync(OrganizationTemplate template)
     {
-        using var connection = _connectionFactory.CreateConnection();
         template.Id = Guid.NewGuid();
         template.CreatedAt = DateTime.UtcNow;
-        await connection.ExecuteAsync(@"INSERT INTO OrganizationTemplates (Id, Name, Description, Structure, DefaultPermissions, IncludeContentTypes, IsDefault, IsActive, CreatedBy, CreatedAt)
-            VALUES (@Id, @Name, @Description, @Structure, @DefaultPermissions, @IncludeContentTypes, @IsDefault, @IsActive, @CreatedBy, @CreatedAt)", template);
+
+        _context.OrganizationTemplates.Add(template);
+        await _context.SaveChangesAsync();
         return template.Id;
     }
 
     public async Task<bool> UpdateAsync(OrganizationTemplate template)
     {
-        using var connection = _connectionFactory.CreateConnection();
         template.ModifiedAt = DateTime.UtcNow;
-        return await connection.ExecuteAsync(@"UPDATE OrganizationTemplates SET Name=@Name, Description=@Description, Structure=@Structure, DefaultPermissions=@DefaultPermissions,
-            IncludeContentTypes=@IncludeContentTypes, IsDefault=@IsDefault, IsActive=@IsActive, ModifiedBy=@ModifiedBy, ModifiedAt=@ModifiedAt WHERE Id=@Id", template) > 0;
+
+        var existing = await _context.OrganizationTemplates.FindAsync(template.Id);
+        if (existing == null) return false;
+
+        existing.Name = template.Name;
+        existing.Description = template.Description;
+        existing.Structure = template.Structure;
+        existing.DefaultPermissions = template.DefaultPermissions;
+        existing.IncludeContentTypes = template.IncludeContentTypes;
+        existing.IsDefault = template.IsDefault;
+        existing.IsActive = template.IsActive;
+        existing.ModifiedBy = template.ModifiedBy;
+        existing.ModifiedAt = template.ModifiedAt;
+
+        return await _context.SaveChangesAsync() > 0;
     }
 
     public async Task<bool> SetDefaultAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
-        using var transaction = connection.BeginTransaction();
-        try
+        var strategy = _context.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
         {
-            await connection.ExecuteAsync("UPDATE OrganizationTemplates SET IsDefault=0", transaction: transaction);
-            await connection.ExecuteAsync("UPDATE OrganizationTemplates SET IsDefault=1 WHERE Id=@Id", new { Id = id }, transaction);
-            transaction.Commit();
-            return true;
-        }
-        catch { transaction.Rollback(); return false; }
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                await _context.OrganizationTemplates
+                    .IgnoreQueryFilters()
+                    .ExecuteUpdateAsync(s => s.SetProperty(x => x.IsDefault, false));
+                await _context.OrganizationTemplates
+                    .IgnoreQueryFilters()
+                    .Where(x => x.Id == id)
+                    .ExecuteUpdateAsync(s => s.SetProperty(x => x.IsDefault, true));
+                await transaction.CommitAsync();
+                return true;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                return false;
+            }
+        });
     }
 
     public async Task<bool> DeleteAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.ExecuteAsync("UPDATE OrganizationTemplates SET IsActive=0, ModifiedAt=@Now WHERE Id=@Id", new { Id = id, Now = DateTime.UtcNow }) > 0;
+        return await _context.OrganizationTemplates
+            .Where(t => t.Id == id)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(t => t.IsActive, false)
+                .SetProperty(t => t.ModifiedAt, DateTime.UtcNow)) > 0;
     }
 }
 
 public class PermissionLevelDefinitionRepository : IPermissionLevelDefinitionRepository
 {
-    private readonly IDbConnectionFactory _connectionFactory;
+    private readonly DmsDbContext _context;
 
-    public PermissionLevelDefinitionRepository(IDbConnectionFactory connectionFactory) => _connectionFactory = connectionFactory;
+    public PermissionLevelDefinitionRepository(DmsDbContext context) => _context = context;
 
     public async Task<IEnumerable<PermissionLevelDefinition>> GetAllAsync(bool includeInactive = false)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<PermissionLevelDefinition>("SELECT * FROM PermissionLevelDefinitions WHERE (@IncludeInactive = 1 OR IsActive = 1) ORDER BY SortOrder, Level", new { IncludeInactive = includeInactive });
+        var query = includeInactive
+            ? _context.PermissionLevelDefinitions.IgnoreQueryFilters()
+            : _context.PermissionLevelDefinitions.AsQueryable();
+
+        return await query
+            .AsNoTracking()
+            .OrderBy(p => p.SortOrder)
+            .ThenBy(p => p.Level)
+            .ToListAsync();
     }
 
     public async Task<PermissionLevelDefinition?> GetByIdAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<PermissionLevelDefinition>("SELECT * FROM PermissionLevelDefinitions WHERE Id = @Id", new { Id = id });
+        return await _context.PermissionLevelDefinitions
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.Id == id);
     }
 
     public async Task<PermissionLevelDefinition?> GetByLevelAsync(int level)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<PermissionLevelDefinition>("SELECT * FROM PermissionLevelDefinitions WHERE Level = @Level AND IsActive = 1", new { Level = level });
+        return await _context.PermissionLevelDefinitions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.Level == level);
     }
 
     public async Task<Guid> CreateAsync(PermissionLevelDefinition definition)
     {
-        using var connection = _connectionFactory.CreateConnection();
         definition.Id = Guid.NewGuid();
         definition.CreatedAt = DateTime.UtcNow;
-        await connection.ExecuteAsync(@"INSERT INTO PermissionLevelDefinitions (Id, Name, Description, Level, Color, Icon, CanRead, CanWrite, CanDelete, CanAdmin, CanShare, CanExport, IsSystem, IsActive, SortOrder, CreatedBy, CreatedAt)
-            VALUES (@Id, @Name, @Description, @Level, @Color, @Icon, @CanRead, @CanWrite, @CanDelete, @CanAdmin, @CanShare, @CanExport, @IsSystem, @IsActive, @SortOrder, @CreatedBy, @CreatedAt)", definition);
+
+        _context.PermissionLevelDefinitions.Add(definition);
+        await _context.SaveChangesAsync();
         return definition.Id;
     }
 
     public async Task<bool> UpdateAsync(PermissionLevelDefinition definition)
     {
-        using var connection = _connectionFactory.CreateConnection();
         definition.ModifiedAt = DateTime.UtcNow;
-        return await connection.ExecuteAsync(@"UPDATE PermissionLevelDefinitions SET Name=@Name, Description=@Description, Level=@Level, Color=@Color, Icon=@Icon,
-            CanRead=@CanRead, CanWrite=@CanWrite, CanDelete=@CanDelete, CanAdmin=@CanAdmin, CanShare=@CanShare, CanExport=@CanExport, IsSystem=@IsSystem, IsActive=@IsActive, SortOrder=@SortOrder, ModifiedBy=@ModifiedBy, ModifiedAt=@ModifiedAt WHERE Id=@Id", definition) > 0;
+
+        var existing = await _context.PermissionLevelDefinitions.FindAsync(definition.Id);
+        if (existing == null) return false;
+
+        existing.Name = definition.Name;
+        existing.Description = definition.Description;
+        existing.Level = definition.Level;
+        existing.Color = definition.Color;
+        existing.Icon = definition.Icon;
+        existing.CanRead = definition.CanRead;
+        existing.CanWrite = definition.CanWrite;
+        existing.CanDelete = definition.CanDelete;
+        existing.CanAdmin = definition.CanAdmin;
+        existing.CanShare = definition.CanShare;
+        existing.CanExport = definition.CanExport;
+        existing.IsSystem = definition.IsSystem;
+        existing.IsActive = definition.IsActive;
+        existing.SortOrder = definition.SortOrder;
+        existing.ModifiedBy = definition.ModifiedBy;
+        existing.ModifiedAt = definition.ModifiedAt;
+
+        return await _context.SaveChangesAsync() > 0;
     }
 
     public async Task<bool> DeleteAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.ExecuteAsync("UPDATE PermissionLevelDefinitions SET IsActive=0, ModifiedAt=@Now WHERE Id=@Id AND IsSystem=0", new { Id = id, Now = DateTime.UtcNow }) > 0;
+        return await _context.PermissionLevelDefinitions
+            .Where(p => p.Id == id && !p.IsSystem)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(p => p.IsActive, false)
+                .SetProperty(p => p.ModifiedAt, DateTime.UtcNow)) > 0;
     }
 }
 
 public class PurposeRepository : IPurposeRepository
 {
-    private readonly IDbConnectionFactory _connectionFactory;
+    private readonly DmsDbContext _context;
 
-    public PurposeRepository(IDbConnectionFactory connectionFactory) => _connectionFactory = connectionFactory;
+    public PurposeRepository(DmsDbContext context) => _context = context;
 
     public async Task<IEnumerable<Purpose>> GetAllAsync(bool includeInactive = false)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<Purpose>("SELECT * FROM Purposes WHERE (@IncludeInactive = 1 OR IsActive = 1) ORDER BY SortOrder, Name", new { IncludeInactive = includeInactive });
+        var query = includeInactive
+            ? _context.Purposes.IgnoreQueryFilters()
+            : _context.Purposes.AsQueryable();
+
+        return await query
+            .AsNoTracking()
+            .OrderBy(p => p.SortOrder)
+            .ThenBy(p => p.Name)
+            .ToListAsync();
     }
 
     public async Task<Purpose?> GetByIdAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<Purpose>("SELECT * FROM Purposes WHERE Id = @Id", new { Id = id });
+        return await _context.Purposes
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.Id == id);
     }
 
     public async Task<IEnumerable<Purpose>> GetByTypeAsync(string purposeType)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<Purpose>("SELECT * FROM Purposes WHERE PurposeType = @PurposeType AND IsActive = 1 ORDER BY SortOrder", new { PurposeType = purposeType });
+        return await _context.Purposes
+            .AsNoTracking()
+            .Where(p => p.PurposeType == purposeType)
+            .OrderBy(p => p.SortOrder)
+            .ToListAsync();
     }
 
     public async Task<Purpose?> GetDefaultAsync(string purposeType)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<Purpose>("SELECT * FROM Purposes WHERE PurposeType = @PurposeType AND IsDefault = 1 AND IsActive = 1", new { PurposeType = purposeType });
+        return await _context.Purposes
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.PurposeType == purposeType && p.IsDefault);
     }
 
     public async Task<Guid> CreateAsync(Purpose purpose)
     {
-        using var connection = _connectionFactory.CreateConnection();
         purpose.Id = Guid.NewGuid();
         purpose.CreatedAt = DateTime.UtcNow;
-        await connection.ExecuteAsync(@"INSERT INTO Purposes (Id, Name, Description, PurposeType, RequiresJustification, RequiresApproval, IsDefault, IsActive, SortOrder, CreatedBy, CreatedAt)
-            VALUES (@Id, @Name, @Description, @PurposeType, @RequiresJustification, @RequiresApproval, @IsDefault, @IsActive, @SortOrder, @CreatedBy, @CreatedAt)", purpose);
+
+        _context.Purposes.Add(purpose);
+        await _context.SaveChangesAsync();
         return purpose.Id;
     }
 
     public async Task<bool> UpdateAsync(Purpose purpose)
     {
-        using var connection = _connectionFactory.CreateConnection();
         purpose.ModifiedAt = DateTime.UtcNow;
-        return await connection.ExecuteAsync(@"UPDATE Purposes SET Name=@Name, Description=@Description, PurposeType=@PurposeType, RequiresJustification=@RequiresJustification,
-            RequiresApproval=@RequiresApproval, IsDefault=@IsDefault, IsActive=@IsActive, SortOrder=@SortOrder, ModifiedBy=@ModifiedBy, ModifiedAt=@ModifiedAt WHERE Id=@Id", purpose) > 0;
+
+        var existing = await _context.Purposes.FindAsync(purpose.Id);
+        if (existing == null) return false;
+
+        existing.Name = purpose.Name;
+        existing.Description = purpose.Description;
+        existing.PurposeType = purpose.PurposeType;
+        existing.RequiresJustification = purpose.RequiresJustification;
+        existing.RequiresApproval = purpose.RequiresApproval;
+        existing.IsDefault = purpose.IsDefault;
+        existing.IsActive = purpose.IsActive;
+        existing.SortOrder = purpose.SortOrder;
+        existing.ModifiedBy = purpose.ModifiedBy;
+        existing.ModifiedAt = purpose.ModifiedAt;
+
+        return await _context.SaveChangesAsync() > 0;
     }
 
     public async Task<bool> DeleteAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.ExecuteAsync("UPDATE Purposes SET IsActive=0, ModifiedAt=@Now WHERE Id=@Id", new { Id = id, Now = DateTime.UtcNow }) > 0;
+        return await _context.Purposes
+            .Where(p => p.Id == id)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(p => p.IsActive, false)
+                .SetProperty(p => p.ModifiedAt, DateTime.UtcNow)) > 0;
     }
 }
 
 public class ScanConfigRepository : IScanConfigRepository
 {
-    private readonly IDbConnectionFactory _connectionFactory;
+    private readonly DmsDbContext _context;
 
-    public ScanConfigRepository(IDbConnectionFactory connectionFactory) => _connectionFactory = connectionFactory;
+    public ScanConfigRepository(DmsDbContext context) => _context = context;
 
     public async Task<IEnumerable<ScanConfig>> GetAllAsync(bool includeInactive = false)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<ScanConfig>(@"SELECT sc.*, f.Name as TargetFolderName FROM ScanConfigs sc
-            LEFT JOIN Folders f ON sc.TargetFolderId = f.Id WHERE (@IncludeInactive = 1 OR sc.IsActive = 1) ORDER BY sc.Name", new { IncludeInactive = includeInactive });
+        var query = includeInactive
+            ? _context.ScanConfigs.IgnoreQueryFilters()
+            : _context.ScanConfigs.AsQueryable();
+
+        return await query
+            .AsNoTracking()
+            .GroupJoin(_context.Folders.AsNoTracking(), sc => sc.TargetFolderId, f => f.Id, (sc, folders) => new { sc, folders })
+            .SelectMany(x => x.folders.DefaultIfEmpty(), (x, f) => new ScanConfig
+            {
+                Id = x.sc.Id,
+                Name = x.sc.Name,
+                Description = x.sc.Description,
+                Resolution = x.sc.Resolution,
+                ColorMode = x.sc.ColorMode,
+                OutputFormat = x.sc.OutputFormat,
+                EnableOCR = x.sc.EnableOCR,
+                OcrLanguage = x.sc.OcrLanguage,
+                AutoDeskew = x.sc.AutoDeskew,
+                AutoCrop = x.sc.AutoCrop,
+                RemoveBlankPages = x.sc.RemoveBlankPages,
+                CompressionQuality = x.sc.CompressionQuality,
+                TargetFolderId = x.sc.TargetFolderId,
+                IsDefault = x.sc.IsDefault,
+                IsActive = x.sc.IsActive,
+                CreatedBy = x.sc.CreatedBy,
+                CreatedAt = x.sc.CreatedAt,
+                ModifiedBy = x.sc.ModifiedBy,
+                ModifiedAt = x.sc.ModifiedAt,
+                TargetFolderName = f != null ? f.Name : null
+            })
+            .OrderBy(sc => sc.Name)
+            .ToListAsync();
     }
 
     public async Task<ScanConfig?> GetByIdAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<ScanConfig>(@"SELECT sc.*, f.Name as TargetFolderName FROM ScanConfigs sc
-            LEFT JOIN Folders f ON sc.TargetFolderId = f.Id WHERE sc.Id = @Id", new { Id = id });
+        return await _context.ScanConfigs
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(sc => sc.Id == id)
+            .GroupJoin(_context.Folders.AsNoTracking(), sc => sc.TargetFolderId, f => f.Id, (sc, folders) => new { sc, folders })
+            .SelectMany(x => x.folders.DefaultIfEmpty(), (x, f) => new ScanConfig
+            {
+                Id = x.sc.Id,
+                Name = x.sc.Name,
+                Description = x.sc.Description,
+                Resolution = x.sc.Resolution,
+                ColorMode = x.sc.ColorMode,
+                OutputFormat = x.sc.OutputFormat,
+                EnableOCR = x.sc.EnableOCR,
+                OcrLanguage = x.sc.OcrLanguage,
+                AutoDeskew = x.sc.AutoDeskew,
+                AutoCrop = x.sc.AutoCrop,
+                RemoveBlankPages = x.sc.RemoveBlankPages,
+                CompressionQuality = x.sc.CompressionQuality,
+                TargetFolderId = x.sc.TargetFolderId,
+                IsDefault = x.sc.IsDefault,
+                IsActive = x.sc.IsActive,
+                CreatedBy = x.sc.CreatedBy,
+                CreatedAt = x.sc.CreatedAt,
+                ModifiedBy = x.sc.ModifiedBy,
+                ModifiedAt = x.sc.ModifiedAt,
+                TargetFolderName = f != null ? f.Name : null
+            })
+            .FirstOrDefaultAsync();
     }
 
     public async Task<ScanConfig?> GetDefaultAsync()
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<ScanConfig>("SELECT * FROM ScanConfigs WHERE IsDefault = 1 AND IsActive = 1");
+        return await _context.ScanConfigs
+            .AsNoTracking()
+            .FirstOrDefaultAsync(sc => sc.IsDefault);
     }
 
     public async Task<Guid> CreateAsync(ScanConfig config)
     {
-        using var connection = _connectionFactory.CreateConnection();
         config.Id = Guid.NewGuid();
         config.CreatedAt = DateTime.UtcNow;
-        await connection.ExecuteAsync(@"INSERT INTO ScanConfigs (Id, Name, Description, Resolution, ColorMode, OutputFormat, EnableOCR, OcrLanguage, AutoDeskew, AutoCrop, RemoveBlankPages, CompressionQuality, TargetFolderId, IsDefault, IsActive, CreatedBy, CreatedAt)
-            VALUES (@Id, @Name, @Description, @Resolution, @ColorMode, @OutputFormat, @EnableOCR, @OcrLanguage, @AutoDeskew, @AutoCrop, @RemoveBlankPages, @CompressionQuality, @TargetFolderId, @IsDefault, @IsActive, @CreatedBy, @CreatedAt)", config);
+
+        _context.ScanConfigs.Add(config);
+        await _context.SaveChangesAsync();
         return config.Id;
     }
 
     public async Task<bool> UpdateAsync(ScanConfig config)
     {
-        using var connection = _connectionFactory.CreateConnection();
         config.ModifiedAt = DateTime.UtcNow;
-        return await connection.ExecuteAsync(@"UPDATE ScanConfigs SET Name=@Name, Description=@Description, Resolution=@Resolution, ColorMode=@ColorMode, OutputFormat=@OutputFormat,
-            EnableOCR=@EnableOCR, OcrLanguage=@OcrLanguage, AutoDeskew=@AutoDeskew, AutoCrop=@AutoCrop, RemoveBlankPages=@RemoveBlankPages, CompressionQuality=@CompressionQuality,
-            TargetFolderId=@TargetFolderId, IsDefault=@IsDefault, IsActive=@IsActive, ModifiedBy=@ModifiedBy, ModifiedAt=@ModifiedAt WHERE Id=@Id", config) > 0;
+
+        var existing = await _context.ScanConfigs.FindAsync(config.Id);
+        if (existing == null) return false;
+
+        existing.Name = config.Name;
+        existing.Description = config.Description;
+        existing.Resolution = config.Resolution;
+        existing.ColorMode = config.ColorMode;
+        existing.OutputFormat = config.OutputFormat;
+        existing.EnableOCR = config.EnableOCR;
+        existing.OcrLanguage = config.OcrLanguage;
+        existing.AutoDeskew = config.AutoDeskew;
+        existing.AutoCrop = config.AutoCrop;
+        existing.RemoveBlankPages = config.RemoveBlankPages;
+        existing.CompressionQuality = config.CompressionQuality;
+        existing.TargetFolderId = config.TargetFolderId;
+        existing.IsDefault = config.IsDefault;
+        existing.IsActive = config.IsActive;
+        existing.ModifiedBy = config.ModifiedBy;
+        existing.ModifiedAt = config.ModifiedAt;
+
+        return await _context.SaveChangesAsync() > 0;
     }
 
     public async Task<bool> SetDefaultAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
-        using var transaction = connection.BeginTransaction();
-        try
+        var strategy = _context.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
         {
-            await connection.ExecuteAsync("UPDATE ScanConfigs SET IsDefault=0", transaction: transaction);
-            await connection.ExecuteAsync("UPDATE ScanConfigs SET IsDefault=1 WHERE Id=@Id", new { Id = id }, transaction);
-            transaction.Commit();
-            return true;
-        }
-        catch { transaction.Rollback(); return false; }
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                await _context.ScanConfigs
+                    .IgnoreQueryFilters()
+                    .ExecuteUpdateAsync(s => s.SetProperty(x => x.IsDefault, false));
+                await _context.ScanConfigs
+                    .IgnoreQueryFilters()
+                    .Where(x => x.Id == id)
+                    .ExecuteUpdateAsync(s => s.SetProperty(x => x.IsDefault, true));
+                await transaction.CommitAsync();
+                return true;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                return false;
+            }
+        });
     }
 
     public async Task<bool> DeleteAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.ExecuteAsync("UPDATE ScanConfigs SET IsActive=0, ModifiedAt=@Now WHERE Id=@Id", new { Id = id, Now = DateTime.UtcNow }) > 0;
+        return await _context.ScanConfigs
+            .Where(sc => sc.Id == id)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(sc => sc.IsActive, false)
+                .SetProperty(sc => sc.ModifiedAt, DateTime.UtcNow)) > 0;
     }
 }
 
 public class SearchConfigRepository : ISearchConfigRepository
 {
-    private readonly IDbConnectionFactory _connectionFactory;
+    private readonly DmsDbContext _context;
 
-    public SearchConfigRepository(IDbConnectionFactory connectionFactory) => _connectionFactory = connectionFactory;
+    public SearchConfigRepository(DmsDbContext context) => _context = context;
 
     public async Task<IEnumerable<SearchConfig>> GetAllAsync(bool includeInactive = false)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<SearchConfig>("SELECT * FROM SearchConfigs WHERE (@IncludeInactive = 1 OR IsActive = 1) ORDER BY Name", new { IncludeInactive = includeInactive });
+        var query = includeInactive
+            ? _context.SearchConfigs.IgnoreQueryFilters()
+            : _context.SearchConfigs.AsQueryable();
+
+        return await query
+            .AsNoTracking()
+            .OrderBy(s => s.Name)
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<SearchConfig>> GetGlobalAsync()
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<SearchConfig>("SELECT * FROM SearchConfigs WHERE IsGlobal = 1 AND IsActive = 1 ORDER BY Name");
+        return await _context.SearchConfigs
+            .AsNoTracking()
+            .Where(s => s.IsGlobal)
+            .OrderBy(s => s.Name)
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<SearchConfig>> GetByUserAsync(Guid userId)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<SearchConfig>("SELECT * FROM SearchConfigs WHERE (IsGlobal = 1 OR CreatedBy = @UserId) AND IsActive = 1 ORDER BY Name", new { UserId = userId });
+        return await _context.SearchConfigs
+            .AsNoTracking()
+            .Where(s => s.IsGlobal || s.CreatedBy == userId)
+            .OrderBy(s => s.Name)
+            .ToListAsync();
     }
 
     public async Task<SearchConfig?> GetByIdAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<SearchConfig>("SELECT * FROM SearchConfigs WHERE Id = @Id", new { Id = id });
+        return await _context.SearchConfigs
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Id == id);
     }
 
     public async Task<SearchConfig?> GetDefaultAsync()
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<SearchConfig>("SELECT * FROM SearchConfigs WHERE IsDefault = 1 AND IsActive = 1");
+        return await _context.SearchConfigs
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.IsDefault);
     }
 
     public async Task<Guid> CreateAsync(SearchConfig config)
     {
-        using var connection = _connectionFactory.CreateConnection();
         config.Id = Guid.NewGuid();
         config.CreatedAt = DateTime.UtcNow;
-        await connection.ExecuteAsync(@"INSERT INTO SearchConfigs (Id, Name, Description, SearchType, DefaultFields, Filters, IncludeContent, IncludeMetadata, IncludeVersions, FuzzyMatch, MaxResults, SortField, SortDirection, IsGlobal, IsDefault, IsActive, CreatedBy, CreatedAt)
-            VALUES (@Id, @Name, @Description, @SearchType, @DefaultFields, @Filters, @IncludeContent, @IncludeMetadata, @IncludeVersions, @FuzzyMatch, @MaxResults, @SortField, @SortDirection, @IsGlobal, @IsDefault, @IsActive, @CreatedBy, @CreatedAt)", config);
+
+        _context.SearchConfigs.Add(config);
+        await _context.SaveChangesAsync();
         return config.Id;
     }
 
     public async Task<bool> UpdateAsync(SearchConfig config)
     {
-        using var connection = _connectionFactory.CreateConnection();
         config.ModifiedAt = DateTime.UtcNow;
-        return await connection.ExecuteAsync(@"UPDATE SearchConfigs SET Name=@Name, Description=@Description, SearchType=@SearchType, DefaultFields=@DefaultFields, Filters=@Filters,
-            IncludeContent=@IncludeContent, IncludeMetadata=@IncludeMetadata, IncludeVersions=@IncludeVersions, FuzzyMatch=@FuzzyMatch, MaxResults=@MaxResults,
-            SortField=@SortField, SortDirection=@SortDirection, IsGlobal=@IsGlobal, IsDefault=@IsDefault, IsActive=@IsActive, ModifiedBy=@ModifiedBy, ModifiedAt=@ModifiedAt WHERE Id=@Id", config) > 0;
+
+        var existing = await _context.SearchConfigs.FindAsync(config.Id);
+        if (existing == null) return false;
+
+        existing.Name = config.Name;
+        existing.Description = config.Description;
+        existing.SearchType = config.SearchType;
+        existing.DefaultFields = config.DefaultFields;
+        existing.Filters = config.Filters;
+        existing.IncludeContent = config.IncludeContent;
+        existing.IncludeMetadata = config.IncludeMetadata;
+        existing.IncludeVersions = config.IncludeVersions;
+        existing.FuzzyMatch = config.FuzzyMatch;
+        existing.MaxResults = config.MaxResults;
+        existing.SortField = config.SortField;
+        existing.SortDirection = config.SortDirection;
+        existing.IsGlobal = config.IsGlobal;
+        existing.IsDefault = config.IsDefault;
+        existing.IsActive = config.IsActive;
+        existing.ModifiedBy = config.ModifiedBy;
+        existing.ModifiedAt = config.ModifiedAt;
+
+        return await _context.SaveChangesAsync() > 0;
     }
 
     public async Task<bool> SetDefaultAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        connection.Open();
-        using var transaction = connection.BeginTransaction();
-        try
+        var strategy = _context.Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
         {
-            await connection.ExecuteAsync("UPDATE SearchConfigs SET IsDefault=0", transaction: transaction);
-            await connection.ExecuteAsync("UPDATE SearchConfigs SET IsDefault=1 WHERE Id=@Id", new { Id = id }, transaction);
-            transaction.Commit();
-            return true;
-        }
-        catch { transaction.Rollback(); return false; }
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                await _context.SearchConfigs
+                    .IgnoreQueryFilters()
+                    .ExecuteUpdateAsync(s => s.SetProperty(x => x.IsDefault, false));
+                await _context.SearchConfigs
+                    .IgnoreQueryFilters()
+                    .Where(x => x.Id == id)
+                    .ExecuteUpdateAsync(s => s.SetProperty(x => x.IsDefault, true));
+                await transaction.CommitAsync();
+                return true;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                return false;
+            }
+        });
     }
 
     public async Task<bool> DeleteAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.ExecuteAsync("UPDATE SearchConfigs SET IsActive=0, ModifiedAt=@Now WHERE Id=@Id", new { Id = id, Now = DateTime.UtcNow }) > 0;
+        return await _context.SearchConfigs
+            .Where(s => s.Id == id)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(x => x.IsActive, false)
+                .SetProperty(x => x.ModifiedAt, DateTime.UtcNow)) > 0;
     }
 }

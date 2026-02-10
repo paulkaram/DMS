@@ -22,11 +22,30 @@ public class TreeNodeDto
     public List<TreeNodeDto> Children { get; set; } = new();
 }
 
+public class LookupDto
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public int ItemCount { get; set; }
+}
+
+public class LookupDetailDto
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public List<LookupItemDto> Items { get; set; } = new();
+}
+
 public class LookupItemDto
 {
     public Guid Id { get; set; }
+    public Guid LookupId { get; set; }
     public string Value { get; set; } = string.Empty;
     public string? DisplayText { get; set; }
+    public string? Language { get; set; }
+    public int SortOrder { get; set; }
 }
 
 public class ClassificationDto

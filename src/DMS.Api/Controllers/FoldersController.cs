@@ -1,3 +1,4 @@
+using DMS.Api.Constants;
 using DMS.BL.DTOs;
 using DMS.BL.Interfaces;
 using DMS.DAL.Entities;
@@ -6,43 +7,43 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace DMS.Api.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
 [Authorize]
-public class FoldersController : ControllerBase
+public class FoldersController : BaseApiController
 {
     private readonly IFolderService _folderService;
-    private readonly IPermissionService _permissionService;
     private readonly IFolderTemplateService _templateService;
 
     public FoldersController(
         IFolderService folderService,
-        IPermissionService permissionService,
         IFolderTemplateService templateService)
     {
         _folderService = folderService;
-        _permissionService = permissionService;
         _templateService = templateService;
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] Guid? cabinetId, [FromQuery] Guid? parentId, [FromQuery] string? search)
+    public async Task<IActionResult> GetAll(
+        [FromQuery] Guid? cabinetId, [FromQuery] Guid? parentId, [FromQuery] string? search,
+        [FromQuery] int page = 1, [FromQuery] int pageSize = AppConstants.DefaultPageSize)
     {
         var userId = GetCurrentUserId();
+        pageSize = Math.Min(pageSize, AppConstants.MaxPageSize);
 
         if (!string.IsNullOrEmpty(search))
         {
-            var searchResult = await _folderService.SearchAsync(search, cabinetId);
+            var searchResult = await _folderService.SearchPaginatedAsync(search, cabinetId, page, pageSize);
             if (!searchResult.Success) return BadRequest(searchResult.Errors);
 
+            var pagedResult = searchResult.Data!;
             // Filter results based on user's read permission
             var accessibleFolders = new List<FolderDto>();
-            foreach (var folder in searchResult.Data!)
+            foreach (var folder in pagedResult.Items)
             {
                 if (await HasPermissionAsync(userId, "Folder", folder.Id, (int)PermissionLevel.Read))
                     accessibleFolders.Add(folder);
             }
-            return Ok(accessibleFolders);
+            pagedResult.Items = accessibleFolders;
+            return Ok(pagedResult);
         }
 
         if (cabinetId.HasValue)
@@ -51,28 +52,30 @@ public class FoldersController : ControllerBase
             if (parentId.HasValue)
             {
                 if (!await HasPermissionAsync(userId, "Folder", parentId.Value, (int)PermissionLevel.Read))
-                    return Forbid("You don't have permission to view this folder");
+                    return Forbid(ErrorMessages.Permissions.ViewFolder);
             }
             else
             {
                 if (!await HasPermissionAsync(userId, "Cabinet", cabinetId.Value, (int)PermissionLevel.Read))
-                    return Forbid("You don't have permission to view this cabinet");
+                    return Forbid(ErrorMessages.Permissions.ViewCabinet);
             }
 
-            var result = await _folderService.GetByParentIdAsync(parentId, cabinetId.Value);
+            var result = await _folderService.GetByParentIdPaginatedAsync(parentId, cabinetId.Value, page, pageSize);
             if (!result.Success) return BadRequest(result.Errors);
 
+            var pagedResult = result.Data!;
             // Filter child folders based on user's read permission
             var accessibleFolders = new List<FolderDto>();
-            foreach (var folder in result.Data!)
+            foreach (var folder in pagedResult.Items)
             {
                 if (await HasPermissionAsync(userId, "Folder", folder.Id, (int)PermissionLevel.Read))
                     accessibleFolders.Add(folder);
             }
-            return Ok(accessibleFolders);
+            pagedResult.Items = accessibleFolders;
+            return Ok(pagedResult);
         }
 
-        return BadRequest(new[] { "CabinetId is required" });
+        return BadRequest(new[] { ErrorMessages.CabinetIdRequired });
     }
 
     [HttpGet("{id:guid}")]
@@ -82,7 +85,7 @@ public class FoldersController : ControllerBase
 
         // Check read permission
         if (!await HasPermissionAsync(userId, "Folder", id, (int)PermissionLevel.Read))
-            return Forbid("You don't have permission to view this folder");
+            return Forbid(ErrorMessages.Permissions.ViewFolder);
 
         var result = await _folderService.GetByIdAsync(id);
         return result.Success ? Ok(result.Data) : NotFound(result.Errors);
@@ -95,7 +98,7 @@ public class FoldersController : ControllerBase
 
         // Check read permission on cabinet
         if (!await HasPermissionAsync(userId, "Cabinet", cabinetId, (int)PermissionLevel.Read))
-            return Forbid("You don't have permission to view this cabinet");
+            return Forbid(ErrorMessages.Permissions.ViewCabinet);
 
         var result = await _folderService.GetTreeAsync(cabinetId);
         if (!result.Success) return BadRequest(result.Errors);
@@ -119,12 +122,12 @@ public class FoldersController : ControllerBase
         if (dto.ParentFolderId.HasValue)
         {
             if (!await HasPermissionAsync(userId, "Folder", dto.ParentFolderId.Value, (int)PermissionLevel.Write))
-                return Forbid("You don't have permission to create folders here");
+                return Forbid(ErrorMessages.Permissions.CreateFoldersHere);
         }
         else
         {
             if (!await HasPermissionAsync(userId, "Cabinet", dto.CabinetId, (int)PermissionLevel.Write))
-                return Forbid("You don't have permission to create folders in this cabinet");
+                return Forbid(ErrorMessages.Permissions.CreateFoldersInCabinet);
         }
 
         var result = await _folderService.CreateAsync(dto, userId);
@@ -138,7 +141,7 @@ public class FoldersController : ControllerBase
 
         // Check write permission on folder
         if (!await HasPermissionAsync(userId, "Folder", id, (int)PermissionLevel.Write))
-            return Forbid("You don't have permission to edit this folder");
+            return Forbid(ErrorMessages.Permissions.EditFolder);
 
         var result = await _folderService.UpdateAsync(id, dto, userId);
         return result.Success ? Ok(result.Data) : BadRequest(result.Errors);
@@ -151,18 +154,18 @@ public class FoldersController : ControllerBase
 
         // Check write+delete permission on source folder (need to remove from current location)
         if (!await HasPermissionAsync(userId, "Folder", id, (int)(PermissionLevel.Write | PermissionLevel.Delete)))
-            return Forbid("You don't have permission to move this folder");
+            return Forbid(ErrorMessages.Permissions.MoveFolder);
 
         // Check write permission on destination
         if (dto.NewParentFolderId.HasValue)
         {
             if (!await HasPermissionAsync(userId, "Folder", dto.NewParentFolderId.Value, (int)PermissionLevel.Write))
-                return Forbid("You don't have permission to move folders to this destination");
+                return Forbid(ErrorMessages.Permissions.MoveFoldersToDestination);
         }
         else if (dto.NewCabinetId.HasValue)
         {
             if (!await HasPermissionAsync(userId, "Cabinet", dto.NewCabinetId.Value, (int)PermissionLevel.Write))
-                return Forbid("You don't have permission to move folders to this cabinet");
+                return Forbid(ErrorMessages.Permissions.MoveFoldersToCabinet);
         }
 
         var result = await _folderService.MoveAsync(id, dto, userId);
@@ -176,7 +179,7 @@ public class FoldersController : ControllerBase
 
         // Check delete permission on folder
         if (!await HasPermissionAsync(userId, "Folder", id, (int)PermissionLevel.Delete))
-            return Forbid("You don't have permission to delete this folder");
+            return Forbid(ErrorMessages.Permissions.DeleteFolder);
 
         var result = await _folderService.DeleteAsync(id, userId);
         return result.Success ? NoContent() : BadRequest(result.Errors);
@@ -192,7 +195,7 @@ public class FoldersController : ControllerBase
 
         // Check write permission on folder
         if (!await HasPermissionAsync(userId, "Folder", id, (int)PermissionLevel.Write))
-            return Forbid("You don't have permission to create folders here");
+            return Forbid(ErrorMessages.Permissions.CreateFoldersHere);
 
         var result = await _templateService.ApplyTemplateAsync(id, dto, userId);
         if (!result.Success)
@@ -211,7 +214,7 @@ public class FoldersController : ControllerBase
 
         // Check read permission on folder
         if (!await HasPermissionAsync(userId, "Folder", id, (int)PermissionLevel.Read))
-            return Forbid("You don't have permission to view this folder");
+            return Forbid(ErrorMessages.Permissions.ViewFolder);
 
         var result = await _templateService.PreviewTemplateAsync(id, request.TemplateId);
         if (!result.Success)
@@ -219,27 +222,4 @@ public class FoldersController : ControllerBase
 
         return Ok(result.Data);
     }
-
-    private Guid GetCurrentUserId()
-    {
-        var userIdClaim = User.FindFirst("sub")?.Value ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        return Guid.TryParse(userIdClaim, out var userId) ? userId : Guid.Empty;
-    }
-
-    private bool IsAdmin() => User.IsInRole("Admin");
-
-    private async Task<bool> HasPermissionAsync(Guid userId, string nodeType, Guid nodeId, int requiredLevel)
-    {
-        // Admin users bypass permission checks - they have full access to everything
-        if (IsAdmin())
-            return true;
-
-        var result = await _permissionService.HasPermissionAsync(userId, nodeType, nodeId, requiredLevel);
-        return result.Success && result.Data;
-    }
-}
-
-public class PreviewTemplateRequest
-{
-    public Guid TemplateId { get; set; }
 }

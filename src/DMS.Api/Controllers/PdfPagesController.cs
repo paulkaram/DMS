@@ -1,4 +1,5 @@
 using System.Text.Json;
+using DMS.Api.Constants;
 using DMS.BL.DTOs;
 using DMS.BL.Interfaces;
 using DMS.DAL.Entities;
@@ -8,13 +9,11 @@ using System.Security.Claims;
 
 namespace DMS.Api.Controllers;
 
-[ApiController]
 [Route("api/documents/{documentId:guid}/pages")]
 [Authorize]
-public class PdfPagesController : ControllerBase
+public class PdfPagesController : BaseApiController
 {
     private readonly IPdfPageService _pdfPageService;
-    private readonly IPermissionService _permissionService;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -22,27 +21,9 @@ public class PdfPagesController : ControllerBase
         PropertyNameCaseInsensitive = true
     };
 
-    public PdfPagesController(
-        IPdfPageService pdfPageService,
-        IPermissionService permissionService)
+    public PdfPagesController(IPdfPageService pdfPageService)
     {
         _pdfPageService = pdfPageService;
-        _permissionService = permissionService;
-    }
-
-    private Guid GetCurrentUserId()
-    {
-        var userIdClaim = User.FindFirst("sub")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        return Guid.TryParse(userIdClaim, out var userId) ? userId : Guid.Empty;
-    }
-
-    private bool IsAdmin() => User.IsInRole("Admin");
-
-    private async Task<bool> HasPermissionAsync(Guid userId, string nodeType, Guid nodeId, int requiredLevel)
-    {
-        if (IsAdmin()) return true;
-        var result = await _permissionService.HasPermissionAsync(userId, nodeType, nodeId, requiredLevel);
-        return result.Success && result.Data;
     }
 
     [HttpGet("count")]
@@ -50,7 +31,7 @@ public class PdfPagesController : ControllerBase
     {
         var userId = GetCurrentUserId();
         if (!await HasPermissionAsync(userId, "Document", documentId, (int)PermissionLevel.Read))
-            return Forbid("You don't have permission to view this document");
+            return Forbid(ErrorMessages.Permissions.ReadPages);
 
         var result = await _pdfPageService.GetPageCountAsync(documentId);
         if (!result.Success)
@@ -68,7 +49,7 @@ public class PdfPagesController : ControllerBase
     {
         var userId = GetCurrentUserId();
         if (!await HasPermissionAsync(userId, "Document", documentId, (int)PermissionLevel.Write))
-            return Forbid("You don't have write permission on this document");
+            return Forbid(ErrorMessages.Permissions.WritePages);
 
         PageReorganizeRequest? request;
         try
@@ -77,11 +58,11 @@ public class PdfPagesController : ControllerBase
         }
         catch (JsonException)
         {
-            return BadRequest(new[] { "Invalid manifest JSON" });
+            return BadRequest(new[] { ErrorMessages.InvalidManifestJson });
         }
 
         if (request == null || request.Pages.Count == 0)
-            return BadRequest(new[] { "Manifest must contain at least one page" });
+            return BadRequest(new[] { ErrorMessages.ManifestRequiresPage });
 
         var streams = new List<Stream>();
         var fileNames = new List<string>();

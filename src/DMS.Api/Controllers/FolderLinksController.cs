@@ -1,15 +1,13 @@
+using DMS.BL.DTOs;
 using DMS.DAL.Entities;
 using DMS.DAL.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace DMS.Api.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
 [Authorize]
-public class FolderLinksController : ControllerBase
+public class FolderLinksController : BaseApiController
 {
     private readonly IFolderLinkRepository _folderLinkRepository;
 
@@ -17,8 +15,6 @@ public class FolderLinksController : ControllerBase
     {
         _folderLinkRepository = folderLinkRepository;
     }
-
-    private Guid GetUserId() => Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
 
     [HttpGet("from/{folderId}")]
     public async Task<ActionResult<IEnumerable<FolderLink>>> GetLinksFromFolder(Guid folderId)
@@ -41,7 +37,7 @@ public class FolderLinksController : ControllerBase
         {
             SourceFolderId = request.SourceFolderId,
             TargetFolderId = request.TargetFolderId,
-            CreatedBy = GetUserId()
+            CreatedBy = GetCurrentUserId()
         };
 
         var id = await _folderLinkRepository.CreateAsync(link);
@@ -55,10 +51,4 @@ public class FolderLinksController : ControllerBase
         if (!result) return NotFound();
         return Ok();
     }
-}
-
-public class CreateFolderLinkRequest
-{
-    public Guid SourceFolderId { get; set; }
-    public Guid TargetFolderId { get; set; }
 }

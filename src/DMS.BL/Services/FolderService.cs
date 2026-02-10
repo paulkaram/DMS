@@ -60,6 +60,30 @@ public class FolderService : IFolderService
         return ServiceResult<List<FolderDto>>.Ok(folders.Select(MapToDto).ToList());
     }
 
+    public async Task<ServiceResult<PagedResultDto<FolderDto>>> SearchPaginatedAsync(string? name, Guid? cabinetId, int page, int pageSize)
+    {
+        var (items, totalCount) = await _folderRepository.SearchPaginatedAsync(name, cabinetId, page, pageSize);
+        return ServiceResult<PagedResultDto<FolderDto>>.Ok(new PagedResultDto<FolderDto>
+        {
+            Items = items.Select(MapToDto).ToList(),
+            TotalCount = totalCount,
+            PageNumber = page,
+            PageSize = pageSize
+        });
+    }
+
+    public async Task<ServiceResult<PagedResultDto<FolderDto>>> GetByParentIdPaginatedAsync(Guid? parentId, Guid cabinetId, int page, int pageSize)
+    {
+        var (items, totalCount) = await _folderRepository.GetByParentIdPaginatedAsync(parentId, cabinetId, page, pageSize);
+        return ServiceResult<PagedResultDto<FolderDto>>.Ok(new PagedResultDto<FolderDto>
+        {
+            Items = items.Select(MapToDto).ToList(),
+            TotalCount = totalCount,
+            PageNumber = page,
+            PageSize = pageSize
+        });
+    }
+
     public async Task<ServiceResult<FolderDto>> CreateAsync(CreateFolderDto dto, Guid userId)
     {
         var folder = new Folder

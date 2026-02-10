@@ -1,10 +1,13 @@
+using System.Text.Json.Serialization;
+using DMS.DAL.Data;
+
 namespace DMS.DAL.Entities;
 
 /// <summary>
 /// Represents an organizational structure (Ministry, Department, Division, Section, Unit)
 /// Used for structure-based permission assignment
 /// </summary>
-public class Structure
+public class Structure : IAuditable, ISoftDeletable
 {
     public Guid Id { get; set; }
     public Guid? ParentId { get; set; }
@@ -24,8 +27,11 @@ public class Structure
     public DateTime? ModifiedAt { get; set; }
 
     // Navigation properties
+    [JsonIgnore]
     public Structure? Parent { get; set; }
+    [JsonIgnore]
     public ICollection<Structure>? Children { get; set; }
+    [JsonIgnore]
     public ICollection<StructureMember>? Members { get; set; }
 }
 
@@ -57,7 +63,9 @@ public class StructureMember
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation properties
+    [JsonIgnore]
     public Structure? Structure { get; set; }
+    [JsonIgnore]
     public User? User { get; set; }
 }
 
@@ -152,6 +160,8 @@ public class PermissionDelegation
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation
+    [JsonIgnore]
     public User? Delegator { get; set; }
+    [JsonIgnore]
     public User? Delegate { get; set; }
 }

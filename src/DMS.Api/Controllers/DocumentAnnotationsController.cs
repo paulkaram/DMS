@@ -1,3 +1,4 @@
+using DMS.Api.Constants;
 using DMS.BL.DTOs;
 using DMS.BL.Interfaces;
 using DMS.DAL.Entities;
@@ -7,35 +8,15 @@ using System.Security.Claims;
 
 namespace DMS.Api.Controllers;
 
-[ApiController]
 [Route("api/documents/{documentId}/annotations")]
 [Authorize]
-public class DocumentAnnotationsController : ControllerBase
+public class DocumentAnnotationsController : BaseApiController
 {
     private readonly IDocumentAnnotationService _annotationService;
-    private readonly IPermissionService _permissionService;
 
-    public DocumentAnnotationsController(
-        IDocumentAnnotationService annotationService,
-        IPermissionService permissionService)
+    public DocumentAnnotationsController(IDocumentAnnotationService annotationService)
     {
         _annotationService = annotationService;
-        _permissionService = permissionService;
-    }
-
-    private Guid GetCurrentUserId()
-    {
-        var userIdClaim = User.FindFirst("sub")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        return Guid.TryParse(userIdClaim, out var userId) ? userId : Guid.Empty;
-    }
-
-    private bool IsAdmin() => User.IsInRole("Admin");
-
-    private async Task<bool> HasPermissionAsync(Guid userId, string nodeType, Guid nodeId, int requiredLevel)
-    {
-        if (IsAdmin()) return true;
-        var result = await _permissionService.HasPermissionAsync(userId, nodeType, nodeId, requiredLevel);
-        return result.Success && result.Data;
     }
 
     [HttpGet]
@@ -43,7 +24,7 @@ public class DocumentAnnotationsController : ControllerBase
     {
         var userId = GetCurrentUserId();
         if (!await HasPermissionAsync(userId, "Document", documentId, (int)PermissionLevel.Read))
-            return Forbid("You don't have permission to view this document");
+            return Forbid(ErrorMessages.Permissions.ViewAnnotations);
 
         var annotations = await _annotationService.GetByDocumentIdAsync(documentId);
         return Ok(annotations);
@@ -54,7 +35,7 @@ public class DocumentAnnotationsController : ControllerBase
     {
         var userId = GetCurrentUserId();
         if (!await HasPermissionAsync(userId, "Document", documentId, (int)PermissionLevel.Read))
-            return Forbid("You don't have permission to view this document");
+            return Forbid(ErrorMessages.Permissions.ViewAnnotations);
 
         var count = await _annotationService.GetCountAsync(documentId);
         return Ok(count);
@@ -65,7 +46,7 @@ public class DocumentAnnotationsController : ControllerBase
     {
         var userId = GetCurrentUserId();
         if (!await HasPermissionAsync(userId, "Document", documentId, (int)PermissionLevel.Write))
-            return Forbid("You don't have write permission on this document");
+            return Forbid(ErrorMessages.Permissions.WriteAnnotations);
 
         request.DocumentId = documentId;
         var result = await _annotationService.SaveAnnotationsAsync(request, userId);
@@ -77,7 +58,7 @@ public class DocumentAnnotationsController : ControllerBase
     {
         var userId = GetCurrentUserId();
         if (!await HasPermissionAsync(userId, "Document", documentId, (int)PermissionLevel.Write))
-            return Forbid("You don't have write permission on this document");
+            return Forbid(ErrorMessages.Permissions.WriteAnnotations);
 
         var result = await _annotationService.DeleteAsync(id, userId);
         if (!result) return NotFound();
@@ -89,29 +70,22 @@ public class DocumentAnnotationsController : ControllerBase
     {
         var userId = GetCurrentUserId();
         if (!await HasPermissionAsync(userId, "Document", documentId, (int)PermissionLevel.Write))
-            return Forbid("You don't have write permission on this document");
+            return Forbid(ErrorMessages.Permissions.WriteAnnotations);
 
         await _annotationService.DeleteAllByDocumentAsync(documentId, userId);
         return NoContent();
     }
 }
 
-[ApiController]
 [Route("api/signatures")]
 [Authorize]
-public class SavedSignaturesController : ControllerBase
+public class SavedSignaturesController : BaseApiController
 {
     private readonly ISavedSignatureService _signatureService;
 
     public SavedSignaturesController(ISavedSignatureService signatureService)
     {
         _signatureService = signatureService;
-    }
-
-    private Guid GetCurrentUserId()
-    {
-        var userIdClaim = User.FindFirst("sub")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        return Guid.TryParse(userIdClaim, out var userId) ? userId : Guid.Empty;
     }
 
     [HttpGet]

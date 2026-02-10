@@ -5,10 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace DMS.Api.Controllers;
 
-[ApiController]
 [Route("api")]
 [Authorize]
-public class ReferenceDataController : ControllerBase
+public class ReferenceDataController : BaseApiController
 {
     private readonly IReferenceDataService _referenceDataService;
 
@@ -126,10 +125,74 @@ public class ReferenceDataController : ControllerBase
     }
 
     // Lookups
-    [HttpGet("lookups/{name}")]
+    [HttpGet("lookups")]
+    public async Task<IActionResult> GetLookups()
+    {
+        var result = await _referenceDataService.GetLookupsAsync();
+        return result.Success ? Ok(result.Data) : BadRequest(result.Errors);
+    }
+
+    [HttpGet("lookups/{id:guid}")]
+    public async Task<IActionResult> GetLookupById(Guid id)
+    {
+        var result = await _referenceDataService.GetLookupByIdAsync(id);
+        return result.Success ? Ok(result.Data) : NotFound(result.Errors);
+    }
+
+    [HttpGet("lookups/by-name/{name}")]
     public async Task<IActionResult> GetLookupItems(string name, [FromQuery] string? language)
     {
         var result = await _referenceDataService.GetLookupItemsAsync(name, language);
         return result.Success ? Ok(result.Data) : BadRequest(result.Errors);
+    }
+
+    [HttpPost("lookups")]
+    public async Task<IActionResult> CreateLookup([FromBody] DMS.BL.DTOs.LookupDto dto)
+    {
+        var result = await _referenceDataService.CreateLookupAsync(dto);
+        return result.Success ? Ok(result.Data) : BadRequest(result.Errors);
+    }
+
+    [HttpPut("lookups/{id:guid}")]
+    public async Task<IActionResult> UpdateLookup(Guid id, [FromBody] DMS.BL.DTOs.LookupDto dto)
+    {
+        var result = await _referenceDataService.UpdateLookupAsync(id, dto);
+        return result.Success ? Ok(result.Data) : BadRequest(result.Errors);
+    }
+
+    [HttpDelete("lookups/{id:guid}")]
+    public async Task<IActionResult> DeleteLookup(Guid id)
+    {
+        var result = await _referenceDataService.DeleteLookupAsync(id);
+        return result.Success ? NoContent() : BadRequest(result.Errors);
+    }
+
+    // Lookup Items
+    [HttpGet("lookups/{lookupId:guid}/items")]
+    public async Task<IActionResult> GetLookupItemsById(Guid lookupId, [FromQuery] string? language)
+    {
+        var result = await _referenceDataService.GetLookupItemsByIdAsync(lookupId, language);
+        return result.Success ? Ok(result.Data) : BadRequest(result.Errors);
+    }
+
+    [HttpPost("lookups/{lookupId:guid}/items")]
+    public async Task<IActionResult> CreateLookupItem(Guid lookupId, [FromBody] DMS.BL.DTOs.LookupItemDto dto)
+    {
+        var result = await _referenceDataService.CreateLookupItemAsync(lookupId, dto);
+        return result.Success ? Ok(result.Data) : BadRequest(result.Errors);
+    }
+
+    [HttpPut("lookups/items/{itemId:guid}")]
+    public async Task<IActionResult> UpdateLookupItem(Guid itemId, [FromBody] DMS.BL.DTOs.LookupItemDto dto)
+    {
+        var result = await _referenceDataService.UpdateLookupItemAsync(itemId, dto);
+        return result.Success ? Ok(result.Data) : BadRequest(result.Errors);
+    }
+
+    [HttpDelete("lookups/items/{itemId:guid}")]
+    public async Task<IActionResult> DeleteLookupItem(Guid itemId)
+    {
+        var result = await _referenceDataService.DeleteLookupItemAsync(itemId);
+        return result.Success ? NoContent() : BadRequest(result.Errors);
     }
 }

@@ -1,9 +1,11 @@
+using DMS.DAL.Data;
+
 namespace DMS.DAL.Entities;
 
 /// <summary>
 /// Bookmark templates for document generation
 /// </summary>
-public class Bookmark
+public class Bookmark : IAuditable, ISoftDeletable
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
@@ -24,7 +26,7 @@ public class Bookmark
 /// <summary>
 /// Case management for grouping related documents
 /// </summary>
-public class Case
+public class Case : IAuditable, ISoftDeletable
 {
     public Guid Id { get; set; }
     public string CaseNumber { get; set; } = string.Empty;
@@ -50,7 +52,7 @@ public class Case
 /// <summary>
 /// External service endpoints configuration
 /// </summary>
-public class ServiceEndpoint
+public class ServiceEndpoint : IAuditable, ISoftDeletable
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
@@ -74,7 +76,7 @@ public class ServiceEndpoint
 /// <summary>
 /// Export configuration profiles
 /// </summary>
-public class ExportConfig
+public class ExportConfig : IAuditable, ISoftDeletable
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
@@ -98,7 +100,7 @@ public class ExportConfig
 /// <summary>
 /// Naming conventions for documents and folders
 /// </summary>
-public class NamingConvention
+public class NamingConvention : IAuditable, ISoftDeletable
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
@@ -125,7 +127,7 @@ public class NamingConvention
 /// <summary>
 /// Organization folder templates for standard structures
 /// </summary>
-public class OrganizationTemplate
+public class OrganizationTemplate : IAuditable, ISoftDeletable
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
@@ -144,7 +146,7 @@ public class OrganizationTemplate
 /// <summary>
 /// Permission level definitions
 /// </summary>
-public class PermissionLevelDefinition
+public class PermissionLevelDefinition : IAuditable, ISoftDeletable
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
@@ -170,7 +172,7 @@ public class PermissionLevelDefinition
 /// <summary>
 /// Purpose/reason for document actions (for compliance)
 /// </summary>
-public class Purpose
+public class Purpose : IAuditable, ISoftDeletable
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
@@ -190,7 +192,7 @@ public class Purpose
 /// <summary>
 /// Scan/OCR configuration profiles
 /// </summary>
-public class ScanConfig
+public class ScanConfig : IAuditable, ISoftDeletable
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
@@ -219,7 +221,7 @@ public class ScanConfig
 /// <summary>
 /// Search configuration and saved searches
 /// </summary>
-public class SearchConfig
+public class SearchConfig : IAuditable, ISoftDeletable
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;

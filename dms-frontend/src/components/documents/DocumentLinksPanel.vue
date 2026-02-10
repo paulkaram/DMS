@@ -74,8 +74,10 @@ async function searchDocuments() {
   isSearching.value = true
   try {
     const response = await documentsApi.search({ search: searchQuery.value })
+    const data = response.data
+    const items = Array.isArray(data) ? data : data.items ?? []
     // Filter out the current document
-    searchResults.value = response.data.filter((doc: any) => doc.id !== props.documentId)
+    searchResults.value = items.filter((doc: any) => doc.id !== props.documentId)
   } catch (error) {
   } finally {
     isSearching.value = false

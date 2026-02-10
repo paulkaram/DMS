@@ -39,5 +39,10 @@ public interface ILookupRepository
     Task<IEnumerable<LookupItem>> GetItemsByLookupIdAsync(Guid lookupId, string? language = null);
     Task<IEnumerable<LookupItem>> GetItemsByLookupNameAsync(string lookupName, string? language = null);
     Task<Guid> CreateAsync(Lookup entity);
+    Task<bool> UpdateAsync(Lookup entity);
+    Task<bool> DeleteAsync(Guid id);
+    Task<LookupItem?> GetItemByIdAsync(Guid id);
     Task<Guid> CreateItemAsync(LookupItem entity);
+    Task<bool> UpdateItemAsync(LookupItem entity);
+    Task<bool> DeleteItemAsync(Guid id);
 }

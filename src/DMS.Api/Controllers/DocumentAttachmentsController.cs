@@ -1,15 +1,14 @@
+using DMS.Api.Constants;
 using DMS.BL.DTOs;
 using DMS.BL.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace DMS.Api.Controllers;
 
-[ApiController]
 [Route("api/documents/{documentId}/attachments")]
 [Authorize]
-public class DocumentAttachmentsController : ControllerBase
+public class DocumentAttachmentsController : BaseApiController
 {
     private readonly IDocumentAttachmentService _attachmentService;
     private readonly IFileStorageService _fileStorageService;
@@ -27,8 +26,6 @@ public class DocumentAttachmentsController : ControllerBase
         _fileValidationService = fileValidationService;
         _passwordService = passwordService;
     }
-
-    private Guid GetUserId() => Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
 
     /// <summary>
     /// Validates the document password if one is set.
@@ -53,7 +50,7 @@ public class DocumentAttachmentsController : ControllerBase
     public async Task<ActionResult<IEnumerable<DocumentAttachmentDto>>> GetAttachments(Guid documentId)
     {
         if (!await ValidateDocumentPasswordAsync(documentId))
-            return StatusCode(403, "Document is password protected. Provide the password via X-Document-Password header.");
+            return StatusCode(403, ErrorMessages.DocumentPasswordRequired);
 
         var attachments = await _attachmentService.GetByDocumentIdAsync(documentId);
         return Ok(attachments);
@@ -63,7 +60,7 @@ public class DocumentAttachmentsController : ControllerBase
     public async Task<ActionResult<DocumentAttachmentDto>> GetAttachment(Guid documentId, Guid id)
     {
         if (!await ValidateDocumentPasswordAsync(documentId))
-            return StatusCode(403, "Document is password protected. Provide the password via X-Document-Password header.");
+            return StatusCode(403, ErrorMessages.DocumentPasswordRequired);
 
         var attachment = await _attachmentService.GetByIdAsync(id);
         if (attachment == null) return NotFound();
@@ -81,7 +78,7 @@ public class DocumentAttachmentsController : ControllerBase
     public async Task<ActionResult> DownloadAttachment(Guid documentId, Guid id)
     {
         if (!await ValidateDocumentPasswordAsync(documentId))
-            return StatusCode(403, "Document is password protected. Provide the password via X-Document-Password header.");
+            return StatusCode(403, ErrorMessages.DocumentPasswordRequired);
 
         var result = await _attachmentService.DownloadAsync(id);
         if (result == null) return NotFound();
@@ -96,9 +93,9 @@ public class DocumentAttachmentsController : ControllerBase
         [FromForm] string? description = null)
     {
         if (!await ValidateDocumentPasswordAsync(documentId))
-            return StatusCode(403, "Document is password protected. Provide the password via X-Document-Password header.");
+            return StatusCode(403, ErrorMessages.DocumentPasswordRequired);
         if (file == null || file.Length == 0)
-            return BadRequest("No file uploaded");
+            return BadRequest(ErrorMessages.NoFileUploaded);
 
         // Validate file before processing
         using var fileStream = file.OpenReadStream();
@@ -123,7 +120,7 @@ public class DocumentAttachmentsController : ControllerBase
             validatedContentType,
             file.Length,
             storagePath,
-            GetUserId());
+            GetCurrentUserId());
 
         return CreatedAtAction(nameof(GetAttachment), new { documentId, id = attachment.Id }, attachment);
     }
@@ -132,7 +129,7 @@ public class DocumentAttachmentsController : ControllerBase
     public async Task<ActionResult> DeleteAttachment(Guid documentId, Guid id)
     {
         if (!await ValidateDocumentPasswordAsync(documentId))
-            return StatusCode(403, "Document is password protected. Provide the password via X-Document-Password header.");
+            return StatusCode(403, ErrorMessages.DocumentPasswordRequired);
 
         var result = await _attachmentService.DeleteAsync(id);
         if (!result) return NotFound();

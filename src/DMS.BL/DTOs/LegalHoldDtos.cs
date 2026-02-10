@@ -73,3 +73,14 @@ public class LegalHoldDocumentDto
     public Guid? ReleasedBy { get; set; }
     public string? Notes { get; set; }
 }
+
+public class AddDocumentsToHoldDto
+{
+    public List<Guid> DocumentIds { get; set; } = new();
+    public string? Notes { get; set; }
+}
+
+public class ReleaseHoldDto
+{
+    public string Reason { get; set; } = string.Empty;
+}

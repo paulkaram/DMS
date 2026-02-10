@@ -1,87 +1,75 @@
-using Dapper;
 using DMS.DAL.Data;
 using DMS.DAL.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace DMS.DAL.Repositories;
 
 public class CabinetRepository : ICabinetRepository
 {
-    private readonly IDbConnectionFactory _connectionFactory;
+    private readonly DmsDbContext _context;
 
-    public CabinetRepository(IDbConnectionFactory connectionFactory)
+    public CabinetRepository(DmsDbContext context)
     {
-        _connectionFactory = connectionFactory;
+        _context = context;
     }
 
     public async Task<Cabinet?> GetByIdAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<Cabinet>(
-            "SELECT * FROM Cabinets WHERE Id = @Id", new { Id = id });
+        return await _context.Cabinets
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == id);
     }
 
     public async Task<IEnumerable<Cabinet>> GetAllAsync()
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<Cabinet>(
-            "SELECT * FROM Cabinets ORDER BY Name");
+        return await _context.Cabinets
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .OrderBy(c => c.Name)
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<Cabinet>> GetActiveAsync()
     {
-        using var connection = _connectionFactory.CreateConnection();
-        return await connection.QueryAsync<Cabinet>(
-            "SELECT * FROM Cabinets WHERE IsActive = 1 ORDER BY Name");
+        return await _context.Cabinets
+            .AsNoTracking()
+            .OrderBy(c => c.Name)
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<Cabinet>> SearchAsync(string? name)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var sql = "SELECT * FROM Cabinets WHERE IsActive = 1";
+        var query = _context.Cabinets.AsNoTracking();
+
         if (!string.IsNullOrEmpty(name))
-        {
-            sql += " AND Name LIKE @Name";
-        }
-        sql += " ORDER BY Name";
-        return await connection.QueryAsync<Cabinet>(sql, new { Name = $"%{name}%" });
+            query = query.Where(c => c.Name.Contains(name));
+
+        return await query.OrderBy(c => c.Name).ToListAsync();
     }
 
     public async Task<Guid> CreateAsync(Cabinet entity)
     {
         entity.Id = Guid.NewGuid();
-        entity.CreatedAt = DateTime.UtcNow;
-
-        using var connection = _connectionFactory.CreateConnection();
-        await connection.ExecuteAsync(@"
-            INSERT INTO Cabinets (Id, Name, Description, BreakInheritance, IsActive, CreatedBy, CreatedAt)
-            VALUES (@Id, @Name, @Description, @BreakInheritance, @IsActive, @CreatedBy, @CreatedAt)",
-            entity);
-
+        _context.Cabinets.Add(entity);
+        await _context.SaveChangesAsync();
         return entity.Id;
     }
 
     public async Task<bool> UpdateAsync(Cabinet entity)
     {
-        entity.ModifiedAt = DateTime.UtcNow;
-
-        using var connection = _connectionFactory.CreateConnection();
-        var affected = await connection.ExecuteAsync(@"
-            UPDATE Cabinets
-            SET Name = @Name, Description = @Description, BreakInheritance = @BreakInheritance,
-                IsActive = @IsActive, ModifiedBy = @ModifiedBy, ModifiedAt = @ModifiedAt
-            WHERE Id = @Id",
-            entity);
-
+        _context.Cabinets.Update(entity);
+        var affected = await _context.SaveChangesAsync();
         return affected > 0;
     }
 
     public async Task<bool> DeleteAsync(Guid id)
     {
-        using var connection = _connectionFactory.CreateConnection();
-        var affected = await connection.ExecuteAsync(
-            "UPDATE Cabinets SET IsActive = 0, ModifiedAt = @ModifiedAt WHERE Id = @Id",
-            new { Id = id, ModifiedAt = DateTime.UtcNow });
-
+        var affected = await _context.Cabinets
+            .Where(c => c.Id == id)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(c => c.IsActive, false)
+                .SetProperty(c => c.ModifiedAt, DateTime.UtcNow));
         return affected > 0;
     }
 }

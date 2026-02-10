@@ -5,10 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace DMS.Api.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
 [Authorize]
-public class StructuresController : ControllerBase
+public class StructuresController : BaseApiController
 {
     private readonly IStructureService _structureService;
 
@@ -229,10 +227,4 @@ public class StructuresController : ControllerBase
     }
 
     #endregion
-
-    private Guid GetCurrentUserId()
-    {
-        var userIdClaim = User.FindFirst("sub")?.Value ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        return Guid.TryParse(userIdClaim, out var userId) ? userId : Guid.Empty;
-    }
 }

@@ -1,15 +1,13 @@
+using DMS.Api.Constants;
 using DMS.BL.DTOs;
 using DMS.BL.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace DMS.Api.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
 [Authorize]
-public class ApprovalsController : ControllerBase
+public class ApprovalsController : BaseApiController
 {
     private readonly IApprovalService _approvalService;
 
@@ -17,8 +15,6 @@ public class ApprovalsController : ControllerBase
     {
         _approvalService = approvalService;
     }
-
-    private Guid GetUserId() => Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
 
     // Workflows
     [HttpGet("workflows")]
@@ -39,7 +35,7 @@ public class ApprovalsController : ControllerBase
     [HttpPost("workflows")]
     public async Task<ActionResult<Guid>> CreateWorkflow([FromBody] CreateWorkflowRequest request)
     {
-        var id = await _approvalService.CreateWorkflowAsync(GetUserId(), request);
+        var id = await _approvalService.CreateWorkflowAsync(GetCurrentUserId(), request);
         return Ok(id);
     }
 
@@ -63,14 +59,14 @@ public class ApprovalsController : ControllerBase
     [HttpGet("requests/pending")]
     public async Task<ActionResult<IEnumerable<ApprovalRequestDto>>> GetPendingRequests()
     {
-        var requests = await _approvalService.GetPendingRequestsForUserAsync(GetUserId());
+        var requests = await _approvalService.GetPendingRequestsForUserAsync(GetCurrentUserId());
         return Ok(requests);
     }
 
     [HttpGet("requests/my")]
     public async Task<ActionResult<IEnumerable<ApprovalRequestDto>>> GetMyRequests()
     {
-        var requests = await _approvalService.GetMyRequestsAsync(GetUserId());
+        var requests = await _approvalService.GetMyRequestsAsync(GetCurrentUserId());
         return Ok(requests);
     }
 
@@ -92,15 +88,15 @@ public class ApprovalsController : ControllerBase
     [HttpPost("requests")]
     public async Task<ActionResult<Guid>> CreateRequest([FromBody] CreateApprovalRequestDto request)
     {
-        var id = await _approvalService.CreateRequestAsync(GetUserId(), request);
+        var id = await _approvalService.CreateRequestAsync(GetCurrentUserId(), request);
         return Ok(id);
     }
 
     [HttpPost("requests/{id}/action")]
     public async Task<ActionResult> SubmitAction(Guid id, [FromBody] SubmitApprovalActionDto action)
     {
-        var result = await _approvalService.SubmitActionAsync(id, GetUserId(), action);
-        if (!result) return BadRequest("Unable to submit action");
+        var result = await _approvalService.SubmitActionAsync(id, GetCurrentUserId(), action);
+        if (!result) return BadRequest(ErrorMessages.UnableToSubmitAction);
         return Ok();
     }
 

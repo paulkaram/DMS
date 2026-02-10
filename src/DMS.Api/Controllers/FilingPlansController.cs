@@ -1,15 +1,13 @@
+using DMS.BL.DTOs;
 using DMS.DAL.Entities;
 using DMS.DAL.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace DMS.Api.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
 [Authorize]
-public class FilingPlansController : ControllerBase
+public class FilingPlansController : BaseApiController
 {
     private readonly IFilingPlanRepository _filingPlanRepository;
 
@@ -17,8 +15,6 @@ public class FilingPlansController : ControllerBase
     {
         _filingPlanRepository = filingPlanRepository;
     }
-
-    private Guid GetUserId() => Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
 
     [HttpGet("folder/{folderId}")]
     public async Task<ActionResult<IEnumerable<FilingPlan>>> GetByFolder(Guid folderId)
@@ -47,7 +43,7 @@ public class FilingPlansController : ControllerBase
             ClassificationId = request.ClassificationId,
             DocumentTypeId = request.DocumentTypeId,
             IsActive = true,
-            CreatedBy = GetUserId()
+            CreatedBy = GetCurrentUserId()
         };
 
         var id = await _filingPlanRepository.CreateAsync(plan);
@@ -79,19 +75,4 @@ public class FilingPlansController : ControllerBase
         if (!result) return NotFound();
         return Ok();
     }
-}
-
-public class CreateFilingPlanRequest
-{
-    public Guid FolderId { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public string? Description { get; set; }
-    public string? Pattern { get; set; }
-    public Guid? ClassificationId { get; set; }
-    public Guid? DocumentTypeId { get; set; }
-}
-
-public class UpdateFilingPlanRequest : CreateFilingPlanRequest
-{
-    public bool IsActive { get; set; } = true;
 }

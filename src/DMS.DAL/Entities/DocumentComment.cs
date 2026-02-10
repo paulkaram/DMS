@@ -1,12 +1,14 @@
+using DMS.DAL.Data;
+
 namespace DMS.DAL.Entities;
 
-public class DocumentComment
+public class DocumentComment : IAuditable
 {
     public Guid Id { get; set; }
     public Guid DocumentId { get; set; }
     public Guid? ParentCommentId { get; set; }
     public string Content { get; set; } = string.Empty;
-    public Guid CreatedBy { get; set; }
+    public Guid? CreatedBy { get; set; }
     public DateTime CreatedAt { get; set; }
     public Guid? ModifiedBy { get; set; }
     public DateTime? ModifiedAt { get; set; }

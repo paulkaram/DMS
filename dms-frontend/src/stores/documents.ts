@@ -77,7 +77,8 @@ export const useDocumentsStore = defineStore('documents', () => {
     error.value = null
     try {
       const response = await documentsApi.getByFolder(folderId)
-      documents.value = response.data
+      const data = response.data
+      documents.value = Array.isArray(data) ? data : data.items ?? []
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Failed to load documents'
     } finally {
@@ -89,7 +90,8 @@ export const useDocumentsStore = defineStore('documents', () => {
     isLoadingSubFolders.value = true
     try {
       const response = await foldersApi.getByParent(cabinetId, parentFolderId)
-      subFolders.value = response.data
+      const data = response.data
+      subFolders.value = Array.isArray(data) ? data : data.items ?? []
     } catch (err: any) {
       subFolders.value = []
     } finally {

@@ -96,7 +96,7 @@ public class DocumentAnnotationService : IDocumentAnnotationService
             PageNumber = annotation.PageNumber,
             AnnotationData = annotation.AnnotationData,
             VersionNumber = annotation.VersionNumber,
-            CreatedBy = annotation.CreatedBy,
+            CreatedBy = annotation.CreatedBy ?? Guid.Empty,
             CreatedByName = annotation.CreatedByName,
             CreatedAt = annotation.CreatedAt,
             ModifiedAt = annotation.ModifiedAt

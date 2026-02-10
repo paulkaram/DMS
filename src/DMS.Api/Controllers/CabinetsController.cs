@@ -1,3 +1,4 @@
+using DMS.Api.Constants;
 using DMS.BL.DTOs;
 using DMS.BL.Interfaces;
 using DMS.DAL.Entities;
@@ -6,24 +7,19 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace DMS.Api.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
 [Authorize]
-public class CabinetsController : ControllerBase
+public class CabinetsController : BaseApiController
 {
     private readonly ICabinetService _cabinetService;
-    private readonly IPermissionService _permissionService;
     private readonly IRolePermissionService _rolePermissionService;
     private readonly IFolderTemplateService _templateService;
 
     public CabinetsController(
         ICabinetService cabinetService,
-        IPermissionService permissionService,
         IRolePermissionService rolePermissionService,
         IFolderTemplateService templateService)
     {
         _cabinetService = cabinetService;
-        _permissionService = permissionService;
         _rolePermissionService = rolePermissionService;
         _templateService = templateService;
     }
@@ -56,7 +52,7 @@ public class CabinetsController : ControllerBase
 
         // Check read permission on cabinet
         if (!await HasPermissionAsync(userId, "Cabinet", id, (int)PermissionLevel.Read))
-            return Forbid("You don't have permission to view this cabinet");
+            return Forbid(ErrorMessages.Permissions.ViewCabinet);
 
         var result = await _cabinetService.GetByIdAsync(id);
         return result.Success ? Ok(result.Data) : NotFound(result.Errors);
@@ -70,7 +66,7 @@ public class CabinetsController : ControllerBase
         // Check role-based permission for creating cabinets
         var canCreate = await _rolePermissionService.UserHasPermissionAsync(userId, "cabinet.create");
         if (!canCreate.Success || !canCreate.Data)
-            return Forbid("You don't have permission to create cabinets");
+            return Forbid(ErrorMessages.Permissions.CreateCabinet);
 
         var result = await _cabinetService.CreateAsync(dto, userId);
         return result.Success ? CreatedAtAction(nameof(GetById), new { id = result.Data!.Id }, result.Data) : BadRequest(result.Errors);
@@ -84,11 +80,11 @@ public class CabinetsController : ControllerBase
         // Check role-based permission for managing cabinets
         var canManage = await _rolePermissionService.UserHasPermissionAsync(userId, "cabinet.manage");
         if (!canManage.Success || !canManage.Data)
-            return Forbid("You don't have permission to manage cabinets");
+            return Forbid(ErrorMessages.Permissions.ManageCabinet);
 
         // Also check node-level admin permission
         if (!await HasPermissionAsync(userId, "Cabinet", id, (int)PermissionLevel.Admin))
-            return Forbid("You don't have permission to update this cabinet");
+            return Forbid(ErrorMessages.Permissions.UpdateCabinet);
 
         var result = await _cabinetService.UpdateAsync(id, dto, userId);
         return result.Success ? Ok(result.Data) : BadRequest(result.Errors);
@@ -102,11 +98,11 @@ public class CabinetsController : ControllerBase
         // Check role-based permission for deleting cabinets
         var canDelete = await _rolePermissionService.UserHasPermissionAsync(userId, "cabinet.delete");
         if (!canDelete.Success || !canDelete.Data)
-            return Forbid("You don't have permission to delete cabinets");
+            return Forbid(ErrorMessages.Permissions.DeleteCabinet);
 
         // Also check node-level permission
         if (!await HasPermissionAsync(userId, "Cabinet", id, (int)PermissionLevel.Delete))
-            return Forbid("You don't have permission to delete this cabinet");
+            return Forbid(ErrorMessages.Permissions.DeleteThisCabinet);
 
         var result = await _cabinetService.DeleteAsync(id, userId);
         return result.Success ? NoContent() : BadRequest(result.Errors);
@@ -122,7 +118,7 @@ public class CabinetsController : ControllerBase
 
         // Check write permission on cabinet
         if (!await HasPermissionAsync(userId, "Cabinet", id, (int)PermissionLevel.Write))
-            return Forbid("You don't have permission to create folders in this cabinet");
+            return Forbid(ErrorMessages.Permissions.CreateFoldersInCabinet);
 
         var result = await _templateService.ApplyTemplateToCabinetAsync(id, dto, userId);
         if (!result.Success)
@@ -141,7 +137,7 @@ public class CabinetsController : ControllerBase
 
         // Check read permission on cabinet
         if (!await HasPermissionAsync(userId, "Cabinet", id, (int)PermissionLevel.Read))
-            return Forbid("You don't have permission to view this cabinet");
+            return Forbid(ErrorMessages.Permissions.ViewCabinet);
 
         var result = await _templateService.PreviewTemplateToCabinetAsync(id, request.TemplateId);
         if (!result.Success)
@@ -149,27 +145,4 @@ public class CabinetsController : ControllerBase
 
         return Ok(result.Data);
     }
-
-    private Guid GetCurrentUserId()
-    {
-        var userIdClaim = User.FindFirst("sub")?.Value ?? User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        return Guid.TryParse(userIdClaim, out var userId) ? userId : Guid.Empty;
-    }
-
-    private bool IsAdmin() => User.IsInRole("Administrator");
-
-    private async Task<bool> HasPermissionAsync(Guid userId, string nodeType, Guid nodeId, int requiredLevel)
-    {
-        // Admin users bypass permission checks - they have full access to everything
-        if (IsAdmin())
-            return true;
-
-        var result = await _permissionService.HasPermissionAsync(userId, nodeType, nodeId, requiredLevel);
-        return result.Success && result.Data;
-    }
-}
-
-public class CabinetPreviewTemplateRequest
-{
-    public Guid TemplateId { get; set; }
 }

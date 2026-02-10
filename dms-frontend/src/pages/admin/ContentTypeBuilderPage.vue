@@ -188,6 +188,7 @@ async function saveContentType() {
         allowOnFolders: contentType.value.allowOnFolders,
         allowOnDocuments: contentType.value.allowOnDocuments,
         isRequired: contentType.value.isRequired,
+        isSystemDefault: contentType.value.isSystemDefault,
         isActive: contentType.value.isActive,
         sortOrder: contentType.value.sortOrder
       })

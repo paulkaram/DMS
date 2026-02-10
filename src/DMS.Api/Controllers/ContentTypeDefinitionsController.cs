@@ -1,17 +1,16 @@
+using DMS.Api.Constants;
 using DMS.BL.DTOs;
 using DMS.DAL.DTOs;
 using DMS.DAL.Entities;
 using DMS.DAL.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace DMS.Api.Controllers;
 
-[ApiController]
 [Route("api/content-type-definitions")]
 [Authorize]
-public class ContentTypeDefinitionsController : ControllerBase
+public class ContentTypeDefinitionsController : BaseApiController
 {
     private readonly IContentTypeDefinitionRepository _repository;
 
@@ -19,8 +18,6 @@ public class ContentTypeDefinitionsController : ControllerBase
     {
         _repository = repository;
     }
-
-    private Guid GetUserId() => Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? Guid.Empty.ToString());
 
     #region Content Type Definitions
 
@@ -54,7 +51,7 @@ public class ContentTypeDefinitionsController : ControllerBase
             IsRequired = request.IsRequired,
             IsSystemDefault = request.IsSystemDefault,
             SortOrder = request.SortOrder,
-            CreatedBy = GetUserId()
+            CreatedBy = GetCurrentUserId()
         };
 
         var id = await _repository.CreateAsync(contentType);
@@ -62,7 +59,7 @@ public class ContentTypeDefinitionsController : ControllerBase
         // If setting as system default, clear any existing system default
         if (request.IsSystemDefault)
         {
-            await _repository.SetSystemDefaultAsync(id, GetUserId());
+            await _repository.SetSystemDefaultAsync(id, GetCurrentUserId());
         }
 
         return Ok(id);
@@ -73,6 +70,8 @@ public class ContentTypeDefinitionsController : ControllerBase
     {
         var contentType = await _repository.GetByIdAsync(id);
         if (contentType == null) return NotFound();
+
+        var wasSystemDefault = contentType.IsSystemDefault;
 
         contentType.Name = request.Name;
         contentType.Description = request.Description;
@@ -85,12 +84,12 @@ public class ContentTypeDefinitionsController : ControllerBase
         contentType.IsSystemDefault = request.IsSystemDefault;
         contentType.IsActive = request.IsActive;
         contentType.SortOrder = request.SortOrder;
-        contentType.ModifiedBy = GetUserId();
+        contentType.ModifiedBy = GetCurrentUserId();
 
         // If setting as system default, handle clearing old default
-        if (request.IsSystemDefault && !contentType.IsSystemDefault)
+        if (request.IsSystemDefault && !wasSystemDefault)
         {
-            await _repository.SetSystemDefaultAsync(id, GetUserId());
+            await _repository.SetSystemDefaultAsync(id, GetCurrentUserId());
         }
 
         var result = await _repository.UpdateAsync(contentType);
@@ -113,7 +112,7 @@ public class ContentTypeDefinitionsController : ControllerBase
     public async Task<ActionResult<ContentTypeDefinition>> GetSystemDefault()
     {
         var contentType = await _repository.GetSystemDefaultAsync();
-        if (contentType == null) return NotFound("No system default content type is configured");
+        if (contentType == null) return NotFound(ErrorMessages.NoSystemDefaultContentType);
         return Ok(contentType);
     }
 
@@ -126,8 +125,8 @@ public class ContentTypeDefinitionsController : ControllerBase
         var contentType = await _repository.GetByIdAsync(id);
         if (contentType == null) return NotFound();
 
-        var result = await _repository.SetSystemDefaultAsync(id, GetUserId());
-        if (!result) return BadRequest("Failed to set system default");
+        var result = await _repository.SetSystemDefaultAsync(id, GetCurrentUserId());
+        if (!result) return BadRequest(ErrorMessages.FailedToSetSystemDefault);
         return Ok();
     }
 
@@ -137,7 +136,7 @@ public class ContentTypeDefinitionsController : ControllerBase
     [HttpDelete("system-default")]
     public async Task<ActionResult> ClearSystemDefault()
     {
-        var result = await _repository.ClearSystemDefaultAsync(GetUserId());
+        var result = await _repository.ClearSystemDefaultAsync(GetCurrentUserId());
         return Ok();
     }
 
@@ -253,7 +252,7 @@ public class ContentTypeDefinitionsController : ControllerBase
             DateValue = m.DateValue
         }).ToList();
 
-        var result = await _repository.SaveDocumentMetadataAsync(documentId, contentTypeId, items, GetUserId());
+        var result = await _repository.SaveDocumentMetadataAsync(documentId, contentTypeId, items, GetCurrentUserId());
         if (!result) return BadRequest();
         return Ok();
     }
@@ -294,7 +293,7 @@ public class ContentTypeDefinitionsController : ControllerBase
             IsDefault = request.IsDefault,
             InheritToChildren = request.InheritToChildren,
             DisplayOrder = request.DisplayOrder,
-            CreatedBy = GetUserId()
+            CreatedBy = GetCurrentUserId()
         };
 
         var id = await _repository.AssignContentTypeToFolderAsync(assignment);
@@ -351,7 +350,7 @@ public class ContentTypeDefinitionsController : ControllerBase
             IsDefault = request.IsDefault,
             InheritToChildren = request.InheritToChildren,
             DisplayOrder = request.DisplayOrder,
-            CreatedBy = GetUserId()
+            CreatedBy = GetCurrentUserId()
         };
 
         var id = await _repository.AssignContentTypeToCabinetAsync(assignment);
@@ -413,81 +412,3 @@ public class ContentTypeDefinitionsController : ControllerBase
 
     #endregion
 }
-
-#region Request DTOs
-
-public class CreateContentTypeDefinitionRequest
-{
-    public string Name { get; set; } = string.Empty;
-    public string? Description { get; set; }
-    public string? Icon { get; set; }
-    public string? Color { get; set; }
-    public string? Category { get; set; }
-    public bool AllowOnFolders { get; set; } = true;
-    public bool AllowOnDocuments { get; set; } = true;
-    public bool IsRequired { get; set; } = false;
-    public bool IsSystemDefault { get; set; } = false;
-    public int SortOrder { get; set; } = 0;
-}
-
-public class UpdateContentTypeDefinitionRequest : CreateContentTypeDefinitionRequest
-{
-    public bool IsActive { get; set; } = true;
-}
-
-public class CreateFieldRequest
-{
-    public string FieldName { get; set; } = string.Empty;
-    public string DisplayName { get; set; } = string.Empty;
-    public string? Description { get; set; }
-    public string FieldType { get; set; } = "Text";
-    public bool IsRequired { get; set; } = false;
-    public bool IsReadOnly { get; set; } = false;
-    public bool ShowInList { get; set; } = false;
-    public bool IsSearchable { get; set; } = true;
-    public string? DefaultValue { get; set; }
-    public string? ValidationRules { get; set; }
-    public string? LookupName { get; set; }
-    public string? Options { get; set; }
-    public string? GroupName { get; set; }
-    public int ColumnSpan { get; set; } = 12;
-}
-
-public class UpdateFieldRequest : CreateFieldRequest
-{
-    public int SortOrder { get; set; } = 0;
-    public bool IsActive { get; set; } = true;
-}
-
-public class ReorderFieldsRequest
-{
-    public List<Guid> FieldIds { get; set; } = new();
-}
-
-public class SaveMetadataRequest
-{
-    public Guid FieldId { get; set; }
-    public string FieldName { get; set; } = string.Empty;
-    public string? Value { get; set; }
-    public decimal? NumericValue { get; set; }
-    public DateTime? DateValue { get; set; }
-}
-
-public class AssignContentTypeRequest
-{
-    public Guid ContentTypeId { get; set; }
-    public bool IsRequired { get; set; } = false;
-    public bool IsDefault { get; set; } = false;
-    public bool InheritToChildren { get; set; } = true;
-    public int DisplayOrder { get; set; } = 0;
-}
-
-public class UpdateAssignmentRequest
-{
-    public bool IsRequired { get; set; }
-    public bool IsDefault { get; set; }
-    public bool InheritToChildren { get; set; }
-    public int DisplayOrder { get; set; }
-}
-
-#endregion

@@ -16,7 +16,8 @@ async function loadRecycleBin() {
   isLoading.value = true
   try {
     const response = await recycleBinApi.getMyRecycleBin()
-    recycleBinItems.value = response.data
+    const data = response.data
+    recycleBinItems.value = Array.isArray(data) ? data : data.items ?? []
   } catch (err) {
   } finally {
     isLoading.value = false

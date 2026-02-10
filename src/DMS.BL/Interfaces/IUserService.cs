@@ -8,22 +8,14 @@ public interface IUserService
     Task<ServiceResult<UserDto>> GetByUsernameAsync(string username);
     Task<ServiceResult<List<UserDto>>> GetAllAsync();
     Task<ServiceResult<List<UserDto>>> SearchAsync(string? search);
+    Task<ServiceResult<PagedResultDto<UserDto>>> GetAllPaginatedAsync(int page, int pageSize);
+    Task<ServiceResult<PagedResultDto<UserDto>>> SearchPaginatedAsync(string? search, int page, int pageSize);
     Task<ServiceResult<UserDto>> CreateAsync(CreateUserDto dto);
     Task<ServiceResult<UserDto>> UpdateAsync(Guid id, UpdateUserDto dto);
     Task<ServiceResult<List<RoleDto>>> GetRolesAsync();
     Task<ServiceResult<List<RoleDto>>> GetUserRolesAsync(Guid userId);
     Task<ServiceResult> AssignRoleAsync(Guid userId, Guid roleId);
     Task<ServiceResult> RemoveRoleAsync(Guid userId, Guid roleId);
-}
-
-public interface IDelegationService
-{
-    Task<ServiceResult<DelegationDto>> GetByIdAsync(Guid id);
-    Task<ServiceResult<List<DelegationDto>>> GetMyDelegationsAsync(Guid userId);
-    Task<ServiceResult<List<DelegationDto>>> GetDelegationsToMeAsync(Guid userId);
-    Task<ServiceResult<DelegationDto>> CreateAsync(CreateDelegationDto dto, Guid fromUserId);
-    Task<ServiceResult<DelegationDto>> UpdateAsync(Guid id, UpdateDelegationDto dto, Guid userId);
-    Task<ServiceResult> DeleteAsync(Guid id, Guid userId);
 }
 
 public interface IAuthService
