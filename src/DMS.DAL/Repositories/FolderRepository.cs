@@ -13,9 +13,16 @@ public class FolderRepository : IFolderRepository
         _context = context;
     }
 
+    private IQueryable<Folder> ApplyPrivacyFilter(IQueryable<Folder> query, int? userPrivacyLevel)
+    {
+        if (userPrivacyLevel == null) return query; // null = admin, no filter
+        return query.Where(f => f.PrivacyLevelId == null || f.PrivacyLevel!.Level <= userPrivacyLevel.Value);
+    }
+
     public async Task<Folder?> GetByIdAsync(Guid id)
     {
         return await _context.Folders
+            .Include(f => f.PrivacyLevel)
             .AsNoTracking()
             .FirstOrDefaultAsync(f => f.Id == id);
     }
@@ -23,60 +30,21 @@ public class FolderRepository : IFolderRepository
     public async Task<IEnumerable<Folder>> GetAllAsync()
     {
         return await _context.Folders
+            .Include(f => f.PrivacyLevel)
             .AsNoTracking()
             .OrderBy(f => f.Path)
             .ThenBy(f => f.Name)
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Folder>> GetByCabinetIdAsync(Guid cabinetId)
+    public async Task<IEnumerable<Folder>> GetByCabinetIdAsync(Guid cabinetId, int? userPrivacyLevel = null)
     {
-        return await _context.Folders
+        var query = _context.Folders
+            .Include(f => f.PrivacyLevel)
             .AsNoTracking()
-            .Where(f => f.CabinetId == cabinetId)
-            .OrderBy(f => f.Path)
-            .ThenBy(f => f.Name)
-            .ToListAsync();
-    }
+            .Where(f => f.CabinetId == cabinetId);
 
-    public async Task<IEnumerable<Folder>> GetByParentIdAsync(Guid? parentId, Guid cabinetId)
-    {
-        if (parentId == null)
-        {
-            return await _context.Folders
-                .AsNoTracking()
-                .Where(f => f.CabinetId == cabinetId && f.ParentFolderId == null)
-                .OrderBy(f => f.Name)
-                .ToListAsync();
-        }
-
-        return await _context.Folders
-            .AsNoTracking()
-            .Where(f => f.ParentFolderId == parentId)
-            .OrderBy(f => f.Name)
-            .ToListAsync();
-    }
-
-    public async Task<IEnumerable<Folder>> GetTreeAsync(Guid cabinetId, int maxResults = 5000)
-    {
-        return await _context.Folders
-            .AsNoTracking()
-            .Where(f => f.CabinetId == cabinetId)
-            .OrderBy(f => f.Path)
-            .ThenBy(f => f.Name)
-            .Take(maxResults)
-            .ToListAsync();
-    }
-
-    public async Task<IEnumerable<Folder>> SearchAsync(string? name, Guid? cabinetId)
-    {
-        var query = _context.Folders.AsNoTracking();
-
-        if (!string.IsNullOrEmpty(name))
-            query = query.Where(f => EF.Functions.Like(f.Name, $"%{name}%"));
-
-        if (cabinetId.HasValue)
-            query = query.Where(f => f.CabinetId == cabinetId.Value);
+        query = ApplyPrivacyFilter(query, userPrivacyLevel);
 
         return await query
             .OrderBy(f => f.Path)
@@ -84,14 +52,82 @@ public class FolderRepository : IFolderRepository
             .ToListAsync();
     }
 
-    public async Task<(List<Folder> Items, int TotalCount)> SearchPaginatedAsync(string? name, Guid? cabinetId, int page, int pageSize)
+    public async Task<IEnumerable<Folder>> GetByParentIdAsync(Guid? parentId, Guid cabinetId, int? userPrivacyLevel = null)
     {
-        var query = _context.Folders.AsNoTracking().AsQueryable();
+        IQueryable<Folder> query;
+
+        if (parentId == null)
+        {
+            query = _context.Folders
+                .Include(f => f.PrivacyLevel)
+                .AsNoTracking()
+                .Where(f => f.CabinetId == cabinetId && f.ParentFolderId == null);
+        }
+        else
+        {
+            query = _context.Folders
+                .Include(f => f.PrivacyLevel)
+                .AsNoTracking()
+                .Where(f => f.ParentFolderId == parentId);
+        }
+
+        query = ApplyPrivacyFilter(query, userPrivacyLevel);
+
+        return await query
+            .OrderBy(f => f.Name)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Folder>> GetTreeAsync(Guid cabinetId, int maxResults = 5000, int? userPrivacyLevel = null)
+    {
+        var query = _context.Folders
+            .Include(f => f.PrivacyLevel)
+            .AsNoTracking()
+            .Where(f => f.CabinetId == cabinetId);
+
+        query = ApplyPrivacyFilter(query, userPrivacyLevel);
+
+        return await query
+            .OrderBy(f => f.Path)
+            .ThenBy(f => f.Name)
+            .Take(maxResults)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Folder>> SearchAsync(string? name, Guid? cabinetId, int? userPrivacyLevel = null)
+    {
+        var query = _context.Folders
+            .Include(f => f.PrivacyLevel)
+            .AsNoTracking()
+            .AsQueryable();
+
+        if (!string.IsNullOrEmpty(name))
+            query = query.Where(f => EF.Functions.Like(f.Name, $"%{name}%"));
+
+        if (cabinetId.HasValue)
+            query = query.Where(f => f.CabinetId == cabinetId.Value);
+
+        query = ApplyPrivacyFilter(query, userPrivacyLevel);
+
+        return await query
+            .OrderBy(f => f.Path)
+            .ThenBy(f => f.Name)
+            .ToListAsync();
+    }
+
+    public async Task<(List<Folder> Items, int TotalCount)> SearchPaginatedAsync(string? name, Guid? cabinetId, int page, int pageSize, int? userPrivacyLevel = null)
+    {
+        var query = _context.Folders
+            .Include(f => f.PrivacyLevel)
+            .AsNoTracking()
+            .AsQueryable();
 
         if (!string.IsNullOrEmpty(name))
             query = query.Where(f => EF.Functions.Like(f.Name, $"%{name}%"));
         if (cabinetId.HasValue)
             query = query.Where(f => f.CabinetId == cabinetId.Value);
+
+        query = ApplyPrivacyFilter(query, userPrivacyLevel);
 
         var totalCount = await query.CountAsync();
 
@@ -105,22 +141,26 @@ public class FolderRepository : IFolderRepository
         return (items, totalCount);
     }
 
-    public async Task<(List<Folder> Items, int TotalCount)> GetByParentIdPaginatedAsync(Guid? parentId, Guid cabinetId, int page, int pageSize)
+    public async Task<(List<Folder> Items, int TotalCount)> GetByParentIdPaginatedAsync(Guid? parentId, Guid cabinetId, int page, int pageSize, int? userPrivacyLevel = null)
     {
         IQueryable<Folder> query;
 
         if (parentId == null)
         {
             query = _context.Folders
+                .Include(f => f.PrivacyLevel)
                 .AsNoTracking()
                 .Where(f => f.CabinetId == cabinetId && f.ParentFolderId == null);
         }
         else
         {
             query = _context.Folders
+                .Include(f => f.PrivacyLevel)
                 .AsNoTracking()
                 .Where(f => f.ParentFolderId == parentId);
         }
+
+        query = ApplyPrivacyFilter(query, userPrivacyLevel);
 
         var totalCount = await query.CountAsync();
 
@@ -175,11 +215,17 @@ public class FolderRepository : IFolderRepository
 
     public async Task<bool> DeleteAsync(Guid id)
     {
-        var affected = await _context.Folders
-            .Where(f => f.Id == id)
-            .ExecuteUpdateAsync(s => s
-                .SetProperty(f => f.IsActive, false)
-                .SetProperty(f => f.ModifiedAt, DateTime.UtcNow));
+        // Soft-delete the folder and all its descendants using a recursive CTE
+        var affected = await _context.Database.ExecuteSqlRawAsync(@"
+            WITH FolderTree AS (
+                SELECT Id FROM Folders WHERE Id = {0} AND IsActive = 1
+                UNION ALL
+                SELECT f.Id FROM Folders f
+                INNER JOIN FolderTree ft ON f.ParentFolderId = ft.Id
+                WHERE f.IsActive = 1
+            )
+            UPDATE Folders SET IsActive = 0, ModifiedAt = GETUTCDATE()
+            WHERE Id IN (SELECT Id FROM FolderTree)", id);
         return affected > 0;
     }
 }

@@ -114,7 +114,7 @@ public class DocumentRepository : IDocumentRepository
     }
 
     public async Task<(List<DocumentWithNames> Items, int TotalCount)> SearchWithNamesPaginatedAsync(
-        string? name, Guid? folderId, Guid? classificationId, Guid? documentTypeId, int page, int pageSize)
+        string? name, Guid? folderId, Guid? classificationId, Guid? documentTypeId, int page, int pageSize, int? userPrivacyLevel = null)
     {
         var query = _context.Documents.AsNoTracking().AsQueryable();
 
@@ -126,6 +126,14 @@ public class DocumentRepository : IDocumentRepository
             query = query.Where(d => d.ClassificationId == classificationId.Value);
         if (documentTypeId.HasValue)
             query = query.Where(d => d.DocumentTypeId == documentTypeId.Value);
+
+        // Privacy level filtering: exclude documents in folders above user's privacy level
+        if (userPrivacyLevel != null)
+        {
+            query = query.Where(d =>
+                !_context.Folders.Any(f => f.Id == d.FolderId && f.PrivacyLevelId != null
+                    && _context.PrivacyLevels.Any(pl => pl.Id == f.PrivacyLevelId && pl.Level > userPrivacyLevel.Value)));
+        }
 
         var totalCount = await query.CountAsync();
 

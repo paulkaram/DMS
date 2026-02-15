@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { usersApi, rolesApi, structuresApi } from '@/api/client'
-import type { User, Role, Structure } from '@/types'
+import { usersApi, rolesApi, structuresApi, privacyLevelsApi } from '@/api/client'
+import type { User, Role, Structure, PrivacyLevel } from '@/types'
 import AdminBreadcrumb from '@/components/admin/AdminBreadcrumb.vue'
 import Select from '@/components/ui/Select.vue'
 
@@ -9,6 +9,7 @@ import Select from '@/components/ui/Select.vue'
 const users = ref<User[]>([])
 const roles = ref<Role[]>([])
 const structures = ref<Structure[]>([])
+const privacyLevels = ref<PrivacyLevel[]>([])
 const searchQuery = ref('')
 const isLoading = ref(true)
 const selectedUser = ref<User | null>(null)
@@ -58,15 +59,17 @@ onMounted(async () => {
 async function loadData() {
   isLoading.value = true
   try {
-    const [usersResponse, rolesResponse, structuresResponse] = await Promise.all([
+    const [usersResponse, rolesResponse, structuresResponse, privacyLevelsResponse] = await Promise.all([
       usersApi.getAll(),
       rolesApi.getAll(),
-      structuresApi.getAll()
+      structuresApi.getAll(),
+      privacyLevelsApi.getAll()
     ])
     const usersData = usersResponse.data
     users.value = Array.isArray(usersData) ? usersData : usersData.items ?? []
     roles.value = rolesResponse.data
     structures.value = structuresResponse.data
+    privacyLevels.value = privacyLevelsResponse.data
   } catch (error) {
   } finally {
     isLoading.value = false
@@ -92,6 +95,8 @@ async function handleSearch() {
 const isAssigningRole = ref(false)
 const isRemovingRole = ref<string | null>(null)
 const selectedRoleToAdd = ref<string>('')
+const isSavingPrivacyLevel = ref(false)
+const selectedPrivacyLevel = ref<string>('')
 
 async function viewUser(user: User) {
   selectedUser.value = user
@@ -100,6 +105,7 @@ async function viewUser(user: User) {
   userRoles.value = []
   userStructures.value = []
   selectedRoleToAdd.value = ''
+  selectedPrivacyLevel.value = String(user.privacyLevel ?? 0)
 
   try {
     const [structuresRes, rolesRes] = await Promise.all([
@@ -173,6 +179,43 @@ function getFullName(user: User): string {
     return `${user.firstName} ${user.lastName}`
   }
   return user.displayName || user.username || '-'
+}
+
+const privacyLevelOptions = computed(() => {
+  return privacyLevels.value
+    .filter(pl => pl.isActive)
+    .sort((a, b) => a.level - b.level)
+    .map(pl => ({
+      value: String(pl.level),
+      label: `${pl.name} (Level ${pl.level})`
+    }))
+})
+
+function getPrivacyLevelName(level: number): string {
+  const pl = privacyLevels.value.find(p => p.level === level)
+  return pl ? pl.name : `Level ${level}`
+}
+
+function getPrivacyLevelColor(level: number): string {
+  const pl = privacyLevels.value.find(p => p.level === level)
+  return pl?.color || '#6b7280'
+}
+
+async function saveUserPrivacyLevel() {
+  if (!selectedUser.value) return
+  isSavingPrivacyLevel.value = true
+  try {
+    await usersApi.update(selectedUser.value.id, {
+      privacyLevel: parseInt(selectedPrivacyLevel.value)
+    })
+    selectedUser.value.privacyLevel = parseInt(selectedPrivacyLevel.value)
+    // Update in the users list too
+    const idx = users.value.findIndex(u => u.id === selectedUser.value!.id)
+    if (idx >= 0) users.value[idx].privacyLevel = parseInt(selectedPrivacyLevel.value)
+  } catch (err) {
+  } finally {
+    isSavingPrivacyLevel.value = false
+  }
 }
 
 function getTypeIcon(type: string) {
@@ -565,6 +608,43 @@ function getTypeIcon(type: string) {
                     </button>
                   </div>
                 </template>
+              </div>
+
+              <!-- Privacy Level -->
+              <div class="mt-6">
+                <h4 class="text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-3">Security Clearance</h4>
+                <div class="p-4 bg-zinc-50 dark:bg-surface-dark rounded-lg space-y-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center" :style="{ backgroundColor: getPrivacyLevelColor(selectedUser?.privacyLevel ?? 0) + '20' }">
+                      <span class="material-symbols-outlined" :style="{ color: getPrivacyLevelColor(selectedUser?.privacyLevel ?? 0) }">shield</span>
+                    </div>
+                    <div class="flex-1">
+                      <p class="text-sm font-medium text-zinc-700 dark:text-zinc-200">Current Level</p>
+                      <p class="text-xs text-zinc-500 dark:text-zinc-400">
+                        {{ getPrivacyLevelName(selectedUser?.privacyLevel ?? 0) }}
+                      </p>
+                    </div>
+                  </div>
+                  <div class="flex items-stretch gap-2">
+                    <div class="flex-1">
+                      <Select
+                        v-model="selectedPrivacyLevel"
+                        :options="privacyLevelOptions"
+                        placeholder="Select privacy level..."
+                        size="md"
+                      />
+                    </div>
+                    <button
+                      @click="saveUserPrivacyLevel"
+                      :disabled="isSavingPrivacyLevel || String(selectedUser?.privacyLevel ?? 0) === selectedPrivacyLevel"
+                      class="px-4 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5 whitespace-nowrap"
+                    >
+                      <span v-if="isSavingPrivacyLevel" class="material-symbols-outlined animate-spin text-base">progress_activity</span>
+                      <span v-else class="material-symbols-outlined text-base">save</span>
+                      Save
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <!-- User Structures -->

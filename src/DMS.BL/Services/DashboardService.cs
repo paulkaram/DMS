@@ -26,7 +26,10 @@ public class DashboardService : IDashboardService
             DocumentsThisMonth = await _dashboardRepo.GetDocumentsThisMonthAsync(),
             DocumentsThisYear = await _dashboardRepo.GetDocumentsThisYearAsync(),
             TotalStorageUsed = await _dashboardRepo.GetTotalStorageUsedAsync(),
-            MyCheckoutsCount = await _dashboardRepo.GetCheckedOutCountAsync(userId)
+            MyCheckoutsCount = await _dashboardRepo.GetCheckedOutCountAsync(userId),
+            PendingApprovalsCount = await _dashboardRepo.GetPendingApprovalCountAsync(userId),
+            ExpiredDocumentsCount = await _dashboardRepo.GetExpiredDocumentCountAsync(),
+            ExpiringSoonCount = await _dashboardRepo.GetExpiringSoonCountAsync()
         };
 
         var contentTypes = await _dashboardRepo.GetContentTypeDistributionAsync();
@@ -40,9 +43,9 @@ public class DashboardService : IDashboardService
         return ServiceResult<DashboardStatisticsDto>.Ok(stats);
     }
 
-    public async Task<ServiceResult<List<RecentDocumentDto>>> GetRecentDocumentsAsync(int take = 10)
+    public async Task<ServiceResult<List<RecentDocumentDto>>> GetRecentDocumentsAsync(int take = 10, int? userPrivacyLevel = null)
     {
-        var docs = await _dashboardRepo.GetRecentDocumentsAsync(take);
+        var docs = await _dashboardRepo.GetRecentDocumentsAsync(take, userPrivacyLevel);
         return ServiceResult<List<RecentDocumentDto>>.Ok(docs.Select(x => new RecentDocumentDto
         {
             Id = x.Id,
@@ -50,6 +53,19 @@ public class DashboardService : IDashboardService
             FolderName = x.FolderName,
             Extension = x.Extension,
             CreatedAt = x.CreatedAt,
+            CreatedByName = x.CreatedByName
+        }).ToList());
+    }
+
+    public async Task<ServiceResult<List<ExpiredDocumentDto>>> GetExpiredDocumentsAsync(int take = 5, int? userPrivacyLevel = null)
+    {
+        var docs = await _dashboardRepo.GetExpiredDocumentsAsync(take, userPrivacyLevel);
+        return ServiceResult<List<ExpiredDocumentDto>>.Ok(docs.Select(x => new ExpiredDocumentDto
+        {
+            Id = x.Id,
+            Name = x.Name,
+            Extension = x.Extension,
+            ExpiryDate = x.ExpiryDate,
             CreatedByName = x.CreatedByName
         }).ToList());
     }

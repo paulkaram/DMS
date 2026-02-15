@@ -61,7 +61,8 @@ public class PermissionRepository : IPermissionRepository
         Guid userId, NodeType nodeType, Guid nodeId)
     {
         var connection = _context.Database.GetDbConnection();
-        await connection.OpenAsync();
+        if (connection.State != System.Data.ConnectionState.Open)
+            await connection.OpenAsync();
 
         using var command = connection.CreateCommand();
         command.CommandText = "sp_GetEffectivePermission";

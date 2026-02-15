@@ -212,10 +212,12 @@ export const authApi = {
 export const usersApi = {
   getAll: () =>
     apiClient.get('/users'),
-  search: (query: string) =>
-    apiClient.get('/users/search', { params: { query } }),
+  search: (query: string, page = 1, pageSize = 20) =>
+    apiClient.get('/users', { params: { search: query, page, pageSize } }),
   getById: (id: string) =>
     apiClient.get(`/users/${id}`),
+  update: (id: string, data: { email?: string; firstName?: string; lastName?: string; privacyLevel?: number }) =>
+    apiClient.put(`/users/${id}`, data),
   getUserRoles: (userId: string) =>
     apiClient.get(`/users/${userId}/roles`),
   assignRole: (userId: string, roleId: string) =>
@@ -371,7 +373,9 @@ export const dashboardApi = {
   getRecentDocuments: (take = 10) =>
     apiClient.get('/dashboard/recent-documents', { params: { take } }),
   getMyCheckouts: () =>
-    apiClient.get('/dashboard/my-checkouts')
+    apiClient.get('/dashboard/my-checkouts'),
+  getExpiredDocuments: (take = 5) =>
+    apiClient.get('/dashboard/expired-documents', { params: { take } })
 }
 
 // Reference Data API
@@ -486,22 +490,24 @@ export const approvalsApi = {
     apiClient.get('/approvals/workflows'),
   getWorkflow: (id: string) =>
     apiClient.get(`/approvals/workflows/${id}`),
-  createWorkflow: (data: { name: string; description?: string; folderId?: string; requiredApprovers: number; isSequential: boolean; steps?: { stepOrder: number; approverUserId?: string; approverRoleId?: string; isRequired: boolean }[] }) =>
+  createWorkflow: (data: { name: string; description?: string; folderId?: string; requiredApprovers: number; isSequential: boolean; designerData?: string; triggerType?: string; inheritToSubfolders?: boolean; steps?: { stepOrder: number; approverUserId?: string; approverRoleId?: string; approverStructureId?: string; assignToManager?: boolean; isRequired: boolean; statusId?: string }[] }) =>
     apiClient.post('/approvals/workflows', data),
-  updateWorkflow: (id: string, data: { name: string; description?: string; folderId?: string; requiredApprovers: number; isSequential: boolean }) =>
+  updateWorkflow: (id: string, data: { name: string; description?: string; folderId?: string; requiredApprovers: number; isSequential: boolean; designerData?: string; triggerType?: string; inheritToSubfolders?: boolean; steps?: { stepOrder: number; approverUserId?: string; approverRoleId?: string; approverStructureId?: string; assignToManager?: boolean; isRequired: boolean; statusId?: string }[] }) =>
     apiClient.put(`/approvals/workflows/${id}`, data),
   deleteWorkflow: (id: string) =>
     apiClient.delete(`/approvals/workflows/${id}`),
 
   // Requests
-  getPendingRequests: () =>
-    apiClient.get('/approvals/requests/pending'),
+  getPendingRequests: (take?: number) =>
+    apiClient.get('/approvals/requests/pending', { params: take ? { take } : {} }),
   getMyRequests: () =>
     apiClient.get('/approvals/requests/my'),
   submitAction: (requestId: string, data: { action: number; comments?: string }) =>
     apiClient.post(`/approvals/requests/${requestId}/action`, data),
   cancelRequest: (requestId: string) =>
-    apiClient.post(`/approvals/requests/${requestId}/cancel`)
+    apiClient.post(`/approvals/requests/${requestId}/cancel`),
+  resubmitRequest: (requestId: string) =>
+    apiClient.post(`/approvals/requests/${requestId}/resubmit`)
 }
 
 // Content Types API
@@ -569,7 +575,9 @@ export const approvalRequestsApi = {
   submitAction: (requestId: string, data: { action: number; comments?: string }) =>
     apiClient.post(`/approvals/requests/${requestId}/action`, data),
   cancelRequest: (requestId: string) =>
-    apiClient.post(`/approvals/requests/${requestId}/cancel`)
+    apiClient.post(`/approvals/requests/${requestId}/cancel`),
+  resubmitRequest: (requestId: string) =>
+    apiClient.post(`/approvals/requests/${requestId}/resubmit`)
 }
 
 // Content Type Definitions API (Form Builder)
@@ -1165,4 +1173,36 @@ export const rolePermissionsApi = {
     apiClient.get(`/role-permissions/check/${actionCode}`),
   getUserPermissions: (userId: string) =>
     apiClient.get(`/role-permissions/users/${userId}`)
+}
+
+// =============================================
+// Workflow Statuses API
+// =============================================
+export const workflowStatusesApi = {
+  getAll: (includeInactive = false) =>
+    apiClient.get('/workflow-statuses', { params: { includeInactive } }),
+  getById: (id: string) =>
+    apiClient.get(`/workflow-statuses/${id}`),
+  create: (data: { name: string; color: string; icon?: string; description?: string; sortOrder: number }) =>
+    apiClient.post('/workflow-statuses', data),
+  update: (id: string, data: { name: string; color: string; icon?: string; description?: string; sortOrder: number; isActive: boolean }) =>
+    apiClient.put(`/workflow-statuses/${id}`, data),
+  delete: (id: string) =>
+    apiClient.delete(`/workflow-statuses/${id}`)
+}
+
+// =============================================
+// Privacy Levels API
+// =============================================
+export const privacyLevelsApi = {
+  getAll: (includeInactive = false) =>
+    apiClient.get('/privacy-levels', { params: { includeInactive } }),
+  getById: (id: string) =>
+    apiClient.get(`/privacy-levels/${id}`),
+  create: (data: { name: string; level: number; color?: string; description?: string }) =>
+    apiClient.post('/privacy-levels', data),
+  update: (id: string, data: { name: string; level: number; color?: string; description?: string; isActive: boolean }) =>
+    apiClient.put(`/privacy-levels/${id}`, data),
+  delete: (id: string) =>
+    apiClient.delete(`/privacy-levels/${id}`)
 }

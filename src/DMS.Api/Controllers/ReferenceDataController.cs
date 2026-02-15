@@ -195,4 +195,40 @@ public class ReferenceDataController : BaseApiController
         var result = await _referenceDataService.DeleteLookupItemAsync(itemId);
         return result.Success ? NoContent() : BadRequest(result.Errors);
     }
+
+    // Privacy Levels
+    [HttpGet("privacy-levels")]
+    public async Task<IActionResult> GetPrivacyLevels([FromQuery] bool includeInactive = false)
+    {
+        var result = await _referenceDataService.GetPrivacyLevelsAsync(includeInactive);
+        return result.Success ? Ok(result.Data) : BadRequest(result.Errors);
+    }
+
+    [HttpGet("privacy-levels/{id:guid}")]
+    public async Task<IActionResult> GetPrivacyLevel(Guid id)
+    {
+        var result = await _referenceDataService.GetPrivacyLevelByIdAsync(id);
+        return result.Success ? Ok(result.Data) : NotFound(result.Errors);
+    }
+
+    [HttpPost("privacy-levels")]
+    public async Task<IActionResult> CreatePrivacyLevel([FromBody] PrivacyLevelDto dto)
+    {
+        var result = await _referenceDataService.CreatePrivacyLevelAsync(dto);
+        return result.Success ? CreatedAtAction(nameof(GetPrivacyLevel), new { id = result.Data!.Id }, result.Data) : BadRequest(result.Errors);
+    }
+
+    [HttpPut("privacy-levels/{id:guid}")]
+    public async Task<IActionResult> UpdatePrivacyLevel(Guid id, [FromBody] PrivacyLevelDto dto)
+    {
+        var result = await _referenceDataService.UpdatePrivacyLevelAsync(id, dto);
+        return result.Success ? Ok(result.Data) : BadRequest(result.Errors);
+    }
+
+    [HttpDelete("privacy-levels/{id:guid}")]
+    public async Task<IActionResult> DeletePrivacyLevel(Guid id)
+    {
+        var result = await _referenceDataService.DeletePrivacyLevelAsync(id);
+        return result.Success ? NoContent() : BadRequest(result.Errors);
+    }
 }

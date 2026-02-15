@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import type { MySharedItem, Document } from '@/types'
 import { sharesApi, documentsApi } from '@/api/client'
@@ -22,6 +22,11 @@ const selectedItem = ref<MySharedItem | null>(null)
 const newExpiryDate = ref<string | null>(null)
 const isExtending = ref(false)
 
+// Context menu state
+const showContextMenu = ref(false)
+const contextMenuPosition = ref({ x: 0, y: 0 })
+const contextMenuItem = ref<MySharedItem | null>(null)
+
 // Toast notification
 const toast = ref<{ show: boolean; message: string; type: 'success' | 'error' }>({
   show: false,
@@ -31,6 +36,11 @@ const toast = ref<{ show: boolean; message: string; type: 'success' | 'error' }>
 
 onMounted(async () => {
   await loadMySharedItems()
+  document.addEventListener('click', closeContextMenu)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', closeContextMenu)
 })
 
 async function loadMySharedItems() {
@@ -110,6 +120,24 @@ async function revokeShare(item: MySharedItem) {
   } catch (err) {
     showToast('Failed to revoke share', 'error')
   }
+}
+
+function openContextMenu(event: MouseEvent, item: MySharedItem) {
+  event.preventDefault()
+  event.stopPropagation()
+  contextMenuItem.value = item
+
+  const menuWidth = 200
+  const menuHeight = 280
+  const x = Math.min(event.clientX, window.innerWidth - menuWidth)
+  const y = Math.min(event.clientY, window.innerHeight - menuHeight)
+  contextMenuPosition.value = { x, y }
+  showContextMenu.value = true
+}
+
+function closeContextMenu() {
+  showContextMenu.value = false
+  contextMenuItem.value = null
 }
 
 function showToast(message: string, type: 'success' | 'error' = 'success') {
@@ -326,8 +354,9 @@ const displayedItems = computed(() => {
           <div
             v-for="(item, index) in displayedItems"
             :key="item.shareId"
-            class="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-surface-dark rounded-lg border border-zinc-100 dark:border-border-dark hover:border-teal/30 hover:shadow-md transition-all"
+            class="flex items-center gap-4 p-4 bg-zinc-50 dark:bg-surface-dark rounded-lg border border-zinc-100 dark:border-border-dark hover:border-teal/30 hover:shadow-md transition-all cursor-pointer"
             :class="{ 'opacity-60': isExpired(item.expiresAt) }"
+            @contextmenu="openContextMenu($event, item)"
           >
             <!-- Document Icon -->
             <DocumentIcon :extension="item.extension" :index="index" size="lg" />
@@ -390,7 +419,7 @@ const displayedItems = computed(() => {
             <div class="flex items-center gap-1 flex-shrink-0">
               <div class="relative group">
                 <button
-                  @click="previewDocument(item)"
+                  @click.stop="previewDocument(item)"
                   class="p-2 text-zinc-500 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors"
                 >
                   <span class="material-symbols-outlined text-xl">open_in_new</span>
@@ -401,7 +430,7 @@ const displayedItems = computed(() => {
               </div>
               <div class="relative group">
                 <button
-                  @click="viewDocument(item)"
+                  @click.stop="viewDocument(item)"
                   class="p-2 text-zinc-500 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors"
                 >
                   <span class="material-symbols-outlined text-xl">info</span>
@@ -412,7 +441,7 @@ const displayedItems = computed(() => {
               </div>
               <div class="relative group">
                 <button
-                  @click="copyShareUrl(item)"
+                  @click.stop="copyShareUrl(item)"
                   class="p-2 text-zinc-500 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors"
                 >
                   <span class="material-symbols-outlined text-xl">link</span>
@@ -423,24 +452,13 @@ const displayedItems = computed(() => {
               </div>
               <div class="relative group">
                 <button
-                  @click="openExtendModal(item)"
-                  class="p-2 text-zinc-500 hover:text-teal hover:bg-teal/10 rounded-lg transition-colors"
+                  @click.stop="openContextMenu($event, item)"
+                  class="p-2 text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-border-dark rounded-lg transition-colors"
                 >
-                  <span class="material-symbols-outlined text-xl">event</span>
+                  <span class="material-symbols-outlined text-xl">more_vert</span>
                 </button>
                 <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-border-dark rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                  Extend
-                </span>
-              </div>
-              <div class="relative group">
-                <button
-                  @click="revokeShare(item)"
-                  class="p-2 text-zinc-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                >
-                  <span class="material-symbols-outlined text-xl">link_off</span>
-                </button>
-                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-xs font-medium text-white bg-zinc-800 dark:bg-border-dark rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                  Revoke
+                  More
                 </span>
               </div>
             </div>
@@ -448,6 +466,63 @@ const displayedItems = computed(() => {
         </div>
       </div>
     </div>
+
+    <!-- Context Menu -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition duration-100 ease-out"
+        enter-from-class="transform scale-95 opacity-0"
+        enter-to-class="transform scale-100 opacity-100"
+        leave-active-class="transition duration-75 ease-in"
+        leave-from-class="transform scale-100 opacity-100"
+        leave-to-class="transform scale-95 opacity-0"
+      >
+        <div
+          v-if="showContextMenu && contextMenuItem"
+          class="fixed z-50 min-w-[180px] bg-white dark:bg-surface-dark rounded-lg shadow-xl border border-zinc-200 dark:border-border-dark py-1.5 overflow-hidden"
+          :style="{ left: contextMenuPosition.x + 'px', top: contextMenuPosition.y + 'px' }"
+          @click.stop
+        >
+          <button
+            @click="previewDocument(contextMenuItem); closeContextMenu()"
+            class="w-full px-4 py-2.5 text-left text-sm text-zinc-700 dark:text-zinc-200 hover:bg-teal/10 hover:text-teal flex items-center gap-3 transition-colors"
+          >
+            <span class="material-symbols-outlined text-lg">open_in_new</span>
+            Preview
+          </button>
+          <button
+            @click="viewDocument(contextMenuItem); closeContextMenu()"
+            class="w-full px-4 py-2.5 text-left text-sm text-zinc-700 dark:text-zinc-200 hover:bg-teal/10 hover:text-teal flex items-center gap-3 transition-colors"
+          >
+            <span class="material-symbols-outlined text-lg">info</span>
+            View Details
+          </button>
+          <button
+            @click="copyShareUrl(contextMenuItem); closeContextMenu()"
+            class="w-full px-4 py-2.5 text-left text-sm text-zinc-700 dark:text-zinc-200 hover:bg-teal/10 hover:text-teal flex items-center gap-3 transition-colors"
+          >
+            <span class="material-symbols-outlined text-lg">link</span>
+            Copy Link
+          </button>
+          <div class="my-1.5 border-t border-zinc-200 dark:border-border-dark"></div>
+          <button
+            @click="openExtendModal(contextMenuItem); closeContextMenu()"
+            class="w-full px-4 py-2.5 text-left text-sm text-zinc-700 dark:text-zinc-200 hover:bg-teal/10 hover:text-teal flex items-center gap-3 transition-colors"
+          >
+            <span class="material-symbols-outlined text-lg">event</span>
+            Extend Expiry
+          </button>
+          <div class="my-1.5 border-t border-zinc-200 dark:border-border-dark"></div>
+          <button
+            @click="revokeShare(contextMenuItem); closeContextMenu()"
+            class="w-full px-4 py-2.5 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-3 transition-colors"
+          >
+            <span class="material-symbols-outlined text-lg">link_off</span>
+            Revoke Share
+          </button>
+        </div>
+      </Transition>
+    </Teleport>
 
     <!-- Extend Date Modal -->
     <UiModal v-model="showExtendModal" size="sm" :overflow-visible="true">

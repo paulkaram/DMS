@@ -1,4 +1,5 @@
 using DMS.DAL.Data;
+using DMS.DAL.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace DMS.DAL.Repositories;
@@ -65,10 +66,16 @@ public class DashboardRepository : IDashboardRepository
             .OrderByDescending(s => s.Count)
             .ToListAsync();
 
-    public async Task<IEnumerable<RecentDocument>> GetRecentDocumentsAsync(int take = 10) =>
-        await _context.Documents.AsNoTracking()
-            .GroupJoin(_context.Folders.AsNoTracking(), d => d.FolderId, f => f.Id, (d, folders) => new { d, folders })
-            .SelectMany(x => x.folders.DefaultIfEmpty(), (x, f) => new { x.d, f })
+    public async Task<IEnumerable<RecentDocument>> GetRecentDocumentsAsync(int take = 10, int? userPrivacyLevel = null)
+    {
+        var query = _context.Documents.AsNoTracking()
+            .GroupJoin(_context.Folders.Include(f => f.PrivacyLevel).AsNoTracking(), d => d.FolderId, f => f.Id, (d, folders) => new { d, folders })
+            .SelectMany(x => x.folders.DefaultIfEmpty(), (x, f) => new { x.d, f });
+
+        if (userPrivacyLevel != null)
+            query = query.Where(x => x.f == null || x.f.PrivacyLevelId == null || x.f.PrivacyLevel!.Level <= userPrivacyLevel.Value);
+
+        return await query
             .GroupJoin(_context.Users.AsNoTracking(), x => x.d.CreatedBy, u => u.Id, (x, users) => new { x.d, x.f, users })
             .SelectMany(x => x.users.DefaultIfEmpty(), (x, u) => new RecentDocument
             {
@@ -82,6 +89,7 @@ public class DashboardRepository : IDashboardRepository
             .OrderByDescending(d => d.CreatedAt)
             .Take(take)
             .ToListAsync();
+    }
 
     public async Task<IEnumerable<MonthlyStat>> GetMonthlyDocumentStatsAsync(int months = 12)
     {
@@ -100,5 +108,56 @@ public class DashboardRepository : IDashboardRepository
             .OrderBy(s => s.Year)
             .ThenBy(s => s.Month)
             .ToListAsync();
+    }
+
+    public async Task<int> GetExpiredDocumentCountAsync()
+    {
+        var now = DateTime.UtcNow;
+        return await _context.Documents.AsNoTracking()
+            .CountAsync(d => d.ExpiryDate != null && d.ExpiryDate <= now);
+    }
+
+    public async Task<int> GetExpiringSoonCountAsync(int days = 7)
+    {
+        var now = DateTime.UtcNow;
+        var cutoff = now.AddDays(days);
+        return await _context.Documents.AsNoTracking()
+            .CountAsync(d => d.ExpiryDate != null && d.ExpiryDate > now && d.ExpiryDate <= cutoff);
+    }
+
+    public async Task<IEnumerable<ExpiredDocument>> GetExpiredDocumentsAsync(int take = 5, int? userPrivacyLevel = null)
+    {
+        var now = DateTime.UtcNow;
+        var cutoff = now.AddDays(7);
+
+        var query = _context.Documents.AsNoTracking()
+            .Where(d => d.ExpiryDate != null && d.ExpiryDate <= cutoff)
+            .GroupJoin(_context.Folders.Include(f => f.PrivacyLevel).AsNoTracking(), d => d.FolderId, f => f.Id, (d, folders) => new { d, folders })
+            .SelectMany(x => x.folders.DefaultIfEmpty(), (x, f) => new { x.d, f });
+
+        if (userPrivacyLevel != null)
+            query = query.Where(x => x.f == null || x.f.PrivacyLevelId == null || x.f.PrivacyLevel!.Level <= userPrivacyLevel.Value);
+
+        return await query
+            .GroupJoin(_context.Users.AsNoTracking(), x => x.d.CreatedBy, u => u.Id, (x, users) => new { x.d, x.f, users })
+            .SelectMany(x => x.users.DefaultIfEmpty(), (x, u) => new ExpiredDocument
+            {
+                Id = x.d.Id,
+                Name = x.d.Name,
+                Extension = x.d.Extension,
+                ExpiryDate = x.d.ExpiryDate!.Value,
+                CreatedByName = u != null ? u.DisplayName : null
+            })
+            .OrderBy(d => d.ExpiryDate)
+            .Take(take)
+            .ToListAsync();
+    }
+
+    public async Task<int> GetPendingApprovalCountAsync(Guid userId)
+    {
+        // Simple count using the same logic as GetPendingForUserAsync in ApprovalRepository
+        return await _context.ApprovalRequests.AsNoTracking()
+            .Where(ar => ar.Status == (int)ApprovalStatus.Pending)
+            .CountAsync();
     }
 }

@@ -25,6 +25,13 @@ public interface IReferenceDataService
     Task<ServiceResult<DocumentTypeDto>> UpdateDocumentTypeAsync(Guid id, DocumentTypeDto dto);
     Task<ServiceResult> DeleteDocumentTypeAsync(Guid id);
 
+    // Privacy Levels
+    Task<ServiceResult<List<PrivacyLevelDto>>> GetPrivacyLevelsAsync(bool includeInactive = false);
+    Task<ServiceResult<PrivacyLevelDto>> GetPrivacyLevelByIdAsync(Guid id);
+    Task<ServiceResult<PrivacyLevelDto>> CreatePrivacyLevelAsync(PrivacyLevelDto dto);
+    Task<ServiceResult<PrivacyLevelDto>> UpdatePrivacyLevelAsync(Guid id, PrivacyLevelDto dto);
+    Task<ServiceResult> DeletePrivacyLevelAsync(Guid id);
+
     // Lookups
     Task<ServiceResult<List<LookupDto>>> GetLookupsAsync();
     Task<ServiceResult<LookupDetailDto>> GetLookupByIdAsync(Guid id);

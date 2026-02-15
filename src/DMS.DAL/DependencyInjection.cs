@@ -103,6 +103,12 @@ public static class DependencyInjection
         // Role Permission Matrix
         services.AddScoped<IRolePermissionRepository, RolePermissionRepository>();
 
+        // Workflow Statuses
+        services.AddScoped<IWorkflowStatusRepository, WorkflowStatusRepository>();
+
+        // Privacy Levels
+        services.AddScoped<IPrivacyLevelRepository, PrivacyLevelRepository>();
+
         return services;
     }
 }

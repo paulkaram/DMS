@@ -59,6 +59,7 @@ public class AuthService : IAuthService
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 DisplayName = user.DisplayName,
+                PrivacyLevel = user.PrivacyLevel,
                 IsActive = user.IsActive,
                 LastLoginAt = DateTime.UtcNow,
                 Roles = roles.Select(r => new RoleDto { Id = r.Id, Name = r.Name, Description = r.Description }).ToList()
@@ -90,6 +91,7 @@ public class AuthService : IAuthService
             new(JwtRegisteredClaimNames.UniqueName, user.Username),
             new(JwtRegisteredClaimNames.Email, user.Email ?? ""),
             new("displayName", user.DisplayName ?? user.Username),
+            new("privacyLevel", user.PrivacyLevel.ToString()),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 

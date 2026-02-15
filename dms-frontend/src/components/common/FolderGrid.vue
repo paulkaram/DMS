@@ -119,6 +119,14 @@ defineExpose({ clearSelection, selectedFolders })
             {{ folder.name }}
             <span v-if="folder.accessMode === 1" class="material-symbols-outlined text-amber-500" style="font-size: 13px;" title="Private folder">lock</span>
           </p>
+          <span
+            v-if="folder.privacyLevelName"
+            class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium mt-0.5"
+            :style="{ backgroundColor: (folder.privacyLevelColor || '#6b7280') + '20', color: folder.privacyLevelColor || '#6b7280' }"
+            :title="'Privacy: ' + folder.privacyLevelName"
+          >
+            {{ folder.privacyLevelName }}
+          </span>
           <p v-if="folder.description" class="text-[11px] text-zinc-400 dark:text-zinc-500 truncate w-full mt-0.5 leading-tight">
             {{ folder.description }}
           </p>
@@ -175,6 +183,13 @@ defineExpose({ clearSelection, selectedFolders })
               <p class="text-sm font-medium text-zinc-700 dark:text-zinc-200 truncate group-hover:text-teal transition-colors flex items-center gap-1">
                 {{ folder.name }}
                 <span v-if="folder.accessMode === 1" class="material-symbols-outlined text-amber-500 text-xs" title="Private folder">lock</span>
+                <span
+                  v-if="folder.privacyLevelName"
+                  class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0"
+                  :style="{ backgroundColor: (folder.privacyLevelColor || '#6b7280') + '20', color: folder.privacyLevelColor || '#6b7280' }"
+                >
+                  {{ folder.privacyLevelName }}
+                </span>
               </p>
             </div>
           </div>

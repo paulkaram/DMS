@@ -12,6 +12,7 @@ const adminSections = [
     color: 'teal',
     items: [
       { name: 'Workflow Designer', path: '/admin/workflow-designer', icon: 'account_tree', description: 'Design automated document processes' },
+      { name: 'Workflow Statuses', path: '/admin/workflow-statuses', icon: 'label', description: 'Custom status labels for workflow steps' },
       { name: 'Content Type Builder', path: '/admin/content-type-builder', icon: 'build', description: 'Create custom metadata schemas' },
       { name: 'Folder Content Type', path: '/admin/folder-content-types', icon: 'folder_special', description: 'Define folder classification types' },
       { name: 'File Content Type', path: '/settings/content-types', icon: 'insert_drive_file', description: 'Configure document file types' },
@@ -54,6 +55,7 @@ const adminSections = [
       { name: 'Users', path: '/admin/users', icon: 'person', description: 'User accounts & profiles' },
       { name: 'Roles', path: '/admin/roles', icon: 'badge', description: 'Role definitions' },
       { name: 'Role Permissions', path: '/admin/role-permissions', icon: 'security', description: 'Role-based action permissions matrix' },
+      { name: 'Privacy Levels', path: '/admin/privacy-levels', icon: 'shield', description: 'Security classification levels for folders' },
       { name: 'Organizational Structures', path: '/admin/structures', icon: 'account_tree', description: 'Departments, divisions & units' }
     ]
   },

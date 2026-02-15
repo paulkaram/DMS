@@ -3,7 +3,7 @@ import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { Document, DocumentVersion, WorkingCopy, VersionComparison } from '@/types'
 import { CheckInType, DiffType } from '@/types'
-import { documentsApi, permissionsApi, activityLogsApi, contentTypeDefinitionsApi } from '@/api/client'
+import { documentsApi, permissionsApi, activityLogsApi, contentTypeDefinitionsApi, foldersApi } from '@/api/client'
 import { PermissionLevels } from '@/types'
 import { UiSelect, UiDatePicker } from '@/components/ui'
 import { PermissionManagementModal } from '@/components/permissions'
@@ -42,6 +42,10 @@ const fileInputRef = ref<HTMLInputElement | null>(null)
 
 // User's permission level on this document
 const myPermissionLevel = ref<number>(0)
+
+// Folder privacy level
+const folderPrivacyLevelName = ref<string | null>(null)
+const folderPrivacyLevelColor = ref<string | null>(null)
 
 // Computed permission checks
 const canRead = computed(() => myPermissionLevel.value >= PermissionLevels.Read)
@@ -106,6 +110,17 @@ async function loadDocument() {
     metadata.value = metadataResponse.data || []
 
     await loadMyPermissionLevel(id)
+
+    // Load folder privacy level
+    if (document.value.folderId) {
+      try {
+        const folderRes = await foldersApi.getById(document.value.folderId)
+        folderPrivacyLevelName.value = folderRes.data.privacyLevelName || null
+        folderPrivacyLevelColor.value = folderRes.data.privacyLevelColor || null
+      } catch {
+        // Folder access might be restricted, ignore
+      }
+    }
 
     if (metadata.value.length > 0) {
       const contentTypeId = metadata.value[0]?.contentTypeId
@@ -982,6 +997,44 @@ watch(isEditMode, (newVal) => {
                           {{ canAdmin ? 'shield_person' : canDelete ? 'delete' : canWrite ? 'edit' : 'visibility' }}
                         </span>
                         {{ canAdmin ? 'Admin' : canDelete ? 'Delete' : canWrite ? 'Write' : 'Read' }}
+                      </span>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt class="text-xs text-zinc-500">Expiry Date</dt>
+                    <dd>
+                      <template v-if="document.expiryDate">
+                        <span
+                          class="px-2 py-0.5 text-xs font-medium rounded flex items-center gap-1"
+                          :class="{
+                            'bg-red-100 text-red-700': new Date(document.expiryDate) <= new Date(),
+                            'bg-amber-100 text-amber-700': new Date(document.expiryDate) > new Date() && new Date(document.expiryDate) <= new Date(Date.now() + 7 * 86400000),
+                            'bg-zinc-100 text-zinc-600': new Date(document.expiryDate) > new Date(Date.now() + 7 * 86400000)
+                          }"
+                        >
+                          <span class="material-symbols-outlined text-xs">
+                            {{ new Date(document.expiryDate) <= new Date() ? 'event_busy' : 'event' }}
+                          </span>
+                          {{ new Date(document.expiryDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
+                          <template v-if="new Date(document.expiryDate) <= new Date()"> &middot; Expired</template>
+                          <template v-else-if="new Date(document.expiryDate) <= new Date(Date.now() + 7 * 86400000)"> &middot; Expiring Soon</template>
+                        </span>
+                      </template>
+                      <span v-else class="text-sm text-zinc-400">-</span>
+                    </dd>
+                  </div>
+                  <div v-if="folderPrivacyLevelName" class="flex items-center justify-between">
+                    <dt class="text-xs text-zinc-500">Privacy Level</dt>
+                    <dd>
+                      <span
+                        class="px-2 py-0.5 text-xs font-semibold rounded-full flex items-center gap-1"
+                        :style="{
+                          backgroundColor: (folderPrivacyLevelColor || '#6b7280') + '18',
+                          color: folderPrivacyLevelColor || '#6b7280'
+                        }"
+                      >
+                        <span class="material-symbols-outlined text-xs">shield</span>
+                        {{ folderPrivacyLevelName }}
                       </span>
                     </dd>
                   </div>

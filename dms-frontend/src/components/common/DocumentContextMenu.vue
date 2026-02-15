@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import type { Document } from '@/types'
+import { ApprovalStatus } from '@/types'
 
 export interface DocumentPermissions {
   canRead: boolean
@@ -14,8 +15,6 @@ export interface DocumentPermissions {
   canCheckin: boolean
   canManageVersions: boolean
   canManagePermissions: boolean
-  canStartWorkflow: boolean
-  canRoute: boolean
 }
 
 export interface MenuItem {
@@ -67,9 +66,7 @@ const actionCodeMap: Record<string, string> = {
   'copy': 'document.copy',
   'cut': 'document.cut',
   'move': 'document.move',
-  'route': 'document.route',
   'audit-trail': 'audit.document',
-  'start-workflow': 'document.workflow',
   'duplicate': 'document.duplicate',
   'create-shortcut': 'document.shortcut.create',
   'remove-shortcut': 'document.shortcut.remove'
@@ -91,160 +88,160 @@ const canPerform = (menuId: string, nodePermission: boolean): boolean => {
   return hasRolePermission(menuId)
 }
 
+// Approval status restrictions:
+// Pending (0): Creator can only view properties and audit trail
+// Rejected (2): Creator can view + checkout/checkin/edit to resubmit
+const isPending = computed(() => props.document.approvalStatus === ApprovalStatus.Pending)
+const isRejected = computed(() => props.document.approvalStatus === ApprovalStatus.Rejected)
+const isApprovalRestricted = computed(() => isPending.value || isRejected.value)
+
 const menuItems = computed<MenuItem[]>(() => {
   const p = props.permissions
   const items: MenuItem[] = []
 
-  // View actions (require Read + role permission)
+  // View actions (require Read + role permission) — always allowed for creator
   const hasViewActions = canPerform('view-properties', p.canRead) || canPerform('preview', p.canRead)
   if (hasViewActions) {
     if (canPerform('view-properties', p.canRead)) {
       items.push({ id: 'view-properties', label: 'View properties', icon: 'info' })
     }
-    if (canPerform('preview', p.canRead)) {
+    if (canPerform('preview', p.canRead) && !isApprovalRestricted.value) {
       items.push({ id: 'preview', label: 'Preview', icon: 'preview' })
     }
   }
 
-  // Checkout/Checkin actions
-  if (canPerform('checkout', p.canCheckout) && !props.document.isCheckedOut) {
-    if (items.length > 0) items.push({ id: 'divider-checkout1', label: '', divider: true })
-    items.push({ id: 'checkout', label: 'Check out', icon: 'lock' })
-  }
-  const hasCheckinActions = canPerform('checkin', p.canCheckin) || canPerform('discard-checkout', p.canCheckin)
-  if (hasCheckinActions && props.document.isCheckedOut) {
-    if (items.length > 0) items.push({ id: 'divider-checkout2', label: '', divider: true })
-    if (canPerform('checkin', p.canCheckin)) {
-      items.push({ id: 'checkin', label: 'Check in', icon: 'lock_open' })
+  // Checkout/Checkin actions — allowed for rejected docs (creator can resubmit)
+  if (!isPending.value) {
+    if (canPerform('checkout', p.canCheckout) && !props.document.isCheckedOut) {
+      if (items.length > 0) items.push({ id: 'divider-checkout1', label: '', divider: true })
+      items.push({ id: 'checkout', label: 'Check out', icon: 'lock' })
     }
-    if (canPerform('discard-checkout', p.canCheckin)) {
-      items.push({ id: 'discard-checkout', label: 'Discard checkout', icon: 'lock_reset' })
-    }
-  }
-
-  // Comments section
-  const hasCommentActions = canPerform('edit-comments', p.canWrite) || canPerform('view-comments', p.canRead)
-  if (hasCommentActions) {
-    if (items.length > 0) items.push({ id: 'divider-comments', label: '', divider: true })
-    if (canPerform('edit-comments', p.canWrite)) {
-      items.push({ id: 'edit-comments', label: 'Edit comments', icon: 'edit' })
-    }
-    if (canPerform('view-comments', p.canRead)) {
-      items.push({ id: 'view-comments', label: 'View comments', icon: 'chat' })
+    const hasCheckinActions = canPerform('checkin', p.canCheckin) || canPerform('discard-checkout', p.canCheckin)
+    if (hasCheckinActions && props.document.isCheckedOut) {
+      if (items.length > 0) items.push({ id: 'divider-checkout2', label: '', divider: true })
+      if (canPerform('checkin', p.canCheckin)) {
+        items.push({ id: 'checkin', label: 'Check in', icon: 'lock_open' })
+      }
+      if (canPerform('discard-checkout', p.canCheckin)) {
+        items.push({ id: 'discard-checkout', label: 'Discard checkout', icon: 'lock_reset' })
+      }
     }
   }
 
-  // Links section
-  const hasLinkActions = canPerform('link-files', p.canWrite) || canPerform('view-links', p.canRead)
-  if (hasLinkActions) {
-    if (items.length > 0) items.push({ id: 'divider-links', label: '', divider: true })
-    if (canPerform('link-files', p.canWrite)) {
-      items.push({ id: 'link-files', label: 'Link to other files', icon: 'link' })
+  // All sections below are blocked for pending/rejected documents
+  if (!isApprovalRestricted.value) {
+    // Comments section
+    const hasCommentActions = canPerform('edit-comments', p.canWrite) || canPerform('view-comments', p.canRead)
+    if (hasCommentActions) {
+      if (items.length > 0) items.push({ id: 'divider-comments', label: '', divider: true })
+      if (canPerform('edit-comments', p.canWrite)) {
+        items.push({ id: 'edit-comments', label: 'Edit comments', icon: 'edit' })
+      }
+      if (canPerform('view-comments', p.canRead)) {
+        items.push({ id: 'view-comments', label: 'View comments', icon: 'chat' })
+      }
     }
-    if (canPerform('view-links', p.canRead)) {
-      items.push({ id: 'view-links', label: 'View link to other files', icon: 'link-view' })
+
+    // Links section
+    const hasLinkActions = canPerform('link-files', p.canWrite) || canPerform('view-links', p.canRead)
+    if (hasLinkActions) {
+      if (items.length > 0) items.push({ id: 'divider-links', label: '', divider: true })
+      if (canPerform('link-files', p.canWrite)) {
+        items.push({ id: 'link-files', label: 'Link to other files', icon: 'link' })
+      }
+      if (canPerform('view-links', p.canRead)) {
+        items.push({ id: 'view-links', label: 'View link to other files', icon: 'link-view' })
+      }
+    }
+
+    // Attachments section
+    const hasAttachmentActions = canPerform('view-attachments', p.canRead) || canPerform('edit-attachments', p.canWrite)
+    if (hasAttachmentActions) {
+      if (items.length > 0) items.push({ id: 'divider-attachments', label: '', divider: true })
+      if (canPerform('view-attachments', p.canRead)) {
+        items.push({ id: 'view-attachments', label: 'View attachments', icon: 'attachment' })
+      }
+      if (canPerform('edit-attachments', p.canWrite)) {
+        items.push({ id: 'edit-attachments', label: 'Edit attachments', icon: 'attachment-edit' })
+      }
+    }
+
+    // Share section
+    const hasShareActions = canPerform('send-email', p.canRead) || canPerform('share', p.canShare) || canPerform('toggle-favorite', p.canRead)
+    if (hasShareActions) {
+      if (items.length > 0) items.push({ id: 'divider-share', label: '', divider: true })
+      if (canPerform('send-email', p.canRead)) {
+        items.push({ id: 'send-email', label: 'Send by email', icon: 'mail' })
+      }
+      if (canPerform('share', p.canShare)) {
+        items.push({ id: 'share', label: 'Share', icon: 'share' })
+      }
+      if (canPerform('toggle-favorite', p.canRead)) {
+        items.push({ id: 'toggle-favorite', label: props.isFavorite ? 'Remove from favorites' : 'Add to favorite', icon: 'star' })
+      }
+    }
+
+    // Admin section
+    if (canPerform('manage-password', p.canAdmin)) {
+      items.push({ id: 'divider-admin', label: '', divider: true })
+      items.push({ id: 'manage-password', label: 'Manage password', icon: 'lock' })
+    }
+
+    // Download/Delete section
+    const hasFileActions = canPerform('download', p.canExport) || canPerform('delete', p.canDelete) || (props.document.isShortcut && canPerform('remove-shortcut', p.canWrite))
+    if (hasFileActions) {
+      if (items.length > 0) items.push({ id: 'divider-file', label: '', divider: true })
+      if (canPerform('download', p.canExport)) {
+        items.push({ id: 'download', label: 'Download', icon: 'download' })
+      }
+      if (props.document.isShortcut && canPerform('remove-shortcut', p.canWrite)) {
+        items.push({ id: 'remove-shortcut', label: 'Remove shortcut', icon: 'remove-shortcut' })
+      } else if (canPerform('delete', p.canDelete)) {
+        items.push({ id: 'delete', label: 'Delete', icon: 'delete' })
+      }
+    }
+
+    // Permissions section
+    if (canPerform('manage-permissions', p.canManagePermissions)) {
+      items.push({ id: 'divider-permissions', label: '', divider: true })
+      items.push({ id: 'manage-permissions', label: 'Manage permissions', icon: 'permission' })
+    }
+
+    // Version history
+    if (canPerform('version-history', p.canRead)) {
+      items.push({ id: 'divider-history', label: '', divider: true })
+      items.push({ id: 'version-history', label: 'Version history', icon: 'history' })
+    }
+
+    // Copy/Move section
+    const hasCopyMoveActions = canPerform('copy', p.canRead) || canPerform('cut', p.canWrite) || canPerform('move', p.canWrite)
+    if (hasCopyMoveActions) {
+      if (items.length > 0) items.push({ id: 'divider-copymove', label: '', divider: true })
+      if (canPerform('copy', p.canRead)) {
+        items.push({ id: 'copy', label: 'Copy', icon: 'copy' })
+      }
+      if (canPerform('cut', p.canWrite)) {
+        items.push({ id: 'cut', label: 'Cut', icon: 'cut' })
+      }
+      if (canPerform('move', p.canWrite)) {
+        items.push({ id: 'move', label: 'Move to...', icon: 'move' })
+      }
+      if (!props.document.isShortcut && canPerform('create-shortcut', p.canRead)) {
+        items.push({ id: 'create-shortcut', label: 'Create shortcut', icon: 'shortcut' })
+      }
+    }
+
+    // Duplicate
+    if (canPerform('duplicate', p.canWrite)) {
+      items.push({ id: 'divider-duplicate', label: '', divider: true })
+      items.push({ id: 'duplicate', label: 'Duplicate', icon: 'duplicate' })
     }
   }
 
-  // Attachments section
-  const hasAttachmentActions = canPerform('view-attachments', p.canRead) || canPerform('edit-attachments', p.canWrite)
-  if (hasAttachmentActions) {
-    if (items.length > 0) items.push({ id: 'divider-attachments', label: '', divider: true })
-    if (canPerform('view-attachments', p.canRead)) {
-      items.push({ id: 'view-attachments', label: 'View attachments', icon: 'attachment' })
-    }
-    if (canPerform('edit-attachments', p.canWrite)) {
-      items.push({ id: 'edit-attachments', label: 'Edit attachments', icon: 'attachment-edit' })
-    }
-  }
-
-  // Share section
-  const hasShareActions = canPerform('send-email', p.canRead) || canPerform('share', p.canShare) || canPerform('toggle-favorite', p.canRead)
-  if (hasShareActions) {
-    if (items.length > 0) items.push({ id: 'divider-share', label: '', divider: true })
-    if (canPerform('send-email', p.canRead)) {
-      items.push({ id: 'send-email', label: 'Send by email', icon: 'mail' })
-    }
-    if (canPerform('share', p.canShare)) {
-      items.push({ id: 'share', label: 'Share', icon: 'share' })
-    }
-    if (canPerform('toggle-favorite', p.canRead)) {
-      items.push({ id: 'toggle-favorite', label: props.isFavorite ? 'Remove from favorites' : 'Add to favorite', icon: 'star' })
-    }
-  }
-
-  // Admin section
-  if (canPerform('manage-password', p.canAdmin)) {
-    items.push({ id: 'divider-admin', label: '', divider: true })
-    items.push({ id: 'manage-password', label: 'Manage password', icon: 'lock' })
-  }
-
-  // Download/Delete section
-  const hasFileActions = canPerform('download', p.canExport) || canPerform('delete', p.canDelete) || (props.document.isShortcut && canPerform('remove-shortcut', p.canWrite))
-  if (hasFileActions) {
-    if (items.length > 0) items.push({ id: 'divider-file', label: '', divider: true })
-    if (canPerform('download', p.canExport)) {
-      items.push({ id: 'download', label: 'Download', icon: 'download' })
-    }
-    if (props.document.isShortcut && canPerform('remove-shortcut', p.canWrite)) {
-      items.push({ id: 'remove-shortcut', label: 'Remove shortcut', icon: 'remove-shortcut' })
-    } else if (canPerform('delete', p.canDelete)) {
-      items.push({ id: 'delete', label: 'Delete', icon: 'delete' })
-    }
-  }
-
-  // Permissions section
-  if (canPerform('manage-permissions', p.canManagePermissions)) {
-    items.push({ id: 'divider-permissions', label: '', divider: true })
-    items.push({ id: 'manage-permissions', label: 'Manage permissions', icon: 'permission' })
-  }
-
-  // Version history
-  if (canPerform('version-history', p.canRead)) {
-    items.push({ id: 'divider-history', label: '', divider: true })
-    items.push({ id: 'version-history', label: 'Version history', icon: 'history' })
-  }
-
-  // Copy/Move section
-  const hasCopyMoveActions = canPerform('copy', p.canRead) || canPerform('cut', p.canWrite) || canPerform('move', p.canWrite)
-  if (hasCopyMoveActions) {
-    if (items.length > 0) items.push({ id: 'divider-copymove', label: '', divider: true })
-    if (canPerform('copy', p.canRead)) {
-      items.push({ id: 'copy', label: 'Copy', icon: 'copy' })
-    }
-    if (canPerform('cut', p.canWrite)) {
-      items.push({ id: 'cut', label: 'Cut', icon: 'cut' })
-    }
-    if (canPerform('move', p.canWrite)) {
-      items.push({ id: 'move', label: 'Move to...', icon: 'move' })
-    }
-    if (!props.document.isShortcut && canPerform('create-shortcut', p.canRead)) {
-      items.push({ id: 'create-shortcut', label: 'Create shortcut', icon: 'shortcut' })
-    }
-  }
-
-  // Route section
-  if (canPerform('route', p.canRoute)) {
-    items.push({ id: 'divider-route', label: '', divider: true })
-    items.push({ id: 'route', label: 'Route', icon: 'route' })
-  }
-
-  // Audit section - requires role permission (audit.document)
+  // Audit section - always available (even for restricted docs)
   if (hasRolePermission('audit-trail')) {
     items.push({ id: 'divider-audit', label: '', divider: true })
     items.push({ id: 'audit-trail', label: 'Audit trail', icon: 'audit' })
-  }
-
-  // Workflow section
-  if (canPerform('start-workflow', p.canStartWorkflow)) {
-    items.push({ id: 'divider-workflow', label: '', divider: true })
-    items.push({ id: 'start-workflow', label: 'Start workflow', icon: 'workflow' })
-  }
-
-  // Duplicate
-  if (canPerform('duplicate', p.canWrite)) {
-    items.push({ id: 'divider-duplicate', label: '', divider: true })
-    items.push({ id: 'duplicate', label: 'Duplicate', icon: 'duplicate' })
   }
 
   return items

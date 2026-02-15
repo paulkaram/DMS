@@ -238,6 +238,18 @@ const router = createRouter({
       name: 'admin-workflow-designer',
       component: () => import('@/pages/admin/WorkflowDesignerPage.vue'),
       meta: { requiresAuth: true }
+    },
+    {
+      path: '/admin/workflow-statuses',
+      name: 'admin-workflow-statuses',
+      component: () => import('@/pages/admin/WorkflowStatusesPage.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/admin/privacy-levels',
+      name: 'admin-privacy-levels',
+      component: () => import('@/pages/admin/PrivacyLevelsPage.vue'),
+      meta: { requiresAuth: true }
     }
   ]
 })

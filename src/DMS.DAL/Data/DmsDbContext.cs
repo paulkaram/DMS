@@ -29,6 +29,7 @@ public class DmsDbContext : DbContext
     public DbSet<StructureMember> StructureMembers => Set<StructureMember>();
 
     // Reference Data
+    public DbSet<PrivacyLevel> PrivacyLevels => Set<PrivacyLevel>();
     public DbSet<Classification> Classifications => Set<Classification>();
     public DbSet<Importance> Importances => Set<Importance>();
     public DbSet<DocumentType> DocumentTypes => Set<DocumentType>();
@@ -72,6 +73,7 @@ public class DmsDbContext : DbContext
     public DbSet<ApprovalWorkflowStep> ApprovalWorkflowSteps => Set<ApprovalWorkflowStep>();
     public DbSet<ApprovalRequest> ApprovalRequests => Set<ApprovalRequest>();
     public DbSet<ApprovalAction> ApprovalActions => Set<ApprovalAction>();
+    public DbSet<WorkflowStatus> WorkflowStatuses => Set<WorkflowStatus>();
 
     // Retention & Compliance
     public DbSet<RetentionPolicy> RetentionPolicies => Set<RetentionPolicy>();

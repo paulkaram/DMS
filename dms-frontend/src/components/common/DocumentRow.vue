@@ -6,6 +6,22 @@ import DocumentStatus from './DocumentStatus.vue'
 import { formatFileSize, formatRelativeDate } from '@/utils/formatters'
 import { UiCheckbox } from '@/components/ui'
 
+function getExpiryInfo(expiryDate?: string | null): { status: 'expired' | 'expiring-soon' | 'active' | null; label: string } | null {
+  if (!expiryDate) return null
+  const now = new Date()
+  const expiry = new Date(expiryDate)
+  const diffMs = expiry.getTime() - now.getTime()
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+
+  if (diffDays <= 0) {
+    return { status: 'expired', label: 'Expired' }
+  }
+  if (diffDays <= 7) {
+    return { status: 'expiring-soon', label: `Expires ${expiry.toLocaleDateString()}` }
+  }
+  return { status: 'active', label: `Expires ${expiry.toLocaleDateString()}` }
+}
+
 const props = defineProps<{
   document: Document
   index?: number
@@ -28,6 +44,8 @@ const isSelected = computed({
   get: () => props.selected ?? false,
   set: () => emit('select', props.document.id)
 })
+
+const expiryInfo = computed(() => getExpiryInfo(props.document.expiryDate))
 </script>
 
 <template>
@@ -99,6 +117,40 @@ const isSelected = computed({
                 style="font-size: 12px; font-variation-settings: 'FILL' 1;"
               >attach_file</span>
               <span class="text-[9px] font-bold text-violet-600 dark:text-violet-400 tabular-nums pr-0.5">{{ document.attachmentCount }}</span>
+            </div>
+            <!-- Expiry Badge -->
+            <div
+              v-if="expiryInfo?.status === 'expired'"
+              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500/15 border border-red-500/30"
+              title="This document has expired"
+            >
+              <span
+                class="material-symbols-outlined text-red-500"
+                style="font-size: 12px;"
+              >event_busy</span>
+              <span class="text-[9px] font-semibold text-red-600 dark:text-red-400 uppercase tracking-wide pr-0.5">Expired</span>
+            </div>
+            <div
+              v-else-if="expiryInfo?.status === 'expiring-soon'"
+              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30"
+              :title="expiryInfo.label"
+            >
+              <span
+                class="material-symbols-outlined text-amber-500"
+                style="font-size: 12px;"
+              >schedule</span>
+              <span class="text-[9px] font-semibold text-amber-600 dark:text-amber-400 tracking-wide pr-0.5">{{ expiryInfo.label }}</span>
+            </div>
+            <div
+              v-else-if="expiryInfo?.status === 'active'"
+              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700"
+              :title="expiryInfo.label"
+            >
+              <span
+                class="material-symbols-outlined text-zinc-400"
+                style="font-size: 12px;"
+              >event</span>
+              <span class="text-[9px] text-zinc-500 dark:text-zinc-400 tracking-wide pr-0.5">{{ expiryInfo.label }}</span>
             </div>
           </div>
           <span class="text-[10px] text-zinc-400 uppercase tracking-wide">{{ document.extension?.replace('.', '') }}</span>

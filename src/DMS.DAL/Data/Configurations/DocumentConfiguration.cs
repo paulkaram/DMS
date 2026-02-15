@@ -26,5 +26,6 @@ public class DocumentConfiguration : IEntityTypeConfiguration<Document>
         builder.HasIndex(e => new { e.FolderId, e.IsActive });
         builder.HasIndex(e => new { e.CreatedBy, e.CreatedAt }).IsDescending(false, true);
         builder.HasIndex(e => e.Name);
+        builder.HasIndex(e => e.ExpiryDate).HasFilter("[ExpiryDate] IS NOT NULL");
     }
 }

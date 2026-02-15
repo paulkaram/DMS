@@ -7,6 +7,8 @@ import { UiCheckbox, UiDatePicker, UiSelect } from '@/components/ui'
 interface Props {
   folderId: string
   folderName?: string
+  folderPrivacyLevelName?: string
+  folderPrivacyLevelColor?: string
 }
 
 const props = defineProps<Props>()
@@ -37,6 +39,7 @@ interface FileConfig {
   file: File
   name: string
   description: string
+  expiryDate: string | null
   contentTypeId: string | null
   fieldValues: Record<string, any>
   configured: boolean
@@ -52,7 +55,8 @@ const isLoadingContentTypes = ref(false)
 // Metadata state
 const basicMetadata = ref({
   name: '',
-  description: ''
+  description: '',
+  expiryDate: null as string | null
 })
 
 // Dynamic field values based on content type
@@ -376,6 +380,7 @@ function initializeFileConfigs() {
     file,
     name: file.name.replace(/\.[^/.]+$/, ''),
     description: '',
+    expiryDate: null,
     contentTypeId: null,
     fieldValues: {},
     configured: false
@@ -395,6 +400,7 @@ function loadConfigForCurrentFile() {
   if (config) {
     basicMetadata.value.name = config.name
     basicMetadata.value.description = config.description
+    basicMetadata.value.expiryDate = config.expiryDate
     selectedContentTypeId.value = config.contentTypeId
     // Field values will be loaded via the watcher on selectedContentTypeId
     // We need to restore them after content type loads
@@ -412,6 +418,7 @@ function saveCurrentFileConfig() {
       ...fileConfigs.value[currentFileIndex.value],
       name: basicMetadata.value.name,
       description: basicMetadata.value.description,
+      expiryDate: basicMetadata.value.expiryDate,
       contentTypeId: selectedContentTypeId.value,
       fieldValues: { ...fieldValues.value },
       configured: true
@@ -529,6 +536,7 @@ async function handleUpload() {
         : {
             name: basicMetadata.value.name || file.name.replace(/\.[^/.]+$/, ''),
             description: basicMetadata.value.description,
+            expiryDate: basicMetadata.value.expiryDate,
             contentTypeId: selectedContentTypeId.value,
             fieldValues: fieldValues.value
           }
@@ -540,6 +548,9 @@ async function handleUpload() {
       formData.append('name', config.name || file.name.replace(/\.[^/.]+$/, ''))
       if (config.description) {
         formData.append('description', config.description)
+      }
+      if (config.expiryDate) {
+        formData.append('expiryDate', config.expiryDate)
       }
       if (config.contentTypeId) {
         formData.append('contentTypeId', config.contentTypeId)
@@ -679,6 +690,14 @@ function getMaterialIcon(iconName?: string): string {
                     <p v-if="folderName && !isWizardMode" class="text-sm text-white/80 flex items-center gap-1 mt-0.5">
                       <span class="material-symbols-outlined text-sm">folder</span>
                       {{ folderName }}
+                      <span
+                        v-if="folderPrivacyLevelName"
+                        class="inline-flex items-center gap-1 ml-2 px-2 py-0.5 rounded-full text-[11px] font-semibold"
+                        :style="{ backgroundColor: (folderPrivacyLevelColor || '#6b7280') + '33', color: 'white' }"
+                      >
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        {{ folderPrivacyLevelName }}
+                      </span>
                     </p>
                     <p v-if="isWizardMode && currentFile" class="text-sm text-white/80 flex items-center gap-1 mt-0.5">
                       <span class="material-symbols-outlined text-sm">description</span>
@@ -982,8 +1001,21 @@ function getMaterialIcon(iconName?: string): string {
                     </div>
                   </Transition>
 
+                  <!-- Privacy Level Notice -->
+                  <div v-if="folderPrivacyLevelName && !isWizardMode && uploadFiles.length > 0" class="mt-4 flex items-center gap-2.5 px-4 py-3 rounded-lg border"
+                    :style="{
+                      backgroundColor: (folderPrivacyLevelColor || '#6b7280') + '08',
+                      borderColor: (folderPrivacyLevelColor || '#6b7280') + '30'
+                    }"
+                  >
+                    <span class="material-symbols-outlined text-lg" :style="{ color: folderPrivacyLevelColor || '#6b7280' }">shield</span>
+                    <p class="text-sm text-zinc-600 dark:text-zinc-300">
+                      Uploaded documents will inherit the <strong :style="{ color: folderPrivacyLevelColor || '#6b7280' }">{{ folderPrivacyLevelName }}</strong> privacy level from this folder.
+                    </p>
+                  </div>
+
                   <!-- Basic Metadata -->
-                  <div class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="mt-5 grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Document Name</label>
                       <div class="relative">
@@ -1007,6 +1039,15 @@ function getMaterialIcon(iconName?: string): string {
                           placeholder="Add a description..."
                         ></textarea>
                       </div>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Expiry Date</label>
+                      <UiDatePicker
+                        v-model="basicMetadata.expiryDate"
+                        placeholder="No expiry"
+                        :min-date="new Date(Date.now() + 86400000).toISOString().split('T')[0]"
+                        clearable
+                      />
                     </div>
                   </div>
                 </div>

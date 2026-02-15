@@ -21,17 +21,35 @@ public class FoldersController : BaseApiController
         _templateService = templateService;
     }
 
+    /// <summary>
+    /// Checks if the current user has sufficient privacy level to access a folder.
+    /// </summary>
+    private async Task<bool> HasPrivacyAccessAsync(Guid folderId)
+    {
+        var privacyLevel = GetCurrentUserPrivacyLevel();
+        if (privacyLevel == null) return true; // Admin bypasses
+
+        var folderResult = await _folderService.GetByIdAsync(folderId);
+        if (!folderResult.Success) return true;
+
+        var folder = folderResult.Data!;
+        if (folder.PrivacyLevelValue == null) return true;
+
+        return folder.PrivacyLevelValue.Value <= privacyLevel.Value;
+    }
+
     [HttpGet]
     public async Task<IActionResult> GetAll(
         [FromQuery] Guid? cabinetId, [FromQuery] Guid? parentId, [FromQuery] string? search,
         [FromQuery] int page = 1, [FromQuery] int pageSize = AppConstants.DefaultPageSize)
     {
         var userId = GetCurrentUserId();
+        var privacyLevel = GetCurrentUserPrivacyLevel();
         pageSize = Math.Min(pageSize, AppConstants.MaxPageSize);
 
         if (!string.IsNullOrEmpty(search))
         {
-            var searchResult = await _folderService.SearchPaginatedAsync(search, cabinetId, page, pageSize);
+            var searchResult = await _folderService.SearchPaginatedAsync(search, cabinetId, page, pageSize, privacyLevel);
             if (!searchResult.Success) return BadRequest(searchResult.Errors);
 
             var pagedResult = searchResult.Data!;
@@ -60,7 +78,7 @@ public class FoldersController : BaseApiController
                     return Forbid(ErrorMessages.Permissions.ViewCabinet);
             }
 
-            var result = await _folderService.GetByParentIdPaginatedAsync(parentId, cabinetId.Value, page, pageSize);
+            var result = await _folderService.GetByParentIdPaginatedAsync(parentId, cabinetId.Value, page, pageSize, privacyLevel);
             if (!result.Success) return BadRequest(result.Errors);
 
             var pagedResult = result.Data!;
@@ -87,6 +105,10 @@ public class FoldersController : BaseApiController
         if (!await HasPermissionAsync(userId, "Folder", id, (int)PermissionLevel.Read))
             return Forbid(ErrorMessages.Permissions.ViewFolder);
 
+        // Check privacy level
+        if (!await HasPrivacyAccessAsync(id))
+            return NotFound(new[] { ErrorMessages.Permissions.InsufficientPrivacyLevel });
+
         var result = await _folderService.GetByIdAsync(id);
         return result.Success ? Ok(result.Data) : NotFound(result.Errors);
     }
@@ -95,12 +117,13 @@ public class FoldersController : BaseApiController
     public async Task<IActionResult> GetTree(Guid cabinetId)
     {
         var userId = GetCurrentUserId();
+        var privacyLevel = GetCurrentUserPrivacyLevel();
 
         // Check read permission on cabinet
         if (!await HasPermissionAsync(userId, "Cabinet", cabinetId, (int)PermissionLevel.Read))
             return Forbid(ErrorMessages.Permissions.ViewCabinet);
 
-        var result = await _folderService.GetTreeAsync(cabinetId);
+        var result = await _folderService.GetTreeAsync(cabinetId, privacyLevel);
         if (!result.Success) return BadRequest(result.Errors);
 
         // Filter tree based on user's read permission

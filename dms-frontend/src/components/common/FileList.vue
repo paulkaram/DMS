@@ -136,9 +136,7 @@ function getDocumentPermissions(doc: Document, permissionLevel: number): Documen
     canCheckout: canWrite && !doc.isCheckedOut && !doc.isLocked,
     canCheckin: canWrite && doc.isCheckedOut,
     canManageVersions: canWrite && !doc.isLocked,
-    canManagePermissions: canAdmin,
-    canStartWorkflow: canWrite && !doc.isCheckedOut,
-    canRoute: canWrite
+    canManagePermissions: canAdmin
   }
 }
 

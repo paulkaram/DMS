@@ -8,7 +8,7 @@ public interface IDocumentRepository : IRepository<Document>
     Task<IEnumerable<DocumentWithNames>> GetByFolderIdWithNamesAsync(Guid folderId);
     Task<IEnumerable<Document>> SearchAsync(string? name, Guid? folderId, Guid? classificationId, Guid? documentTypeId);
     Task<IEnumerable<DocumentWithNames>> SearchWithNamesAsync(string? name, Guid? folderId, Guid? classificationId, Guid? documentTypeId);
-    Task<(List<DocumentWithNames> Items, int TotalCount)> SearchWithNamesPaginatedAsync(string? name, Guid? folderId, Guid? classificationId, Guid? documentTypeId, int page, int pageSize);
+    Task<(List<DocumentWithNames> Items, int TotalCount)> SearchWithNamesPaginatedAsync(string? name, Guid? folderId, Guid? classificationId, Guid? documentTypeId, int page, int pageSize, int? userPrivacyLevel = null);
     Task<IEnumerable<Document>> GetCheckedOutByUserAsync(Guid userId);
     Task<IEnumerable<DocumentWithNames>> GetCheckedOutByUserWithNamesAsync(Guid userId);
     Task<IEnumerable<Document>> GetCreatedByUserAsync(Guid userId, int take = 50);

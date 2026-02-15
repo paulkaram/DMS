@@ -137,6 +137,7 @@ public class UserService : IUserService
         user.FirstName = dto.FirstName;
         user.LastName = dto.LastName;
         user.DisplayName = $"{dto.FirstName} {dto.LastName}".Trim();
+        user.PrivacyLevel = dto.PrivacyLevel ?? user.PrivacyLevel;
 
         await _userRepository.UpdateAsync(user);
 
@@ -177,6 +178,7 @@ public class UserService : IUserService
             FirstName = user.FirstName,
             LastName = user.LastName,
             DisplayName = user.DisplayName,
+            PrivacyLevel = user.PrivacyLevel,
             IsActive = user.IsActive,
             LastLoginAt = user.LastLoginAt
         };

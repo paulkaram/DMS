@@ -8,6 +8,7 @@ public class UserDto
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
     public string? DisplayName { get; set; }
+    public int PrivacyLevel { get; set; }
     public bool IsActive { get; set; }
     public DateTime? LastLoginAt { get; set; }
     public List<RoleDto> Roles { get; set; } = new();
@@ -27,6 +28,7 @@ public class UpdateUserDto
     public string? Email { get; set; }
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
+    public int? PrivacyLevel { get; set; }
 }
 
 public class RoleDto

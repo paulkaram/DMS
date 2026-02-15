@@ -10,6 +10,9 @@ public class DashboardStatisticsDto
     public int DocumentsThisYear { get; set; }
     public long TotalStorageUsed { get; set; }
     public int MyCheckoutsCount { get; set; }
+    public int PendingApprovalsCount { get; set; }
+    public int ExpiredDocumentsCount { get; set; }
+    public int ExpiringSoonCount { get; set; }
     public List<ContentTypeStatDto> ContentTypeDistribution { get; set; } = new();
 }
 
@@ -27,5 +30,14 @@ public class RecentDocumentDto
     public string? FolderName { get; set; }
     public string? Extension { get; set; }
     public DateTime CreatedAt { get; set; }
+    public string? CreatedByName { get; set; }
+}
+
+public class ExpiredDocumentDto
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string? Extension { get; set; }
+    public DateTime ExpiryDate { get; set; }
     public string? CreatedByName { get; set; }
 }

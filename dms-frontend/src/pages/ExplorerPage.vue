@@ -3,7 +3,7 @@ import { ref, watch, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useDocumentsStore } from '@/stores/documents'
 import { useAuthStore } from '@/stores/auth'
-import { referenceDataApi, cabinetsApi, foldersApi, documentsApi, filingPlansApi, permissionsApi, activityLogsApi, contentTypeDefinitionsApi, documentShortcutsApi, documentPasswordsApi } from '@/api/client'
+import { referenceDataApi, cabinetsApi, foldersApi, documentsApi, filingPlansApi, permissionsApi, activityLogsApi, contentTypeDefinitionsApi, documentShortcutsApi, documentPasswordsApi, approvalsApi, privacyLevelsApi } from '@/api/client'
 import TreeView from '@/components/common/TreeView.vue'
 import FileList from '@/components/common/FileList.vue'
 import FolderGrid from '@/components/common/FolderGrid.vue'
@@ -23,9 +23,9 @@ import FolderContentTypeModal from '@/components/folders/FolderContentTypeModal.
 import { PermissionManagementModal } from '@/components/permissions'
 import ApplyTemplateModal from '@/components/templates/ApplyTemplateModal.vue'
 import type { MenuItem } from '@/components/common/ContextMenu.vue'
-import type { Classification, Importance, DocumentType, Cabinet, Folder, TreeNode, FilingPlan, Permission, ActivityLog, Document, ApplyTemplateResult } from '@/types'
+import type { Classification, Importance, DocumentType, Cabinet, Folder, TreeNode, FilingPlan, Permission, ActivityLog, Document, ApplyTemplateResult, ApprovalWorkflow, PrivacyLevel } from '@/types'
 import { PermissionLevels } from '@/types'
-import { UiSelect, UiConfirmDialog, UiModal, UiButton } from '@/components/ui'
+import { UiSelect, UiConfirmDialog, UiModal, UiButton, DmsLoader } from '@/components/ui'
 import type { ConfirmDialogType } from '@/components/ui/ConfirmDialog.vue'
 import { useBulkOperations } from '@/composables/useBulkOperations'
 
@@ -273,7 +273,8 @@ const editCabinetData = ref({ id: '', name: '', description: '' })
 
 const newFolderName = ref('')
 const newFolderDescription = ref('')
-const editFolderData = ref({ id: '', name: '', description: '', accessMode: 0 })
+const newFolderPrivacyLevelId = ref('')
+const editFolderData = ref({ id: '', name: '', description: '', accessMode: 0, privacyLevelId: '' })
 
 // Upload data
 const uploadFiles = ref<File[]>([])
@@ -291,6 +292,22 @@ const isDragging = ref(false)
 const classifications = ref<Classification[]>([])
 const importances = ref<Importance[]>([])
 const documentTypes = ref<DocumentType[]>([])
+const privacyLevels = ref<PrivacyLevel[]>([])
+
+// Privacy level modal
+const showPrivacyLevelModal = ref(false)
+const privacyLevelTarget = ref<{ id: string; name: string; currentPrivacyLevelId?: string }>({ id: '', name: '' })
+const selectedPrivacyLevelId = ref('')
+
+const privacyLevelOptions = computed(() => {
+  const opts: { value: string; label: string }[] = [
+    { value: '', label: 'None — visible to everyone' }
+  ]
+  for (const pl of privacyLevels.value.filter(p => p.isActive)) {
+    opts.push({ value: pl.id, label: `${pl.name} (Level ${pl.level})` })
+  }
+  return opts
+})
 
 const breadcrumbs = computed(() => {
   const items: { name: string; type: string; index: number }[] = []
@@ -339,14 +356,16 @@ onMounted(async () => {
 
 async function loadReferenceData() {
   try {
-    const [classRes, impRes, docTypeRes] = await Promise.all([
+    const [classRes, impRes, docTypeRes, plRes] = await Promise.all([
       referenceDataApi.getClassifications(),
       referenceDataApi.getImportances(),
-      referenceDataApi.getDocumentTypes()
+      referenceDataApi.getDocumentTypes(),
+      privacyLevelsApi.getAll()
     ])
     classifications.value = classRes.data
     importances.value = impRes.data
     documentTypes.value = docTypeRes.data
+    privacyLevels.value = plRes.data
   } catch (err) {
   }
 }
@@ -407,10 +426,12 @@ async function handleCreateFolder() {
       cabinetId: store.currentCabinet.id,
       parentFolderId: store.currentFolder?.id,
       name: newFolderName.value,
-      description: newFolderDescription.value
+      description: newFolderDescription.value,
+      privacyLevelId: newFolderPrivacyLevelId.value || undefined
     })
     newFolderName.value = ''
     newFolderDescription.value = ''
+    newFolderPrivacyLevelId.value = ''
     showNewFolderModal.value = false
     await store.loadFolderTree(store.currentCabinet.id)
   } catch (err) {
@@ -422,7 +443,8 @@ function openEditFolder(folder: Folder) {
     id: folder.id,
     name: folder.name,
     description: folder.description || '',
-    accessMode: folder.accessMode ?? 0
+    accessMode: folder.accessMode ?? 0,
+    privacyLevelId: folder.privacyLevelId || ''
   }
   showEditFolderModal.value = true
 }
@@ -434,7 +456,8 @@ async function handleUpdateFolder() {
       name: editFolderData.value.name,
       description: editFolderData.value.description,
       breakInheritance: false,
-      accessMode: editFolderData.value.accessMode
+      accessMode: editFolderData.value.accessMode,
+      privacyLevelId: editFolderData.value.privacyLevelId || undefined
     })
     // Update tree node directly without reloading (preserves expansion state)
     store.updateNodeName(editFolderData.value.id, editFolderData.value.name)
@@ -464,13 +487,20 @@ async function handleDelete() {
         store.documents = []
       }
     } else {
-      await foldersApi.delete(deleteTarget.value.id)
-      if (store.currentCabinet) {
-        await store.loadFolderTree(store.currentCabinet.id)
-      }
-      if (store.currentFolder?.id === deleteTarget.value.id) {
-        store.currentFolder = null
-        store.documents = []
+      const deletedId = deleteTarget.value.id
+      // Find the cabinet this folder belongs to (from tree or current state)
+      const cabinetId = store.currentCabinet?.id || store.findCabinetForFolder(deletedId)
+      await foldersApi.delete(deletedId)
+      if (cabinetId) {
+        await store.loadFolderTree(cabinetId)
+        // If we deleted the current folder, navigate up; otherwise refresh subfolders
+        if (store.currentFolder?.id === deletedId) {
+          store.currentFolder = null
+          store.documents = []
+          await store.loadSubFolders(cabinetId, undefined)
+        } else {
+          await store.loadSubFolders(cabinetId, store.currentFolder?.id)
+        }
       }
     }
     showDeleteConfirm.value = false
@@ -581,6 +611,7 @@ const getActionCode = (menuId: string, isCabinet: boolean): string | null => {
     'share': 'folder.share',
     'permissions': `${prefix}.permissions`,
     'delete': `${prefix}.delete`,
+    'manage-workflow': `${prefix}.settings`,
     'audit': isCabinet ? 'audit.cabinet' : 'audit.folder',
     'dashboard': `${prefix}.dashboard`,
     'export': `${prefix}.export`
@@ -655,9 +686,9 @@ const contextMenuItems = computed<MenuItem[]>(() => {
     }
   }
 
-  // Admin actions (patterns, filing plans, settings, content types)
+  // Admin actions (patterns, filing plans, settings, content types, workflows)
   const adminActionsAvailable = (!isCabinet && (canPerform('add-pattern', canAdmin) || canPerform('add-filing-plan', canAdmin))) ||
-    canPerform('settings', canAdmin) || canPerform('content-types', canAdmin)
+    canPerform('settings', canAdmin) || canPerform('content-types', canAdmin) || canPerform('manage-workflow', canAdmin)
 
   if (adminActionsAvailable) {
     if (!isCabinet) {
@@ -682,6 +713,9 @@ const contextMenuItems = computed<MenuItem[]>(() => {
     if (canPerform('content-types', canAdmin)) {
       items.push({ id: 'content-types', label: 'Manage Content Types', icon: 'category' })
     }
+    if (canPerform('manage-workflow', canAdmin)) {
+      items.push({ id: 'manage-workflow', label: 'Manage Workflow', icon: 'workflow' })
+    }
     // Private folder toggle (folders only, admin permission)
     if (!isCabinet && canAdmin) {
       const isPrivate = contextMenuNode.value?.accessMode === 1
@@ -689,6 +723,14 @@ const contextMenuItems = computed<MenuItem[]>(() => {
         id: 'toggle-private',
         label: isPrivate ? 'Disable Private Mode' : 'Enable Private Mode',
         icon: isPrivate ? 'lock-open' : 'lock'
+      })
+    }
+    // Set privacy level (folders only, admin permission)
+    if (!isCabinet && canAdmin && privacyLevels.value.length > 0) {
+      items.push({
+        id: 'set-privacy-level',
+        label: 'Set Privacy Level',
+        icon: 'shield'
       })
     }
   }
@@ -767,7 +809,7 @@ async function handleContextMenuSelect(actionId: string) {
         editCabinetData.value = { id: node.id, name: node.name, description: '' }
         showEditCabinetModal.value = true
       } else {
-        editFolderData.value = { id: node.id, name: node.name, description: '', accessMode: 0 }
+        editFolderData.value = { id: node.id, name: node.name, description: '', accessMode: 0, privacyLevelId: '' }
         showEditFolderModal.value = true
       }
       break
@@ -814,6 +856,9 @@ async function handleContextMenuSelect(actionId: string) {
       }
       showContentTypeModal.value = true
       break
+    case 'manage-workflow':
+      openWorkflowModal(node.id, node.name, isCabinet)
+      break
     case 'share':
       router.push(`/my-shared-items`)
       break
@@ -857,12 +902,52 @@ async function handleContextMenuSelect(actionId: string) {
         }
       }
       break
+    case 'set-privacy-level':
+      if (!isCabinet) {
+        privacyLevelTarget.value = { id: node.id, name: node.name }
+        // Load current folder to get its privacy level
+        try {
+          const folderRes = await foldersApi.getById(node.id)
+          privacyLevelTarget.value.currentPrivacyLevelId = folderRes.data.privacyLevelId
+          selectedPrivacyLevelId.value = folderRes.data.privacyLevelId || ''
+        } catch {
+          selectedPrivacyLevelId.value = ''
+        }
+        showPrivacyLevelModal.value = true
+      }
+      break
     case 'export':
       // Export functionality - could download folder contents as zip
       break
   }
 
   closeContextMenu()
+}
+
+// Privacy Level Operations
+async function savePrivacyLevel() {
+  if (!privacyLevelTarget.value.id) return
+  try {
+    const folderRes = await foldersApi.getById(privacyLevelTarget.value.id)
+    const folder = folderRes.data
+    await foldersApi.update(privacyLevelTarget.value.id, {
+      name: folder.name,
+      description: folder.description || '',
+      breakInheritance: folder.breakInheritance,
+      accessMode: folder.accessMode ?? 0,
+      privacyLevelId: selectedPrivacyLevelId.value || undefined
+    })
+    // Refresh tree and subfolder grid
+    if (store.currentCabinet) {
+      await store.loadFolderTree(store.currentCabinet.id)
+    }
+    if (store.currentFolder) {
+      await store.loadSubFolders(store.currentFolder.cabinetId, store.currentFolder.id)
+    }
+    showPrivacyLevelModal.value = false
+  } catch {
+    // silently fail
+  }
 }
 
 // Filing Plans Operations
@@ -902,6 +987,89 @@ async function deleteFilingPlan(planId: string) {
       await loadFilingPlans(contextMenuNode.value.id)
     }
   } catch (err) {
+  }
+}
+
+// Workflow Management
+const showWorkflowModal = ref(false)
+const workflowModalTarget = ref<{ id: string; name: string; isCabinet: boolean } | null>(null)
+const allWorkflows = ref<ApprovalWorkflow[]>([])
+const assignedWorkflowId = ref<string | null>(null)
+const isLoadingWorkflows = ref(false)
+const isSavingWorkflow = ref(false)
+
+const workflowOptions = computed(() =>
+  allWorkflows.value
+    .filter(w => w.isActive)
+    .map(wf => ({
+      value: wf.id,
+      label: wf.name,
+      group: wf.triggerType === 'OnUpload' ? 'Auto-Trigger' : wf.triggerType === 'Manual' ? 'Manual' : 'Other'
+    }))
+)
+
+const selectedWorkflow = computed(() =>
+  allWorkflows.value.find(w => w.id === assignedWorkflowId.value)
+)
+
+async function openWorkflowModal(nodeId: string, nodeName: string, isCabinet: boolean) {
+  workflowModalTarget.value = { id: nodeId, name: nodeName, isCabinet }
+  isLoadingWorkflows.value = true
+  showWorkflowModal.value = true
+  try {
+    const res = await approvalsApi.getWorkflows()
+    const data = res.data
+    allWorkflows.value = Array.isArray(data) ? data : data.items ?? []
+    // Find if any workflow is already assigned to this folder
+    const assigned = allWorkflows.value.find(w => w.folderId === nodeId)
+    assignedWorkflowId.value = assigned?.id || null
+  } catch {
+    allWorkflows.value = []
+    assignedWorkflowId.value = null
+  } finally {
+    isLoadingWorkflows.value = false
+  }
+}
+
+async function saveWorkflowAssignment() {
+  if (!workflowModalTarget.value) return
+  isSavingWorkflow.value = true
+  try {
+    // If a workflow was previously assigned to this folder, clear it
+    const previouslyAssigned = allWorkflows.value.find(w => w.folderId === workflowModalTarget.value!.id && w.id !== assignedWorkflowId.value)
+    if (previouslyAssigned) {
+      await approvalsApi.updateWorkflow(previouslyAssigned.id, {
+        name: previouslyAssigned.name,
+        description: previouslyAssigned.description || undefined,
+        folderId: undefined,
+        requiredApprovers: previouslyAssigned.requiredApprovers,
+        isSequential: previouslyAssigned.isSequential,
+        designerData: previouslyAssigned.designerData,
+        triggerType: previouslyAssigned.triggerType,
+        inheritToSubfolders: previouslyAssigned.inheritToSubfolders
+      })
+    }
+    // Assign the selected workflow to this folder (or clear assignment)
+    if (assignedWorkflowId.value) {
+      const wf = allWorkflows.value.find(w => w.id === assignedWorkflowId.value)
+      if (wf) {
+        await approvalsApi.updateWorkflow(wf.id, {
+          name: wf.name,
+          description: wf.description || undefined,
+          folderId: workflowModalTarget.value.id,
+          requiredApprovers: wf.requiredApprovers,
+          isSequential: wf.isSequential,
+          designerData: wf.designerData,
+          triggerType: wf.triggerType,
+          inheritToSubfolders: wf.inheritToSubfolders
+        })
+      }
+    }
+    showWorkflowModal.value = false
+  } catch {
+    // silently fail
+  } finally {
+    isSavingWorkflow.value = false
   }
 }
 
@@ -1210,12 +1378,6 @@ function handleDocumentAction(action: string, document: Document) {
       passwordDocument.value = document
       showPasswordDialog.value = true
       break
-    case 'start-workflow':
-      router.push(`/approvals/new?documentId=${document.id}`)
-      break
-    case 'route':
-      router.push(`/approvals/new?documentId=${document.id}`)
-      break
     case 'view-comments':
       commentsDocument.value = document
       showCommentsModal.value = true
@@ -1445,9 +1607,10 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
     )
   }
 
-  // Refresh the folder tree to show newly created folders
+  // Refresh the folder tree and subfolder grid to show newly created folders
   if (store.currentCabinet) {
     await store.loadFolderTree(store.currentCabinet.id)
+    await store.loadSubFolders(store.currentCabinet.id, store.currentFolder?.id)
   }
 }
 </script>
@@ -2099,6 +2262,15 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
             placeholder="Optional description"
           ></textarea>
         </div>
+        <div v-if="privacyLevels.length > 0">
+          <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Privacy Level</label>
+          <UiSelect
+            v-model="newFolderPrivacyLevelId"
+            :options="privacyLevelOptions"
+            placeholder="None — visible to everyone"
+            clearable
+          />
+        </div>
       </div>
       <template #footer>
         <div class="flex justify-end gap-3">
@@ -2126,6 +2298,15 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
             rows="3"
             class="w-full px-4 py-2 border border-zinc-300 dark:border-border-dark rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-surface-dark text-zinc-900 dark:text-zinc-100"
           ></textarea>
+        </div>
+        <div v-if="privacyLevels.length > 0">
+          <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Privacy Level</label>
+          <UiSelect
+            v-model="editFolderData.privacyLevelId"
+            :options="privacyLevelOptions"
+            placeholder="None — visible to everyone"
+            clearable
+          />
         </div>
         <div class="flex items-center justify-between p-3 rounded-lg border border-zinc-200 dark:border-border-dark bg-zinc-50 dark:bg-surface-dark">
           <div class="flex items-center gap-3">
@@ -2163,6 +2344,8 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
       v-if="showUploadModal && store.currentFolder"
       :folder-id="store.currentFolder.id"
       :folder-name="store.currentFolder.name"
+      :folder-privacy-level-name="store.currentFolder.privacyLevelName"
+      :folder-privacy-level-color="store.currentFolder.privacyLevelColor"
       @close="showUploadModal = false"
       @uploaded="store.loadDocuments(store.currentFolder!.id)"
     />
@@ -2384,6 +2567,148 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
       <template #footer>
         <div class="flex justify-end">
           <UiButton variant="outline" @click="showSettingsModal = false">Close</UiButton>
+        </div>
+      </template>
+    </UiModal>
+
+    <!-- Privacy Level Modal -->
+    <UiModal v-model="showPrivacyLevelModal" :title="'Set Privacy Level — ' + privacyLevelTarget.name" size="sm">
+      <div class="space-y-4">
+        <div class="flex items-start gap-3 bg-teal/5 dark:bg-teal/10 border border-teal/20 rounded-lg px-4 py-3">
+          <span class="material-symbols-outlined text-teal text-lg mt-0.5">shield</span>
+          <p class="text-sm text-zinc-600 dark:text-zinc-300">
+            Set the minimum privacy clearance level required to access this folder and its documents. Users with a lower privacy level will not see this folder.
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Privacy Level</label>
+          <UiSelect
+            v-model="selectedPrivacyLevelId"
+            :options="privacyLevelOptions"
+            placeholder="None — visible to everyone"
+            clearable
+          />
+        </div>
+
+        <!-- Current level indicator -->
+        <div v-if="selectedPrivacyLevelId" class="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700">
+          <span class="material-symbols-outlined text-amber-500 text-base">visibility_off</span>
+          <span class="text-xs text-amber-700 dark:text-amber-400">
+            Users with privacy level below <strong>{{ privacyLevels.find(p => p.id === selectedPrivacyLevelId)?.name }}</strong> will not see this folder
+          </span>
+        </div>
+      </div>
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <UiButton variant="outline" @click="showPrivacyLevelModal = false">Cancel</UiButton>
+          <UiButton @click="savePrivacyLevel">Save</UiButton>
+        </div>
+      </template>
+    </UiModal>
+
+    <!-- Workflow Assignment Modal -->
+    <UiModal v-model="showWorkflowModal" :title="'Manage Workflow — ' + (workflowModalTarget?.name || '')" size="md" overflow-visible>
+      <div v-if="isLoadingWorkflows" class="py-10">
+        <DmsLoader size="md" text="Loading workflows..." />
+      </div>
+      <div v-else class="space-y-5">
+        <div class="flex items-start gap-3 bg-teal/5 dark:bg-teal/10 border border-teal/20 rounded-lg px-4 py-3">
+          <span class="material-symbols-outlined text-teal text-lg mt-0.5">info</span>
+          <p class="text-sm text-zinc-600 dark:text-zinc-300">
+            Assign a workflow to this {{ workflowModalTarget?.isCabinet ? 'cabinet' : 'folder' }}. Documents uploaded here will automatically trigger the selected workflow.
+          </p>
+        </div>
+
+        <UiSelect
+          v-model="assignedWorkflowId"
+          :options="workflowOptions"
+          label="Assigned Workflow"
+          placeholder="None — no auto-trigger"
+          searchable
+          clearable
+        />
+
+        <!-- Selected workflow detail card -->
+        <Transition
+          enter-active-class="transition duration-200 ease-out"
+          enter-from-class="opacity-0 -translate-y-2"
+          enter-to-class="opacity-100 translate-y-0"
+          leave-active-class="transition duration-150 ease-in"
+          leave-from-class="opacity-100 translate-y-0"
+          leave-to-class="opacity-0 -translate-y-2"
+        >
+          <div v-if="selectedWorkflow" class="rounded-lg border border-zinc-200 dark:border-border-dark overflow-hidden">
+            <div class="bg-gradient-to-r from-navy/5 to-teal/5 dark:from-navy/20 dark:to-teal/20 px-4 py-3 flex items-center justify-between border-b border-zinc-200 dark:border-border-dark">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-teal/15 flex items-center justify-center">
+                  <span class="material-symbols-outlined text-teal text-base">account_tree</span>
+                </div>
+                <span class="text-sm font-semibold text-zinc-800 dark:text-zinc-100">{{ selectedWorkflow.name }}</span>
+              </div>
+              <span
+                class="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full"
+                :class="selectedWorkflow.triggerType === 'OnUpload'
+                  ? 'bg-teal/15 text-teal'
+                  : 'bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400'"
+              >
+                <span class="material-symbols-outlined text-xs">{{ selectedWorkflow.triggerType === 'OnUpload' ? 'bolt' : 'touch_app' }}</span>
+                {{ selectedWorkflow.triggerType === 'OnUpload' ? 'Auto' : selectedWorkflow.triggerType }}
+              </span>
+            </div>
+            <div class="px-4 py-3 grid grid-cols-2 gap-x-6 gap-y-2.5">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-zinc-400 text-base">play_circle</span>
+                <div>
+                  <div class="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Trigger</div>
+                  <div class="text-sm text-zinc-700 dark:text-zinc-200">{{ selectedWorkflow.triggerType === 'OnUpload' ? 'On File Upload' : selectedWorkflow.triggerType }}</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-zinc-400 text-base">{{ selectedWorkflow.inheritToSubfolders ? 'account_tree' : 'folder' }}</span>
+                <div>
+                  <div class="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Scope</div>
+                  <div class="text-sm text-zinc-700 dark:text-zinc-200">{{ selectedWorkflow.inheritToSubfolders ? 'Includes subfolders' : 'This folder only' }}</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-zinc-400 text-base">format_list_numbered</span>
+                <div>
+                  <div class="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Steps</div>
+                  <div class="text-sm text-zinc-700 dark:text-zinc-200">{{ selectedWorkflow.steps?.length || 0 }} {{ (selectedWorkflow.steps?.length || 0) === 1 ? 'step' : 'steps' }}</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-zinc-400 text-base">group</span>
+                <div>
+                  <div class="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Approvers</div>
+                  <div class="text-sm text-zinc-700 dark:text-zinc-200">{{ selectedWorkflow.requiredApprovers }} required</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Transition>
+
+        <div v-if="!allWorkflows.some(w => w.isActive)" class="flex items-center gap-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30 rounded-lg px-4 py-3">
+          <span class="material-symbols-outlined text-amber-500 text-base">warning</span>
+          <p class="text-xs text-amber-700 dark:text-amber-400">
+            No active workflows found. <a href="/admin/workflow-designer" class="font-medium underline hover:text-teal transition-colors">Create one in the Workflow Designer</a>.
+          </p>
+        </div>
+      </div>
+      <template #footer>
+        <div class="flex justify-end gap-3">
+          <UiButton variant="outline" @click="showWorkflowModal = false">Cancel</UiButton>
+          <UiButton @click="saveWorkflowAssignment" :disabled="isSavingWorkflow">
+            <span v-if="isSavingWorkflow" class="flex items-center gap-2">
+              <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              Saving...
+            </span>
+            <span v-else>Save Assignment</span>
+          </UiButton>
         </div>
       </template>
     </UiModal>

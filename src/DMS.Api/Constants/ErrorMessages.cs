@@ -54,6 +54,9 @@ public static class ErrorMessages
         public const string PreviewDocument = "You don't have permission to preview this document";
         public const string RestoreVersion = "You don't have permission to restore versions of this document";
         public const string ViewWorkingCopy = "You don't have permission to view this working copy";
+        public const string DocumentPendingApproval = "This document is pending approval and not accessible";
+        public const string DocumentExpired = "This document has expired and is no longer accessible";
+        public const string InsufficientPrivacyLevel = "You don't have sufficient privacy clearance to access this content";
 
         // Shortcut permissions
         public const string ReadDocument = "You don't have permission to read this document";

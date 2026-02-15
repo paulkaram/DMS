@@ -273,10 +273,8 @@ watch(() => props.modelValue, (newVal) => {
       ]"
       @click="toggle"
     >
-      <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-lg bg-teal/10 flex items-center justify-center flex-shrink-0">
-          <span class="material-symbols-outlined text-teal text-lg">calendar_month</span>
-        </div>
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-teal text-lg flex-shrink-0">calendar_month</span>
         <span :class="displayValue ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-400 dark:text-zinc-500'">
           {{ displayValue || placeholder }}
         </span>

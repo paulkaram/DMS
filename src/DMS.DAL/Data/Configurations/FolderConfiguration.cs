@@ -18,6 +18,7 @@ public class FolderConfiguration : IEntityTypeConfiguration<Folder>
 
         builder.HasOne<Cabinet>().WithMany().HasForeignKey(e => e.CabinetId);
         builder.HasOne<Folder>().WithMany().HasForeignKey(e => e.ParentFolderId);
+        builder.HasOne(e => e.PrivacyLevel).WithMany().HasForeignKey(e => e.PrivacyLevelId);
 
         // Performance indexes
         builder.HasIndex(e => e.CabinetId);

@@ -103,6 +103,12 @@ public class Document : IAuditable, ISoftDeletable
     /// </summary>
     public string ContentCategory { get; set; } = "Original";
 
+    /// <summary>
+    /// Optional expiry date for time-limited documents (contracts, licenses, permits).
+    /// Attachments inherit the parent document's expiry date.
+    /// </summary>
+    public DateTime? ExpiryDate { get; set; }
+
     public bool IsActive { get; set; } = true;
     public Guid? CreatedBy { get; set; }
     public DateTime CreatedAt { get; set; }

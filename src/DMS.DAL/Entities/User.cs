@@ -8,6 +8,7 @@ public class User
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
     public string? DisplayName { get; set; }
+    public int PrivacyLevel { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTime? LastLoginAt { get; set; }
     public DateTime CreatedAt { get; set; }

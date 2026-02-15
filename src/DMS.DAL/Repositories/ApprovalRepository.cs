@@ -29,6 +29,9 @@ public class ApprovalWorkflowRepository : IApprovalWorkflowRepository
                 IsActive = w.IsActive,
                 CreatedBy = w.CreatedBy,
                 CreatedAt = w.CreatedAt,
+                DesignerData = w.DesignerData,
+                TriggerType = w.TriggerType,
+                InheritToSubfolders = w.InheritToSubfolders,
                 FolderName = _context.Folders
                     .Where(f => f.Id == w.FolderId)
                     .Select(f => f.Name)
@@ -60,6 +63,9 @@ public class ApprovalWorkflowRepository : IApprovalWorkflowRepository
                 IsActive = w.IsActive,
                 CreatedBy = w.CreatedBy,
                 CreatedAt = w.CreatedAt,
+                DesignerData = w.DesignerData,
+                TriggerType = w.TriggerType,
+                InheritToSubfolders = w.InheritToSubfolders,
                 FolderName = _context.Folders
                     .Where(f => f.Id == w.FolderId)
                     .Select(f => f.Name)
@@ -84,12 +90,47 @@ public class ApprovalWorkflowRepository : IApprovalWorkflowRepository
                 IsActive = w.IsActive,
                 CreatedBy = w.CreatedBy,
                 CreatedAt = w.CreatedAt,
+                DesignerData = w.DesignerData,
+                TriggerType = w.TriggerType,
+                InheritToSubfolders = w.InheritToSubfolders,
                 FolderName = _context.Folders
                     .Where(f => f.Id == w.FolderId)
                     .Select(f => f.Name)
                     .FirstOrDefault()
             })
             .FirstOrDefaultAsync();
+    }
+
+    public async Task<ApprovalWorkflow?> GetActiveByFolderChainAsync(Guid folderId, string triggerType)
+    {
+        // Walk up the folder parent chain via recursive CTE and find the first
+        // active workflow matching the trigger type that either:
+        // - Is directly assigned to the target folder, OR
+        // - Is assigned to a parent folder with InheritToSubfolders = true
+        // Note: SqlQueryRaw<ApprovalWorkflow> can't handle the Steps navigation property,
+        // so we query just the Id and then load via GetByIdAsync.
+        var ids = await _context.Database.SqlQueryRaw<Guid>(@"
+            WITH FolderChain AS (
+                SELECT Id, ParentFolderId, 0 AS Depth
+                FROM Folders
+                WHERE Id = {0} AND IsActive = 1
+                UNION ALL
+                SELECT f.Id, f.ParentFolderId, fc.Depth + 1
+                FROM Folders f
+                INNER JOIN FolderChain fc ON f.Id = fc.ParentFolderId
+                WHERE f.IsActive = 1
+            )
+            SELECT TOP 1 aw.Id
+            FROM FolderChain fc
+            INNER JOIN ApprovalWorkflows aw ON aw.FolderId = fc.Id
+            WHERE aw.IsActive = 1
+              AND aw.TriggerType = {1}
+              AND (fc.Depth = 0 OR aw.InheritToSubfolders = 1)
+            ORDER BY fc.Depth ASC",
+            folderId, triggerType).ToListAsync();
+
+        if (ids.Count == 0) return null;
+        return await GetByIdAsync(ids[0]);
     }
 
     public async Task<IEnumerable<ApprovalWorkflowStep>> GetStepsAsync(Guid workflowId)
@@ -105,7 +146,10 @@ public class ApprovalWorkflowRepository : IApprovalWorkflowRepository
                 StepOrder = s.StepOrder,
                 ApproverUserId = s.ApproverUserId,
                 ApproverRoleId = s.ApproverRoleId,
+                ApproverStructureId = s.ApproverStructureId,
+                AssignToManager = s.AssignToManager,
                 IsRequired = s.IsRequired,
+                StatusId = s.StatusId,
                 CreatedAt = s.CreatedAt,
                 ApproverUserName = _context.Users
                     .Where(u => u.Id == s.ApproverUserId)
@@ -114,6 +158,18 @@ public class ApprovalWorkflowRepository : IApprovalWorkflowRepository
                 ApproverRoleName = _context.Roles
                     .Where(r => r.Id == s.ApproverRoleId)
                     .Select(r => r.Name)
+                    .FirstOrDefault(),
+                ApproverStructureName = _context.Structures
+                    .Where(st => st.Id == s.ApproverStructureId)
+                    .Select(st => st.Name)
+                    .FirstOrDefault(),
+                StatusName = _context.WorkflowStatuses
+                    .Where(ws => ws.Id == s.StatusId)
+                    .Select(ws => ws.Name)
+                    .FirstOrDefault(),
+                StatusColor = _context.WorkflowStatuses
+                    .Where(ws => ws.Id == s.StatusId)
+                    .Select(ws => ws.Color)
                     .FirstOrDefault()
             })
             .ToListAsync();
@@ -141,8 +197,12 @@ public class ApprovalWorkflowRepository : IApprovalWorkflowRepository
         existing.RequiredApprovers = entity.RequiredApprovers;
         existing.IsSequential = entity.IsSequential;
         existing.IsActive = entity.IsActive;
+        existing.DesignerData = entity.DesignerData;
+        existing.TriggerType = entity.TriggerType;
+        existing.InheritToSubfolders = entity.InheritToSubfolders;
 
-        return await _context.SaveChangesAsync() > 0;
+        await _context.SaveChangesAsync();
+        return true;
     }
 
     public async Task<bool> DeleteAsync(Guid id)
@@ -172,6 +232,24 @@ public class ApprovalWorkflowRepository : IApprovalWorkflowRepository
 
         _context.ApprovalWorkflowSteps.Remove(entity);
         return await _context.SaveChangesAsync() > 0;
+    }
+
+    public async Task ReplaceStepsAsync(Guid workflowId, IEnumerable<ApprovalWorkflowStep> newSteps)
+    {
+        var existing = await _context.ApprovalWorkflowSteps
+            .Where(s => s.WorkflowId == workflowId)
+            .ToListAsync();
+        _context.ApprovalWorkflowSteps.RemoveRange(existing);
+
+        foreach (var step in newSteps)
+        {
+            step.Id = Guid.NewGuid();
+            step.WorkflowId = workflowId;
+            step.CreatedAt = DateTime.UtcNow;
+            _context.ApprovalWorkflowSteps.Add(step);
+        }
+
+        await _context.SaveChangesAsync();
     }
 }
 
@@ -227,7 +305,7 @@ public class ApprovalRequestRepository : IApprovalRequestRepository
 
     public async Task<IEnumerable<ApprovalRequest>> GetByDocumentIdAsync(Guid documentId)
     {
-        return await _context.ApprovalRequests
+        var requests = await _context.ApprovalRequests
             .AsNoTracking()
             .Where(ar => ar.DocumentId == documentId)
             .OrderByDescending(ar => ar.CreatedAt)
@@ -258,35 +336,111 @@ public class ApprovalRequestRepository : IApprovalRequestRepository
                     .FirstOrDefault()
             })
             .ToListAsync();
+
+        // Batch-load actions for all requests
+        if (requests.Count > 0)
+        {
+            var requestIds = requests.Select(r => r.Id).ToList();
+            var allActions = await _context.ApprovalActions
+                .AsNoTracking()
+                .Where(aa => requestIds.Contains(aa.RequestId))
+                .OrderBy(aa => aa.ActionDate)
+                .Select(aa => new ApprovalAction
+                {
+                    Id = aa.Id,
+                    RequestId = aa.RequestId,
+                    StepId = aa.StepId,
+                    ApproverId = aa.ApproverId,
+                    Action = aa.Action,
+                    Comments = aa.Comments,
+                    ActionDate = aa.ActionDate,
+                    ApproverName = _context.Users
+                        .Where(u => u.Id == aa.ApproverId)
+                        .Select(u => u.DisplayName)
+                        .FirstOrDefault()
+                })
+                .ToListAsync();
+
+            var actionsByRequest = allActions.GroupBy(a => a.RequestId)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            foreach (var r in requests)
+            {
+                r.Actions = actionsByRequest.GetValueOrDefault(r.Id) ?? [];
+            }
+        }
+
+        return requests;
     }
 
     public async Task<IEnumerable<ApprovalRequest>> GetPendingForUserAsync(Guid userId)
     {
-        // Complex query with multiple JOINs and NOT EXISTS - using raw SQL
-        return await _context.Database.SqlQueryRaw<ApprovalRequest>(@"
+        // Complex query with multiple JOINs and NOT EXISTS - using FromSqlRaw
+        // (SqlQueryRaw doesn't work with mapped entity types)
+        var requests = await _context.ApprovalRequests.FromSqlRaw(@"
             SELECT DISTINCT ar.Id, ar.DocumentId, ar.WorkflowId, ar.RequestedBy,
-                   ar.Status, ar.DueDate, ar.Comments, ar.CreatedAt, ar.CompletedAt,
-                   d.Name as DocumentName, u.DisplayName as RequestedByName,
-                   aw.Name as WorkflowName
+                   ar.Status, ar.DueDate, ar.Comments, ar.CreatedAt, ar.CompletedAt
             FROM ApprovalRequests ar
-            LEFT JOIN Documents d ON ar.DocumentId = d.Id
-            LEFT JOIN Users u ON ar.RequestedBy = u.Id
-            LEFT JOIN ApprovalWorkflows aw ON ar.WorkflowId = aw.Id
-            LEFT JOIN ApprovalWorkflowSteps aws ON aw.Id = aws.WorkflowId
+            INNER JOIN ApprovalWorkflows aw ON ar.WorkflowId = aw.Id
+            INNER JOIN ApprovalWorkflowSteps aws ON aw.Id = aws.WorkflowId
             LEFT JOIN UserRoles ur ON aws.ApproverRoleId = ur.RoleId
-            WHERE ar.Status = 0
-            AND (aws.ApproverUserId = {0} OR ur.UserId = {0})
+                AND ur.UserId = {0}
+            LEFT JOIN StructureMembers sm ON aws.ApproverStructureId = sm.StructureId
+                AND sm.UserId = {0}
+            LEFT JOIN Structures st ON aws.ApproverStructureId = st.Id
+            WHERE ar.Status = {1}
+            AND (
+                aws.ApproverUserId = {0}
+                OR ur.UserId IS NOT NULL
+                OR (aws.ApproverStructureId IS NOT NULL AND (
+                    (aws.AssignToManager = 1 AND st.ManagerId = {0})
+                    OR (aws.AssignToManager = 0 AND sm.UserId IS NOT NULL)
+                ))
+            )
             AND NOT EXISTS (
                 SELECT 1 FROM ApprovalActions aa
                 WHERE aa.RequestId = ar.Id AND aa.ApproverId = {0}
             )
             ORDER BY ar.CreatedAt DESC",
-            userId).ToListAsync();
+            userId, (int)ApprovalStatus.Pending).AsNoTracking().ToListAsync();
+
+        // Enrich with display names
+        if (requests.Count > 0)
+        {
+            var docIds = requests.Select(r => r.DocumentId).Distinct().ToList();
+            var userIds = requests.Select(r => r.RequestedBy).Distinct().ToList();
+            var workflowIds = requests.Where(r => r.WorkflowId.HasValue).Select(r => r.WorkflowId!.Value).Distinct().ToList();
+
+            var docNames = await _context.Documents.IgnoreQueryFilters()
+                .Where(d => docIds.Contains(d.Id))
+                .Select(d => new { d.Id, d.Name })
+                .ToDictionaryAsync(d => d.Id, d => d.Name);
+
+            var userNames = await _context.Users
+                .Where(u => userIds.Contains(u.Id))
+                .Select(u => new { u.Id, u.DisplayName })
+                .ToDictionaryAsync(u => u.Id, u => u.DisplayName);
+
+            var workflowNames = await _context.ApprovalWorkflows.IgnoreQueryFilters()
+                .Where(w => workflowIds.Contains(w.Id))
+                .Select(w => new { w.Id, w.Name })
+                .ToDictionaryAsync(w => w.Id, w => w.Name);
+
+            foreach (var r in requests)
+            {
+                r.DocumentName = docNames.GetValueOrDefault(r.DocumentId);
+                r.RequestedByName = userNames.GetValueOrDefault(r.RequestedBy);
+                if (r.WorkflowId.HasValue)
+                    r.WorkflowName = workflowNames.GetValueOrDefault(r.WorkflowId.Value);
+            }
+        }
+
+        return requests;
     }
 
     public async Task<IEnumerable<ApprovalRequest>> GetByRequestedByAsync(Guid userId)
     {
-        return await _context.ApprovalRequests
+        var requests = await _context.ApprovalRequests
             .AsNoTracking()
             .Where(ar => ar.RequestedBy == userId)
             .OrderByDescending(ar => ar.CreatedAt)
@@ -317,6 +471,41 @@ public class ApprovalRequestRepository : IApprovalRequestRepository
                     .FirstOrDefault()
             })
             .ToListAsync();
+
+        // Batch-load actions for all requests
+        if (requests.Count > 0)
+        {
+            var requestIds = requests.Select(r => r.Id).ToList();
+            var allActions = await _context.ApprovalActions
+                .AsNoTracking()
+                .Where(aa => requestIds.Contains(aa.RequestId))
+                .OrderBy(aa => aa.ActionDate)
+                .Select(aa => new ApprovalAction
+                {
+                    Id = aa.Id,
+                    RequestId = aa.RequestId,
+                    StepId = aa.StepId,
+                    ApproverId = aa.ApproverId,
+                    Action = aa.Action,
+                    Comments = aa.Comments,
+                    ActionDate = aa.ActionDate,
+                    ApproverName = _context.Users
+                        .Where(u => u.Id == aa.ApproverId)
+                        .Select(u => u.DisplayName)
+                        .FirstOrDefault()
+                })
+                .ToListAsync();
+
+            var actionsByRequest = allActions.GroupBy(a => a.RequestId)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            foreach (var r in requests)
+            {
+                r.Actions = actionsByRequest.GetValueOrDefault(r.Id) ?? [];
+            }
+        }
+
+        return requests;
     }
 
     public async Task<IEnumerable<ApprovalRequest>> GetAllAsync(int? status = null)
@@ -411,5 +600,50 @@ public class ApprovalRequestRepository : IApprovalRequestRepository
         await _context.SaveChangesAsync();
 
         return action.Id;
+    }
+
+    public async Task<Dictionary<Guid, int>> GetLatestStatusByDocumentIdsAsync(IEnumerable<Guid> documentIds)
+    {
+        var ids = documentIds.ToList();
+        if (ids.Count == 0) return new Dictionary<Guid, int>();
+
+        return await _context.ApprovalRequests
+            .AsNoTracking()
+            .Where(ar => ids.Contains(ar.DocumentId))
+            .GroupBy(ar => ar.DocumentId)
+            .Select(g => new
+            {
+                DocumentId = g.Key,
+                Status = g.OrderByDescending(ar => ar.CreatedAt).First().Status
+            })
+            .ToDictionaryAsync(x => x.DocumentId, x => x.Status);
+    }
+
+    public async Task<bool> IsApproverForDocumentAsync(Guid documentId, Guid userId)
+    {
+        // Check if the user is an assigned approver for any pending request on this document
+        var result = await _context.Database.SqlQueryRaw<int>(@"
+            SELECT COUNT(*) AS [Value]
+            FROM ApprovalRequests ar
+            INNER JOIN ApprovalWorkflows aw ON ar.WorkflowId = aw.Id
+            INNER JOIN ApprovalWorkflowSteps aws ON aw.Id = aws.WorkflowId
+            LEFT JOIN UserRoles ur ON aws.ApproverRoleId = ur.RoleId
+                AND ur.UserId = {1}
+            LEFT JOIN StructureMembers sm ON aws.ApproverStructureId = sm.StructureId
+                AND sm.UserId = {1}
+            LEFT JOIN Structures st ON aws.ApproverStructureId = st.Id
+            WHERE ar.DocumentId = {0}
+            AND ar.Status = {2}
+            AND (
+                aws.ApproverUserId = {1}
+                OR ur.UserId IS NOT NULL
+                OR (aws.ApproverStructureId IS NOT NULL AND (
+                    (aws.AssignToManager = 1 AND st.ManagerId = {1})
+                    OR (aws.AssignToManager = 0 AND sm.UserId IS NOT NULL)
+                ))
+            )",
+            documentId, userId, (int)ApprovalStatus.Pending).FirstOrDefaultAsync();
+
+        return result > 0;
     }
 }

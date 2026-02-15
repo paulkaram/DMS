@@ -57,10 +57,10 @@ public class ApprovalsController : BaseApiController
 
     // Requests
     [HttpGet("requests/pending")]
-    public async Task<ActionResult<IEnumerable<ApprovalRequestDto>>> GetPendingRequests()
+    public async Task<ActionResult<IEnumerable<ApprovalRequestDto>>> GetPendingRequests([FromQuery] int? take = null)
     {
         var requests = await _approvalService.GetPendingRequestsForUserAsync(GetCurrentUserId());
-        return Ok(requests);
+        return Ok(take.HasValue ? requests.Take(take.Value) : requests);
     }
 
     [HttpGet("requests/my")]
@@ -105,6 +105,14 @@ public class ApprovalsController : BaseApiController
     {
         var result = await _approvalService.CancelRequestAsync(id);
         if (!result) return NotFound();
+        return Ok();
+    }
+
+    [HttpPost("requests/{id}/resubmit")]
+    public async Task<ActionResult> ResubmitRequest(Guid id)
+    {
+        var result = await _approvalService.ResubmitRequestAsync(id, GetCurrentUserId());
+        if (!result) return BadRequest("Unable to resubmit request");
         return Ok();
     }
 }

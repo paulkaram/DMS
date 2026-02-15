@@ -29,6 +29,10 @@ export interface Folder {
   path?: string
   breakInheritance: boolean
   accessMode?: number
+  privacyLevelId?: string
+  privacyLevelName?: string
+  privacyLevelColor?: string
+  privacyLevelValue?: number
   createdAt: string
   modifiedAt?: string
   children?: Folder[]
@@ -40,6 +44,7 @@ export interface CreateFolder {
   name: string
   description?: string
   accessMode?: number
+  privacyLevelId?: string
 }
 
 export interface UpdateFolder {
@@ -47,6 +52,7 @@ export interface UpdateFolder {
   description?: string
   breakInheritance: boolean
   accessMode?: number
+  privacyLevelId?: string
 }
 
 // Document types
@@ -79,6 +85,8 @@ export interface Document {
   isShortcut?: boolean
   shortcutId?: string
   attachmentCount?: number
+  approvalStatus?: number | null
+  expiryDate?: string | null
 }
 
 // Document Shortcut
@@ -275,6 +283,16 @@ export interface DocumentType {
   description?: string
 }
 
+// Privacy Level types
+export interface PrivacyLevel {
+  id: string
+  name: string
+  level: number
+  color?: string
+  description?: string
+  isActive: boolean
+}
+
 // User types
 export interface User {
   id: string
@@ -283,6 +301,7 @@ export interface User {
   firstName?: string
   lastName?: string
   displayName?: string
+  privacyLevel?: number
   roles?: Role[]
 }
 
@@ -362,6 +381,9 @@ export interface DashboardStatistics {
   documentsThisMonth: number
   documentsThisYear: number
   myCheckoutsCount: number
+  pendingApprovalsCount: number
+  expiredDocumentsCount: number
+  expiringSoonCount: number
 }
 
 export interface RecentDocument {
@@ -370,6 +392,14 @@ export interface RecentDocument {
   extension?: string
   folderName?: string
   createdAt: string
+  createdByName?: string
+}
+
+export interface ExpiredDocument {
+  id: string
+  name: string
+  extension?: string
+  expiryDate: string
   createdByName?: string
 }
 
@@ -489,6 +519,35 @@ export interface RestoreRequest {
 
 
 
+// Workflow Status types
+export interface WorkflowStatus {
+  id: string
+  name: string
+  color: string
+  icon?: string
+  description?: string
+  sortOrder: number
+  isActive: boolean
+  createdAt: string
+}
+
+export interface CreateWorkflowStatus {
+  name: string
+  color: string
+  icon?: string
+  description?: string
+  sortOrder: number
+}
+
+export interface UpdateWorkflowStatus {
+  name: string
+  color: string
+  icon?: string
+  description?: string
+  sortOrder: number
+  isActive: boolean
+}
+
 // Approval types
 export interface ApprovalWorkflow {
   id: string
@@ -500,6 +559,9 @@ export interface ApprovalWorkflow {
   isActive: boolean
   createdAt: string
   folderName?: string
+  designerData?: string
+  triggerType: string
+  inheritToSubfolders: boolean
   steps?: ApprovalWorkflowStep[]
 }
 
@@ -509,9 +571,15 @@ export interface ApprovalWorkflowStep {
   stepOrder: number
   approverUserId?: string
   approverRoleId?: string
+  approverStructureId?: string
+  assignToManager: boolean
   isRequired: boolean
+  statusId?: string
   approverUserName?: string
   approverRoleName?: string
+  approverStructureName?: string
+  statusName?: string
+  statusColor?: string
 }
 
 export interface ApprovalRequest {
@@ -561,6 +629,8 @@ export interface CreateWorkflowRequest {
   folderId?: string
   requiredApprovers: number
   isSequential: boolean
+  triggerType?: string
+  inheritToSubfolders?: boolean
   steps?: CreateWorkflowStep[]
 }
 
@@ -568,7 +638,10 @@ export interface CreateWorkflowStep {
   stepOrder: number
   approverUserId?: string
   approverRoleId?: string
+  approverStructureId?: string
+  assignToManager: boolean
   isRequired: boolean
+  statusId?: string
 }
 
 // Node types
@@ -583,7 +656,8 @@ export const ApprovalStatus = {
   Pending: 0,
   Approved: 1,
   Rejected: 2,
-  Cancelled: 3
+  Cancelled: 3,
+  ReturnedForRevision: 4
 } as const
 
 // Approval action types

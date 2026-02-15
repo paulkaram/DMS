@@ -24,7 +24,8 @@ public class DashboardController : BaseApiController
     [HttpGet("recent-documents")]
     public async Task<IActionResult> GetRecentDocuments([FromQuery] int take = 10)
     {
-        var result = await _dashboardService.GetRecentDocumentsAsync(take);
+        var privacyLevel = GetCurrentUserPrivacyLevel();
+        var result = await _dashboardService.GetRecentDocumentsAsync(take, privacyLevel);
         return result.Success ? Ok(result.Data) : BadRequest(result.Errors);
     }
 
@@ -33,6 +34,14 @@ public class DashboardController : BaseApiController
     {
         var userId = GetCurrentUserId();
         var result = await _dashboardService.GetMyCheckedOutDocumentsAsync(userId);
+        return result.Success ? Ok(result.Data) : BadRequest(result.Errors);
+    }
+
+    [HttpGet("expired-documents")]
+    public async Task<IActionResult> GetExpiredDocuments([FromQuery] int take = 5)
+    {
+        var privacyLevel = GetCurrentUserPrivacyLevel();
+        var result = await _dashboardService.GetExpiredDocumentsAsync(take, privacyLevel);
         return result.Success ? Ok(result.Data) : BadRequest(result.Errors);
     }
 }

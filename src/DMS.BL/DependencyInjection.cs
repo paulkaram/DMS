@@ -83,6 +83,9 @@ public static class DependencyInjection
         // Reports
         services.AddScoped<IReportsService, ReportsService>();
 
+        // Workflow Statuses
+        services.AddScoped<IWorkflowStatusService, WorkflowStatusService>();
+
         return services;
     }
 }

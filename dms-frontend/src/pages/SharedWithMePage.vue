@@ -94,7 +94,12 @@ function openContextMenu(event: MouseEvent, doc: SharedDocument) {
   event.preventDefault()
   event.stopPropagation()
   contextMenuDocument.value = doc
-  contextMenuPosition.value = { x: event.clientX, y: event.clientY }
+
+  const menuWidth = 200
+  const menuHeight = 200
+  const x = Math.min(event.clientX, window.innerWidth - menuWidth)
+  const y = Math.min(event.clientY, window.innerHeight - menuHeight)
+  contextMenuPosition.value = { x, y }
   showContextMenu.value = true
 }
 

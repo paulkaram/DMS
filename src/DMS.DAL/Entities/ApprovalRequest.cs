@@ -6,7 +6,7 @@ public class ApprovalRequest
     public Guid DocumentId { get; set; }
     public Guid? WorkflowId { get; set; }
     public Guid RequestedBy { get; set; }
-    public int Status { get; set; } // 0=Pending, 1=Approved, 2=Rejected, 3=Cancelled
+    public int Status { get; set; } // 0=Pending, 1=Approved, 2=Rejected, 3=Cancelled, 4=ReturnedForRevision
     public DateTime? DueDate { get; set; }
     public string? Comments { get; set; }
     public DateTime CreatedAt { get; set; }
@@ -38,7 +38,8 @@ public enum ApprovalStatus
     Pending = 0,
     Approved = 1,
     Rejected = 2,
-    Cancelled = 3
+    Cancelled = 3,
+    ReturnedForRevision = 4
 }
 
 public enum ApprovalActionType

@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, onMounted, onUnmounted, watch } from 'vue'
 import { UiButton, UiInput, UiTextArea, UiSelect, UiModal } from '@/components/ui'
 import AdminBreadcrumb from '@/components/admin/AdminBreadcrumb.vue'
+import { structuresApi, usersApi, rolesApi, approvalsApi, foldersApi, cabinetsApi, workflowStatusesApi } from '@/api/client'
+import type { StructureTree, User, Role, WorkflowStatus } from '@/types'
 
 // ── Types ────────────────────────────────────────────────────────────
 interface WorkflowNode {
@@ -18,6 +20,8 @@ interface WorkflowConnection {
   id: string
   fromNodeId: string
   toNodeId: string
+  fromPort?: 'bottom-left' | 'bottom' | 'bottom-right'
+  toPort?: 'top-left' | 'top' | 'top-right'
   label?: string
   condition?: string
 }
@@ -28,6 +32,9 @@ interface WorkflowDefinition {
   description: string
   status: 'Active' | 'Draft' | 'Inactive'
   triggerType: 'Manual' | 'OnUpload' | 'OnStatusChange' | 'Scheduled'
+  inheritToSubfolders: boolean
+  folderId?: string
+  folderName?: string
   version: number
   steps: WorkflowNode[]
   connections: WorkflowConnection[]
@@ -61,17 +68,203 @@ const canvasOffset = reactive({ x: 0, y: 0 })
 const isPanning = ref(false)
 const panStart = reactive({ x: 0, y: 0 })
 
-// Connecting state
+// Connecting state (port drag)
 const isConnecting = ref(false)
 const connectFromNodeId = ref<string | null>(null)
+const connectMousePos = reactive({ x: 0, y: 0 })
+const connectFromPort = ref('bottom')
+const canvasContainerRef = ref<HTMLElement | null>(null)
+
+// Structure tree for assignment picker
+const structureTree = ref<StructureTree[]>([])
+const flatStructures = computed(() => {
+  const result: { id: string; name: string; type: string }[] = []
+  function flatten(nodes: StructureTree[], depth = 0) {
+    for (const node of nodes) {
+      result.push({ id: node.id, name: '\u00A0'.repeat(depth * 3) + node.name, type: node.type })
+      if (node.children?.length) flatten(node.children, depth + 1)
+    }
+  }
+  flatten(structureTree.value)
+  return result
+})
+
+async function loadStructureTree() {
+  try {
+    const res = await structuresApi.getTree()
+    structureTree.value = res.data
+  } catch { /* silent */ }
+}
+
+// ── Autocomplete state ───────────────────────────────────────────────
+// User autocomplete
+const userSearchQuery = ref('')
+const userSearchResults = ref<User[]>([])
+const showUserDropdown = ref(false)
+const isSearchingUsers = ref(false)
+let userSearchTimer: ReturnType<typeof setTimeout> | null = null
+
+// Role autocomplete
+const roleSearchQuery = ref('')
+const allRoles = ref<Role[]>([])
+const showRoleDropdown = ref(false)
+
+// Structure autocomplete
+const structureSearchQuery = ref('')
+const showStructureDropdown = ref(false)
+
+const filteredRoles = computed(() => {
+  const q = roleSearchQuery.value.toLowerCase().trim()
+  if (!q) return allRoles.value
+  return allRoles.value.filter(r => r.name.toLowerCase().includes(q))
+})
+
+const filteredStructures = computed(() => {
+  const q = structureSearchQuery.value.toLowerCase().trim()
+  if (!q) return flatStructures.value
+  return flatStructures.value.filter(s => s.name.trim().toLowerCase().includes(q))
+})
+
+async function loadRoles() {
+  try {
+    const res = await rolesApi.getAll()
+    const data = res.data
+    allRoles.value = Array.isArray(data) ? data : data.items ?? []
+  } catch { /* silent */ }
+}
+
+// Workflow statuses
+const workflowStatuses = ref<WorkflowStatus[]>([])
+
+async function loadWorkflowStatuses() {
+  try {
+    const res = await workflowStatusesApi.getAll()
+    workflowStatuses.value = res.data
+  } catch { /* silent */ }
+}
+
+const stepStatusOptions = computed(() => [
+  { value: null, label: 'No status' },
+  ...workflowStatuses.value.map(ws => ({ value: ws.id, label: ws.name }))
+])
+
+function onStatusChange(val: string | number | null) {
+  if (!selectedNode.value) return
+  selectedNode.value.config.statusId = val || undefined
+  const ws = workflowStatuses.value.find(s => s.id === val)
+  selectedNode.value.config.statusName = ws?.name
+  selectedNode.value.config.statusColor = ws?.color
+}
+
+function onUserSearchInput(query: string) {
+  userSearchQuery.value = query
+  if (userSearchTimer) clearTimeout(userSearchTimer)
+  if (!query.trim()) {
+    userSearchResults.value = []
+    showUserDropdown.value = false
+    return
+  }
+  isSearchingUsers.value = true
+  userSearchTimer = setTimeout(async () => {
+    try {
+      const res = await usersApi.search(query)
+      const data = res.data
+      userSearchResults.value = Array.isArray(data) ? data : data.items ?? []
+      showUserDropdown.value = userSearchResults.value.length > 0
+    } catch {
+      userSearchResults.value = []
+    } finally {
+      isSearchingUsers.value = false
+    }
+  }, 300)
+}
+
+function selectUser(user: User) {
+  if (!selectedNode.value) return
+  selectedNode.value.config.approverUserId = user.id
+  selectedNode.value.config.assignee = user.displayName || user.username
+  selectedNode.value.config.assignmentMode = 'user'
+  userSearchQuery.value = user.displayName || user.username
+  showUserDropdown.value = false
+}
+
+function selectRole(role: Role) {
+  if (!selectedNode.value) return
+  selectedNode.value.config.approverRoleId = role.id
+  selectedNode.value.config.assignee = role.name
+  selectedNode.value.config.assignmentMode = 'role'
+  roleSearchQuery.value = role.name
+  showRoleDropdown.value = false
+}
+
+function selectStructure(structure: { id: string; name: string; type: string }) {
+  if (!selectedNode.value) return
+  selectedNode.value.config.approverStructureId = structure.id
+  selectedNode.value.config.assignmentMode = 'structure'
+  structureSearchQuery.value = structure.name.trim()
+  showStructureDropdown.value = false
+}
+
+function clearAssignment() {
+  if (!selectedNode.value) return
+  delete selectedNode.value.config.approverUserId
+  delete selectedNode.value.config.approverRoleId
+  delete selectedNode.value.config.approverStructureId
+  delete selectedNode.value.config.assignee
+  delete selectedNode.value.config.assignToManager
+  userSearchQuery.value = ''
+  roleSearchQuery.value = ''
+  structureSearchQuery.value = ''
+}
+
+// Sync autocomplete fields when node selection changes
+watch(selectedNodeId, () => {
+  showUserDropdown.value = false
+  showRoleDropdown.value = false
+  showStructureDropdown.value = false
+  userSearchQuery.value = ''
+  roleSearchQuery.value = ''
+  structureSearchQuery.value = ''
+
+  if (selectedNode.value && (selectedNode.value.type === 'approval' || selectedNode.value.type === 'review')) {
+    const mode = getAssignmentMode(selectedNode.value)
+    if (mode === 'user' && selectedNode.value.config.approverUserId) {
+      userSearchQuery.value = selectedNode.value.config.assignee || ''
+    } else if (mode === 'role' && selectedNode.value.config.approverRoleId) {
+      roleSearchQuery.value = selectedNode.value.config.assignee || ''
+    } else if (mode === 'structure' && selectedNode.value.config.approverStructureId) {
+      const s = flatStructures.value.find(s => s.id === selectedNode.value!.config.approverStructureId)
+      structureSearchQuery.value = s?.name?.trim() || ''
+    }
+  }
+})
+
+// Palette drag-drop state
+const isDraggingFromPalette = ref(false)
+const paletteDropType = ref('')
+const paletteGhostPos = reactive({ x: 0, y: 0 })
 
 // ── Designer state ───────────────────────────────────────────────────
+const isNewWorkflow = ref(false)
+const isLoadingList = ref(false)
+const isSaving = ref(false)
+const showWorkflowProps = ref(false)
+const toast = ref<{ show: boolean; message: string; type: 'success' | 'error' }>({ show: false, message: '', type: 'success' })
+
+function showToast(message: string, type: 'success' | 'error' = 'success') {
+  toast.value = { show: true, message, type }
+  setTimeout(() => { toast.value.show = false }, 3000)
+}
+
 const designerWorkflow = ref<WorkflowDefinition>({
   id: '',
   name: 'Untitled Workflow',
   description: '',
   status: 'Draft',
   triggerType: 'Manual',
+  inheritToSubfolders: true,
+  folderId: undefined,
+  folderName: undefined,
   version: 1,
   steps: [],
   connections: [],
@@ -80,103 +273,105 @@ const designerWorkflow = ref<WorkflowDefinition>({
   createdBy: 'Admin'
 })
 
-// ── Sample workflows ─────────────────────────────────────────────────
-const workflows = ref<WorkflowDefinition[]>([
-  {
-    id: '1',
-    name: 'Document Approval Process',
-    description: 'Standard document review and approval workflow with manager sign-off and compliance check.',
-    status: 'Active',
-    triggerType: 'OnUpload',
-    version: 3,
-    steps: [
-      { id: 'n1', type: 'start', label: 'Document Uploaded', x: 300, y: 60, config: {}, description: 'Triggered on file upload' },
-      { id: 'n2', type: 'review', label: 'Initial Review', x: 300, y: 180, config: { assignee: 'Document Controller' }, description: 'Verify document metadata' },
-      { id: 'n3', type: 'condition', label: 'Requires Approval?', x: 300, y: 310, config: { condition: 'document.classification == Confidential' }, description: 'Check classification level' },
-      { id: 'n4', type: 'approval', label: 'Manager Approval', x: 160, y: 440, config: { assignee: 'Department Manager', timeout: '48h' }, description: 'Manager reviews and approves' },
-      { id: 'n5', type: 'notification', label: 'Notify Author', x: 460, y: 440, config: { template: 'auto-approved' }, description: 'Send auto-approval notification' },
-      { id: 'n6', type: 'end', label: 'Complete', x: 300, y: 570, config: {}, description: 'Workflow complete' }
-    ],
-    connections: [
-      { id: 'c1', fromNodeId: 'n1', toNodeId: 'n2' },
-      { id: 'c2', fromNodeId: 'n2', toNodeId: 'n3' },
-      { id: 'c3', fromNodeId: 'n3', toNodeId: 'n4', label: 'Yes', condition: 'true' },
-      { id: 'c4', fromNodeId: 'n3', toNodeId: 'n5', label: 'No', condition: 'false' },
-      { id: 'c5', fromNodeId: 'n4', toNodeId: 'n6' },
-      { id: 'c6', fromNodeId: 'n5', toNodeId: 'n6' }
-    ],
-    createdAt: '2025-12-01T10:00:00Z',
-    updatedAt: '2026-01-28T14:30:00Z',
-    createdBy: 'Admin'
-  },
-  {
-    id: '2',
-    name: 'Contract Review Pipeline',
-    description: 'Multi-stage contract review involving legal, finance, and executive teams.',
-    status: 'Active',
-    triggerType: 'Manual',
-    version: 2,
-    steps: [
-      { id: 'n1', type: 'start', label: 'Start', x: 300, y: 60, config: {} },
-      { id: 'n2', type: 'parallel', label: 'Parallel Review', x: 300, y: 180, config: {} },
-      { id: 'n3', type: 'review', label: 'Legal Review', x: 140, y: 310, config: { assignee: 'Legal Team' } },
-      { id: 'n4', type: 'review', label: 'Finance Review', x: 460, y: 310, config: { assignee: 'Finance Team' } },
-      { id: 'n5', type: 'approval', label: 'Executive Sign-off', x: 300, y: 440, config: { assignee: 'CTO' } },
-      { id: 'n6', type: 'end', label: 'Finalized', x: 300, y: 570, config: {} }
-    ],
-    connections: [
-      { id: 'c1', fromNodeId: 'n1', toNodeId: 'n2' },
-      { id: 'c2', fromNodeId: 'n2', toNodeId: 'n3', label: 'Branch A' },
-      { id: 'c3', fromNodeId: 'n2', toNodeId: 'n4', label: 'Branch B' },
-      { id: 'c4', fromNodeId: 'n3', toNodeId: 'n5' },
-      { id: 'c5', fromNodeId: 'n4', toNodeId: 'n5' },
-      { id: 'c6', fromNodeId: 'n5', toNodeId: 'n6' }
-    ],
-    createdAt: '2025-11-15T08:00:00Z',
-    updatedAt: '2026-02-02T09:15:00Z',
-    createdBy: 'Admin'
-  },
-  {
-    id: '3',
-    name: 'Expense Report Workflow',
-    description: 'Automated expense report processing with threshold-based routing.',
-    status: 'Draft',
-    triggerType: 'OnStatusChange',
+// ── Workflows from API ──────────────────────────────────────────────
+const workflows = ref<WorkflowDefinition[]>([])
+
+async function loadWorkflows() {
+  isLoadingList.value = true
+  try {
+    const res = await approvalsApi.getWorkflows()
+    const data = res.data
+    const list = Array.isArray(data) ? data : data.items ?? []
+    workflows.value = list.map(mapApiToDesigner)
+  } catch {
+    showToast('Failed to load workflows', 'error')
+  } finally {
+    isLoadingList.value = false
+  }
+}
+
+function mapApiToDesigner(apiWf: any): WorkflowDefinition {
+  // If designerData exists, restore the full visual canvas state
+  if (apiWf.designerData) {
+    try {
+      const saved = JSON.parse(apiWf.designerData)
+      return {
+        id: apiWf.id,
+        name: apiWf.name,
+        description: apiWf.description || '',
+        status: saved.status || (apiWf.isActive ? 'Active' : 'Draft'),
+        triggerType: apiWf.triggerType || saved.triggerType || 'Manual',
+        inheritToSubfolders: apiWf.inheritToSubfolders ?? true,
+        folderId: apiWf.folderId || undefined,
+        folderName: apiWf.folderName || undefined,
+        version: saved.version || 1,
+        steps: saved.steps || [],
+        connections: saved.connections || [],
+        createdAt: apiWf.createdAt,
+        updatedAt: apiWf.createdAt,
+        createdBy: 'Admin'
+      }
+    } catch { /* fall through to auto-layout */ }
+  }
+
+  // Fallback: auto-layout from API steps (legacy workflows without designerData)
+  const steps: WorkflowNode[] = []
+  const connections: WorkflowConnection[] = []
+
+  steps.push({ id: 'start', type: 'start', label: 'Start', x: 300, y: 60, config: {} })
+
+  const apiSteps = (apiWf.steps || []).slice().sort((a: any, b: any) => a.stepOrder - b.stepOrder)
+  let prevId = 'start'
+  apiSteps.forEach((step: any, i: number) => {
+    const nodeId = `step-${step.id}`
+    const config: Record<string, any> = { stepId: step.id, isRequired: step.isRequired }
+    if (step.approverUserId) {
+      config.approverUserId = step.approverUserId
+      config.assignee = step.approverUserName || ''
+      config.assignmentMode = 'user'
+    } else if (step.approverRoleId) {
+      config.approverRoleId = step.approverRoleId
+      config.assignee = step.approverRoleName || ''
+      config.assignmentMode = 'role'
+    } else if (step.approverStructureId) {
+      config.approverStructureId = step.approverStructureId
+      config.assignToManager = step.assignToManager
+      config.assignmentMode = 'structure'
+    }
+
+    steps.push({
+      id: nodeId,
+      type: 'approval',
+      label: step.approverUserName || step.approverRoleName || step.approverStructureName || `Step ${i + 1}`,
+      x: 300,
+      y: 180 + i * 130,
+      config
+    })
+    connections.push({ id: `conn-${prevId}-${nodeId}`, fromNodeId: prevId, toNodeId: nodeId })
+    prevId = nodeId
+  })
+
+  const endY = apiSteps.length > 0 ? 180 + apiSteps.length * 130 : 240
+  steps.push({ id: 'end', type: 'end', label: 'End', x: 300, y: endY, config: {} })
+  connections.push({ id: `conn-${prevId}-end`, fromNodeId: prevId, toNodeId: 'end' })
+
+  return {
+    id: apiWf.id,
+    name: apiWf.name,
+    description: apiWf.description || '',
+    status: apiWf.isActive ? 'Active' : 'Draft',
+    triggerType: apiWf.triggerType || 'Manual',
+    inheritToSubfolders: apiWf.inheritToSubfolders ?? true,
+    folderId: apiWf.folderId || undefined,
+    folderName: apiWf.folderName || undefined,
     version: 1,
-    steps: [
-      { id: 'n1', type: 'start', label: 'Start', x: 300, y: 60, config: {} },
-      { id: 'n2', type: 'condition', label: 'Amount Check', x: 300, y: 180, config: { condition: 'amount > 5000' } },
-      { id: 'n3', type: 'end', label: 'Done', x: 300, y: 310, config: {} }
-    ],
-    connections: [
-      { id: 'c1', fromNodeId: 'n1', toNodeId: 'n2' },
-      { id: 'c2', fromNodeId: 'n2', toNodeId: 'n3' }
-    ],
-    createdAt: '2026-01-20T12:00:00Z',
-    updatedAt: '2026-02-05T16:45:00Z',
-    createdBy: 'Admin'
-  },
-  {
-    id: '4',
-    name: 'Policy Update Notification',
-    description: 'Notify all department heads when policies are updated.',
-    status: 'Inactive',
-    triggerType: 'OnStatusChange',
-    version: 1,
-    steps: [
-      { id: 'n1', type: 'start', label: 'Start', x: 300, y: 60, config: {} },
-      { id: 'n2', type: 'notification', label: 'Notify Heads', x: 300, y: 180, config: {} },
-      { id: 'n3', type: 'end', label: 'Done', x: 300, y: 310, config: {} }
-    ],
-    connections: [
-      { id: 'c1', fromNodeId: 'n1', toNodeId: 'n2' },
-      { id: 'c2', fromNodeId: 'n2', toNodeId: 'n3' }
-    ],
-    createdAt: '2025-10-05T07:00:00Z',
-    updatedAt: '2025-12-10T11:00:00Z',
+    steps,
+    connections,
+    createdAt: apiWf.createdAt,
+    updatedAt: apiWf.createdAt,
     createdBy: 'Admin'
   }
-])
+}
 
 // ── Computed ─────────────────────────────────────────────────────────
 const stats = computed(() => ({
@@ -198,6 +393,36 @@ const selectedNodeType = computed(() => {
   if (!selectedNode.value) return null
   return getNodeType(selectedNode.value.type)
 })
+
+// ── Assignment mode helpers ──────────────────────────────────────────
+type AssignmentMode = 'user' | 'role' | 'structure'
+
+function getAssignmentMode(node: WorkflowNode): AssignmentMode {
+  if (node.config.assignmentMode) return node.config.assignmentMode
+  if (node.config.approverStructureId) return 'structure'
+  if (node.config.approverRoleId) return 'role'
+  return 'user'
+}
+
+function setAssignmentMode(node: WorkflowNode, mode: AssignmentMode) {
+  // Clear all assignment fields first
+  delete node.config.assignee
+  delete node.config.approverUserId
+  delete node.config.approverRoleId
+  delete node.config.approverStructureId
+  delete node.config.assignToManager
+  node.config.assignmentMode = mode
+  if (mode === 'structure') {
+    node.config.assignToManager = false
+  }
+  // Reset autocomplete fields
+  userSearchQuery.value = ''
+  roleSearchQuery.value = ''
+  structureSearchQuery.value = ''
+  showUserDropdown.value = false
+  showRoleDropdown.value = false
+  showStructureDropdown.value = false
+}
 
 // ── List view helpers ────────────────────────────────────────────────
 function getStatusClass(status: string) {
@@ -255,14 +480,18 @@ let nodeCounter = 100
 function openDesigner(workflow?: WorkflowDefinition) {
   if (workflow) {
     designerWorkflow.value = JSON.parse(JSON.stringify(workflow))
+    isNewWorkflow.value = false
   } else {
     nodeCounter = 100
     designerWorkflow.value = {
-      id: crypto.randomUUID(),
+      id: '',
       name: 'Untitled Workflow',
       description: '',
       status: 'Draft',
       triggerType: 'Manual',
+      inheritToSubfolders: true,
+      folderId: undefined,
+      folderName: undefined,
       version: 1,
       steps: [
         { id: 'start-1', type: 'start', label: 'Start', x: 300, y: 60, config: {} },
@@ -275,6 +504,7 @@ function openDesigner(workflow?: WorkflowDefinition) {
       updatedAt: new Date().toISOString(),
       createdBy: 'Admin'
     }
+    isNewWorkflow.value = true
   }
   selectedNodeId.value = null
   zoom.value = 1
@@ -288,29 +518,69 @@ function backToList() {
   selectedNodeId.value = null
 }
 
-function addNode(type: string) {
+function addNodeAtPosition(type: string, x: number, y: number) {
   nodeCounter++
   const nt = getNodeType(type)
-  // Find a good position: below the last non-end node
-  const nonEndNodes = designerWorkflow.value.steps.filter(n => n.type !== 'end')
-  const maxY = nonEndNodes.length > 0 ? Math.max(...nonEndNodes.map(n => n.y)) : 60
   const newNode: WorkflowNode = {
     id: `node-${nodeCounter}`,
     type: type as WorkflowNode['type'],
     label: nt.label,
     description: '',
-    x: 300,
-    y: maxY + 130,
+    x: Math.round(x),
+    y: Math.round(y),
     config: {}
   }
-  // Push end nodes further down
-  designerWorkflow.value.steps.forEach(n => {
-    if (n.type === 'end' && n.y <= newNode.y) {
-      n.y = newNode.y + 130
-    }
-  })
   designerWorkflow.value.steps.push(newNode)
   selectedNodeId.value = newNode.id
+}
+
+function addNode(type: string) {
+  const nonEndNodes = designerWorkflow.value.steps.filter(n => n.type !== 'end')
+  const maxY = nonEndNodes.length > 0 ? Math.max(...nonEndNodes.map(n => n.y)) : 60
+  const x = 300, y = maxY + 130
+  designerWorkflow.value.steps.forEach(n => {
+    if (n.type === 'end' && n.y <= y) n.y = y + 130
+  })
+  addNodeAtPosition(type, x, y)
+}
+
+function onPaletteItemMouseDown(e: MouseEvent, type: string) {
+  e.preventDefault()
+  const startX = e.clientX, startY = e.clientY
+  let hasMoved = false
+
+  const onMouseMove = (ev: MouseEvent) => {
+    if (!hasMoved && Math.hypot(ev.clientX - startX, ev.clientY - startY) > 5) {
+      hasMoved = true
+      isDraggingFromPalette.value = true
+      paletteDropType.value = type
+    }
+    if (hasMoved) {
+      const pos = screenToCanvas(ev)
+      paletteGhostPos.x = pos.x
+      paletteGhostPos.y = pos.y
+    }
+  }
+
+  const onMouseUp = (ev: MouseEvent) => {
+    if (hasMoved && isDraggingFromPalette.value) {
+      const rect = canvasContainerRef.value?.getBoundingClientRect()
+      if (rect && ev.clientX >= rect.left && ev.clientX <= rect.right
+        && ev.clientY >= rect.top && ev.clientY <= rect.bottom) {
+        const pos = screenToCanvas(ev)
+        addNodeAtPosition(type, pos.x, pos.y)
+      }
+    } else {
+      addNode(type)
+    }
+    isDraggingFromPalette.value = false
+    paletteDropType.value = ''
+    window.removeEventListener('mousemove', onMouseMove)
+    window.removeEventListener('mouseup', onMouseUp)
+  }
+
+  window.addEventListener('mousemove', onMouseMove)
+  window.addEventListener('mouseup', onMouseUp)
 }
 
 function deleteSelectedNode() {
@@ -326,36 +596,134 @@ function deleteSelectedNode() {
 }
 
 function selectNode(id: string) {
-  if (isConnecting.value && connectFromNodeId.value) {
-    // Complete the connection
-    if (connectFromNodeId.value !== id) {
-      const exists = designerWorkflow.value.connections.some(
-        c => c.fromNodeId === connectFromNodeId.value && c.toNodeId === id
-      )
-      if (!exists) {
-        designerWorkflow.value.connections.push({
-          id: `conn-${Date.now()}`,
-          fromNodeId: connectFromNodeId.value,
-          toNodeId: id
-        })
-      }
-    }
-    isConnecting.value = false
-    connectFromNodeId.value = null
-    return
-  }
   selectedNodeId.value = id
+  showWorkflowProps.value = false
 }
 
-function startConnection(nodeId: string) {
+// ── Keyboard shortcuts ──────────────────────────────────────────────
+function onKeyDown(e: KeyboardEvent) {
+  if (currentView.value !== 'designer') return
+  const tag = (e.target as HTMLElement)?.tagName
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    e.preventDefault()
+    deleteSelectedNode()
+  }
+}
+
+// ── Folder list for folder picker ─────────────────────────────────
+const folderOptions = ref<{ value: string; label: string }[]>([])
+
+async function loadFolderOptions() {
+  try {
+    const cabRes = await cabinetsApi.getAll()
+    const cabinets = Array.isArray(cabRes.data) ? cabRes.data : cabRes.data.items ?? []
+    const options: { value: string; label: string }[] = []
+    for (const cab of cabinets) {
+      options.push({ value: cab.id, label: `📁 ${cab.name} (Cabinet)` })
+      try {
+        const treeRes = await foldersApi.getTree(cab.id)
+        const tree = Array.isArray(treeRes.data) ? treeRes.data : treeRes.data.items ?? []
+        function flattenTree(nodes: any[], prefix: string) {
+          for (const node of nodes) {
+            options.push({ value: node.id, label: `${prefix}${node.name}` })
+            if (node.children?.length) flattenTree(node.children, prefix + '  ')
+          }
+        }
+        flattenTree(tree, '    ')
+      } catch { /* skip */ }
+    }
+    folderOptions.value = options
+  } catch { /* skip */ }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', onKeyDown)
+  loadWorkflows()
+  loadStructureTree()
+  loadRoles()
+  loadFolderOptions()
+  loadWorkflowStatuses()
+})
+onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
+
+// ── Port-based connection drag ──────────────────────────────────────
+function screenToCanvas(e: MouseEvent) {
+  const rect = canvasContainerRef.value?.getBoundingClientRect()
+  if (!rect) return { x: 0, y: 0 }
+  return {
+    x: (e.clientX - rect.left - canvasOffset.x) / zoom.value,
+    y: (e.clientY - rect.top - canvasOffset.y) / zoom.value
+  }
+}
+
+function onOutputPortMouseDown(e: MouseEvent, nodeId: string, port = 'bottom') {
+  e.stopPropagation()
+  e.preventDefault()
   isConnecting.value = true
   connectFromNodeId.value = nodeId
+  connectFromPort.value = port
+  const pos = screenToCanvas(e)
+  connectMousePos.x = pos.x
+  connectMousePos.y = pos.y
+
+  const onMouseMove = (ev: MouseEvent) => {
+    const p = screenToCanvas(ev)
+    connectMousePos.x = p.x
+    connectMousePos.y = p.y
+  }
+
+  const onMouseUp = () => {
+    isConnecting.value = false
+    connectFromNodeId.value = null
+    window.removeEventListener('mousemove', onMouseMove)
+    window.removeEventListener('mouseup', onMouseUp)
+  }
+
+  window.addEventListener('mousemove', onMouseMove)
+  window.addEventListener('mouseup', onMouseUp)
 }
 
-function cancelConnection() {
-  isConnecting.value = false
-  connectFromNodeId.value = null
+function onInputPortMouseUp(e: MouseEvent, nodeId: string, port = 'top') {
+  if (isConnecting.value && connectFromNodeId.value && connectFromNodeId.value !== nodeId) {
+    const exists = designerWorkflow.value.connections.some(
+      c => c.fromNodeId === connectFromNodeId.value && c.toNodeId === nodeId
+        && c.fromPort === connectFromPort.value && c.toPort === port
+    )
+    if (!exists) {
+      designerWorkflow.value.connections.push({
+        id: `conn-${Date.now()}`,
+        fromNodeId: connectFromNodeId.value,
+        toNodeId: nodeId,
+        fromPort: connectFromPort.value as any,
+        toPort: port as any
+      })
+    }
+  }
 }
+
+const tempConnectionPath = computed(() => {
+  if (!isConnecting.value || !connectFromNodeId.value) return ''
+  const from = designerWorkflow.value.steps.find(n => n.id === connectFromNodeId.value)
+  if (!from) return ''
+  const startPos = getPortPosition(from, connectFromPort.value)
+  const x1 = startPos.x, y1 = startPos.y
+  const x2 = connectMousePos.x, y2 = connectMousePos.y
+  if (Math.abs(x1 - x2) < 2 && Math.abs(y1 - y2) < 2) return ''
+  if (Math.abs(x1 - x2) < 2) return `M ${x1} ${y1} L ${x2} ${y2}`
+  const midY = (y1 + y2) / 2
+  const dy1 = Math.abs(midY - y1), dy2 = Math.abs(y2 - midY), dx = Math.abs(x2 - x1) / 2
+  if (dy1 < 1 || dy2 < 1 || dx < 1) return `M ${x1} ${y1} L ${x2} ${y2}`
+  const r = Math.min(CORNER_RADIUS, dy1, dy2, dx)
+  const dirX = x2 > x1 ? 1 : -1
+  return [
+    `M ${x1} ${y1}`, `L ${x1} ${midY - r}`,
+    `Q ${x1} ${midY}, ${x1 + r * dirX} ${midY}`,
+    `L ${x2 - r * dirX} ${midY}`,
+    `Q ${x2} ${midY}, ${x2} ${midY + r}`,
+    `L ${x2} ${y2}`
+  ].join(' ')
+})
 
 function deleteConnection(connId: string) {
   designerWorkflow.value.connections = designerWorkflow.value.connections.filter(c => c.id !== connId)
@@ -396,11 +764,6 @@ function onNodeMouseDown(e: MouseEvent, nodeId: string) {
 // ── Canvas panning ───────────────────────────────────────────────────
 function onCanvasMouseDown(e: MouseEvent) {
   if (e.button !== 0 || e.target !== e.currentTarget) return
-  if (isConnecting.value) {
-    cancelConnection()
-    return
-  }
-  selectedNodeId.value = null
   isPanning.value = true
   panStart.x = e.clientX - canvasOffset.x
   panStart.y = e.clientY - canvasOffset.y
@@ -427,29 +790,26 @@ function onCanvasWheel(e: WheelEvent) {
   zoom.value = Math.min(2, Math.max(0.3, zoom.value + delta))
 }
 
-// ── SVG path helper ──────────────────────────────────────────────────
+// ── SVG path helper (orthogonal connectors) ─────────────────────────
+const CORNER_RADIUS = 8
+
 function getConnectionPath(conn: WorkflowConnection) {
   const from = designerWorkflow.value.steps.find(n => n.id === conn.fromNodeId)
   const to = designerWorkflow.value.steps.find(n => n.id === conn.toNodeId)
   if (!from || !to) return ''
-
-  const x1 = from.x
-  const y1 = from.y + 28
-  const x2 = to.x
-  const y2 = to.y - 28
-
-  const midY = (y1 + y2) / 2
-  return `M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`
+  const startPos = getPortPosition(from, conn.fromPort || 'bottom')
+  const endPos = getPortPosition(to, conn.toPort || 'top')
+  return buildConnectionPath(startPos, endPos)
 }
 
 function getConnectionMidpoint(conn: WorkflowConnection) {
   const from = designerWorkflow.value.steps.find(n => n.id === conn.fromNodeId)
   const to = designerWorkflow.value.steps.find(n => n.id === conn.toNodeId)
   if (!from || !to) return { x: 0, y: 0 }
-  return {
-    x: (from.x + to.x) / 2,
-    y: (from.y + to.y) / 2 + 4
-  }
+  const s = getPortPosition(from, conn.fromPort || 'bottom')
+  const e = getPortPosition(to, conn.toPort || 'top')
+  const midY = (s.y + e.y) / 2
+  return { x: (s.x + e.x) / 2, y: midY }
 }
 
 // ── Node shape dimensions ────────────────────────────────────────────
@@ -467,6 +827,130 @@ function getNodeHeight(type: string) {
   return 56
 }
 
+function getPortOffset(type: string) {
+  return Math.max(15, getNodeWidth(type) / 2 * 0.5)
+}
+
+// Absolute port positions (node.x/y = center) — used for drawing connections
+function getPortPosition(node: WorkflowNode, port: string) {
+  const nt = getNodeType(node.type)
+  const hw = getNodeWidth(node.type) / 2
+  const hh = getNodeHeight(node.type) / 2
+
+  if (nt.shape === 'circle') {
+    // Single entry at top, exits at left/bottom/right edges
+    const r = hw
+    switch (port) {
+      case 'top':          return { x: node.x, y: node.y - r }
+      case 'bottom-left':  return { x: node.x - r, y: node.y }
+      case 'bottom':       return { x: node.x, y: node.y + r }
+      case 'bottom-right': return { x: node.x + r, y: node.y }
+      default:             return { x: node.x, y: node.y + r }
+    }
+  }
+
+  if (nt.shape === 'diamond') {
+    // Entry near top vertex, exits at left/bottom/right vertices
+    switch (port) {
+      case 'top-left':     return { x: node.x - 8, y: node.y - hh + 8 }
+      case 'top':          return { x: node.x, y: node.y - hh }
+      case 'top-right':    return { x: node.x + 8, y: node.y - hh + 8 }
+      case 'bottom-left':  return { x: node.x - hw, y: node.y }
+      case 'bottom':       return { x: node.x, y: node.y + hh }
+      case 'bottom-right': return { x: node.x + hw, y: node.y }
+      default:             return { x: node.x, y: node.y + hh }
+    }
+  }
+
+  // Rectangle — ports along top/bottom edges
+  const offset = getPortOffset(node.type)
+  switch (port) {
+    case 'top-left':     return { x: node.x - offset, y: node.y - hh }
+    case 'top':          return { x: node.x, y: node.y - hh }
+    case 'top-right':    return { x: node.x + offset, y: node.y - hh }
+    case 'bottom-left':  return { x: node.x - offset, y: node.y + hh }
+    case 'bottom':       return { x: node.x, y: node.y + hh }
+    case 'bottom-right': return { x: node.x + offset, y: node.y + hh }
+    default:             return { x: node.x, y: node.y + hh }
+  }
+}
+
+interface PortDef { id: string; cx: number; cy: number }
+
+// Relative port positions (top-left = 0,0) — used for rendering port dots on nodes
+function getNodePortPositions(type: string): { entries: PortDef[]; exits: PortDef[] } {
+  const w = getNodeWidth(type)
+  const h = getNodeHeight(type)
+  const hw = w / 2
+  const hh = h / 2
+  const nt = getNodeType(type)
+
+  if (nt.shape === 'circle') {
+    // Single entry at top, exits at left/bottom/right edges
+    return {
+      entries: [
+        { id: 'top', cx: hw, cy: 0 }
+      ],
+      exits: [
+        { id: 'bottom-left',  cx: 0,  cy: hh },
+        { id: 'bottom',       cx: hw, cy: h },
+        { id: 'bottom-right', cx: w,  cy: hh }
+      ]
+    }
+  }
+
+  if (nt.shape === 'diamond') {
+    // Single entry at top vertex, exits at left/bottom/right vertices
+    return {
+      entries: [
+        { id: 'top', cx: hw, cy: 0 }
+      ],
+      exits: [
+        { id: 'bottom-left',  cx: 0,  cy: hh },
+        { id: 'bottom',       cx: hw, cy: h },
+        { id: 'bottom-right', cx: w,  cy: hh }
+      ]
+    }
+  }
+
+  // Rectangle
+  const offset = getPortOffset(type)
+  return {
+    entries: [
+      { id: 'top-left',  cx: hw - offset, cy: 0 },
+      { id: 'top',       cx: hw,          cy: 0 },
+      { id: 'top-right', cx: hw + offset, cy: 0 }
+    ],
+    exits: [
+      { id: 'bottom-left',  cx: hw - offset, cy: h },
+      { id: 'bottom',       cx: hw,          cy: h },
+      { id: 'bottom-right', cx: hw + offset, cy: h }
+    ]
+  }
+}
+
+function buildConnectionPath(
+  start: { x: number; y: number },
+  end: { x: number; y: number }
+): string {
+  const x1 = start.x, y1 = start.y
+  const x2 = end.x, y2 = end.y
+  if (Math.abs(x1 - x2) < 2) return `M ${x1} ${y1} L ${x2} ${y2}`
+  const midY = (y1 + y2) / 2
+  const dy1 = Math.abs(midY - y1), dy2 = Math.abs(y2 - midY), dx = Math.abs(x2 - x1) / 2
+  if (dy1 < 1 || dy2 < 1 || dx < 1) return `M ${x1} ${y1} L ${x2} ${y2}`
+  const r = Math.min(CORNER_RADIUS, dy1, dy2, dx)
+  const dirX = x2 > x1 ? 1 : -1
+  return [
+    `M ${x1} ${y1}`,
+    `L ${x1} ${midY - r}`,
+    `Q ${x1} ${midY}, ${x1 + r * dirX} ${midY}`,
+    `L ${x2 - r * dirX} ${midY}`,
+    `Q ${x2} ${midY}, ${x2} ${midY + r}`,
+    `L ${x2} ${y2}`
+  ].join(' ')
+}
+
 // ── Save modal ───────────────────────────────────────────────────────
 const triggerOptions = [
   { value: 'Manual', label: 'Manual Trigger' },
@@ -481,36 +965,120 @@ const statusOptions = [
   { value: 'Inactive', label: 'Inactive' }
 ]
 
-function handleSaveWorkflow() {
-  designerWorkflow.value.updatedAt = new Date().toISOString()
-  const idx = workflows.value.findIndex(w => w.id === designerWorkflow.value.id)
-  if (idx >= 0) {
-    workflows.value[idx] = JSON.parse(JSON.stringify(designerWorkflow.value))
-  } else {
-    workflows.value.push(JSON.parse(JSON.stringify(designerWorkflow.value)))
+function extractApiSteps() {
+  // Extract approval/review nodes sorted by Y position (top-to-bottom) and map to API format
+  const approvalNodes = designerWorkflow.value.steps
+    .filter(n => n.type === 'approval' || n.type === 'review')
+    .sort((a, b) => a.y - b.y)
+
+  return approvalNodes.map((node, i) => ({
+    stepOrder: i + 1,
+    approverUserId: node.config.approverUserId || undefined,
+    approverRoleId: node.config.approverRoleId || undefined,
+    approverStructureId: node.config.approverStructureId || undefined,
+    assignToManager: node.config.assignToManager || false,
+    isRequired: node.config.isRequired !== false,
+    statusId: node.config.statusId || undefined
+  }))
+}
+
+async function handleSaveWorkflow() {
+  isSaving.value = true
+  try {
+    const steps = extractApiSteps()
+    // Serialize full visual canvas state for persistence
+    const designerData = JSON.stringify({
+      steps: designerWorkflow.value.steps,
+      connections: designerWorkflow.value.connections,
+      status: designerWorkflow.value.status,
+      triggerType: designerWorkflow.value.triggerType,
+      version: designerWorkflow.value.version
+    })
+    const payload = {
+      name: designerWorkflow.value.name,
+      description: designerWorkflow.value.description || undefined,
+      folderId: designerWorkflow.value.folderId || undefined,
+      requiredApprovers: steps.length || 1,
+      isSequential: true,
+      triggerType: designerWorkflow.value.triggerType,
+      inheritToSubfolders: designerWorkflow.value.inheritToSubfolders,
+      designerData,
+      steps
+    }
+
+    if (isNewWorkflow.value || !designerWorkflow.value.id) {
+      const res = await approvalsApi.createWorkflow(payload)
+      designerWorkflow.value.id = res.data
+      isNewWorkflow.value = false
+      showToast('Workflow created successfully')
+    } else {
+      await approvalsApi.updateWorkflow(designerWorkflow.value.id, payload)
+      showToast('Workflow saved successfully')
+    }
+
+    showSaveModal.value = false
+    await loadWorkflows()
+  } catch (err: any) {
+    showToast(err?.response?.data?.message || 'Failed to save workflow', 'error')
+  } finally {
+    isSaving.value = false
   }
-  showSaveModal.value = false
 }
 
-function publishWorkflow() {
+async function publishWorkflow() {
   designerWorkflow.value.status = 'Active'
-  handleSaveWorkflow()
-  backToList()
+  await handleSaveWorkflow()
+  if (!isSaving.value) backToList()
 }
 
-function duplicateWorkflow(wf: WorkflowDefinition) {
-  const copy: WorkflowDefinition = JSON.parse(JSON.stringify(wf))
-  copy.id = crypto.randomUUID()
-  copy.name = `${wf.name} (Copy)`
-  copy.status = 'Draft'
-  copy.version = 1
-  copy.createdAt = new Date().toISOString()
-  copy.updatedAt = new Date().toISOString()
-  workflows.value.push(copy)
+async function duplicateWorkflow(wf: WorkflowDefinition) {
+  try {
+    // Extract steps from the workflow to duplicate
+    const steps = wf.steps
+      .filter(n => n.type === 'approval' || n.type === 'review')
+      .sort((a, b) => a.y - b.y)
+      .map((node, i) => ({
+        stepOrder: i + 1,
+        approverUserId: node.config.approverUserId || undefined,
+        approverRoleId: node.config.approverRoleId || undefined,
+        approverStructureId: node.config.approverStructureId || undefined,
+        assignToManager: node.config.assignToManager || false,
+        isRequired: node.config.isRequired !== false
+      }))
+
+    const designerData = JSON.stringify({
+      steps: wf.steps,
+      connections: wf.connections,
+      status: 'Draft',
+      triggerType: wf.triggerType,
+      version: 1
+    })
+    await approvalsApi.createWorkflow({
+      name: `${wf.name} (Copy)`,
+      description: wf.description || undefined,
+      folderId: wf.folderId || undefined,
+      requiredApprovers: steps.length || 1,
+      isSequential: true,
+      triggerType: wf.triggerType,
+      inheritToSubfolders: wf.inheritToSubfolders,
+      designerData,
+      steps
+    })
+    showToast('Workflow duplicated successfully')
+    await loadWorkflows()
+  } catch {
+    showToast('Failed to duplicate workflow', 'error')
+  }
 }
 
-function deleteWorkflow(id: string) {
-  workflows.value = workflows.value.filter(w => w.id !== id)
+async function deleteWorkflow(id: string) {
+  try {
+    await approvalsApi.deleteWorkflow(id)
+    showToast('Workflow deleted')
+    await loadWorkflows()
+  } catch {
+    showToast('Failed to delete workflow', 'error')
+  }
 }
 </script>
 
@@ -580,8 +1148,14 @@ function deleteWorkflow(id: string) {
         </div>
       </div>
 
+      <!-- Loading State -->
+      <div v-if="isLoadingList" class="flex flex-col items-center justify-center py-20 gap-4">
+        <span class="w-8 h-8 border-3 border-teal border-t-transparent rounded-full animate-spin"></span>
+        <p class="text-sm text-zinc-400">Loading workflows...</p>
+      </div>
+
       <!-- Workflow Cards Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         <!-- Create New Card -->
         <button
           @click="openDesigner()"
@@ -714,101 +1288,115 @@ function deleteWorkflow(id: string) {
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- DESIGNER VIEW                                                  -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <div v-else class="fixed inset-0 z-40 flex flex-col bg-zinc-100 dark:bg-zinc-950">
+    <div v-else class="fixed inset-0 z-40 flex flex-col bg-zinc-50">
 
       <!-- Top Toolbar -->
-      <div class="flex-shrink-0 h-14 bg-white dark:bg-background-dark border-b border-zinc-200 dark:border-border-dark flex items-center px-4 gap-3 shadow-sm z-20">
+      <div class="flex-shrink-0 h-12 bg-[#0d1117] flex items-center px-3 gap-2 z-20 shadow-lg">
         <!-- Back -->
-        <button @click="backToList" class="p-2 rounded-lg text-zinc-500 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-surface-dark transition-colors">
-          <span class="material-symbols-outlined">arrow_back</span>
+        <button @click="backToList" class="p-1.5 rounded text-zinc-400 hover:text-white hover:bg-white/10 transition-colors">
+          <span class="material-symbols-outlined text-[20px]">arrow_back</span>
         </button>
-        <div class="w-px h-6 bg-zinc-200 dark:bg-border-dark"></div>
+        <div class="w-px h-5 bg-zinc-700"></div>
 
         <!-- Workflow Name -->
-        <div class="flex items-center gap-2 flex-1 min-w-0">
-          <span class="material-symbols-outlined text-teal">account_tree</span>
+        <div class="flex items-center gap-2.5 flex-1 min-w-0">
+          <span class="material-symbols-outlined text-teal text-[20px]">account_tree</span>
           <input
             v-model="designerWorkflow.name"
-            class="bg-transparent border-none outline-none text-lg font-bold text-zinc-900 dark:text-white placeholder-zinc-400 min-w-0 flex-1"
+            class="bg-transparent border-none outline-none text-sm font-semibold text-white placeholder-zinc-500 min-w-0 flex-1"
             placeholder="Workflow name..."
           />
-          <span :class="['px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full', getStatusClass(designerWorkflow.status)]">
+          <span :class="['px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded', designerWorkflow.status === 'Active' ? 'bg-emerald-500/20 text-emerald-400' : designerWorkflow.status === 'Draft' ? 'bg-amber-500/20 text-amber-400' : 'bg-zinc-500/20 text-zinc-400']">
             {{ designerWorkflow.status }}
           </span>
+          <button
+            @click="selectedNodeId = null; showWorkflowProps = !showWorkflowProps"
+            class="p-1.5 rounded transition-colors"
+            :class="showWorkflowProps && !selectedNodeId ? 'text-teal bg-teal/15' : 'text-zinc-500 hover:text-teal hover:bg-white/5'"
+            title="Workflow Properties"
+          >
+            <span class="material-symbols-outlined text-[18px]">settings</span>
+          </button>
         </div>
+
+        <div class="w-px h-5 bg-zinc-700"></div>
 
         <!-- Zoom Controls -->
-        <div class="flex items-center gap-1 bg-zinc-100 dark:bg-surface-dark rounded-lg px-1">
-          <button @click="zoom = Math.max(0.3, zoom - 0.1)" class="p-1.5 text-zinc-500 hover:text-zinc-700 dark:hover:text-white transition-colors rounded">
-            <span class="material-symbols-outlined text-lg">remove</span>
+        <div class="flex items-center gap-0.5">
+          <button @click="zoom = Math.max(0.3, zoom - 0.1)" class="p-1.5 text-zinc-500 hover:text-white transition-colors rounded">
+            <span class="material-symbols-outlined text-[18px]">remove</span>
           </button>
-          <span class="text-xs font-mono text-zinc-500 w-12 text-center">{{ Math.round(zoom * 100) }}%</span>
-          <button @click="zoom = Math.min(2, zoom + 0.1)" class="p-1.5 text-zinc-500 hover:text-zinc-700 dark:hover:text-white transition-colors rounded">
-            <span class="material-symbols-outlined text-lg">add</span>
+          <span class="text-[10px] font-mono text-zinc-500 w-10 text-center">{{ Math.round(zoom * 100) }}%</span>
+          <button @click="zoom = Math.min(2, zoom + 0.1)" class="p-1.5 text-zinc-500 hover:text-white transition-colors rounded">
+            <span class="material-symbols-outlined text-[18px]">add</span>
           </button>
-          <button @click="zoom = 1; canvasOffset.x = 0; canvasOffset.y = 0" class="p-1.5 text-zinc-500 hover:text-zinc-700 dark:hover:text-white transition-colors rounded" title="Reset view">
-            <span class="material-symbols-outlined text-lg">fit_screen</span>
+          <button @click="zoom = 1; canvasOffset.x = 0; canvasOffset.y = 0" class="p-1.5 text-zinc-500 hover:text-white transition-colors rounded" title="Reset view">
+            <span class="material-symbols-outlined text-[18px]">fit_screen</span>
           </button>
         </div>
 
-        <div class="w-px h-6 bg-zinc-200 dark:bg-border-dark"></div>
+        <div class="w-px h-5 bg-zinc-700"></div>
 
         <!-- Save / Publish -->
-        <UiButton variant="outline" size="sm" @click="showSaveModal = true">
-          <span class="material-symbols-outlined text-lg">save</span>
+        <button
+          @click="showSaveModal = true"
+          :disabled="isSaving"
+          class="h-7 px-3 rounded text-[11px] font-semibold border border-zinc-600 text-zinc-300 hover:text-white hover:border-zinc-500 transition-colors flex items-center gap-1.5 disabled:opacity-40"
+        >
+          <span class="material-symbols-outlined text-[16px]">save</span>
           Save
-        </UiButton>
-        <UiButton size="sm" @click="publishWorkflow">
-          <span class="material-symbols-outlined text-lg">rocket_launch</span>
-          Publish
-        </UiButton>
+        </button>
+        <button
+          @click="publishWorkflow"
+          :disabled="isSaving"
+          class="h-7 px-3 rounded text-[11px] font-semibold bg-teal text-white hover:bg-teal/90 transition-colors flex items-center gap-1.5 disabled:opacity-40"
+        >
+          <span v-if="isSaving" class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+          <span v-else class="material-symbols-outlined text-[16px]">rocket_launch</span>
+          {{ isSaving ? 'Saving...' : 'Publish' }}
+        </button>
       </div>
 
       <div class="flex-1 flex overflow-hidden">
         <!-- Left Sidebar - Node Palette -->
-        <div class="flex-shrink-0 w-56 bg-white dark:bg-background-dark border-r border-zinc-200 dark:border-border-dark flex flex-col z-10">
-          <div class="p-3 border-b border-zinc-100 dark:border-border-dark">
-            <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Node Palette</p>
+        <div class="flex-shrink-0 w-52 bg-white border-r border-zinc-200/80 flex flex-col z-10">
+          <!-- Palette Header -->
+          <div class="px-3 py-2.5 border-b border-zinc-200/80 flex items-center gap-2">
+            <span class="material-symbols-outlined text-teal text-[16px]">widgets</span>
+            <p class="text-[10px] font-bold text-[#0d1117] uppercase tracking-widest">Components</p>
           </div>
-          <div class="flex-1 overflow-y-auto p-3 space-y-1.5">
-            <button
+
+          <!-- Node Items -->
+          <div class="flex-1 overflow-y-auto p-2 space-y-0.5">
+            <div
               v-for="nt in nodeTypes"
               :key="nt.type"
-              @click="addNode(nt.type)"
-              class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-surface-dark transition-all group"
+              @mousedown="onPaletteItemMouseDown($event, nt.type)"
+              class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-left transition-all group cursor-grab active:cursor-grabbing select-none hover:bg-zinc-50"
             >
               <div
-                class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110"
-                :style="{ backgroundColor: nt.color + '20' }"
+                class="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 border transition-transform group-hover:scale-105"
+                :style="{ backgroundColor: nt.color + '10', borderColor: nt.color + '25' }"
               >
-                <span class="material-symbols-outlined text-lg" :style="{ color: nt.color }">{{ nt.icon }}</span>
+                <span class="material-symbols-outlined" style="font-size: 16px;" :style="{ color: nt.color }">{{ nt.icon }}</span>
               </div>
-              <div>
-                <span class="block">{{ nt.label }}</span>
-                <span class="block text-[10px] text-zinc-400 font-normal">
+              <div class="min-w-0 flex-1">
+                <span class="block text-[12px] font-semibold text-zinc-800 leading-tight">{{ nt.label }}</span>
+                <span class="block text-[9px] text-zinc-400 font-medium leading-tight">
                   {{ nt.shape === 'circle' ? 'Event' : nt.shape === 'diamond' ? 'Gateway' : 'Task' }}
                 </span>
               </div>
-            </button>
-          </div>
-
-          <!-- Connection Mode Indicator -->
-          <div v-if="isConnecting" class="p-3 border-t border-zinc-100 dark:border-border-dark">
-            <div class="bg-teal/10 border border-teal/30 rounded-lg p-3 text-center">
-              <p class="text-xs font-semibold text-teal">Connecting...</p>
-              <p class="text-[10px] text-zinc-500 mt-1">Click a target node</p>
-              <button @click="cancelConnection" class="mt-2 text-[10px] text-zinc-400 hover:text-red-500 transition-colors">Cancel</button>
+              <span class="material-symbols-outlined text-zinc-300 group-hover:text-zinc-400 transition-colors" style="font-size: 14px;">drag_indicator</span>
             </div>
           </div>
 
           <!-- Quick Help -->
-          <div class="p-3 border-t border-zinc-100 dark:border-border-dark">
-            <div class="bg-zinc-50 dark:bg-surface-dark rounded-lg p-3">
-              <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">Quick Help</p>
-              <div class="space-y-1.5 text-[10px] text-zinc-500">
-                <p class="flex items-center gap-2"><span class="material-symbols-outlined text-xs">mouse</span> Drag nodes to move</p>
-                <p class="flex items-center gap-2"><span class="material-symbols-outlined text-xs">open_with</span> Drag canvas to pan</p>
-                <p class="flex items-center gap-2"><span class="material-symbols-outlined text-xs">unfold_more</span> Scroll to zoom</p>
+          <div class="p-2 border-t border-zinc-200/80">
+            <div class="bg-[#0d1117] rounded-md p-2.5">
+              <div class="space-y-1.5 text-[9px] text-zinc-400">
+                <p class="flex items-center gap-1.5"><span class="material-symbols-outlined text-teal" style="font-size: 11px;">drag_indicator</span> Drag to add</p>
+                <p class="flex items-center gap-1.5"><span class="material-symbols-outlined text-teal" style="font-size: 11px;">commit</span> Port to connect</p>
+                <p class="flex items-center gap-1.5"><span class="material-symbols-outlined text-teal" style="font-size: 11px;">delete</span> Del key to remove</p>
               </div>
             </div>
           </div>
@@ -816,8 +1404,9 @@ function deleteWorkflow(id: string) {
 
         <!-- Center Canvas -->
         <div
+          ref="canvasContainerRef"
           class="flex-1 relative overflow-hidden"
-          :class="{ 'cursor-crosshair': isConnecting, 'cursor-grab': !isConnecting && !isPanning, 'cursor-grabbing': isPanning }"
+          :class="{ 'cursor-grab': !isPanning && !isDraggingFromPalette, 'cursor-grabbing': isPanning, 'cursor-copy': isDraggingFromPalette }"
           @mousedown="onCanvasMouseDown"
           @wheel.prevent="onCanvasWheel"
         >
@@ -826,11 +1415,11 @@ function deleteWorkflow(id: string) {
             <defs>
               <pattern id="grid-small" width="20" height="20" patternUnits="userSpaceOnUse"
                 :patternTransform="`translate(${canvasOffset.x % 20},${canvasOffset.y % 20})`">
-                <circle cx="10" cy="10" r="0.5" class="fill-zinc-300 dark:fill-zinc-700" />
+                <circle cx="10" cy="10" r="0.5" fill="#d1d5db" />
               </pattern>
               <pattern id="grid-large" width="100" height="100" patternUnits="userSpaceOnUse"
                 :patternTransform="`translate(${canvasOffset.x % 100},${canvasOffset.y % 100})`">
-                <circle cx="50" cy="50" r="1" class="fill-zinc-300 dark:fill-zinc-600" />
+                <circle cx="50" cy="50" r="1" fill="#9ca3af" />
               </pattern>
             </defs>
             <rect width="100%" height="100%" fill="url(#grid-small)" />
@@ -855,7 +1444,8 @@ function deleteWorkflow(id: string) {
                   <polygon points="0 0, 8 3, 0 6" fill="#94a3b8" />
                 </marker>
               </defs>
-              <g v-for="conn in designerWorkflow.connections" :key="conn.id">
+              <g v-for="conn in designerWorkflow.connections" :key="conn.id" class="group/conn">
+                <!-- Visible connection line -->
                 <path
                   :d="getConnectionPath(conn)"
                   fill="none"
@@ -866,32 +1456,85 @@ function deleteWorkflow(id: string) {
                   class="transition-all"
                   :opacity="selectedNodeId && conn.fromNodeId !== selectedNodeId && conn.toNodeId !== selectedNodeId ? 0.3 : 0.8"
                 />
-                <!-- Connection label -->
-                <g v-if="conn.label" class="pointer-events-auto cursor-pointer" @click="deleteConnection(conn.id)">
+                <!-- Invisible wide hit area for clicking -->
+                <path
+                  :d="getConnectionPath(conn)"
+                  fill="none"
+                  stroke="transparent"
+                  stroke-width="16"
+                  stroke-linecap="round"
+                  class="pointer-events-auto cursor-pointer"
+                  @click.stop="deleteConnection(conn.id)"
+                />
+                <!-- Hover delete button at midpoint -->
+                <g
+                  class="pointer-events-auto cursor-pointer opacity-0 group-hover/conn:opacity-100 transition-opacity"
+                  @click.stop="deleteConnection(conn.id)"
+                >
+                  <circle
+                    :cx="getConnectionMidpoint(conn).x"
+                    :cy="getConnectionMidpoint(conn).y"
+                    r="10"
+                    fill="#ffffff"
+                    stroke="#ef4444"
+                    stroke-width="1.5"
+                    filter="drop-shadow(0 1px 3px rgba(0,0,0,0.15))"
+                  />
+                  <line
+                    :x1="getConnectionMidpoint(conn).x - 4"
+                    :y1="getConnectionMidpoint(conn).y - 4"
+                    :x2="getConnectionMidpoint(conn).x + 4"
+                    :y2="getConnectionMidpoint(conn).y + 4"
+                    stroke="#ef4444" stroke-width="2" stroke-linecap="round"
+                  />
+                  <line
+                    :x1="getConnectionMidpoint(conn).x + 4"
+                    :y1="getConnectionMidpoint(conn).y - 4"
+                    :x2="getConnectionMidpoint(conn).x - 4"
+                    :y2="getConnectionMidpoint(conn).y + 4"
+                    stroke="#ef4444" stroke-width="2" stroke-linecap="round"
+                  />
+                </g>
+                <!-- Connection label (if any) -->
+                <g v-if="conn.label" class="pointer-events-auto cursor-pointer" @click.stop="deleteConnection(conn.id)">
                   <rect
                     :x="getConnectionMidpoint(conn).x - 20"
                     :y="getConnectionMidpoint(conn).y - 10"
                     width="40" height="20" rx="6"
-                    class="fill-white dark:fill-zinc-800 stroke-zinc-200 dark:stroke-zinc-700"
+                    fill="#ffffff"
+                    stroke="#d1d5db"
                     stroke-width="1"
                   />
                   <text
                     :x="getConnectionMidpoint(conn).x"
                     :y="getConnectionMidpoint(conn).y + 4"
                     text-anchor="middle"
-                    class="fill-zinc-500 dark:fill-zinc-400"
+                    fill="#0d1117"
                     font-size="10"
                     font-weight="600"
                   >{{ conn.label }}</text>
                 </g>
               </g>
+              <!-- Temporary connection while dragging -->
+              <path
+                v-if="tempConnectionPath"
+                :d="tempConnectionPath"
+                fill="none"
+                stroke="#00ae8c"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-dasharray="8 4"
+                opacity="0.7"
+                marker-end="url(#arrowhead)"
+                style="animation: dash-flow 0.6s linear infinite"
+              />
             </svg>
 
             <!-- Nodes -->
             <div
               v-for="node in designerWorkflow.steps"
               :key="node.id"
-              class="absolute select-none"
+              class="absolute select-none group/node"
               :style="{
                 left: `${node.x - getNodeWidth(node.type) / 2}px`,
                 top: `${node.y - getNodeHeight(node.type) / 2}px`,
@@ -905,7 +1548,7 @@ function deleteWorkflow(id: string) {
                 v-if="getNodeType(node.type).shape === 'circle'"
                 class="w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all cursor-move"
                 :class="[
-                  selectedNodeId === node.id ? 'ring-2 ring-teal ring-offset-2 ring-offset-zinc-100 dark:ring-offset-zinc-950 scale-110' : 'hover:scale-105'
+                  selectedNodeId === node.id ? 'ring-2 ring-teal ring-offset-2 ring-offset-zinc-50 scale-110' : 'hover:scale-105'
                 ]"
                 :style="{ backgroundColor: getNodeType(node.type).color }"
               >
@@ -920,7 +1563,7 @@ function deleteWorkflow(id: string) {
                 <div
                   class="w-11 h-11 rotate-45 rounded-md shadow-lg transition-all"
                   :class="[
-                    selectedNodeId === node.id ? 'ring-2 ring-teal ring-offset-2 ring-offset-zinc-100 dark:ring-offset-zinc-950 scale-110' : 'hover:scale-105'
+                    selectedNodeId === node.id ? 'ring-2 ring-teal ring-offset-2 ring-offset-zinc-50 scale-110' : 'hover:scale-105'
                   ]"
                   :style="{ backgroundColor: getNodeType(node.type).color }"
                 >
@@ -933,197 +1576,604 @@ function deleteWorkflow(id: string) {
               <!-- Rect shape (Tasks) -->
               <div
                 v-else
-                class="h-14 rounded-lg shadow-lg flex items-center gap-2.5 px-3 transition-all cursor-move bg-white dark:bg-surface-dark border-2"
+                class="h-14 rounded-lg shadow-md shadow-zinc-200/60 flex items-center gap-2.5 px-3 transition-all cursor-move bg-white border"
                 :class="[
                   selectedNodeId === node.id
                     ? 'border-teal shadow-teal/20 shadow-xl scale-105'
-                    : 'border-zinc-200 dark:border-border-dark hover:border-zinc-300 dark:hover:border-zinc-600 hover:scale-[1.02]'
+                    : 'border-zinc-200 hover:border-zinc-400 hover:scale-[1.02]'
                 ]"
                 :style="{ width: getNodeWidth(node.type) + 'px' }"
               >
                 <div
                   class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                  :style="{ backgroundColor: getNodeType(node.type).color + '20' }"
+                  :style="{ backgroundColor: getNodeType(node.type).color + '18' }"
                 >
                   <span class="material-symbols-outlined text-base" :style="{ color: getNodeType(node.type).color }">{{ getNodeType(node.type).icon }}</span>
                 </div>
                 <div class="flex-1 min-w-0">
-                  <p class="text-xs font-semibold text-zinc-800 dark:text-white truncate leading-tight">{{ node.label }}</p>
-                  <p class="text-[9px] text-zinc-400 truncate leading-tight mt-0.5" v-if="node.config?.assignee">{{ node.config.assignee }}</p>
+                  <p class="text-xs font-semibold text-zinc-800 truncate leading-tight">{{ node.label }}</p>
+                  <p class="text-[9px] text-zinc-500 truncate leading-tight mt-0.5" v-if="node.config?.assignee || node.config?.approverStructureId">{{ node.config.approverStructureId ? (node.config.assignToManager ? 'Manager: ' : '') + (flatStructures.find(s => s.id === node.config.approverStructureId)?.name?.trim() || 'Structure') : node.config.assignee }}</p>
+                  <div v-if="node.config?.statusId && workflowStatuses.find(s => s.id === node.config.statusId)" class="flex items-center gap-1 mt-0.5">
+                    <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" :style="{ backgroundColor: workflowStatuses.find(s => s.id === node.config.statusId)?.color }"></span>
+                    <span class="text-[8px] font-medium truncate" :style="{ color: workflowStatuses.find(s => s.id === node.config.statusId)?.color }">{{ workflowStatuses.find(s => s.id === node.config.statusId)?.name }}</span>
+                  </div>
                 </div>
               </div>
 
-              <!-- Node label for circles/diamonds -->
-              <p
-                v-if="getNodeType(node.type).shape !== 'rect'"
-                class="text-[10px] font-semibold text-zinc-600 dark:text-zinc-400 text-center mt-1 whitespace-nowrap"
-                :style="{ width: '80px', marginLeft: '-13px' }"
-              >{{ node.label }}</p>
+              <!-- Entry ports (3: top-left, top, top-right) -->
+              <template v-if="node.type !== 'start'">
+                <div
+                  v-for="ep in getNodePortPositions(node.type).entries"
+                  :key="'in-' + ep.id"
+                  class="absolute -translate-x-1/2 -translate-y-1/2 z-30 transition-all duration-200"
+                  :style="{ left: ep.cx + 'px', top: ep.cy + 'px' }"
+                  :class="isConnecting && connectFromNodeId !== node.id
+                    ? 'opacity-100 scale-100'
+                    : 'opacity-0 scale-75 group-hover/node:opacity-100 group-hover/node:scale-100'"
+                  @mouseup="onInputPortMouseUp($event, node.id, ep.id)"
+                >
+                  <div
+                    class="w-2.5 h-2.5 rounded-full border-2 border-white shadow-sm transition-all cursor-crosshair"
+                    :class="isConnecting && connectFromNodeId !== node.id
+                      ? 'bg-sky-400 scale-[2.2] ring-4 ring-sky-400/30 animate-pulse'
+                      : 'bg-zinc-400 dark:bg-zinc-500 hover:bg-sky-400 hover:scale-[1.8] hover:ring-4 hover:ring-sky-400/20'"
+                  ></div>
+                </div>
+              </template>
 
-              <!-- Connect button (hover) -->
-              <button
-                v-if="!isConnecting"
-                @click.stop="startConnection(node.id)"
-                class="absolute -bottom-2 left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-teal text-white flex items-center justify-center opacity-0 hover:opacity-100 transition-all shadow-md hover:scale-125 z-30"
-                :class="{ '!opacity-60': selectedNodeId === node.id }"
-                title="Drag to connect"
+              <!-- Exit ports (3: bottom-left, bottom, bottom-right) -->
+              <template v-if="node.type !== 'end'">
+                <div
+                  v-for="xp in getNodePortPositions(node.type).exits"
+                  :key="'out-' + xp.id"
+                  class="absolute -translate-x-1/2 -translate-y-1/2 z-30 cursor-crosshair transition-all duration-200"
+                  :style="{ left: xp.cx + 'px', top: xp.cy + 'px' }"
+                  :class="isConnecting
+                    ? (connectFromNodeId === node.id ? 'opacity-100 scale-100' : 'opacity-0 scale-75 pointer-events-none')
+                    : 'opacity-0 scale-75 group-hover/node:opacity-100 group-hover/node:scale-100'"
+                  @mousedown.stop="onOutputPortMouseDown($event, node.id, xp.id)"
+                >
+                  <div class="w-2.5 h-2.5 rounded-full border-2 border-white bg-teal shadow-sm transition-all hover:scale-[1.8] hover:ring-4 hover:ring-teal/20"></div>
+                </div>
+              </template>
+            </div>
+
+            <!-- Palette drag ghost -->
+            <div
+              v-if="isDraggingFromPalette && paletteDropType"
+              class="absolute pointer-events-none"
+              :style="{
+                left: (paletteGhostPos.x - getNodeWidth(paletteDropType) / 2) + 'px',
+                top: (paletteGhostPos.y - getNodeHeight(paletteDropType) / 2) + 'px',
+                zIndex: 50,
+                opacity: 0.6,
+                filter: 'drop-shadow(0 4px 12px rgba(0, 174, 140, 0.3))'
+              }"
+            >
+              <!-- Circle ghost -->
+              <div
+                v-if="getNodeType(paletteDropType).shape === 'circle'"
+                class="w-14 h-14 rounded-full flex items-center justify-center border-2 border-dashed border-teal"
+                :style="{ backgroundColor: getNodeType(paletteDropType).color + '30' }"
               >
-                <span class="material-symbols-outlined text-xs">add</span>
-              </button>
+                <span class="material-symbols-outlined text-white text-xl" :style="{ color: getNodeType(paletteDropType).color }">{{ getNodeType(paletteDropType).icon }}</span>
+              </div>
+              <!-- Diamond ghost -->
+              <div
+                v-else-if="getNodeType(paletteDropType).shape === 'diamond'"
+                class="w-14 h-14 flex items-center justify-center"
+              >
+                <div class="w-11 h-11 rotate-45 rounded-md border-2 border-dashed border-teal" :style="{ backgroundColor: getNodeType(paletteDropType).color + '30' }">
+                  <div class="w-full h-full flex items-center justify-center -rotate-45">
+                    <span class="material-symbols-outlined text-lg" :style="{ color: getNodeType(paletteDropType).color }">{{ getNodeType(paletteDropType).icon }}</span>
+                  </div>
+                </div>
+              </div>
+              <!-- Rect ghost -->
+              <div
+                v-else
+                class="h-14 rounded-lg flex items-center gap-2.5 px-3 border-2 border-dashed border-teal bg-white/80"
+                :style="{ width: getNodeWidth(paletteDropType) + 'px' }"
+              >
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" :style="{ backgroundColor: getNodeType(paletteDropType).color + '20' }">
+                  <span class="material-symbols-outlined text-base" :style="{ color: getNodeType(paletteDropType).color }">{{ getNodeType(paletteDropType).icon }}</span>
+                </div>
+                <p class="text-xs font-semibold text-zinc-500">{{ getNodeType(paletteDropType).label }}</p>
+              </div>
             </div>
           </div>
         </div>
 
         <!-- Right Panel - Properties -->
-        <div class="flex-shrink-0 w-72 bg-white dark:bg-background-dark border-l border-zinc-200 dark:border-border-dark flex flex-col z-10">
+        <div class="flex-shrink-0 w-80 bg-white border-l border-zinc-200 flex flex-col z-10">
           <div v-if="selectedNode" class="flex-1 flex flex-col overflow-hidden">
             <!-- Panel Header -->
-            <div class="p-4 border-b border-zinc-100 dark:border-border-dark flex items-center justify-between">
-              <div class="flex items-center gap-2.5">
-                <div class="w-8 h-8 rounded-lg flex items-center justify-center" :style="{ backgroundColor: selectedNodeType?.color + '20' }">
-                  <span class="material-symbols-outlined text-base" :style="{ color: selectedNodeType?.color }">{{ selectedNodeType?.icon }}</span>
+            <div class="px-4 py-3 border-b border-zinc-200 flex items-center justify-between"
+              :style="{ borderBottom: `2px solid ${selectedNodeType?.color}20` }">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm"
+                  :style="{ backgroundColor: selectedNodeType?.color + '15', border: `1px solid ${selectedNodeType?.color}30` }">
+                  <span class="material-symbols-outlined text-lg" :style="{ color: selectedNodeType?.color }">{{ selectedNodeType?.icon }}</span>
                 </div>
                 <div>
-                  <p class="text-xs font-bold text-zinc-900 dark:text-white">{{ selectedNodeType?.label }} Node</p>
-                  <p class="text-[10px] text-zinc-400">{{ selectedNode.id }}</p>
+                  <p class="text-sm font-bold text-zinc-800">{{ selectedNodeType?.label }}</p>
+                  <p class="text-[10px] text-zinc-400 font-mono">{{ selectedNode.id }}</p>
                 </div>
               </div>
               <button
                 v-if="selectedNode.type !== 'start' && selectedNode.type !== 'end'"
                 @click="deleteSelectedNode"
-                class="p-1.5 rounded-lg text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                class="p-1.5 rounded-lg text-zinc-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                title="Delete (Del)"
               >
                 <span class="material-symbols-outlined text-lg">delete</span>
               </button>
             </div>
 
             <!-- Properties -->
-            <div class="flex-1 overflow-y-auto p-4 space-y-4">
-              <div>
-                <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Label</label>
-                <input
-                  v-model="selectedNode.label"
-                  class="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-border-dark bg-zinc-50 dark:bg-surface-dark text-sm text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all"
-                />
+            <div class="flex-1 overflow-y-auto">
+              <!-- Basic Info Section -->
+              <div class="p-4 space-y-3 border-b border-zinc-100">
+                <div>
+                  <label class="block text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Label</label>
+                  <input
+                    v-model="selectedNode.label"
+                    class="w-full px-3 py-2 rounded-lg border border-zinc-200 bg-white text-sm text-zinc-900 focus:ring-2 focus:ring-teal/30 focus:border-teal outline-none transition-all placeholder-zinc-400"
+                  />
+                </div>
+
+                <div>
+                  <label class="block text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Description</label>
+                  <textarea
+                    v-model="selectedNode.description"
+                    rows="2"
+                    class="w-full px-3 py-2 rounded-lg border border-zinc-200 bg-white text-sm text-zinc-900 focus:ring-2 focus:ring-teal/30 focus:border-teal outline-none transition-all placeholder-zinc-400 resize-none"
+                    placeholder="Describe this step..."
+                  ></textarea>
+                </div>
               </div>
 
-              <div>
-                <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Description</label>
-                <textarea
-                  v-model="selectedNode.description"
-                  rows="2"
-                  class="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-border-dark bg-zinc-50 dark:bg-surface-dark text-sm text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all resize-none"
-                  placeholder="Describe this step..."
-                ></textarea>
-              </div>
+              <!-- Assignment Section for approval/review -->
+              <div v-if="selectedNode.type === 'approval' || selectedNode.type === 'review'" class="p-4 border-b border-zinc-100">
+                <label class="block text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-2.5">Assign To</label>
 
-              <!-- Assignee for approval/review -->
-              <div v-if="selectedNode.type === 'approval' || selectedNode.type === 'review'">
-                <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Assignee</label>
-                <input
-                  v-model="selectedNode.config.assignee"
-                  class="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-border-dark bg-zinc-50 dark:bg-surface-dark text-sm text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all"
-                  placeholder="User or role..."
-                />
-              </div>
+                <!-- 3-mode segmented picker -->
+                <div class="flex bg-zinc-100 rounded-lg p-0.5 mb-3">
+                  <button
+                    v-for="mode in ([
+                      { key: 'user', label: 'User', icon: 'person' },
+                      { key: 'role', label: 'Role', icon: 'shield_person' },
+                      { key: 'structure', label: 'Unit', icon: 'apartment' }
+                    ] as const)"
+                    :key="mode.key"
+                    @click="setAssignmentMode(selectedNode!, mode.key)"
+                    class="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-md text-[11px] font-semibold transition-all"
+                    :class="getAssignmentMode(selectedNode!) === mode.key
+                      ? 'bg-teal text-white shadow-sm'
+                      : 'text-zinc-400 hover:text-zinc-600'"
+                  >
+                    <span class="material-symbols-outlined" style="font-size: 14px;">{{ mode.icon }}</span>
+                    {{ mode.label }}
+                  </button>
+                </div>
 
-              <!-- Condition for branch nodes -->
-              <div v-if="selectedNode.type === 'condition'">
-                <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Condition Expression</label>
-                <textarea
-                  v-model="selectedNode.config.condition"
-                  rows="3"
-                  class="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-border-dark bg-zinc-50 dark:bg-surface-dark text-sm text-zinc-900 dark:text-white font-mono text-xs focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all resize-none"
-                  placeholder="e.g. document.classification == 'Confidential'"
-                ></textarea>
-              </div>
+                <!-- Selected chip (shown when a selection is made) -->
+                <div
+                  v-if="selectedNode.config.approverUserId || selectedNode.config.approverRoleId || selectedNode.config.approverStructureId"
+                  class="flex items-center gap-2 px-3 py-2 rounded-lg bg-teal/10 border border-teal/25 mb-3"
+                >
+                  <div class="w-6 h-6 rounded-full bg-teal/20 flex items-center justify-center flex-shrink-0">
+                    <span class="material-symbols-outlined text-teal" style="font-size: 14px;">
+                      {{ getAssignmentMode(selectedNode!) === 'user' ? 'person' : getAssignmentMode(selectedNode!) === 'role' ? 'shield_person' : 'apartment' }}
+                    </span>
+                  </div>
+                  <span class="text-xs font-semibold text-teal flex-1 truncate">
+                    {{ getAssignmentMode(selectedNode!) === 'structure'
+                      ? (flatStructures.find(s => s.id === selectedNode!.config.approverStructureId)?.name?.trim() || 'Structure')
+                      : selectedNode.config.assignee }}
+                  </span>
+                  <button @click="clearAssignment" class="text-teal/50 hover:text-red-500 transition-colors flex-shrink-0 p-0.5 rounded hover:bg-red-50" title="Clear">
+                    <span class="material-symbols-outlined" style="font-size: 14px;">close</span>
+                  </button>
+                </div>
 
-              <!-- Timeout for approval/review -->
-              <div v-if="selectedNode.type === 'approval' || selectedNode.type === 'review' || selectedNode.type === 'timer'">
-                <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">
-                  {{ selectedNode.type === 'timer' ? 'Duration' : 'Timeout' }}
-                </label>
-                <input
-                  v-model="selectedNode.config.timeout"
-                  class="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-border-dark bg-zinc-50 dark:bg-surface-dark text-sm text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all"
-                  placeholder="e.g. 48h, 3d, 1w"
-                />
-              </div>
-
-              <!-- Notification template -->
-              <div v-if="selectedNode.type === 'notification'">
-                <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Template</label>
-                <input
-                  v-model="selectedNode.config.template"
-                  class="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-border-dark bg-zinc-50 dark:bg-surface-dark text-sm text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all"
-                  placeholder="Notification template name..."
-                />
-                <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5 mt-4">Recipients</label>
-                <input
-                  v-model="selectedNode.config.recipients"
-                  class="w-full px-3 py-2 rounded-lg border border-zinc-200 dark:border-border-dark bg-zinc-50 dark:bg-surface-dark text-sm text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none transition-all"
-                  placeholder="Users, roles, or groups..."
-                />
-              </div>
-
-              <!-- Position -->
-              <div>
-                <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Position</label>
-                <div class="flex gap-2">
-                  <div class="flex-1">
-                    <label class="text-[9px] text-zinc-400">X</label>
+                <!-- User mode (autocomplete) -->
+                <div v-if="getAssignmentMode(selectedNode!) === 'user'" class="relative">
+                  <div class="relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-zinc-400" style="font-size: 16px;">search</span>
                     <input
-                      v-model.number="selectedNode.x"
-                      type="number"
-                      class="w-full px-2 py-1.5 rounded-lg border border-zinc-200 dark:border-border-dark bg-zinc-50 dark:bg-surface-dark text-xs text-zinc-900 dark:text-white font-mono focus:ring-1 focus:ring-teal/50 outline-none"
+                      v-model="userSearchQuery"
+                      @input="onUserSearchInput(userSearchQuery)"
+                      @focus="showUserDropdown = userSearchResults.length > 0"
+                      @blur="showUserDropdown = false"
+                      class="w-full pl-9 pr-8 py-2 rounded-lg border border-zinc-200 bg-white text-sm text-zinc-900 focus:ring-2 focus:ring-teal/30 focus:border-teal outline-none transition-all placeholder-zinc-400"
+                      placeholder="Type to search users..."
+                    />
+                    <span v-if="isSearchingUsers" class="absolute right-3 top-1/2 -translate-y-1/2">
+                      <span class="w-3.5 h-3.5 border-2 border-teal border-t-transparent rounded-full animate-spin inline-block"></span>
+                    </span>
+                  </div>
+                  <div
+                    v-if="showUserDropdown && userSearchResults.length > 0"
+                    class="absolute z-50 w-full mt-1 max-h-48 overflow-y-auto bg-white rounded-lg border border-zinc-200 shadow-xl ring-1 ring-black/5"
+                  >
+                    <button
+                      v-for="user in userSearchResults"
+                      :key="user.id"
+                      @mousedown.prevent="selectUser(user)"
+                      class="w-full px-3 py-2.5 text-left hover:bg-teal/5 flex items-center gap-2.5 transition-colors border-b border-zinc-50 last:border-0"
+                      :class="{ 'bg-teal/5': selectedNode.config.approverUserId === user.id }"
+                    >
+                      <div class="w-7 h-7 rounded-full bg-zinc-100 flex items-center justify-center flex-shrink-0">
+                        <span class="material-symbols-outlined text-zinc-400" style="font-size: 14px;">person</span>
+                      </div>
+                      <div class="min-w-0 flex-1">
+                        <p class="text-zinc-900 truncate text-xs font-medium">{{ user.displayName || user.username }}</p>
+                        <p class="text-[10px] text-zinc-400 truncate">{{ user.username }}</p>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Role mode (autocomplete) -->
+                <div v-if="getAssignmentMode(selectedNode!) === 'role'" class="relative">
+                  <div class="relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-zinc-400" style="font-size: 16px;">search</span>
+                    <input
+                      v-model="roleSearchQuery"
+                      @focus="showRoleDropdown = true"
+                      @blur="showRoleDropdown = false"
+                      class="w-full pl-9 pr-3 py-2 rounded-lg border border-zinc-200 bg-white text-sm text-zinc-900 focus:ring-2 focus:ring-teal/30 focus:border-teal outline-none transition-all placeholder-zinc-400"
+                      placeholder="Type to search roles..."
                     />
                   </div>
-                  <div class="flex-1">
-                    <label class="text-[9px] text-zinc-400">Y</label>
+                  <div
+                    v-if="showRoleDropdown && filteredRoles.length > 0"
+                    class="absolute z-50 w-full mt-1 max-h-48 overflow-y-auto bg-white rounded-lg border border-zinc-200 shadow-xl ring-1 ring-black/5"
+                  >
+                    <button
+                      v-for="role in filteredRoles"
+                      :key="role.id"
+                      @mousedown.prevent="selectRole(role)"
+                      class="w-full px-3 py-2.5 text-left hover:bg-teal/5 flex items-center gap-2.5 transition-colors border-b border-zinc-50 last:border-0"
+                      :class="{ 'bg-teal/5': selectedNode.config.approverRoleId === role.id }"
+                    >
+                      <div class="w-7 h-7 rounded-full bg-zinc-100 flex items-center justify-center flex-shrink-0">
+                        <span class="material-symbols-outlined text-zinc-400" style="font-size: 14px;">shield_person</span>
+                      </div>
+                      <span class="text-zinc-900 truncate text-xs font-medium">{{ role.name }}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Structure mode (autocomplete) -->
+                <div v-if="getAssignmentMode(selectedNode!) === 'structure'" class="space-y-3">
+                  <div class="relative">
+                    <div class="relative">
+                      <span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-zinc-400" style="font-size: 16px;">search</span>
+                      <input
+                        v-model="structureSearchQuery"
+                        @focus="showStructureDropdown = true"
+                        @blur="showStructureDropdown = false"
+                        class="w-full pl-9 pr-3 py-2 rounded-lg border border-zinc-200 bg-white text-sm text-zinc-900 focus:ring-2 focus:ring-teal/30 focus:border-teal outline-none transition-all placeholder-zinc-400"
+                        placeholder="Type to search units..."
+                      />
+                    </div>
+                    <div
+                      v-if="showStructureDropdown && filteredStructures.length > 0"
+                      class="absolute z-50 w-full mt-1 max-h-48 overflow-y-auto bg-white rounded-lg border border-zinc-200 shadow-xl ring-1 ring-black/5"
+                    >
+                      <button
+                        v-for="s in filteredStructures"
+                        :key="s.id"
+                        @mousedown.prevent="selectStructure(s)"
+                        class="w-full px-3 py-2.5 text-left hover:bg-teal/5 flex items-center gap-2.5 transition-colors border-b border-zinc-50 last:border-0"
+                        :class="{ 'bg-teal/5': selectedNode.config.approverStructureId === s.id }"
+                      >
+                        <div class="w-7 h-7 rounded-full bg-zinc-100 flex items-center justify-center flex-shrink-0">
+                          <span class="material-symbols-outlined text-zinc-400" style="font-size: 14px;">apartment</span>
+                        </div>
+                        <span class="text-zinc-900 truncate text-xs font-medium flex-1">{{ s.name }}</span>
+                        <span class="text-[9px] text-zinc-400 bg-zinc-100 px-1.5 py-0.5 rounded font-medium flex-shrink-0">{{ s.type }}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Manager Only toggle -->
+                  <label class="flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg bg-zinc-50 border border-zinc-200 cursor-pointer hover:border-teal/40 transition-colors">
+                    <div class="flex items-center gap-2">
+                      <span class="material-symbols-outlined text-zinc-500" style="font-size: 16px;">manage_accounts</span>
+                      <div>
+                        <span class="text-xs font-medium text-zinc-700 block">Manager Only</span>
+                        <span class="text-[10px] text-zinc-400 block">
+                          {{ selectedNode.config.assignToManager ? 'Only the unit manager' : 'All active members' }}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      @click="selectedNode!.config.assignToManager = !selectedNode!.config.assignToManager"
+                      class="relative w-9 h-5 rounded-full transition-colors duration-200 flex-shrink-0"
+                      :class="selectedNode!.config.assignToManager ? 'bg-teal' : 'bg-zinc-300'"
+                    >
+                      <span
+                        class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200"
+                        :class="selectedNode!.config.assignToManager ? 'translate-x-4' : 'translate-x-0'"
+                      ></span>
+                    </button>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Workflow Status (approval/review nodes) -->
+              <div v-if="selectedNode.type === 'approval' || selectedNode.type === 'review'" class="p-4 border-b border-zinc-100">
+                <label class="block text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-2.5">Step Status</label>
+                <UiSelect
+                  :model-value="selectedNode.config.statusId || null"
+                  @update:model-value="onStatusChange"
+                  :options="stepStatusOptions"
+                  placeholder="No status"
+                  clearable
+                  searchable
+                  size="sm"
+                />
+                <div v-if="selectedNode.config.statusId" class="flex items-center gap-2 mt-2 px-2.5 py-1.5 rounded-lg bg-zinc-50 border border-zinc-100">
+                  <span
+                    class="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                    :style="{ backgroundColor: workflowStatuses.find(s => s.id === selectedNode.config.statusId)?.color }"
+                  ></span>
+                  <span
+                    v-if="workflowStatuses.find(s => s.id === selectedNode.config.statusId)?.icon"
+                    class="material-symbols-outlined"
+                    :style="{ color: workflowStatuses.find(s => s.id === selectedNode.config.statusId)?.color, fontSize: '14px' }"
+                  >{{ workflowStatuses.find(s => s.id === selectedNode.config.statusId)?.icon }}</span>
+                  <span class="text-xs font-medium" :style="{ color: workflowStatuses.find(s => s.id === selectedNode.config.statusId)?.color }">
+                    {{ workflowStatuses.find(s => s.id === selectedNode.config.statusId)?.name }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Configuration Section -->
+              <div v-if="selectedNode.type === 'condition' || selectedNode.type === 'approval' || selectedNode.type === 'review' || selectedNode.type === 'timer' || selectedNode.type === 'notification'"
+                class="p-4 border-b border-zinc-100 space-y-3">
+                <p class="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Configuration</p>
+
+                <!-- Condition for branch nodes -->
+                <div v-if="selectedNode.type === 'condition'">
+                  <label class="block text-[10px] text-zinc-400 mb-1">Condition Expression</label>
+                  <textarea
+                    v-model="selectedNode.config.condition"
+                    rows="3"
+                    class="w-full px-3 py-2 rounded-lg border border-zinc-200 bg-white text-xs text-zinc-900 font-mono focus:ring-2 focus:ring-teal/30 focus:border-teal outline-none transition-all resize-none"
+                    placeholder="e.g. document.classification == 'Confidential'"
+                  ></textarea>
+                </div>
+
+                <!-- Timeout for approval/review -->
+                <div v-if="selectedNode.type === 'approval' || selectedNode.type === 'review' || selectedNode.type === 'timer'">
+                  <label class="block text-[10px] text-zinc-400 mb-1">
+                    {{ selectedNode.type === 'timer' ? 'Duration' : 'Timeout' }}
+                  </label>
+                  <input
+                    v-model="selectedNode.config.timeout"
+                    class="w-full px-3 py-2 rounded-lg border border-zinc-200 bg-white text-sm text-zinc-900 focus:ring-2 focus:ring-teal/30 focus:border-teal outline-none transition-all placeholder-zinc-400"
+                    placeholder="e.g. 48h, 3d, 1w"
+                  />
+                </div>
+
+                <!-- Notification template -->
+                <div v-if="selectedNode.type === 'notification'" class="space-y-3">
+                  <div>
+                    <label class="block text-[10px] text-zinc-400 mb-1">Template</label>
                     <input
-                      v-model.number="selectedNode.y"
-                      type="number"
-                      class="w-full px-2 py-1.5 rounded-lg border border-zinc-200 dark:border-border-dark bg-zinc-50 dark:bg-surface-dark text-xs text-zinc-900 dark:text-white font-mono focus:ring-1 focus:ring-teal/50 outline-none"
+                      v-model="selectedNode.config.template"
+                      class="w-full px-3 py-2 rounded-lg border border-zinc-200 bg-white text-sm text-zinc-900 focus:ring-2 focus:ring-teal/30 focus:border-teal outline-none transition-all placeholder-zinc-400"
+                      placeholder="Notification template name..."
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-[10px] text-zinc-400 mb-1">Recipients</label>
+                    <input
+                      v-model="selectedNode.config.recipients"
+                      class="w-full px-3 py-2 rounded-lg border border-zinc-200 bg-white text-sm text-zinc-900 focus:ring-2 focus:ring-teal/30 focus:border-teal outline-none transition-all placeholder-zinc-400"
+                      placeholder="Users, roles, or groups..."
                     />
                   </div>
                 </div>
               </div>
 
-              <!-- Connections -->
-              <div>
-                <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Connections</label>
-                <div class="space-y-1.5">
-                  <div
-                    v-for="conn in designerWorkflow.connections.filter(c => c.fromNodeId === selectedNode!.id || c.toNodeId === selectedNode!.id)"
-                    :key="conn.id"
-                    class="flex items-center justify-between bg-zinc-50 dark:bg-surface-dark rounded-lg px-2.5 py-1.5"
-                  >
-                    <span class="text-[10px] text-zinc-600 dark:text-zinc-400 font-mono">
-                      {{ conn.fromNodeId === selectedNode!.id ? '→ ' + conn.toNodeId : conn.fromNodeId + ' →' }}
-                    </span>
-                    <button @click="deleteConnection(conn.id)" class="text-zinc-400 hover:text-red-500 transition-colors">
-                      <span class="material-symbols-outlined text-xs">close</span>
-                    </button>
+              <!-- Advanced Section (Position + Connections) -->
+              <div class="p-4 space-y-3">
+                <p class="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Layout</p>
+
+                <!-- Position -->
+                <div class="flex gap-2">
+                  <div class="flex-1">
+                    <label class="text-[9px] text-zinc-400 font-medium">X</label>
+                    <input
+                      v-model.number="selectedNode.x"
+                      type="number"
+                      class="w-full px-2.5 py-1.5 rounded-lg border border-zinc-200 bg-white text-xs text-zinc-900 font-mono focus:ring-1 focus:ring-teal/30 outline-none"
+                    />
                   </div>
-                  <p v-if="designerWorkflow.connections.filter(c => c.fromNodeId === selectedNode!.id || c.toNodeId === selectedNode!.id).length === 0" class="text-[10px] text-zinc-400 italic">
-                    No connections
-                  </p>
+                  <div class="flex-1">
+                    <label class="text-[9px] text-zinc-400 font-medium">Y</label>
+                    <input
+                      v-model.number="selectedNode.y"
+                      type="number"
+                      class="w-full px-2.5 py-1.5 rounded-lg border border-zinc-200 bg-white text-xs text-zinc-900 font-mono focus:ring-1 focus:ring-teal/30 outline-none"
+                    />
+                  </div>
+                </div>
+
+                <!-- Connections -->
+                <div>
+                  <label class="block text-[10px] text-zinc-400 font-medium mb-1.5">Connections</label>
+                  <div class="space-y-1">
+                    <div
+                      v-for="conn in designerWorkflow.connections.filter(c => c.fromNodeId === selectedNode!.id || c.toNodeId === selectedNode!.id)"
+                      :key="conn.id"
+                      class="flex items-center justify-between bg-zinc-50 rounded-lg px-2.5 py-1.5 group/conn"
+                    >
+                      <div class="flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-zinc-400" style="font-size: 12px;">
+                          {{ conn.fromNodeId === selectedNode!.id ? 'arrow_forward' : 'arrow_back' }}
+                        </span>
+                        <span class="text-[11px] text-zinc-500 font-mono">
+                          {{ conn.fromNodeId === selectedNode!.id ? conn.toNodeId : conn.fromNodeId }}
+                        </span>
+                        <span v-if="conn.label" class="text-[9px] bg-zinc-200 text-zinc-600 px-1.5 py-0.5 rounded font-medium">{{ conn.label }}</span>
+                      </div>
+                      <button @click="deleteConnection(conn.id)" class="text-zinc-300 hover:text-red-500 transition-colors opacity-0 group-hover/conn:opacity-100">
+                        <span class="material-symbols-outlined" style="font-size: 14px;">close</span>
+                      </button>
+                    </div>
+                    <p v-if="designerWorkflow.connections.filter(c => c.fromNodeId === selectedNode!.id || c.toNodeId === selectedNode!.id).length === 0" class="text-[10px] text-zinc-400 italic py-1">
+                      No connections yet
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- No Selection -->
-          <div v-else class="flex-1 flex flex-col items-center justify-center p-6 text-center">
-            <div class="w-16 h-16 rounded-lg bg-zinc-100 dark:bg-surface-dark flex items-center justify-center mb-4">
-              <span class="material-symbols-outlined text-3xl text-zinc-300 dark:text-zinc-600">touch_app</span>
+          <!-- Workflow Properties (when settings icon clicked) -->
+          <div v-else-if="showWorkflowProps" class="flex-1 flex flex-col overflow-hidden">
+            <!-- Panel Header -->
+            <div class="px-4 py-3 border-b border-zinc-200 flex items-center gap-3"
+              style="border-bottom: 2px solid rgba(0,174,140,0.15)">
+              <div class="w-9 h-9 rounded-xl bg-teal/10 border border-teal/20 flex items-center justify-center">
+                <span class="material-symbols-outlined text-lg text-teal">account_tree</span>
+              </div>
+              <div>
+                <p class="text-sm font-bold text-zinc-800">Workflow Properties</p>
+                <p class="text-[10px] text-zinc-400">General settings</p>
+              </div>
             </div>
-            <p class="text-sm font-semibold text-zinc-500 dark:text-zinc-400">Select a node</p>
-            <p class="text-xs text-zinc-400 mt-1">Click a node on the canvas to view and edit its properties</p>
+
+            <div class="flex-1 overflow-y-auto">
+              <!-- Basic Info -->
+              <div class="p-4 space-y-3 border-b border-zinc-100">
+                <p class="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Basic Info</p>
+                <div>
+                  <label class="block text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Name</label>
+                  <input
+                    v-model="designerWorkflow.name"
+                    class="w-full px-3 py-2 rounded-lg border border-zinc-200 bg-white text-sm text-zinc-900 focus:ring-2 focus:ring-teal/30 focus:border-teal outline-none transition-all placeholder-zinc-400"
+                    placeholder="Workflow name..."
+                  />
+                </div>
+                <div>
+                  <label class="block text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Description</label>
+                  <textarea
+                    v-model="designerWorkflow.description"
+                    rows="3"
+                    class="w-full px-3 py-2 rounded-lg border border-zinc-200 bg-white text-sm text-zinc-900 focus:ring-2 focus:ring-teal/30 focus:border-teal outline-none transition-all placeholder-zinc-400 resize-none"
+                    placeholder="Describe the purpose of this workflow..."
+                  ></textarea>
+                </div>
+              </div>
+
+              <!-- Settings -->
+              <div class="p-4 space-y-3 border-b border-zinc-100">
+                <p class="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Settings</p>
+                <div>
+                  <UiSelect
+                    v-model="designerWorkflow.folderId"
+                    :options="[{ value: null, label: 'None' }, ...folderOptions]"
+                    label="Assigned Folder"
+                    placeholder="Select a folder..."
+                    searchable
+                    clearable
+                    size="sm"
+                  />
+                </div>
+                <div>
+                  <UiSelect
+                    v-model="designerWorkflow.triggerType"
+                    :options="triggerOptions"
+                    label="Trigger Type"
+                    size="sm"
+                  />
+                </div>
+                <div>
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      v-model="designerWorkflow.inheritToSubfolders"
+                      class="w-4 h-4 rounded border-zinc-300 text-teal focus:ring-teal/30"
+                    />
+                    <span class="text-sm text-zinc-700">Inherit to Subfolders</span>
+                  </label>
+                  <p class="text-[10px] text-zinc-400 mt-1 ml-6">When enabled, this workflow also triggers for documents uploaded to child folders</p>
+                </div>
+                <div>
+                  <UiSelect
+                    v-model="designerWorkflow.status"
+                    :options="statusOptions"
+                    label="Status"
+                    size="sm"
+                  />
+                </div>
+              </div>
+
+              <!-- Summary -->
+              <div class="p-4 space-y-3">
+                <p class="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Summary</p>
+                <div class="grid grid-cols-3 gap-3">
+                  <div class="bg-[#0d1117] rounded-lg p-3 text-center">
+                    <p class="text-lg font-bold text-white">{{ designerWorkflow.steps.length }}</p>
+                    <p class="text-[9px] text-teal font-medium">Nodes</p>
+                  </div>
+                  <div class="bg-[#0d1117] rounded-lg p-3 text-center">
+                    <p class="text-lg font-bold text-white">{{ designerWorkflow.connections.length }}</p>
+                    <p class="text-[9px] text-teal font-medium">Connections</p>
+                  </div>
+                  <div class="bg-[#0d1117] rounded-lg p-3 text-center">
+                    <p class="text-lg font-bold text-white">v{{ designerWorkflow.version }}</p>
+                    <p class="text-[9px] text-teal font-medium">Version</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Empty state -->
+          <div v-else class="flex-1 flex flex-col items-center justify-center p-6 text-center">
+            <div class="w-16 h-16 rounded-2xl bg-zinc-50 border border-zinc-200 flex items-center justify-center mb-4">
+              <span class="material-symbols-outlined text-3xl text-zinc-300">touch_app</span>
+            </div>
+            <p class="text-sm font-semibold text-zinc-600">Select a Node</p>
+            <p class="text-xs text-zinc-400 mt-1 max-w-[180px]">Click any node to edit, or click <span class="material-symbols-outlined align-middle text-sm">settings</span> for workflow properties</p>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Toast Notification -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition ease-out duration-300"
+        enter-from-class="translate-y-2 opacity-0"
+        enter-to-class="translate-y-0 opacity-100"
+        leave-active-class="transition ease-in duration-200"
+        leave-from-class="translate-y-0 opacity-100"
+        leave-to-class="translate-y-2 opacity-0"
+      >
+        <div
+          v-if="toast.show"
+          class="fixed bottom-6 right-6 z-[100] flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border"
+          :class="toast.type === 'success'
+            ? 'bg-white border-emerald-200 text-emerald-700'
+            : 'bg-white border-red-200 text-red-700'"
+        >
+          <span class="material-symbols-outlined text-lg">
+            {{ toast.type === 'success' ? 'check_circle' : 'error' }}
+          </span>
+          <span class="text-sm font-medium">{{ toast.message }}</span>
+        </div>
+      </Transition>
+    </Teleport>
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- SAVE MODAL                                                     -->
@@ -1141,6 +2191,14 @@ function deleteWorkflow(id: string) {
           placeholder="Describe the purpose of this workflow..."
           :rows="3"
         />
+        <UiSelect
+          v-model="designerWorkflow.folderId"
+          :options="[{ value: null, label: 'None' }, ...folderOptions]"
+          label="Assigned Folder"
+          placeholder="Select a folder..."
+          searchable
+          clearable
+        />
         <div class="grid grid-cols-2 gap-4">
           <UiSelect
             v-model="designerWorkflow.triggerType"
@@ -1152,6 +2210,17 @@ function deleteWorkflow(id: string) {
             label="Status"
             :options="statusOptions"
           />
+        </div>
+        <div>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              v-model="designerWorkflow.inheritToSubfolders"
+              class="w-4 h-4 rounded border-zinc-300 text-teal focus:ring-teal/30"
+            />
+            <span class="text-sm text-zinc-700 dark:text-zinc-300">Inherit to Subfolders</span>
+          </label>
+          <p class="text-[10px] text-zinc-400 mt-1 ml-6">When enabled, this workflow also triggers for documents uploaded to child folders</p>
         </div>
         <div class="bg-zinc-50 dark:bg-surface-dark rounded-lg p-4">
           <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">Summary</p>
@@ -1173,9 +2242,10 @@ function deleteWorkflow(id: string) {
       </div>
       <template #footer>
         <div class="flex justify-end gap-3">
-          <UiButton variant="outline" @click="showSaveModal = false">Cancel</UiButton>
-          <UiButton @click="handleSaveWorkflow">
-            Save Workflow
+          <UiButton variant="outline" @click="showSaveModal = false" :disabled="isSaving">Cancel</UiButton>
+          <UiButton @click="handleSaveWorkflow" :disabled="isSaving">
+            <span v-if="isSaving" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            {{ isSaving ? 'Saving...' : 'Save Workflow' }}
           </UiButton>
         </div>
       </template>
@@ -1184,6 +2254,9 @@ function deleteWorkflow(id: string) {
 </template>
 
 <style scoped>
+@keyframes dash-flow {
+  to { stroke-dashoffset: -24; }
+}
 .line-clamp-1 {
   display: -webkit-box;
   -webkit-line-clamp: 1;

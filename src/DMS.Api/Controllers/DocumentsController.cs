@@ -14,17 +14,38 @@ public class DocumentsController : BaseApiController
     private readonly IBulkOperationService _bulkOperationService;
     private readonly IPreviewService _previewService;
     private readonly IFolderService _folderService;
+    private readonly IApprovalService _approvalService;
 
     public DocumentsController(
         IDocumentService documentService,
         IBulkOperationService bulkOperationService,
         IPreviewService previewService,
-        IFolderService folderService)
+        IFolderService folderService,
+        IApprovalService approvalService)
     {
         _documentService = documentService;
         _bulkOperationService = bulkOperationService;
         _previewService = previewService;
         _folderService = folderService;
+        _approvalService = approvalService;
+    }
+
+    /// <summary>
+    /// Checks if the current user has sufficient privacy level to access a document's folder.
+    /// Returns true if access is allowed, false if blocked.
+    /// </summary>
+    private async Task<bool> HasPrivacyAccessAsync(Guid folderId)
+    {
+        var privacyLevel = GetCurrentUserPrivacyLevel();
+        if (privacyLevel == null) return true; // Admin bypasses
+
+        var folderResult = await _folderService.GetByIdAsync(folderId);
+        if (!folderResult.Success) return true; // Folder not found, allow (document may be orphaned)
+
+        var folder = folderResult.Data!;
+        if (folder.PrivacyLevelValue == null) return true; // No privacy restriction
+
+        return folder.PrivacyLevelValue.Value <= privacyLevel.Value;
     }
 
     [HttpGet]
@@ -34,6 +55,7 @@ public class DocumentsController : BaseApiController
         [FromQuery] int page = 1, [FromQuery] int pageSize = AppConstants.DefaultPageSize)
     {
         var userId = GetCurrentUserId();
+        var privacyLevel = GetCurrentUserPrivacyLevel();
         pageSize = Math.Min(pageSize, AppConstants.MaxPageSize);
 
         // If searching within a folder, check read permission on folder
@@ -43,7 +65,7 @@ public class DocumentsController : BaseApiController
                 return Forbid(ErrorMessages.Permissions.ViewFolder);
         }
 
-        var result = await _documentService.SearchPaginatedAsync(search, folderId, classificationId, documentTypeId, page, pageSize);
+        var result = await _documentService.SearchPaginatedAsync(search, folderId, classificationId, documentTypeId, page, pageSize, privacyLevel);
         if (!result.Success) return BadRequest(result.Errors);
 
         var pagedResult = result.Data!;
@@ -69,6 +91,28 @@ public class DocumentsController : BaseApiController
                 accessibleDocs.Add(doc);
         }
         pagedResult.Items = accessibleDocs;
+
+        // Filter out documents pending/rejected approval (only creator and admins can see them)
+        if (!IsAdmin())
+        {
+            pagedResult.Items = pagedResult.Items.Where(doc =>
+                doc.ApprovalStatus == null ||
+                doc.ApprovalStatus == (int)ApprovalStatus.Approved ||
+                doc.ApprovalStatus == (int)ApprovalStatus.Cancelled ||
+                doc.CreatedBy == userId
+            ).ToList();
+        }
+
+        // Filter out expired documents (only creator and admins can see them)
+        if (!IsAdmin())
+        {
+            pagedResult.Items = pagedResult.Items.Where(doc =>
+                doc.ExpiryDate == null ||
+                doc.ExpiryDate > DateTime.UtcNow ||
+                doc.CreatedBy == userId
+            ).ToList();
+        }
+
         return Ok(pagedResult);
     }
 
@@ -82,7 +126,31 @@ public class DocumentsController : BaseApiController
             return Forbid(ErrorMessages.Permissions.ViewDocument);
 
         var result = await _documentService.GetByIdAsync(id);
-        return result.Success ? Ok(result.Data) : NotFound(result.Errors);
+        if (!result.Success) return NotFound(result.Errors);
+
+        var doc = result.Data!;
+
+        // Check privacy level on folder
+        if (!await HasPrivacyAccessAsync(doc.FolderId))
+            return NotFound(new[] { ErrorMessages.Permissions.InsufficientPrivacyLevel });
+
+        // Block access to pending/rejected documents for non-creators/non-admins/non-approvers
+        if (!IsAdmin() && doc.CreatedBy != userId &&
+            doc.ApprovalStatus is (int)ApprovalStatus.Pending or (int)ApprovalStatus.Rejected or (int)ApprovalStatus.ReturnedForRevision)
+        {
+            // Allow assigned approvers to view the document
+            if (!await _approvalService.IsApproverForDocumentAsync(id, userId))
+                return NotFound(new[] { ErrorMessages.Permissions.DocumentPendingApproval });
+        }
+
+        // Block access to expired documents for non-creators/non-admins
+        if (!IsAdmin() && doc.CreatedBy != userId &&
+            doc.ExpiryDate.HasValue && doc.ExpiryDate.Value <= DateTime.UtcNow)
+        {
+            return NotFound(new[] { ErrorMessages.Permissions.DocumentExpired });
+        }
+
+        return Ok(doc);
     }
 
     [HttpGet("{id:guid}/versions")]
@@ -111,11 +179,31 @@ public class DocumentsController : BaseApiController
         if (!docResult.Success)
             return NotFound(docResult.Errors);
 
+        var doc = docResult.Data!;
+
+        // Check privacy level on folder
+        if (!await HasPrivacyAccessAsync(doc.FolderId))
+            return NotFound(new[] { ErrorMessages.Permissions.InsufficientPrivacyLevel });
+
+        // Block download of pending/rejected documents for non-creators/non-admins/non-approvers
+        if (!IsAdmin() && doc.CreatedBy != userId &&
+            doc.ApprovalStatus is (int)ApprovalStatus.Pending or (int)ApprovalStatus.Rejected or (int)ApprovalStatus.ReturnedForRevision)
+        {
+            if (!await _approvalService.IsApproverForDocumentAsync(id, userId))
+                return NotFound(new[] { ErrorMessages.Permissions.DocumentPendingApproval });
+        }
+
+        // Block download of expired documents for non-creators/non-admins
+        if (!IsAdmin() && doc.CreatedBy != userId &&
+            doc.ExpiryDate.HasValue && doc.ExpiryDate.Value <= DateTime.UtcNow)
+        {
+            return NotFound(new[] { ErrorMessages.Permissions.DocumentExpired });
+        }
+
         var result = await _documentService.DownloadAsync(id, version);
         if (!result.Success)
             return NotFound(result.Errors);
 
-        var doc = docResult.Data!;
         return File(result.Data!, doc.ContentType ?? "application/octet-stream", doc.Name + doc.Extension);
     }
 
@@ -190,6 +278,11 @@ public class DocumentsController : BaseApiController
         // Check write permission on document
         if (!await HasPermissionAsync(userId, "Document", id, (int)PermissionLevel.Write))
             return Forbid(ErrorMessages.Permissions.CheckOutDocument);
+
+        // Check privacy level
+        var docResult = await _documentService.GetByIdAsync(id);
+        if (docResult.Success && !await HasPrivacyAccessAsync(docResult.Data!.FolderId))
+            return NotFound(new[] { ErrorMessages.Permissions.InsufficientPrivacyLevel });
 
         var result = await _documentService.CheckOutAsync(id, userId);
         return result.Success ? Ok(result.Message) : BadRequest(result.Errors);
@@ -375,6 +468,10 @@ public class DocumentsController : BaseApiController
         if (!await HasPermissionAsync(userId, "Folder", dto.NewFolderId, (int)PermissionLevel.Write))
             return Forbid(ErrorMessages.Permissions.MoveDocumentsToFolder);
 
+        // Check privacy level on destination folder
+        if (!await HasPrivacyAccessAsync(dto.NewFolderId))
+            return NotFound(new[] { ErrorMessages.Permissions.InsufficientPrivacyLevel });
+
         var result = await _documentService.MoveAsync(id, dto, userId);
         return result.Success ? Ok(result.Message) : BadRequest(result.Errors);
     }
@@ -391,6 +488,10 @@ public class DocumentsController : BaseApiController
         // Check write permission on destination folder
         if (!await HasPermissionAsync(userId, "Folder", dto.TargetFolderId, (int)PermissionLevel.Write))
             return Forbid(ErrorMessages.Permissions.CopyDocumentsToFolder);
+
+        // Check privacy level on destination folder
+        if (!await HasPrivacyAccessAsync(dto.TargetFolderId))
+            return NotFound(new[] { ErrorMessages.Permissions.InsufficientPrivacyLevel });
 
         var result = await _documentService.CopyAsync(id, dto, userId);
         return result.Success ? CreatedAtAction(nameof(GetById), new { id = result.Data!.Id }, result.Data) : BadRequest(result.Errors);
@@ -418,6 +519,31 @@ public class DocumentsController : BaseApiController
         // Check read permission
         if (!await HasPermissionAsync(userId, "Document", id, (int)PermissionLevel.Read))
             return Forbid(ErrorMessages.Permissions.PreviewDocument);
+
+        // Check privacy level and approval status for preview
+        var docResult = await _documentService.GetByIdAsync(id);
+        if (docResult.Success)
+        {
+            var doc = docResult.Data!;
+
+            // Check privacy level on folder
+            if (!await HasPrivacyAccessAsync(doc.FolderId))
+                return NotFound(new[] { ErrorMessages.Permissions.InsufficientPrivacyLevel });
+
+            if (!IsAdmin() && doc.CreatedBy != userId &&
+                doc.ApprovalStatus is (int)ApprovalStatus.Pending or (int)ApprovalStatus.Rejected or (int)ApprovalStatus.ReturnedForRevision)
+            {
+                if (!await _approvalService.IsApproverForDocumentAsync(id, userId))
+                    return NotFound(new[] { ErrorMessages.Permissions.DocumentPendingApproval });
+            }
+
+            // Block preview of expired documents for non-creators/non-admins
+            if (!IsAdmin() && doc.CreatedBy != userId &&
+                doc.ExpiryDate.HasValue && doc.ExpiryDate.Value <= DateTime.UtcNow)
+            {
+                return NotFound(new[] { ErrorMessages.Permissions.DocumentExpired });
+            }
+        }
 
         var result = await _previewService.GetPreviewInfoAsync(id, version);
         return result.Success ? Ok(result.Data) : NotFound(result.Errors);

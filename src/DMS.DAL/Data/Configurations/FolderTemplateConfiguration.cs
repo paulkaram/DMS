@@ -36,7 +36,7 @@ public class FolderTemplateUsageConfiguration : IEntityTypeConfiguration<FolderT
 {
     public void Configure(EntityTypeBuilder<FolderTemplateUsage> builder)
     {
-        builder.ToTable("FolderTemplateUsages");
+        builder.ToTable("FolderTemplateUsage");
         builder.HasKey(e => e.Id);
 
         builder.Ignore(e => e.TemplateName);

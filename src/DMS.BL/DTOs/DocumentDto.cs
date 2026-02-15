@@ -29,6 +29,8 @@ public class DocumentDto
     public bool IsShortcut { get; set; }
     public Guid? ShortcutId { get; set; }
     public int AttachmentCount { get; set; }
+    public int? ApprovalStatus { get; set; }
+    public DateTime? ExpiryDate { get; set; }
 }
 
 public class DocumentShortcutDto
@@ -81,6 +83,7 @@ public class CreateDocumentDto
     public Guid? ClassificationId { get; set; }
     public Guid? ImportanceId { get; set; }
     public Guid? DocumentTypeId { get; set; }
+    public DateTime? ExpiryDate { get; set; }
 }
 
 public class UpdateDocumentDto
@@ -90,6 +93,7 @@ public class UpdateDocumentDto
     public Guid? ClassificationId { get; set; }
     public Guid? ImportanceId { get; set; }
     public Guid? DocumentTypeId { get; set; }
+    public DateTime? ExpiryDate { get; set; }
 }
 
 /// <summary>

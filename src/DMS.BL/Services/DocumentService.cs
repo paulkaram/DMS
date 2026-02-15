@@ -20,6 +20,7 @@ public class DocumentService : IDocumentService
     private readonly IFileValidationService _fileValidationService;
     private readonly IDocumentPasswordRepository _passwordRepository;
     private readonly IDocumentShortcutRepository _shortcutRepository;
+    private readonly IApprovalService _approvalService;
 
     // JSON options for consistent serialization with camelCase
     private static readonly JsonSerializerOptions _jsonOptions = new()
@@ -40,7 +41,8 @@ public class DocumentService : IDocumentService
         IFolderRepository folderRepository,
         IFileValidationService fileValidationService,
         IDocumentPasswordRepository passwordRepository,
-        IDocumentShortcutRepository shortcutRepository)
+        IDocumentShortcutRepository shortcutRepository,
+        IApprovalService approvalService)
     {
         _documentRepository = documentRepository;
         _versionRepository = versionRepository;
@@ -54,6 +56,7 @@ public class DocumentService : IDocumentService
         _fileValidationService = fileValidationService;
         _passwordRepository = passwordRepository;
         _shortcutRepository = shortcutRepository;
+        _approvalService = approvalService;
     }
 
     #region Basic CRUD Operations
@@ -66,6 +69,12 @@ public class DocumentService : IDocumentService
 
         var dto = MapToDto(document);
         dto.HasPassword = await _passwordRepository.HasPasswordAsync(id);
+
+        // Enrich with approval status
+        var statuses = await _approvalService.GetApprovalStatusBulkAsync(new[] { id });
+        if (statuses.TryGetValue(id, out var status))
+            dto.ApprovalStatus = status;
+
         return ServiceResult<DocumentDto>.Ok(dto);
     }
 
@@ -74,6 +83,7 @@ public class DocumentService : IDocumentService
         var documents = await _documentRepository.GetByFolderIdWithNamesAsync(folderId);
         var dtos = documents.Select(MapToDtoWithNames).ToList();
         await EnrichWithPasswordStatusAsync(dtos);
+        await EnrichWithApprovalStatusAsync(dtos);
         return ServiceResult<List<DocumentDto>>.Ok(dtos);
     }
 
@@ -82,14 +92,16 @@ public class DocumentService : IDocumentService
         var documents = await _documentRepository.SearchWithNamesAsync(name, folderId, classificationId, documentTypeId);
         var dtos = documents.Select(MapToDtoWithNames).ToList();
         await EnrichWithPasswordStatusAsync(dtos);
+        await EnrichWithApprovalStatusAsync(dtos);
         return ServiceResult<List<DocumentDto>>.Ok(dtos);
     }
 
-    public async Task<ServiceResult<PagedResultDto<DocumentDto>>> SearchPaginatedAsync(string? name, Guid? folderId, Guid? classificationId, Guid? documentTypeId, int page, int pageSize)
+    public async Task<ServiceResult<PagedResultDto<DocumentDto>>> SearchPaginatedAsync(string? name, Guid? folderId, Guid? classificationId, Guid? documentTypeId, int page, int pageSize, int? userPrivacyLevel = null)
     {
-        var (items, totalCount) = await _documentRepository.SearchWithNamesPaginatedAsync(name, folderId, classificationId, documentTypeId, page, pageSize);
+        var (items, totalCount) = await _documentRepository.SearchWithNamesPaginatedAsync(name, folderId, classificationId, documentTypeId, page, pageSize, userPrivacyLevel);
         var dtos = items.Select(MapToDtoWithNames).ToList();
         await EnrichWithPasswordStatusAsync(dtos);
+        await EnrichWithApprovalStatusAsync(dtos);
         return ServiceResult<PagedResultDto<DocumentDto>>.Ok(new PagedResultDto<DocumentDto>
         {
             Items = dtos,
@@ -104,6 +116,7 @@ public class DocumentService : IDocumentService
         var documents = await _documentRepository.GetCheckedOutByUserWithNamesAsync(userId);
         var dtos = documents.Select(MapToDtoWithNames).ToList();
         await EnrichWithPasswordStatusAsync(dtos);
+        await EnrichWithApprovalStatusAsync(dtos);
         return ServiceResult<List<DocumentDto>>.Ok(dtos);
     }
 
@@ -120,11 +133,26 @@ public class DocumentService : IDocumentService
         }
     }
 
+    private async Task EnrichWithApprovalStatusAsync(List<DocumentDto> documents)
+    {
+        if (documents.Count == 0) return;
+
+        var documentIds = documents.Select(d => d.Id).ToList();
+        var approvalStatuses = await _approvalService.GetApprovalStatusBulkAsync(documentIds);
+
+        foreach (var doc in documents)
+        {
+            if (approvalStatuses.TryGetValue(doc.Id, out var status))
+                doc.ApprovalStatus = status;
+        }
+    }
+
     public async Task<ServiceResult<List<DocumentDto>>> GetCreatedByUserAsync(Guid userId, int take = 50)
     {
         var documents = await _documentRepository.GetCreatedByUserWithNamesAsync(userId, take);
         var dtos = documents.Select(MapToDtoWithNames).ToList();
         await EnrichWithPasswordStatusAsync(dtos);
+        await EnrichWithApprovalStatusAsync(dtos);
         return ServiceResult<List<DocumentDto>>.Ok(dtos);
     }
 
@@ -159,6 +187,7 @@ public class DocumentService : IDocumentService
             ClassificationId = dto.ClassificationId,
             ImportanceId = dto.ImportanceId,
             DocumentTypeId = dto.DocumentTypeId,
+            ExpiryDate = dto.ExpiryDate,
             CreatedBy = userId,
             IsActive = true,
             IsOriginalRecord = true,
@@ -208,6 +237,9 @@ public class DocumentService : IDocumentService
 
         await _activityLogService.LogActivityAsync(
             ActivityActions.Created, "Document", id, dto.Name, null, userId, null, null);
+
+        // Auto-trigger workflow if one is configured for this folder
+        await _approvalService.TryAutoTriggerWorkflowAsync(id, dto.FolderId, userId);
 
         return ServiceResult<DocumentDto>.Ok(MapToDto(document), "Document created successfully");
     }
@@ -1249,7 +1281,8 @@ public class DocumentService : IDocumentService
             ContentTypeId = document.ContentTypeId,
             CreatedBy = document.CreatedBy,
             CreatedAt = document.CreatedAt,
-            ModifiedAt = document.ModifiedAt
+            ModifiedAt = document.ModifiedAt,
+            ExpiryDate = document.ExpiryDate
         };
     }
 
@@ -1282,7 +1315,8 @@ public class DocumentService : IDocumentService
             ModifiedAt = document.ModifiedAt,
             IsShortcut = document.IsShortcut,
             ShortcutId = document.ShortcutId,
-            AttachmentCount = document.AttachmentCount
+            AttachmentCount = document.AttachmentCount,
+            ExpiryDate = document.ExpiryDate
         };
     }
 

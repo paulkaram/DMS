@@ -11,17 +11,20 @@ public class ReferenceDataService : IReferenceDataService
     private readonly IImportanceRepository _importanceRepo;
     private readonly IDocumentTypeRepository _documentTypeRepo;
     private readonly ILookupRepository _lookupRepo;
+    private readonly IPrivacyLevelRepository _privacyLevelRepo;
 
     public ReferenceDataService(
         IClassificationRepository classificationRepo,
         IImportanceRepository importanceRepo,
         IDocumentTypeRepository documentTypeRepo,
-        ILookupRepository lookupRepo)
+        ILookupRepository lookupRepo,
+        IPrivacyLevelRepository privacyLevelRepo)
     {
         _classificationRepo = classificationRepo;
         _importanceRepo = importanceRepo;
         _documentTypeRepo = documentTypeRepo;
         _lookupRepo = lookupRepo;
+        _privacyLevelRepo = privacyLevelRepo;
     }
 
     // Classifications
@@ -322,6 +325,70 @@ public class ReferenceDataService : IReferenceDataService
     public async Task<ServiceResult> DeleteLookupItemAsync(Guid itemId)
     {
         await _lookupRepo.DeleteItemAsync(itemId);
+        return ServiceResult.Ok();
+    }
+
+    // Privacy Levels
+    public async Task<ServiceResult<List<PrivacyLevelDto>>> GetPrivacyLevelsAsync(bool includeInactive = false)
+    {
+        var items = await _privacyLevelRepo.GetAllAsync(includeInactive);
+        return ServiceResult<List<PrivacyLevelDto>>.Ok(items.Select(x => new PrivacyLevelDto
+        {
+            Id = x.Id,
+            Name = x.Name,
+            Level = x.Level,
+            Color = x.Color,
+            Description = x.Description,
+            IsActive = x.IsActive
+        }).ToList());
+    }
+
+    public async Task<ServiceResult<PrivacyLevelDto>> GetPrivacyLevelByIdAsync(Guid id)
+    {
+        var item = await _privacyLevelRepo.GetByIdAsync(id);
+        if (item == null) return ServiceResult<PrivacyLevelDto>.Fail("Not found");
+        return ServiceResult<PrivacyLevelDto>.Ok(new PrivacyLevelDto
+        {
+            Id = item.Id,
+            Name = item.Name,
+            Level = item.Level,
+            Color = item.Color,
+            Description = item.Description,
+            IsActive = item.IsActive
+        });
+    }
+
+    public async Task<ServiceResult<PrivacyLevelDto>> CreatePrivacyLevelAsync(PrivacyLevelDto dto)
+    {
+        var entity = new PrivacyLevel
+        {
+            Name = dto.Name,
+            Level = dto.Level,
+            Color = dto.Color,
+            Description = dto.Description,
+            IsActive = true
+        };
+        var id = await _privacyLevelRepo.CreateAsync(entity);
+        dto.Id = id;
+        return ServiceResult<PrivacyLevelDto>.Ok(dto);
+    }
+
+    public async Task<ServiceResult<PrivacyLevelDto>> UpdatePrivacyLevelAsync(Guid id, PrivacyLevelDto dto)
+    {
+        var entity = await _privacyLevelRepo.GetByIdAsync(id);
+        if (entity == null) return ServiceResult<PrivacyLevelDto>.Fail("Not found");
+        entity.Name = dto.Name;
+        entity.Level = dto.Level;
+        entity.Color = dto.Color;
+        entity.Description = dto.Description;
+        entity.IsActive = dto.IsActive;
+        await _privacyLevelRepo.UpdateAsync(entity);
+        return ServiceResult<PrivacyLevelDto>.Ok(dto);
+    }
+
+    public async Task<ServiceResult> DeletePrivacyLevelAsync(Guid id)
+    {
+        await _privacyLevelRepo.DeleteAsync(id);
         return ServiceResult.Ok();
     }
 }

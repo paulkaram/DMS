@@ -14,6 +14,9 @@ public class ApprovalWorkflowConfiguration : IEntityTypeConfiguration<ApprovalWo
         // Ignore computed/joined properties
         builder.Ignore(e => e.FolderName);
 
+        builder.Property(e => e.TriggerType).HasMaxLength(50).HasDefaultValue("Manual");
+        builder.Property(e => e.InheritToSubfolders).HasDefaultValue(true);
+
         // Navigation
         builder.HasMany(e => e.Steps)
             .WithOne()
@@ -31,5 +34,10 @@ public class ApprovalWorkflowStepConfiguration : IEntityTypeConfiguration<Approv
         // Ignore computed/joined properties
         builder.Ignore(e => e.ApproverUserName);
         builder.Ignore(e => e.ApproverRoleName);
+        builder.Ignore(e => e.ApproverStructureName);
+        builder.Ignore(e => e.StatusName);
+        builder.Ignore(e => e.StatusColor);
+
+        builder.Property(e => e.AssignToManager).HasDefaultValue(false);
     }
 }

@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import type { Principal, User, Role, Structure } from '@/types'
 import { usersApi, rolesApi, structuresApi } from '@/api/client'
 
 // For dropdown positioning
 const triggerRef = ref<HTMLElement | null>(null)
+const searchInputRef = ref<HTMLInputElement | null>(null)
 const dropdownStyle = ref({ top: '0px', left: '0px', width: '0px' })
 
 function updateDropdownPosition() {
@@ -32,13 +33,19 @@ const isOpen = ref(false)
 const searchQuery = ref('')
 const selectedType = ref<'User' | 'Role' | 'Structure'>('User')
 const isLoading = ref(false)
-const hasLoadedData = ref(false)
 
 const users = ref<User[]>([])
 const roles = ref<Role[]>([])
 const structures = ref<Structure[]>([])
 
+// Track if roles/structures have been loaded (they load once, not paginated)
+const rolesLoaded = ref(false)
+const structuresLoaded = ref(false)
+
 const allowedTypes = computed(() => props.principalTypes || ['User', 'Role', 'Structure'])
+
+// Debounce timer for user search
+let searchTimer: ReturnType<typeof setTimeout> | null = null
 
 // Type definitions - consistent teal/navy theme
 const typeConfig = {
@@ -49,7 +56,7 @@ const typeConfig = {
     color: 'from-primary to-teal-600',
     bgColor: 'bg-white dark:bg-surface-dark border-zinc-200 dark:border-border-dark text-zinc-600 dark:text-zinc-300',
     selectedBg: 'bg-primary text-white border-primary',
-    placeholder: 'Search users...',
+    placeholder: 'Search users by name or email...',
     emptyIcon: 'person_off',
     emptyText: 'No users found'
   },
@@ -92,55 +99,75 @@ function getAvatarColor(index: number): string {
   return avatarColors[index % avatarColors.length]
 }
 
-// Load data on mount and when type changes
-watch(selectedType, async () => {
-  if (!hasLoadedData.value) {
-    await loadData()
-  }
-}, { immediate: true })
-
-// Update position when dropdown opens
-watch(isOpen, (open) => {
+// Focus search input when dropdown opens
+watch(isOpen, async (open) => {
   if (open) {
     updateDropdownPosition()
+    await loadInitialData()
+    await nextTick()
+    searchInputRef.value?.focus()
+  } else {
+    searchQuery.value = ''
   }
 })
 
-async function loadData() {
-  if (hasLoadedData.value) return
+// Search users server-side when query changes (debounced)
+watch(searchQuery, (q) => {
+  if (selectedType.value === 'User') {
+    if (searchTimer) clearTimeout(searchTimer)
+    searchTimer = setTimeout(() => searchUsers(q), 300)
+  }
+})
 
+async function searchUsers(query: string) {
   isLoading.value = true
   try {
-    const promises: Promise<any>[] = []
-
-    if (allowedTypes.value.includes('User')) {
-      promises.push(usersApi.getAll().then(r => { const d = r.data; users.value = Array.isArray(d) ? d : d.items ?? [] }))
-    }
-    if (allowedTypes.value.includes('Role')) {
-      promises.push(rolesApi.getAll().then(r => { roles.value = r.data }))
-    }
-    if (allowedTypes.value.includes('Structure')) {
-      promises.push(structuresApi.getAll().then(r => { structures.value = r.data }))
-    }
-
-    await Promise.all(promises)
-    hasLoadedData.value = true
-  } catch (error) {
+    const res = await usersApi.search(query, 1, 50)
+    const d = res.data
+    users.value = Array.isArray(d) ? d : d.items ?? []
+  } catch {
+    // silently fail
   } finally {
     isLoading.value = false
   }
 }
 
+async function loadInitialData() {
+  isLoading.value = true
+  try {
+    const promises: Promise<any>[] = []
+
+    // Always load initial users
+    if (allowedTypes.value.includes('User')) {
+      promises.push(
+        usersApi.search('', 1, 50).then(r => {
+          const d = r.data
+          users.value = Array.isArray(d) ? d : d.items ?? []
+        })
+      )
+    }
+    if (allowedTypes.value.includes('Role') && !rolesLoaded.value) {
+      promises.push(rolesApi.getAll().then(r => { roles.value = r.data; rolesLoaded.value = true }))
+    }
+    if (allowedTypes.value.includes('Structure') && !structuresLoaded.value) {
+      promises.push(structuresApi.getAll().then(r => { structures.value = r.data; structuresLoaded.value = true }))
+    }
+
+    await Promise.all(promises)
+  } catch {
+    // silently fail
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// For roles and structures, filter client-side (they're fully loaded)
 const filteredItems = computed(() => {
   const q = searchQuery.value.toLowerCase()
 
   if (selectedType.value === 'User') {
-    if (!q) return users.value
-    return users.value.filter(u =>
-      u.displayName?.toLowerCase().includes(q) ||
-      u.username?.toLowerCase().includes(q) ||
-      u.email?.toLowerCase().includes(q)
-    )
+    // Users are searched server-side, just return current results
+    return users.value
   }
 
   if (selectedType.value === 'Role') {
@@ -187,6 +214,10 @@ function clearSelection() {
 function selectType(type: 'User' | 'Role' | 'Structure') {
   selectedType.value = type
   searchQuery.value = ''
+  // Reload users when switching back to User type
+  if (type === 'User') {
+    searchUsers('')
+  }
 }
 </script>
 
@@ -251,6 +282,14 @@ function selectType(type: 'User' | 'Role' | 'Structure') {
 
       <!-- Dropdown (Teleported to body) -->
       <Teleport to="body">
+        <!-- Backdrop (below dropdown) -->
+        <div
+          v-if="isOpen"
+          @click="isOpen = false"
+          class="fixed inset-0 z-[9998]"
+        ></div>
+
+        <!-- Dropdown (above backdrop) -->
         <Transition
           enter-active-class="transition duration-150 ease-out"
           enter-from-class="opacity-0 translate-y-1"
@@ -269,11 +308,14 @@ function selectType(type: 'User' | 'Role' | 'Structure') {
               <div class="relative">
                 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
                 <input
+                  ref="searchInputRef"
                   v-model="searchQuery"
                   type="text"
                   :placeholder="currentTypeConfig.placeholder"
                   class="w-full pl-10 pr-4 py-2.5 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none bg-white dark:bg-surface-dark text-gray-900 dark:text-white text-sm"
                   @click.stop
+                  @mousedown.stop
+                  @keydown.stop
                 />
               </div>
             </div>
@@ -366,13 +408,6 @@ function selectType(type: 'User' | 'Role' | 'Structure') {
             </div>
           </div>
         </Transition>
-
-        <!-- Backdrop -->
-        <div
-          v-if="isOpen"
-          @click="isOpen = false"
-          class="fixed inset-0 z-[9998]"
-        ></div>
       </Teleport>
     </div>
   </div>

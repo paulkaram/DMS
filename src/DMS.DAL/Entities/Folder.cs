@@ -22,6 +22,9 @@ public class Folder : IAuditable, ISoftDeletable
     /// </summary>
     public int AccessMode { get; set; } = 0;
 
+    public Guid? PrivacyLevelId { get; set; }
+    public PrivacyLevel? PrivacyLevel { get; set; }
+
     public bool IsActive { get; set; } = true;
     public Guid? CreatedBy { get; set; }
     public DateTime CreatedAt { get; set; }

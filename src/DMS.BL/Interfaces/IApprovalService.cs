@@ -10,6 +10,7 @@ public interface IApprovalService
     Task<Guid> CreateWorkflowAsync(Guid createdBy, CreateWorkflowRequest request);
     Task<bool> UpdateWorkflowAsync(Guid id, CreateWorkflowRequest request);
     Task<bool> DeleteWorkflowAsync(Guid id);
+    Task TryAutoTriggerWorkflowAsync(Guid documentId, Guid folderId, Guid uploadedBy);
 
     // Requests
     Task<IEnumerable<ApprovalRequestDto>> GetPendingRequestsForUserAsync(Guid userId);
@@ -19,4 +20,7 @@ public interface IApprovalService
     Task<Guid> CreateRequestAsync(Guid requestedBy, CreateApprovalRequestDto request);
     Task<bool> SubmitActionAsync(Guid requestId, Guid approverId, SubmitApprovalActionDto action);
     Task<bool> CancelRequestAsync(Guid requestId);
+    Task<bool> ResubmitRequestAsync(Guid requestId, Guid userId);
+    Task<Dictionary<Guid, int>> GetApprovalStatusBulkAsync(IEnumerable<Guid> documentIds);
+    Task<bool> IsApproverForDocumentAsync(Guid documentId, Guid userId);
 }

@@ -41,7 +41,10 @@ public class ApprovalService : IApprovalService
             RequiredApprovers = request.RequiredApprovers,
             IsSequential = request.IsSequential,
             IsActive = true,
-            CreatedBy = createdBy
+            CreatedBy = createdBy,
+            DesignerData = request.DesignerData,
+            TriggerType = request.TriggerType,
+            InheritToSubfolders = request.InheritToSubfolders
         };
 
         var workflowId = await _workflowRepository.CreateAsync(workflow);
@@ -57,7 +60,10 @@ public class ApprovalService : IApprovalService
                     StepOrder = step.StepOrder,
                     ApproverUserId = step.ApproverUserId,
                     ApproverRoleId = step.ApproverRoleId,
-                    IsRequired = step.IsRequired
+                    ApproverStructureId = step.ApproverStructureId,
+                    AssignToManager = step.AssignToManager,
+                    IsRequired = step.IsRequired,
+                    StatusId = step.StatusId
                 });
             }
         }
@@ -75,8 +81,30 @@ public class ApprovalService : IApprovalService
         workflow.FolderId = request.FolderId;
         workflow.RequiredApprovers = request.RequiredApprovers;
         workflow.IsSequential = request.IsSequential;
+        if (request.DesignerData != null)
+            workflow.DesignerData = request.DesignerData;
+        workflow.TriggerType = request.TriggerType;
+        workflow.InheritToSubfolders = request.InheritToSubfolders;
 
-        return await _workflowRepository.UpdateAsync(workflow);
+        var updated = await _workflowRepository.UpdateAsync(workflow);
+
+        // Replace steps if provided
+        if (request.Steps != null)
+        {
+            var newSteps = request.Steps.Select(s => new ApprovalWorkflowStep
+            {
+                StepOrder = s.StepOrder,
+                ApproverUserId = s.ApproverUserId,
+                ApproverRoleId = s.ApproverRoleId,
+                ApproverStructureId = s.ApproverStructureId,
+                AssignToManager = s.AssignToManager,
+                IsRequired = s.IsRequired,
+                StatusId = s.StatusId
+            });
+            await _workflowRepository.ReplaceStepsAsync(id, newSteps);
+        }
+
+        return updated;
     }
 
     public async Task<bool> DeleteWorkflowAsync(Guid id)
@@ -144,6 +172,10 @@ public class ApprovalService : IApprovalService
         {
             await _requestRepository.UpdateStatusAsync(requestId, (int)ApprovalStatus.Rejected);
         }
+        else if (actionDto.Action == (int)ApprovalActionType.ReturnedForRevision)
+        {
+            await _requestRepository.UpdateStatusAsync(requestId, (int)ApprovalStatus.ReturnedForRevision);
+        }
         else if (actionDto.Action == (int)ApprovalActionType.Approved)
         {
             // Check if all required approvers have approved
@@ -169,6 +201,49 @@ public class ApprovalService : IApprovalService
         return await _requestRepository.UpdateStatusAsync(requestId, (int)ApprovalStatus.Cancelled);
     }
 
+    public async Task<bool> ResubmitRequestAsync(Guid requestId, Guid userId)
+    {
+        var request = await _requestRepository.GetByIdAsync(requestId);
+        if (request == null) return false;
+
+        // Only the original requester can resubmit
+        if (request.RequestedBy != userId) return false;
+
+        // Only returned-for-revision or rejected requests can be resubmitted
+        if (request.Status != (int)ApprovalStatus.ReturnedForRevision &&
+            request.Status != (int)ApprovalStatus.Rejected)
+            return false;
+
+        return await _requestRepository.UpdateStatusAsync(requestId, (int)ApprovalStatus.Pending);
+    }
+
+    public async Task TryAutoTriggerWorkflowAsync(Guid documentId, Guid folderId, Guid uploadedBy)
+    {
+        var workflow = await _workflowRepository.GetActiveByFolderChainAsync(folderId, "OnUpload");
+        if (workflow == null) return;
+
+        var approvalRequest = new ApprovalRequest
+        {
+            DocumentId = documentId,
+            WorkflowId = workflow.Id,
+            RequestedBy = uploadedBy,
+            Status = (int)ApprovalStatus.Pending,
+            Comments = $"Auto-triggered by workflow '{workflow.Name}' on upload"
+        };
+
+        await _requestRepository.CreateAsync(approvalRequest);
+    }
+
+    public async Task<Dictionary<Guid, int>> GetApprovalStatusBulkAsync(IEnumerable<Guid> documentIds)
+    {
+        return await _requestRepository.GetLatestStatusByDocumentIdsAsync(documentIds);
+    }
+
+    public async Task<bool> IsApproverForDocumentAsync(Guid documentId, Guid userId)
+    {
+        return await _requestRepository.IsApproverForDocumentAsync(documentId, userId);
+    }
+
     private static ApprovalWorkflowDto MapWorkflowToDto(ApprovalWorkflow workflow)
     {
         return new ApprovalWorkflowDto
@@ -182,6 +257,9 @@ public class ApprovalService : IApprovalService
             IsActive = workflow.IsActive,
             CreatedAt = workflow.CreatedAt,
             FolderName = workflow.FolderName,
+            DesignerData = workflow.DesignerData,
+            TriggerType = workflow.TriggerType,
+            InheritToSubfolders = workflow.InheritToSubfolders,
             Steps = workflow.Steps?.Select(s => new ApprovalWorkflowStepDto
             {
                 Id = s.Id,
@@ -189,9 +267,15 @@ public class ApprovalService : IApprovalService
                 StepOrder = s.StepOrder,
                 ApproverUserId = s.ApproverUserId,
                 ApproverRoleId = s.ApproverRoleId,
+                ApproverStructureId = s.ApproverStructureId,
+                AssignToManager = s.AssignToManager,
                 IsRequired = s.IsRequired,
+                StatusId = s.StatusId,
                 ApproverUserName = s.ApproverUserName,
-                ApproverRoleName = s.ApproverRoleName
+                ApproverRoleName = s.ApproverRoleName,
+                ApproverStructureName = s.ApproverStructureName,
+                StatusName = s.StatusName,
+                StatusColor = s.StatusColor
             }).ToList()
         };
     }

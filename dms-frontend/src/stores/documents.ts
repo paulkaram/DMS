@@ -46,10 +46,16 @@ export const useDocumentsStore = defineStore('documents', () => {
       const response = await foldersApi.getTree(cabinetId)
       const folderTree = response.data as Folder[]
 
-      // Update tree node for this cabinet
+      // Collect currently expanded node IDs so we can preserve expansion state
       const cabinetNode = treeNodes.value.find(n => n.id === cabinetId)
+      const expandedIds = new Set<string>()
+      if (cabinetNode?.children) {
+        collectExpandedIds(cabinetNode.children, expandedIds)
+      }
+
+      // Update tree node for this cabinet
       if (cabinetNode) {
-        cabinetNode.children = mapFoldersToTreeNodes(folderTree)
+        cabinetNode.children = mapFoldersToTreeNodes(folderTree, expandedIds)
         cabinetNode.isExpanded = true
       }
       loadedCabinetIds.value.add(cabinetId)
@@ -60,14 +66,21 @@ export const useDocumentsStore = defineStore('documents', () => {
     }
   }
 
-  function mapFoldersToTreeNodes(folders: Folder[]): TreeNode[] {
+  function collectExpandedIds(nodes: TreeNode[], ids: Set<string>) {
+    for (const node of nodes) {
+      if (node.isExpanded) ids.add(node.id)
+      if (node.children) collectExpandedIds(node.children, ids)
+    }
+  }
+
+  function mapFoldersToTreeNodes(folders: Folder[], expandedIds?: Set<string>): TreeNode[] {
     return folders.map(folder => ({
       id: folder.id,
       name: folder.name,
       type: 'folder' as const,
       parentId: folder.parentFolderId,
-      children: folder.children ? mapFoldersToTreeNodes(folder.children) : [],
-      isExpanded: false,
+      children: folder.children ? mapFoldersToTreeNodes(folder.children, expandedIds) : [],
+      isExpanded: expandedIds?.has(folder.id) ?? false,
       accessMode: folder.accessMode
     }))
   }
@@ -112,6 +125,15 @@ export const useDocumentsStore = defineStore('documents', () => {
       if (node.children) {
         const found = findNodeById(node.children, id)
         if (found) return found
+      }
+    }
+    return null
+  }
+
+  function findCabinetForFolder(folderId: string): string | null {
+    for (const cabinet of treeNodes.value) {
+      if (cabinet.children && findNodeById(cabinet.children, folderId)) {
+        return cabinet.id
       }
     }
     return null
@@ -259,6 +281,7 @@ export const useDocumentsStore = defineStore('documents', () => {
     createFolder,
     uploadDocument,
     deleteDocument,
-    updateNodeName
+    updateNodeName,
+    findCabinetForFolder
   }
 })

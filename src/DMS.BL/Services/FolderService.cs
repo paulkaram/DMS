@@ -33,36 +33,36 @@ public class FolderService : IFolderService
         return ServiceResult<FolderDto>.Ok(MapToDto(folder));
     }
 
-    public async Task<ServiceResult<List<FolderDto>>> GetByCabinetIdAsync(Guid cabinetId)
+    public async Task<ServiceResult<List<FolderDto>>> GetByCabinetIdAsync(Guid cabinetId, int? userPrivacyLevel = null)
     {
-        var folders = await _folderRepository.GetByCabinetIdAsync(cabinetId);
+        var folders = await _folderRepository.GetByCabinetIdAsync(cabinetId, userPrivacyLevel);
         return ServiceResult<List<FolderDto>>.Ok(folders.Select(MapToDto).ToList());
     }
 
-    public async Task<ServiceResult<List<FolderDto>>> GetByParentIdAsync(Guid? parentId, Guid cabinetId)
+    public async Task<ServiceResult<List<FolderDto>>> GetByParentIdAsync(Guid? parentId, Guid cabinetId, int? userPrivacyLevel = null)
     {
-        var folders = await _folderRepository.GetByParentIdAsync(parentId, cabinetId);
+        var folders = await _folderRepository.GetByParentIdAsync(parentId, cabinetId, userPrivacyLevel);
         return ServiceResult<List<FolderDto>>.Ok(folders.Select(MapToDto).ToList());
     }
 
-    public async Task<ServiceResult<List<FolderDto>>> GetTreeAsync(Guid cabinetId)
+    public async Task<ServiceResult<List<FolderDto>>> GetTreeAsync(Guid cabinetId, int? userPrivacyLevel = null)
     {
-        var allFolders = await _folderRepository.GetTreeAsync(cabinetId);
+        var allFolders = await _folderRepository.GetTreeAsync(cabinetId, userPrivacyLevel: userPrivacyLevel);
         var folderList = allFolders.ToList();
         var rootFolders = folderList.Where(f => f.ParentFolderId == null).ToList();
         var result = rootFolders.Select(f => BuildTree(f, folderList)).ToList();
         return ServiceResult<List<FolderDto>>.Ok(result);
     }
 
-    public async Task<ServiceResult<List<FolderDto>>> SearchAsync(string? name, Guid? cabinetId)
+    public async Task<ServiceResult<List<FolderDto>>> SearchAsync(string? name, Guid? cabinetId, int? userPrivacyLevel = null)
     {
-        var folders = await _folderRepository.SearchAsync(name, cabinetId);
+        var folders = await _folderRepository.SearchAsync(name, cabinetId, userPrivacyLevel);
         return ServiceResult<List<FolderDto>>.Ok(folders.Select(MapToDto).ToList());
     }
 
-    public async Task<ServiceResult<PagedResultDto<FolderDto>>> SearchPaginatedAsync(string? name, Guid? cabinetId, int page, int pageSize)
+    public async Task<ServiceResult<PagedResultDto<FolderDto>>> SearchPaginatedAsync(string? name, Guid? cabinetId, int page, int pageSize, int? userPrivacyLevel = null)
     {
-        var (items, totalCount) = await _folderRepository.SearchPaginatedAsync(name, cabinetId, page, pageSize);
+        var (items, totalCount) = await _folderRepository.SearchPaginatedAsync(name, cabinetId, page, pageSize, userPrivacyLevel);
         return ServiceResult<PagedResultDto<FolderDto>>.Ok(new PagedResultDto<FolderDto>
         {
             Items = items.Select(MapToDto).ToList(),
@@ -72,9 +72,9 @@ public class FolderService : IFolderService
         });
     }
 
-    public async Task<ServiceResult<PagedResultDto<FolderDto>>> GetByParentIdPaginatedAsync(Guid? parentId, Guid cabinetId, int page, int pageSize)
+    public async Task<ServiceResult<PagedResultDto<FolderDto>>> GetByParentIdPaginatedAsync(Guid? parentId, Guid cabinetId, int page, int pageSize, int? userPrivacyLevel = null)
     {
-        var (items, totalCount) = await _folderRepository.GetByParentIdPaginatedAsync(parentId, cabinetId, page, pageSize);
+        var (items, totalCount) = await _folderRepository.GetByParentIdPaginatedAsync(parentId, cabinetId, page, pageSize, userPrivacyLevel);
         return ServiceResult<PagedResultDto<FolderDto>>.Ok(new PagedResultDto<FolderDto>
         {
             Items = items.Select(MapToDto).ToList(),
@@ -93,6 +93,7 @@ public class FolderService : IFolderService
             Name = dto.Name,
             Description = dto.Description,
             AccessMode = dto.AccessMode,
+            PrivacyLevelId = dto.PrivacyLevelId,
             CreatedBy = userId,
             IsActive = true
         };
@@ -116,6 +117,7 @@ public class FolderService : IFolderService
         folder.Description = dto.Description;
         folder.BreakInheritance = dto.BreakInheritance;
         folder.AccessMode = dto.AccessMode;
+        folder.PrivacyLevelId = dto.PrivacyLevelId;
         folder.ModifiedBy = userId;
 
         await _folderRepository.UpdateAsync(folder);
@@ -241,6 +243,10 @@ public class FolderService : IFolderService
             Path = folder.Path,
             BreakInheritance = folder.BreakInheritance,
             AccessMode = folder.AccessMode,
+            PrivacyLevelId = folder.PrivacyLevelId,
+            PrivacyLevelName = folder.PrivacyLevel?.Name,
+            PrivacyLevelColor = folder.PrivacyLevel?.Color,
+            PrivacyLevelValue = folder.PrivacyLevel?.Level,
             CreatedAt = folder.CreatedAt,
             ModifiedAt = folder.ModifiedAt
         };

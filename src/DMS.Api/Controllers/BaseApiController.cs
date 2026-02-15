@@ -29,6 +29,13 @@ public abstract class BaseApiController : ControllerBase
         return result.Success && result.Data;
     }
 
+    protected int? GetCurrentUserPrivacyLevel()
+    {
+        if (IsAdmin()) return null; // null = bypass filtering
+        var claim = User.FindFirst("privacyLevel")?.Value;
+        return int.TryParse(claim, out var level) ? level : 0;
+    }
+
     protected IActionResult OkOrNotFound<T>(ServiceResult<T> result) =>
         result.Success ? Ok(result.Data) : NotFound(result.Errors);
 
