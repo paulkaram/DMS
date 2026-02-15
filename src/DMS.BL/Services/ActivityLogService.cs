@@ -37,6 +37,45 @@ public class ActivityLogService : IActivityLogService
         return ServiceResult<List<ActivityLogDto>>.Ok(logs.Select(MapToDto).ToList());
     }
 
+    public async Task<ServiceResult<PagedResultDto<ActivityLogDto>>> GetByNodePagedAsync(string nodeType, Guid nodeId, int page = 1, int pageSize = 50)
+    {
+        if (!Enum.TryParse<NodeType>(nodeType, true, out var parsedNodeType))
+            return ServiceResult<PagedResultDto<ActivityLogDto>>.Fail("Invalid node type");
+
+        var result = await _activityLogRepository.GetByNodePagedAsync(parsedNodeType, nodeId, page, pageSize);
+        return ServiceResult<PagedResultDto<ActivityLogDto>>.Ok(new PagedResultDto<ActivityLogDto>
+        {
+            Items = result.Items.Select(MapToDto).ToList(),
+            TotalCount = result.TotalCount,
+            PageNumber = result.PageNumber,
+            PageSize = result.PageSize
+        });
+    }
+
+    public async Task<ServiceResult<PagedResultDto<ActivityLogDto>>> GetByUserPagedAsync(Guid userId, int page = 1, int pageSize = 50)
+    {
+        var result = await _activityLogRepository.GetByUserPagedAsync(userId, page, pageSize);
+        return ServiceResult<PagedResultDto<ActivityLogDto>>.Ok(new PagedResultDto<ActivityLogDto>
+        {
+            Items = result.Items.Select(MapToDto).ToList(),
+            TotalCount = result.TotalCount,
+            PageNumber = result.PageNumber,
+            PageSize = result.PageSize
+        });
+    }
+
+    public async Task<ServiceResult<PagedResultDto<ActivityLogDto>>> GetRecentPagedAsync(int page = 1, int pageSize = 50)
+    {
+        var result = await _activityLogRepository.GetRecentPagedAsync(page, pageSize);
+        return ServiceResult<PagedResultDto<ActivityLogDto>>.Ok(new PagedResultDto<ActivityLogDto>
+        {
+            Items = result.Items.Select(MapToDto).ToList(),
+            TotalCount = result.TotalCount,
+            PageNumber = result.PageNumber,
+            PageSize = result.PageSize
+        });
+    }
+
     public async Task LogActivityAsync(string action, string? nodeType, Guid? nodeId, string? nodeName, string? details, Guid? userId, string? userName, string? ipAddress)
     {
         NodeType? parsedNodeType = null;

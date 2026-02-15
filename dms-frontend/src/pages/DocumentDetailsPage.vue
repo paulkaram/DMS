@@ -403,7 +403,7 @@ async function loadActivities() {
   if (!document.value) return
   try {
     const response = await activityLogsApi.getByNode('Document', document.value.id)
-    activities.value = response.data
+    activities.value = response.data.items
   } catch (err) {
   }
 }

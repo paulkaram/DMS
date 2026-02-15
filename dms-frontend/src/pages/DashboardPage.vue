@@ -40,7 +40,7 @@ async function loadDashboardData() {
     const [statsResponse, recentDocsResponse, activityResponse, checkoutsResponse, expiredResponse, pendingResponse, myRequestsResponse, workflowsResponse] = await Promise.all([
       dashboardApi.getStatistics(),
       dashboardApi.getRecentDocuments(5),
-      activityLogsApi.getMyActivity(0, 10),
+      activityLogsApi.getMyActivity(1, 10),
       dashboardApi.getMyCheckouts(),
       dashboardApi.getExpiredDocuments(5),
       approvalsApi.getPendingRequests(5).catch(() => ({ data: [] })),
@@ -50,7 +50,7 @@ async function loadDashboardData() {
 
     stats.value = statsResponse.data
     recentDocuments.value = recentDocsResponse.data
-    recentActivity.value = activityResponse.data
+    recentActivity.value = activityResponse.data.items
     myCheckouts.value = checkoutsResponse.data
     expiredDocuments.value = expiredResponse.data
 

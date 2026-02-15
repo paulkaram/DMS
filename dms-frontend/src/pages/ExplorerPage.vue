@@ -1122,7 +1122,7 @@ async function loadAuditTrail(nodeType: string, nodeId: string) {
   isLoadingAudit.value = true
   try {
     const response = await activityLogsApi.getByNode(nodeType, nodeId)
-    auditLogs.value = response.data
+    auditLogs.value = response.data.items
   } catch (err) {
   } finally {
     isLoadingAudit.value = false

@@ -49,8 +49,8 @@ onMounted(async () => {
 async function loadActivities() {
   isLoading.value = true
   try {
-    const response = await activityLogsApi.getRecent(500) // Load more for client-side filtering
-    activities.value = response.data
+    const response = await activityLogsApi.getRecent(1, 500) // Load more for client-side filtering
+    activities.value = response.data.items
   } catch (err) {
   } finally {
     isLoading.value = false

@@ -182,14 +182,14 @@ export const documentsApi = {
 }
 
 export const activityLogsApi = {
-  getRecent: (take = 100) =>
-    apiClient.get('/activitylogs', { params: { take } }),
-  getByNode: (nodeType: string, nodeId: string, skip = 0, take = 50) =>
-    apiClient.get(`/activitylogs/by-node/${nodeType}/${nodeId}`, { params: { skip, take } }),
-  getByUser: (userId: string, skip = 0, take = 50) =>
-    apiClient.get(`/activitylogs/by-user/${userId}`, { params: { skip, take } }),
-  getMyActivity: (skip = 0, take = 50) =>
-    apiClient.get('/activitylogs/my-activity', { params: { skip, take } })
+  getRecent: (page = 1, pageSize = 100) =>
+    apiClient.get('/activitylogs', { params: { page, pageSize } }),
+  getByNode: (nodeType: string, nodeId: string, page = 1, pageSize = 50) =>
+    apiClient.get(`/activitylogs/by-node/${nodeType}/${nodeId}`, { params: { page, pageSize } }),
+  getByUser: (userId: string, page = 1, pageSize = 50) =>
+    apiClient.get(`/activitylogs/by-user/${userId}`, { params: { page, pageSize } }),
+  getMyActivity: (page = 1, pageSize = 50) =>
+    apiClient.get('/activitylogs/my-activity', { params: { page, pageSize } })
 }
 
 // Auth API

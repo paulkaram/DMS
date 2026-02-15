@@ -1,3 +1,4 @@
+using DMS.Api.Constants;
 using DMS.BL.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,31 +16,35 @@ public class ActivityLogsController : BaseApiController
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetRecent([FromQuery] int take = 100)
+    public async Task<IActionResult> GetRecent([FromQuery] int page = 1, [FromQuery] int pageSize = AppConstants.DefaultActivityPageSize)
     {
-        var result = await _activityLogService.GetRecentAsync(take);
+        pageSize = Math.Min(pageSize, AppConstants.MaxPageSize);
+        var result = await _activityLogService.GetRecentPagedAsync(page, pageSize);
         return result.Success ? Ok(result.Data) : BadRequest(result.Errors);
     }
 
     [HttpGet("by-node/{nodeType}/{nodeId:guid}")]
-    public async Task<IActionResult> GetByNode(string nodeType, Guid nodeId, [FromQuery] int skip = 0, [FromQuery] int take = 50)
+    public async Task<IActionResult> GetByNode(string nodeType, Guid nodeId, [FromQuery] int page = 1, [FromQuery] int pageSize = AppConstants.DefaultPageSize)
     {
-        var result = await _activityLogService.GetByNodeAsync(nodeType, nodeId, skip, take);
+        pageSize = Math.Min(pageSize, AppConstants.MaxPageSize);
+        var result = await _activityLogService.GetByNodePagedAsync(nodeType, nodeId, page, pageSize);
         return result.Success ? Ok(result.Data) : BadRequest(result.Errors);
     }
 
     [HttpGet("by-user/{userId:guid}")]
-    public async Task<IActionResult> GetByUser(Guid userId, [FromQuery] int skip = 0, [FromQuery] int take = 50)
+    public async Task<IActionResult> GetByUser(Guid userId, [FromQuery] int page = 1, [FromQuery] int pageSize = AppConstants.DefaultPageSize)
     {
-        var result = await _activityLogService.GetByUserAsync(userId, skip, take);
+        pageSize = Math.Min(pageSize, AppConstants.MaxPageSize);
+        var result = await _activityLogService.GetByUserPagedAsync(userId, page, pageSize);
         return result.Success ? Ok(result.Data) : BadRequest(result.Errors);
     }
 
     [HttpGet("my-activity")]
-    public async Task<IActionResult> GetMyActivity([FromQuery] int skip = 0, [FromQuery] int take = 50)
+    public async Task<IActionResult> GetMyActivity([FromQuery] int page = 1, [FromQuery] int pageSize = AppConstants.DefaultPageSize)
     {
+        pageSize = Math.Min(pageSize, AppConstants.MaxPageSize);
         var userId = GetCurrentUserId();
-        var result = await _activityLogService.GetByUserAsync(userId, skip, take);
+        var result = await _activityLogService.GetByUserPagedAsync(userId, page, pageSize);
         return result.Success ? Ok(result.Data) : BadRequest(result.Errors);
     }
 }
