@@ -28,5 +28,8 @@ public class LookupItemConfiguration : IEntityTypeConfiguration<LookupItem>
         builder.Property(e => e.Language).HasMaxLength(10);
 
         builder.HasOne<Lookup>().WithMany().HasForeignKey(e => e.LookupId);
+
+        // Indexes
+        builder.HasIndex(e => e.LookupId);
     }
 }

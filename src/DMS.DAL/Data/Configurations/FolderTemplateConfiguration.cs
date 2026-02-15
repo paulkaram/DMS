@@ -29,6 +29,10 @@ public class FolderTemplateNodeConfiguration : IEntityTypeConfiguration<FolderTe
         builder.Ignore(e => e.Children);
 
         builder.HasOne<FolderTemplateNode>().WithMany().HasForeignKey(e => e.ParentNodeId);
+
+        // Indexes
+        builder.HasIndex(e => e.TemplateId);
+        builder.HasIndex(e => e.ParentNodeId);
     }
 }
 
@@ -38,6 +42,9 @@ public class FolderTemplateUsageConfiguration : IEntityTypeConfiguration<FolderT
     {
         builder.ToTable("FolderTemplateUsage");
         builder.HasKey(e => e.Id);
+
+        // Indexes
+        builder.HasIndex(e => e.TemplateId);
 
         builder.Ignore(e => e.TemplateName);
         builder.Ignore(e => e.FolderName);

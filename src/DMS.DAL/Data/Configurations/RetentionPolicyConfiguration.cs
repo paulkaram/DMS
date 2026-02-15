@@ -11,6 +11,9 @@ public class RetentionPolicyConfiguration : IEntityTypeConfiguration<RetentionPo
         builder.ToTable("RetentionPolicies");
         builder.HasKey(e => e.Id);
 
+        // Indexes
+        builder.HasIndex(e => e.FolderId);
+
         // Ignore computed/joined properties
         builder.Ignore(e => e.FolderName);
         builder.Ignore(e => e.ClassificationName);

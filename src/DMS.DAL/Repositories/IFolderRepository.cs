@@ -1,9 +1,11 @@
+using DMS.DAL.DTOs;
 using DMS.DAL.Entities;
 
 namespace DMS.DAL.Repositories;
 
 public interface IFolderRepository : IRepository<Folder>
 {
+    Task<PagedResult<Folder>> GetAllPagedAsync(int page = 1, int pageSize = 50);
     Task<IEnumerable<Folder>> GetByCabinetIdAsync(Guid cabinetId, int? userPrivacyLevel = null);
     Task<IEnumerable<Folder>> GetByParentIdAsync(Guid? parentId, Guid cabinetId, int? userPrivacyLevel = null);
     Task<IEnumerable<Folder>> GetTreeAsync(Guid cabinetId, int maxResults = 5000, int? userPrivacyLevel = null);

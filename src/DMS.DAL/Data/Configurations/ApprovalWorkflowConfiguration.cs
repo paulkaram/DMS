@@ -17,6 +17,11 @@ public class ApprovalWorkflowConfiguration : IEntityTypeConfiguration<ApprovalWo
         builder.Property(e => e.TriggerType).HasMaxLength(50).HasDefaultValue("Manual");
         builder.Property(e => e.InheritToSubfolders).HasDefaultValue(true);
 
+        // Indexes
+        builder.HasIndex(e => e.FolderId);
+        builder.HasIndex(e => e.CreatedBy);
+        builder.HasIndex(e => new { e.FolderId, e.TriggerType });
+
         // Navigation
         builder.HasMany(e => e.Steps)
             .WithOne()
@@ -39,5 +44,8 @@ public class ApprovalWorkflowStepConfiguration : IEntityTypeConfiguration<Approv
         builder.Ignore(e => e.StatusColor);
 
         builder.Property(e => e.AssignToManager).HasDefaultValue(false);
+
+        // Indexes
+        builder.HasIndex(e => e.WorkflowId);
     }
 }

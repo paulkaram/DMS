@@ -1,3 +1,4 @@
+using DMS.DAL.DTOs;
 using DMS.DAL.Data;
 using DMS.DAL.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -267,31 +268,26 @@ public class ApprovalRequestRepository : IApprovalRequestRepository
         var request = await _context.ApprovalRequests
             .AsNoTracking()
             .Where(ar => ar.Id == id)
-            .Select(ar => new ApprovalRequest
+            .GroupJoin(_context.Documents.IgnoreQueryFilters().AsNoTracking(), ar => ar.DocumentId, d => d.Id, (ar, docs) => new { ar, docs })
+            .SelectMany(x => x.docs.DefaultIfEmpty(), (x, d) => new { x.ar, d })
+            .GroupJoin(_context.Users.AsNoTracking(), x => x.ar.RequestedBy, u => u.Id, (x, users) => new { x.ar, x.d, users })
+            .SelectMany(x => x.users.DefaultIfEmpty(), (x, u) => new { x.ar, x.d, u })
+            .GroupJoin(_context.ApprovalWorkflows.IgnoreQueryFilters().AsNoTracking(), x => x.ar.WorkflowId, w => w.Id, (x, workflows) => new { x.ar, x.d, x.u, workflows })
+            .SelectMany(x => x.workflows.DefaultIfEmpty(), (x, w) => new { x.ar, x.d, x.u, w })
+            .Select(x => new ApprovalRequest
             {
-                Id = ar.Id,
-                DocumentId = ar.DocumentId,
-                WorkflowId = ar.WorkflowId,
-                RequestedBy = ar.RequestedBy,
-                Status = ar.Status,
-                DueDate = ar.DueDate,
-                Comments = ar.Comments,
-                CreatedAt = ar.CreatedAt,
-                CompletedAt = ar.CompletedAt,
-                DocumentName = _context.Documents
-                    .IgnoreQueryFilters()
-                    .Where(d => d.Id == ar.DocumentId)
-                    .Select(d => d.Name)
-                    .FirstOrDefault(),
-                RequestedByName = _context.Users
-                    .Where(u => u.Id == ar.RequestedBy)
-                    .Select(u => u.DisplayName)
-                    .FirstOrDefault(),
-                WorkflowName = _context.ApprovalWorkflows
-                    .IgnoreQueryFilters()
-                    .Where(w => w.Id == ar.WorkflowId)
-                    .Select(w => w.Name)
-                    .FirstOrDefault()
+                Id = x.ar.Id,
+                DocumentId = x.ar.DocumentId,
+                WorkflowId = x.ar.WorkflowId,
+                RequestedBy = x.ar.RequestedBy,
+                Status = x.ar.Status,
+                DueDate = x.ar.DueDate,
+                Comments = x.ar.Comments,
+                CreatedAt = x.ar.CreatedAt,
+                CompletedAt = x.ar.CompletedAt,
+                DocumentName = x.d != null ? x.d.Name : null,
+                RequestedByName = x.u != null ? x.u.DisplayName : null,
+                WorkflowName = x.w != null ? x.w.Name : null
             })
             .FirstOrDefaultAsync();
 
@@ -308,32 +304,27 @@ public class ApprovalRequestRepository : IApprovalRequestRepository
         var requests = await _context.ApprovalRequests
             .AsNoTracking()
             .Where(ar => ar.DocumentId == documentId)
-            .OrderByDescending(ar => ar.CreatedAt)
-            .Select(ar => new ApprovalRequest
+            .GroupJoin(_context.Documents.IgnoreQueryFilters().AsNoTracking(), ar => ar.DocumentId, d => d.Id, (ar, docs) => new { ar, docs })
+            .SelectMany(x => x.docs.DefaultIfEmpty(), (x, d) => new { x.ar, d })
+            .GroupJoin(_context.Users.AsNoTracking(), x => x.ar.RequestedBy, u => u.Id, (x, users) => new { x.ar, x.d, users })
+            .SelectMany(x => x.users.DefaultIfEmpty(), (x, u) => new { x.ar, x.d, u })
+            .GroupJoin(_context.ApprovalWorkflows.IgnoreQueryFilters().AsNoTracking(), x => x.ar.WorkflowId, w => w.Id, (x, workflows) => new { x.ar, x.d, x.u, workflows })
+            .SelectMany(x => x.workflows.DefaultIfEmpty(), (x, w) => new { x.ar, x.d, x.u, w })
+            .OrderByDescending(x => x.ar.CreatedAt)
+            .Select(x => new ApprovalRequest
             {
-                Id = ar.Id,
-                DocumentId = ar.DocumentId,
-                WorkflowId = ar.WorkflowId,
-                RequestedBy = ar.RequestedBy,
-                Status = ar.Status,
-                DueDate = ar.DueDate,
-                Comments = ar.Comments,
-                CreatedAt = ar.CreatedAt,
-                CompletedAt = ar.CompletedAt,
-                DocumentName = _context.Documents
-                    .IgnoreQueryFilters()
-                    .Where(d => d.Id == ar.DocumentId)
-                    .Select(d => d.Name)
-                    .FirstOrDefault(),
-                RequestedByName = _context.Users
-                    .Where(u => u.Id == ar.RequestedBy)
-                    .Select(u => u.DisplayName)
-                    .FirstOrDefault(),
-                WorkflowName = _context.ApprovalWorkflows
-                    .IgnoreQueryFilters()
-                    .Where(w => w.Id == ar.WorkflowId)
-                    .Select(w => w.Name)
-                    .FirstOrDefault()
+                Id = x.ar.Id,
+                DocumentId = x.ar.DocumentId,
+                WorkflowId = x.ar.WorkflowId,
+                RequestedBy = x.ar.RequestedBy,
+                Status = x.ar.Status,
+                DueDate = x.ar.DueDate,
+                Comments = x.ar.Comments,
+                CreatedAt = x.ar.CreatedAt,
+                CompletedAt = x.ar.CompletedAt,
+                DocumentName = x.d != null ? x.d.Name : null,
+                RequestedByName = x.u != null ? x.u.DisplayName : null,
+                WorkflowName = x.w != null ? x.w.Name : null
             })
             .ToListAsync();
 
@@ -344,20 +335,19 @@ public class ApprovalRequestRepository : IApprovalRequestRepository
             var allActions = await _context.ApprovalActions
                 .AsNoTracking()
                 .Where(aa => requestIds.Contains(aa.RequestId))
-                .OrderBy(aa => aa.ActionDate)
-                .Select(aa => new ApprovalAction
+                .GroupJoin(_context.Users.AsNoTracking(), aa => aa.ApproverId, u => u.Id, (aa, users) => new { aa, users })
+                .SelectMany(x => x.users.DefaultIfEmpty(), (x, u) => new { x.aa, u })
+                .OrderBy(x => x.aa.ActionDate)
+                .Select(x => new ApprovalAction
                 {
-                    Id = aa.Id,
-                    RequestId = aa.RequestId,
-                    StepId = aa.StepId,
-                    ApproverId = aa.ApproverId,
-                    Action = aa.Action,
-                    Comments = aa.Comments,
-                    ActionDate = aa.ActionDate,
-                    ApproverName = _context.Users
-                        .Where(u => u.Id == aa.ApproverId)
-                        .Select(u => u.DisplayName)
-                        .FirstOrDefault()
+                    Id = x.aa.Id,
+                    RequestId = x.aa.RequestId,
+                    StepId = x.aa.StepId,
+                    ApproverId = x.aa.ApproverId,
+                    Action = x.aa.Action,
+                    Comments = x.aa.Comments,
+                    ActionDate = x.aa.ActionDate,
+                    ApproverName = x.u != null ? x.u.DisplayName : null
                 })
                 .ToListAsync();
 
@@ -443,32 +433,27 @@ public class ApprovalRequestRepository : IApprovalRequestRepository
         var requests = await _context.ApprovalRequests
             .AsNoTracking()
             .Where(ar => ar.RequestedBy == userId)
-            .OrderByDescending(ar => ar.CreatedAt)
-            .Select(ar => new ApprovalRequest
+            .GroupJoin(_context.Documents.IgnoreQueryFilters().AsNoTracking(), ar => ar.DocumentId, d => d.Id, (ar, docs) => new { ar, docs })
+            .SelectMany(x => x.docs.DefaultIfEmpty(), (x, d) => new { x.ar, d })
+            .GroupJoin(_context.Users.AsNoTracking(), x => x.ar.RequestedBy, u => u.Id, (x, users) => new { x.ar, x.d, users })
+            .SelectMany(x => x.users.DefaultIfEmpty(), (x, u) => new { x.ar, x.d, u })
+            .GroupJoin(_context.ApprovalWorkflows.IgnoreQueryFilters().AsNoTracking(), x => x.ar.WorkflowId, w => w.Id, (x, workflows) => new { x.ar, x.d, x.u, workflows })
+            .SelectMany(x => x.workflows.DefaultIfEmpty(), (x, w) => new { x.ar, x.d, x.u, w })
+            .OrderByDescending(x => x.ar.CreatedAt)
+            .Select(x => new ApprovalRequest
             {
-                Id = ar.Id,
-                DocumentId = ar.DocumentId,
-                WorkflowId = ar.WorkflowId,
-                RequestedBy = ar.RequestedBy,
-                Status = ar.Status,
-                DueDate = ar.DueDate,
-                Comments = ar.Comments,
-                CreatedAt = ar.CreatedAt,
-                CompletedAt = ar.CompletedAt,
-                DocumentName = _context.Documents
-                    .IgnoreQueryFilters()
-                    .Where(d => d.Id == ar.DocumentId)
-                    .Select(d => d.Name)
-                    .FirstOrDefault(),
-                RequestedByName = _context.Users
-                    .Where(u => u.Id == ar.RequestedBy)
-                    .Select(u => u.DisplayName)
-                    .FirstOrDefault(),
-                WorkflowName = _context.ApprovalWorkflows
-                    .IgnoreQueryFilters()
-                    .Where(w => w.Id == ar.WorkflowId)
-                    .Select(w => w.Name)
-                    .FirstOrDefault()
+                Id = x.ar.Id,
+                DocumentId = x.ar.DocumentId,
+                WorkflowId = x.ar.WorkflowId,
+                RequestedBy = x.ar.RequestedBy,
+                Status = x.ar.Status,
+                DueDate = x.ar.DueDate,
+                Comments = x.ar.Comments,
+                CreatedAt = x.ar.CreatedAt,
+                CompletedAt = x.ar.CompletedAt,
+                DocumentName = x.d != null ? x.d.Name : null,
+                RequestedByName = x.u != null ? x.u.DisplayName : null,
+                WorkflowName = x.w != null ? x.w.Name : null
             })
             .ToListAsync();
 
@@ -479,20 +464,19 @@ public class ApprovalRequestRepository : IApprovalRequestRepository
             var allActions = await _context.ApprovalActions
                 .AsNoTracking()
                 .Where(aa => requestIds.Contains(aa.RequestId))
-                .OrderBy(aa => aa.ActionDate)
-                .Select(aa => new ApprovalAction
+                .GroupJoin(_context.Users.AsNoTracking(), aa => aa.ApproverId, u => u.Id, (aa, users) => new { aa, users })
+                .SelectMany(x => x.users.DefaultIfEmpty(), (x, u) => new { x.aa, u })
+                .OrderBy(x => x.aa.ActionDate)
+                .Select(x => new ApprovalAction
                 {
-                    Id = aa.Id,
-                    RequestId = aa.RequestId,
-                    StepId = aa.StepId,
-                    ApproverId = aa.ApproverId,
-                    Action = aa.Action,
-                    Comments = aa.Comments,
-                    ActionDate = aa.ActionDate,
-                    ApproverName = _context.Users
-                        .Where(u => u.Id == aa.ApproverId)
-                        .Select(u => u.DisplayName)
-                        .FirstOrDefault()
+                    Id = x.aa.Id,
+                    RequestId = x.aa.RequestId,
+                    StepId = x.aa.StepId,
+                    ApproverId = x.aa.ApproverId,
+                    Action = x.aa.Action,
+                    Comments = x.aa.Comments,
+                    ActionDate = x.aa.ActionDate,
+                    ApproverName = x.u != null ? x.u.DisplayName : null
                 })
                 .ToListAsync();
 
@@ -516,34 +500,66 @@ public class ApprovalRequestRepository : IApprovalRequestRepository
             query = query.Where(ar => ar.Status == status.Value);
 
         return await query
-            .OrderByDescending(ar => ar.CreatedAt)
-            .Select(ar => new ApprovalRequest
+            .GroupJoin(_context.Documents.IgnoreQueryFilters().AsNoTracking(), ar => ar.DocumentId, d => d.Id, (ar, docs) => new { ar, docs })
+            .SelectMany(x => x.docs.DefaultIfEmpty(), (x, d) => new { x.ar, d })
+            .GroupJoin(_context.Users.AsNoTracking(), x => x.ar.RequestedBy, u => u.Id, (x, users) => new { x.ar, x.d, users })
+            .SelectMany(x => x.users.DefaultIfEmpty(), (x, u) => new { x.ar, x.d, u })
+            .GroupJoin(_context.ApprovalWorkflows.IgnoreQueryFilters().AsNoTracking(), x => x.ar.WorkflowId, w => w.Id, (x, workflows) => new { x.ar, x.d, x.u, workflows })
+            .SelectMany(x => x.workflows.DefaultIfEmpty(), (x, w) => new { x.ar, x.d, x.u, w })
+            .OrderByDescending(x => x.ar.CreatedAt)
+            .Select(x => new ApprovalRequest
             {
-                Id = ar.Id,
-                DocumentId = ar.DocumentId,
-                WorkflowId = ar.WorkflowId,
-                RequestedBy = ar.RequestedBy,
-                Status = ar.Status,
-                DueDate = ar.DueDate,
-                Comments = ar.Comments,
-                CreatedAt = ar.CreatedAt,
-                CompletedAt = ar.CompletedAt,
-                DocumentName = _context.Documents
-                    .IgnoreQueryFilters()
-                    .Where(d => d.Id == ar.DocumentId)
-                    .Select(d => d.Name)
-                    .FirstOrDefault(),
-                RequestedByName = _context.Users
-                    .Where(u => u.Id == ar.RequestedBy)
-                    .Select(u => u.DisplayName)
-                    .FirstOrDefault(),
-                WorkflowName = _context.ApprovalWorkflows
-                    .IgnoreQueryFilters()
-                    .Where(w => w.Id == ar.WorkflowId)
-                    .Select(w => w.Name)
-                    .FirstOrDefault()
+                Id = x.ar.Id,
+                DocumentId = x.ar.DocumentId,
+                WorkflowId = x.ar.WorkflowId,
+                RequestedBy = x.ar.RequestedBy,
+                Status = x.ar.Status,
+                DueDate = x.ar.DueDate,
+                Comments = x.ar.Comments,
+                CreatedAt = x.ar.CreatedAt,
+                CompletedAt = x.ar.CompletedAt,
+                DocumentName = x.d != null ? x.d.Name : null,
+                RequestedByName = x.u != null ? x.u.DisplayName : null,
+                WorkflowName = x.w != null ? x.w.Name : null
             })
             .ToListAsync();
+    }
+
+    public async Task<PagedResult<ApprovalRequest>> GetAllPagedAsync(int page = 1, int pageSize = 50, int? status = null)
+    {
+        pageSize = Math.Min(pageSize, 200);
+        var query = _context.ApprovalRequests.AsNoTracking().AsQueryable();
+        if (status.HasValue)
+            query = query.Where(ar => ar.Status == status.Value);
+
+        var totalCount = await query.CountAsync();
+        var items = await query
+            .GroupJoin(_context.Documents.IgnoreQueryFilters().AsNoTracking(), ar => ar.DocumentId, d => d.Id, (ar, docs) => new { ar, docs })
+            .SelectMany(x => x.docs.DefaultIfEmpty(), (x, d) => new { x.ar, d })
+            .GroupJoin(_context.Users.AsNoTracking(), x => x.ar.RequestedBy, u => u.Id, (x, users) => new { x.ar, x.d, users })
+            .SelectMany(x => x.users.DefaultIfEmpty(), (x, u) => new { x.ar, x.d, u })
+            .GroupJoin(_context.ApprovalWorkflows.IgnoreQueryFilters().AsNoTracking(), x => x.ar.WorkflowId, w => w.Id, (x, workflows) => new { x.ar, x.d, x.u, workflows })
+            .SelectMany(x => x.workflows.DefaultIfEmpty(), (x, w) => new { x.ar, x.d, x.u, w })
+            .OrderByDescending(x => x.ar.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(x => new ApprovalRequest
+            {
+                Id = x.ar.Id,
+                DocumentId = x.ar.DocumentId,
+                WorkflowId = x.ar.WorkflowId,
+                RequestedBy = x.ar.RequestedBy,
+                Status = x.ar.Status,
+                DueDate = x.ar.DueDate,
+                Comments = x.ar.Comments,
+                CreatedAt = x.ar.CreatedAt,
+                CompletedAt = x.ar.CompletedAt,
+                DocumentName = x.d != null ? x.d.Name : null,
+                RequestedByName = x.u != null ? x.u.DisplayName : null,
+                WorkflowName = x.w != null ? x.w.Name : null
+            })
+            .ToListAsync();
+        return new PagedResult<ApprovalRequest> { Items = items, TotalCount = totalCount, PageNumber = page, PageSize = pageSize };
     }
 
     public async Task<IEnumerable<ApprovalAction>> GetActionsAsync(Guid requestId)
@@ -551,20 +567,19 @@ public class ApprovalRequestRepository : IApprovalRequestRepository
         return await _context.ApprovalActions
             .AsNoTracking()
             .Where(aa => aa.RequestId == requestId)
-            .OrderBy(aa => aa.ActionDate)
-            .Select(aa => new ApprovalAction
+            .GroupJoin(_context.Users.AsNoTracking(), aa => aa.ApproverId, u => u.Id, (aa, users) => new { aa, users })
+            .SelectMany(x => x.users.DefaultIfEmpty(), (x, u) => new { x.aa, u })
+            .OrderBy(x => x.aa.ActionDate)
+            .Select(x => new ApprovalAction
             {
-                Id = aa.Id,
-                RequestId = aa.RequestId,
-                StepId = aa.StepId,
-                ApproverId = aa.ApproverId,
-                Action = aa.Action,
-                Comments = aa.Comments,
-                ActionDate = aa.ActionDate,
-                ApproverName = _context.Users
-                    .Where(u => u.Id == aa.ApproverId)
-                    .Select(u => u.DisplayName)
-                    .FirstOrDefault()
+                Id = x.aa.Id,
+                RequestId = x.aa.RequestId,
+                StepId = x.aa.StepId,
+                ApproverId = x.aa.ApproverId,
+                Action = x.aa.Action,
+                Comments = x.aa.Comments,
+                ActionDate = x.aa.ActionDate,
+                ApproverName = x.u != null ? x.u.DisplayName : null
             })
             .ToListAsync();
     }

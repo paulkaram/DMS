@@ -18,29 +18,26 @@ public class DocumentShareRepository : IDocumentShareRepository
         return await _context.DocumentShares
             .AsNoTracking()
             .Where(s => s.Id == id)
-            .Select(s => new DocumentShare
+            .GroupJoin(_context.Documents.AsNoTracking(), s => s.DocumentId, d => d.Id, (s, docs) => new { s, docs })
+            .SelectMany(x => x.docs.DefaultIfEmpty(), (x, d) => new { x.s, d })
+            .GroupJoin(_context.Users.AsNoTracking(), x => x.s.SharedWithUserId, u => u.Id, (x, sharedWithUsers) => new { x.s, x.d, sharedWithUsers })
+            .SelectMany(x => x.sharedWithUsers.DefaultIfEmpty(), (x, swu) => new { x.s, x.d, swu })
+            .GroupJoin(_context.Users.AsNoTracking(), x => x.s.SharedByUserId, u => u.Id, (x, sharedByUsers) => new { x.s, x.d, x.swu, sharedByUsers })
+            .SelectMany(x => x.sharedByUsers.DefaultIfEmpty(), (x, sbu) => new { x.s, x.d, x.swu, sbu })
+            .Select(x => new DocumentShare
             {
-                Id = s.Id,
-                DocumentId = s.DocumentId,
-                SharedWithUserId = s.SharedWithUserId,
-                SharedByUserId = s.SharedByUserId,
-                PermissionLevel = s.PermissionLevel,
-                ExpiresAt = s.ExpiresAt,
-                Message = s.Message,
-                IsActive = s.IsActive,
-                CreatedAt = s.CreatedAt,
-                DocumentName = _context.Documents
-                    .Where(d => d.Id == s.DocumentId)
-                    .Select(d => d.Name)
-                    .FirstOrDefault(),
-                SharedWithUserName = _context.Users
-                    .Where(u => u.Id == s.SharedWithUserId)
-                    .Select(u => u.DisplayName)
-                    .FirstOrDefault(),
-                SharedByUserName = _context.Users
-                    .Where(u => u.Id == s.SharedByUserId)
-                    .Select(u => u.DisplayName)
-                    .FirstOrDefault()
+                Id = x.s.Id,
+                DocumentId = x.s.DocumentId,
+                SharedWithUserId = x.s.SharedWithUserId,
+                SharedByUserId = x.s.SharedByUserId,
+                PermissionLevel = x.s.PermissionLevel,
+                ExpiresAt = x.s.ExpiresAt,
+                Message = x.s.Message,
+                IsActive = x.s.IsActive,
+                CreatedAt = x.s.CreatedAt,
+                DocumentName = x.d != null ? x.d.Name : null,
+                SharedWithUserName = x.swu != null ? x.swu.DisplayName : null,
+                SharedByUserName = x.sbu != null ? x.sbu.DisplayName : null
             })
             .FirstOrDefaultAsync();
     }
@@ -50,30 +47,27 @@ public class DocumentShareRepository : IDocumentShareRepository
         return await _context.DocumentShares
             .AsNoTracking()
             .Where(s => s.DocumentId == documentId)
-            .OrderByDescending(s => s.CreatedAt)
-            .Select(s => new DocumentShare
+            .GroupJoin(_context.Documents.AsNoTracking(), s => s.DocumentId, d => d.Id, (s, docs) => new { s, docs })
+            .SelectMany(x => x.docs.DefaultIfEmpty(), (x, d) => new { x.s, d })
+            .GroupJoin(_context.Users.AsNoTracking(), x => x.s.SharedWithUserId, u => u.Id, (x, sharedWithUsers) => new { x.s, x.d, sharedWithUsers })
+            .SelectMany(x => x.sharedWithUsers.DefaultIfEmpty(), (x, swu) => new { x.s, x.d, swu })
+            .GroupJoin(_context.Users.AsNoTracking(), x => x.s.SharedByUserId, u => u.Id, (x, sharedByUsers) => new { x.s, x.d, x.swu, sharedByUsers })
+            .SelectMany(x => x.sharedByUsers.DefaultIfEmpty(), (x, sbu) => new { x.s, x.d, x.swu, sbu })
+            .OrderByDescending(x => x.s.CreatedAt)
+            .Select(x => new DocumentShare
             {
-                Id = s.Id,
-                DocumentId = s.DocumentId,
-                SharedWithUserId = s.SharedWithUserId,
-                SharedByUserId = s.SharedByUserId,
-                PermissionLevel = s.PermissionLevel,
-                ExpiresAt = s.ExpiresAt,
-                Message = s.Message,
-                IsActive = s.IsActive,
-                CreatedAt = s.CreatedAt,
-                DocumentName = _context.Documents
-                    .Where(d => d.Id == s.DocumentId)
-                    .Select(d => d.Name)
-                    .FirstOrDefault(),
-                SharedWithUserName = _context.Users
-                    .Where(u => u.Id == s.SharedWithUserId)
-                    .Select(u => u.DisplayName)
-                    .FirstOrDefault(),
-                SharedByUserName = _context.Users
-                    .Where(u => u.Id == s.SharedByUserId)
-                    .Select(u => u.DisplayName)
-                    .FirstOrDefault()
+                Id = x.s.Id,
+                DocumentId = x.s.DocumentId,
+                SharedWithUserId = x.s.SharedWithUserId,
+                SharedByUserId = x.s.SharedByUserId,
+                PermissionLevel = x.s.PermissionLevel,
+                ExpiresAt = x.s.ExpiresAt,
+                Message = x.s.Message,
+                IsActive = x.s.IsActive,
+                CreatedAt = x.s.CreatedAt,
+                DocumentName = x.d != null ? x.d.Name : null,
+                SharedWithUserName = x.swu != null ? x.swu.DisplayName : null,
+                SharedByUserName = x.sbu != null ? x.sbu.DisplayName : null
             })
             .ToListAsync();
     }
@@ -84,30 +78,27 @@ public class DocumentShareRepository : IDocumentShareRepository
             .AsNoTracking()
             .Where(s => s.SharedWithUserId == userId
                 && (s.ExpiresAt == null || s.ExpiresAt > DateTime.Now))
-            .OrderByDescending(s => s.CreatedAt)
-            .Select(s => new DocumentShare
+            .GroupJoin(_context.Documents.AsNoTracking(), s => s.DocumentId, d => d.Id, (s, docs) => new { s, docs })
+            .SelectMany(x => x.docs.DefaultIfEmpty(), (x, d) => new { x.s, d })
+            .GroupJoin(_context.Users.AsNoTracking(), x => x.s.SharedWithUserId, u => u.Id, (x, sharedWithUsers) => new { x.s, x.d, sharedWithUsers })
+            .SelectMany(x => x.sharedWithUsers.DefaultIfEmpty(), (x, swu) => new { x.s, x.d, swu })
+            .GroupJoin(_context.Users.AsNoTracking(), x => x.s.SharedByUserId, u => u.Id, (x, sharedByUsers) => new { x.s, x.d, x.swu, sharedByUsers })
+            .SelectMany(x => x.sharedByUsers.DefaultIfEmpty(), (x, sbu) => new { x.s, x.d, x.swu, sbu })
+            .OrderByDescending(x => x.s.CreatedAt)
+            .Select(x => new DocumentShare
             {
-                Id = s.Id,
-                DocumentId = s.DocumentId,
-                SharedWithUserId = s.SharedWithUserId,
-                SharedByUserId = s.SharedByUserId,
-                PermissionLevel = s.PermissionLevel,
-                ExpiresAt = s.ExpiresAt,
-                Message = s.Message,
-                IsActive = s.IsActive,
-                CreatedAt = s.CreatedAt,
-                DocumentName = _context.Documents
-                    .Where(d => d.Id == s.DocumentId)
-                    .Select(d => d.Name)
-                    .FirstOrDefault(),
-                SharedWithUserName = _context.Users
-                    .Where(u => u.Id == s.SharedWithUserId)
-                    .Select(u => u.DisplayName)
-                    .FirstOrDefault(),
-                SharedByUserName = _context.Users
-                    .Where(u => u.Id == s.SharedByUserId)
-                    .Select(u => u.DisplayName)
-                    .FirstOrDefault()
+                Id = x.s.Id,
+                DocumentId = x.s.DocumentId,
+                SharedWithUserId = x.s.SharedWithUserId,
+                SharedByUserId = x.s.SharedByUserId,
+                PermissionLevel = x.s.PermissionLevel,
+                ExpiresAt = x.s.ExpiresAt,
+                Message = x.s.Message,
+                IsActive = x.s.IsActive,
+                CreatedAt = x.s.CreatedAt,
+                DocumentName = x.d != null ? x.d.Name : null,
+                SharedWithUserName = x.swu != null ? x.swu.DisplayName : null,
+                SharedByUserName = x.sbu != null ? x.sbu.DisplayName : null
             })
             .ToListAsync();
     }
@@ -117,30 +108,27 @@ public class DocumentShareRepository : IDocumentShareRepository
         return await _context.DocumentShares
             .AsNoTracking()
             .Where(s => s.SharedByUserId == userId)
-            .OrderByDescending(s => s.CreatedAt)
-            .Select(s => new DocumentShare
+            .GroupJoin(_context.Documents.AsNoTracking(), s => s.DocumentId, d => d.Id, (s, docs) => new { s, docs })
+            .SelectMany(x => x.docs.DefaultIfEmpty(), (x, d) => new { x.s, d })
+            .GroupJoin(_context.Users.AsNoTracking(), x => x.s.SharedWithUserId, u => u.Id, (x, sharedWithUsers) => new { x.s, x.d, sharedWithUsers })
+            .SelectMany(x => x.sharedWithUsers.DefaultIfEmpty(), (x, swu) => new { x.s, x.d, swu })
+            .GroupJoin(_context.Users.AsNoTracking(), x => x.s.SharedByUserId, u => u.Id, (x, sharedByUsers) => new { x.s, x.d, x.swu, sharedByUsers })
+            .SelectMany(x => x.sharedByUsers.DefaultIfEmpty(), (x, sbu) => new { x.s, x.d, x.swu, sbu })
+            .OrderByDescending(x => x.s.CreatedAt)
+            .Select(x => new DocumentShare
             {
-                Id = s.Id,
-                DocumentId = s.DocumentId,
-                SharedWithUserId = s.SharedWithUserId,
-                SharedByUserId = s.SharedByUserId,
-                PermissionLevel = s.PermissionLevel,
-                ExpiresAt = s.ExpiresAt,
-                Message = s.Message,
-                IsActive = s.IsActive,
-                CreatedAt = s.CreatedAt,
-                DocumentName = _context.Documents
-                    .Where(d => d.Id == s.DocumentId)
-                    .Select(d => d.Name)
-                    .FirstOrDefault(),
-                SharedWithUserName = _context.Users
-                    .Where(u => u.Id == s.SharedWithUserId)
-                    .Select(u => u.DisplayName)
-                    .FirstOrDefault(),
-                SharedByUserName = _context.Users
-                    .Where(u => u.Id == s.SharedByUserId)
-                    .Select(u => u.DisplayName)
-                    .FirstOrDefault()
+                Id = x.s.Id,
+                DocumentId = x.s.DocumentId,
+                SharedWithUserId = x.s.SharedWithUserId,
+                SharedByUserId = x.s.SharedByUserId,
+                PermissionLevel = x.s.PermissionLevel,
+                ExpiresAt = x.s.ExpiresAt,
+                Message = x.s.Message,
+                IsActive = x.s.IsActive,
+                CreatedAt = x.s.CreatedAt,
+                DocumentName = x.d != null ? x.d.Name : null,
+                SharedWithUserName = x.swu != null ? x.swu.DisplayName : null,
+                SharedByUserName = x.sbu != null ? x.sbu.DisplayName : null
             })
             .ToListAsync();
     }

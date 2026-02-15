@@ -10,5 +10,9 @@ public class DocumentWorkingCopyConfiguration : IEntityTypeConfiguration<Documen
     {
         builder.ToTable("DocumentWorkingCopies");
         builder.HasKey(e => e.Id);
+
+        // Indexes
+        builder.HasIndex(e => e.DocumentId);
+        builder.HasIndex(e => e.CheckedOutBy);
     }
 }

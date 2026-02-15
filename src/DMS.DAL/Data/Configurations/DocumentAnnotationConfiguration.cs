@@ -11,6 +11,10 @@ public class DocumentAnnotationConfiguration : IEntityTypeConfiguration<Document
         builder.ToTable("DocumentAnnotations");
         builder.HasKey(e => e.Id);
 
+        // Indexes
+        builder.HasIndex(e => e.DocumentId);
+        builder.HasIndex(e => e.CreatedBy);
+
         // Ignore computed/display properties
         builder.Ignore(e => e.CreatedByName);
     }

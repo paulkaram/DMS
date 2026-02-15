@@ -11,6 +11,9 @@ public class PatternConfiguration : IEntityTypeConfiguration<Pattern>
         builder.ToTable("Patterns");
         builder.HasKey(e => e.Id);
 
+        // Indexes
+        builder.HasIndex(e => e.TargetFolderId);
+
         // Ignore computed/joined properties
         builder.Ignore(e => e.TargetFolderName);
         builder.Ignore(e => e.ContentTypeName);

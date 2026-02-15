@@ -18,24 +18,26 @@ public class DocumentCommentRepository : IDocumentCommentRepository
         return await _context.DocumentComments
             .AsNoTracking()
             .Where(c => c.DocumentId == documentId && c.ParentCommentId == null && !c.IsDeleted)
-            .OrderByDescending(c => c.CreatedAt)
-            .Select(c => new DocumentComment
+            .GroupJoin(_context.Users.AsNoTracking(), c => c.CreatedBy, u => u.Id, (c, users) => new { c, users })
+            .SelectMany(x => x.users.DefaultIfEmpty(), (x, u) => new { x.c, u })
+            .GroupJoin(
+                _context.DocumentComments.AsNoTracking().Where(r => !r.IsDeleted),
+                x => x.c.Id, r => r.ParentCommentId,
+                (x, replies) => new { x.c, x.u, ReplyCount = replies.Count() })
+            .OrderByDescending(x => x.c.CreatedAt)
+            .Select(x => new DocumentComment
             {
-                Id = c.Id,
-                DocumentId = c.DocumentId,
-                ParentCommentId = c.ParentCommentId,
-                Content = c.Content,
-                CreatedBy = c.CreatedBy,
-                CreatedAt = c.CreatedAt,
-                ModifiedBy = c.ModifiedBy,
-                ModifiedAt = c.ModifiedAt,
-                IsDeleted = c.IsDeleted,
-                CreatedByName = _context.Users
-                    .Where(u => u.Id == c.CreatedBy)
-                    .Select(u => u.DisplayName)
-                    .FirstOrDefault(),
-                ReplyCount = _context.DocumentComments
-                    .Count(r => r.ParentCommentId == c.Id && !r.IsDeleted)
+                Id = x.c.Id,
+                DocumentId = x.c.DocumentId,
+                ParentCommentId = x.c.ParentCommentId,
+                Content = x.c.Content,
+                CreatedBy = x.c.CreatedBy,
+                CreatedAt = x.c.CreatedAt,
+                ModifiedBy = x.c.ModifiedBy,
+                ModifiedAt = x.c.ModifiedAt,
+                IsDeleted = x.c.IsDeleted,
+                CreatedByName = x.u != null ? x.u.DisplayName : null,
+                ReplyCount = x.ReplyCount
             })
             .ToListAsync();
     }
@@ -45,22 +47,21 @@ public class DocumentCommentRepository : IDocumentCommentRepository
         return await _context.DocumentComments
             .AsNoTracking()
             .Where(c => c.ParentCommentId == parentCommentId && !c.IsDeleted)
-            .OrderBy(c => c.CreatedAt)
-            .Select(c => new DocumentComment
+            .GroupJoin(_context.Users.AsNoTracking(), c => c.CreatedBy, u => u.Id, (c, users) => new { c, users })
+            .SelectMany(x => x.users.DefaultIfEmpty(), (x, u) => new { x.c, u })
+            .OrderBy(x => x.c.CreatedAt)
+            .Select(x => new DocumentComment
             {
-                Id = c.Id,
-                DocumentId = c.DocumentId,
-                ParentCommentId = c.ParentCommentId,
-                Content = c.Content,
-                CreatedBy = c.CreatedBy,
-                CreatedAt = c.CreatedAt,
-                ModifiedBy = c.ModifiedBy,
-                ModifiedAt = c.ModifiedAt,
-                IsDeleted = c.IsDeleted,
-                CreatedByName = _context.Users
-                    .Where(u => u.Id == c.CreatedBy)
-                    .Select(u => u.DisplayName)
-                    .FirstOrDefault()
+                Id = x.c.Id,
+                DocumentId = x.c.DocumentId,
+                ParentCommentId = x.c.ParentCommentId,
+                Content = x.c.Content,
+                CreatedBy = x.c.CreatedBy,
+                CreatedAt = x.c.CreatedAt,
+                ModifiedBy = x.c.ModifiedBy,
+                ModifiedAt = x.c.ModifiedAt,
+                IsDeleted = x.c.IsDeleted,
+                CreatedByName = x.u != null ? x.u.DisplayName : null
             })
             .ToListAsync();
     }
@@ -70,21 +71,20 @@ public class DocumentCommentRepository : IDocumentCommentRepository
         return await _context.DocumentComments
             .AsNoTracking()
             .Where(c => c.Id == id)
-            .Select(c => new DocumentComment
+            .GroupJoin(_context.Users.AsNoTracking(), c => c.CreatedBy, u => u.Id, (c, users) => new { c, users })
+            .SelectMany(x => x.users.DefaultIfEmpty(), (x, u) => new { x.c, u })
+            .Select(x => new DocumentComment
             {
-                Id = c.Id,
-                DocumentId = c.DocumentId,
-                ParentCommentId = c.ParentCommentId,
-                Content = c.Content,
-                CreatedBy = c.CreatedBy,
-                CreatedAt = c.CreatedAt,
-                ModifiedBy = c.ModifiedBy,
-                ModifiedAt = c.ModifiedAt,
-                IsDeleted = c.IsDeleted,
-                CreatedByName = _context.Users
-                    .Where(u => u.Id == c.CreatedBy)
-                    .Select(u => u.DisplayName)
-                    .FirstOrDefault()
+                Id = x.c.Id,
+                DocumentId = x.c.DocumentId,
+                ParentCommentId = x.c.ParentCommentId,
+                Content = x.c.Content,
+                CreatedBy = x.c.CreatedBy,
+                CreatedAt = x.c.CreatedAt,
+                ModifiedBy = x.c.ModifiedBy,
+                ModifiedAt = x.c.ModifiedAt,
+                IsDeleted = x.c.IsDeleted,
+                CreatedByName = x.u != null ? x.u.DisplayName : null
             })
             .FirstOrDefaultAsync();
     }

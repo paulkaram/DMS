@@ -11,6 +11,9 @@ public class FilingPlanConfiguration : IEntityTypeConfiguration<FilingPlan>
         builder.ToTable("FilingPlans");
         builder.HasKey(e => e.Id);
 
+        // Indexes
+        builder.HasIndex(e => e.FolderId);
+
         // Ignore computed/joined properties
         builder.Ignore(e => e.FolderName);
         builder.Ignore(e => e.ClassificationName);

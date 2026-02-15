@@ -1,9 +1,12 @@
+using DMS.DAL.DTOs;
 using DMS.DAL.Entities;
 
 namespace DMS.DAL.Repositories;
 
 public interface IDocumentRepository : IRepository<Document>
 {
+    Task<PagedResult<Document>> GetAllPagedAsync(int page = 1, int pageSize = 50);
+    Task<PagedResult<Document>> GetByFolderIdPagedAsync(Guid folderId, int page = 1, int pageSize = 50);
     Task<IEnumerable<Document>> GetByFolderIdAsync(Guid folderId);
     Task<IEnumerable<DocumentWithNames>> GetByFolderIdWithNamesAsync(Guid folderId);
     Task<IEnumerable<Document>> SearchAsync(string? name, Guid? folderId, Guid? classificationId, Guid? documentTypeId);

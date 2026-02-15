@@ -20,6 +20,10 @@ public class RoleActionPermissionConfiguration : IEntityTypeConfiguration<RoleAc
         builder.ToTable("RoleActionPermissions");
         builder.HasKey(e => e.Id);
 
+        // Indexes
+        builder.HasIndex(e => e.RoleId);
+        builder.HasIndex(e => e.ActionId);
+
         builder.Ignore(e => e.RoleName);
         builder.Ignore(e => e.ActionCode);
         builder.Ignore(e => e.ActionName);

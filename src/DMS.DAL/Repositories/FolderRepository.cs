@@ -1,3 +1,4 @@
+using DMS.DAL.DTOs;
 using DMS.DAL.Data;
 using DMS.DAL.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -35,6 +36,20 @@ public class FolderRepository : IFolderRepository
             .OrderBy(f => f.Path)
             .ThenBy(f => f.Name)
             .ToListAsync();
+    }
+
+    public async Task<PagedResult<Folder>> GetAllPagedAsync(int page = 1, int pageSize = 50)
+    {
+        pageSize = Math.Min(pageSize, 200);
+        var query = _context.Folders.Include(f => f.PrivacyLevel).AsNoTracking();
+        var totalCount = await query.CountAsync();
+        var items = await query
+            .OrderBy(f => f.Path)
+            .ThenBy(f => f.Name)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+        return new PagedResult<Folder> { Items = items, TotalCount = totalCount, PageNumber = page, PageSize = pageSize };
     }
 
     public async Task<IEnumerable<Folder>> GetByCabinetIdAsync(Guid cabinetId, int? userPrivacyLevel = null)

@@ -16,6 +16,12 @@ public class ApprovalRequestConfiguration : IEntityTypeConfiguration<ApprovalReq
         builder.Ignore(e => e.RequestedByName);
         builder.Ignore(e => e.WorkflowName);
 
+        // Indexes
+        builder.HasIndex(e => e.DocumentId);
+        builder.HasIndex(e => e.WorkflowId);
+        builder.HasIndex(e => e.RequestedBy);
+        builder.HasIndex(e => new { e.DocumentId, e.Status });
+
         // Navigation
         builder.HasMany(e => e.Actions)
             .WithOne()
@@ -29,6 +35,10 @@ public class ApprovalActionConfiguration : IEntityTypeConfiguration<ApprovalActi
     {
         builder.ToTable("ApprovalActions");
         builder.HasKey(e => e.Id);
+
+        // Indexes
+        builder.HasIndex(e => e.RequestId);
+        builder.HasIndex(e => e.ApproverId);
 
         // Ignore computed/joined properties
         builder.Ignore(e => e.ApproverName);

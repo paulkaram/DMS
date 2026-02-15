@@ -1,3 +1,4 @@
+using DMS.DAL.DTOs;
 using DMS.DAL.Data;
 using DMS.DAL.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -29,6 +30,19 @@ public class DocumentRepository : IDocumentRepository
             .ToListAsync();
     }
 
+    public async Task<PagedResult<Document>> GetAllPagedAsync(int page = 1, int pageSize = 50)
+    {
+        pageSize = Math.Min(pageSize, 200);
+        var query = _context.Documents.AsNoTracking();
+        var totalCount = await query.CountAsync();
+        var items = await query
+            .OrderBy(d => d.Name)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+        return new PagedResult<Document> { Items = items, TotalCount = totalCount, PageNumber = page, PageSize = pageSize };
+    }
+
     public async Task<IEnumerable<Document>> GetByFolderIdAsync(Guid folderId)
     {
         return await _context.Documents
@@ -36,6 +50,19 @@ public class DocumentRepository : IDocumentRepository
             .Where(d => d.FolderId == folderId)
             .OrderBy(d => d.Name)
             .ToListAsync();
+    }
+
+    public async Task<PagedResult<Document>> GetByFolderIdPagedAsync(Guid folderId, int page = 1, int pageSize = 50)
+    {
+        pageSize = Math.Min(pageSize, 200);
+        var query = _context.Documents.AsNoTracking().Where(d => d.FolderId == folderId);
+        var totalCount = await query.CountAsync();
+        var items = await query
+            .OrderBy(d => d.Name)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+        return new PagedResult<Document> { Items = items, TotalCount = totalCount, PageNumber = page, PageSize = pageSize };
     }
 
     public async Task<IEnumerable<DocumentWithNames>> GetByFolderIdWithNamesAsync(Guid folderId)

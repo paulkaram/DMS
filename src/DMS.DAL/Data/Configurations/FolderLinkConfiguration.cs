@@ -11,6 +11,10 @@ public class FolderLinkConfiguration : IEntityTypeConfiguration<FolderLink>
         builder.ToTable("FolderLinks");
         builder.HasKey(e => e.Id);
 
+        // Indexes
+        builder.HasIndex(e => e.SourceFolderId);
+        builder.HasIndex(e => e.TargetFolderId);
+
         // Ignore computed/joined properties
         builder.Ignore(e => e.SourceFolderName);
         builder.Ignore(e => e.TargetFolderName);

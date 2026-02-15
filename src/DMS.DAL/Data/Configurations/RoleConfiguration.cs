@@ -25,5 +25,9 @@ public class UserRoleConfiguration : IEntityTypeConfiguration<UserRole>
 
         builder.HasOne<User>().WithMany().HasForeignKey(e => e.UserId);
         builder.HasOne<Role>().WithMany().HasForeignKey(e => e.RoleId);
+
+        // Indexes
+        builder.HasIndex(e => e.UserId);
+        builder.HasIndex(e => e.RoleId);
     }
 }

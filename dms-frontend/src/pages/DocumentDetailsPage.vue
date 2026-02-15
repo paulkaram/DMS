@@ -3,7 +3,7 @@ import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { Document, DocumentVersion, WorkingCopy, VersionComparison } from '@/types'
 import { CheckInType, DiffType } from '@/types'
-import { documentsApi, permissionsApi, activityLogsApi, contentTypeDefinitionsApi, foldersApi, referenceDataApi, privacyLevelsApi } from '@/api/client'
+import { documentsApi, permissionsApi, activityLogsApi, contentTypeDefinitionsApi, foldersApi, cabinetsApi, referenceDataApi, privacyLevelsApi } from '@/api/client'
 import type { PrivacyLevel, Classification, Importance, DocumentType as DocType } from '@/types'
 import { PermissionLevels } from '@/types'
 import { UiSelect, UiDatePicker } from '@/components/ui'
@@ -60,6 +60,11 @@ const myPermissionLevel = ref<number>(0)
 // Folder privacy level
 const folderPrivacyLevelName = ref<string | null>(null)
 const folderPrivacyLevelColor = ref<string | null>(null)
+
+// Folder breadcrumb for navigation context
+const folderBreadcrumb = ref<{ id: string; name: string; cabinetId: string }[]>([])
+const cabinetName = ref<string | null>(null)
+const cabinetId = ref<string | null>(null)
 
 // Computed permission checks
 const canRead = computed(() => myPermissionLevel.value >= PermissionLevels.Read)
@@ -125,12 +130,39 @@ async function loadDocument() {
 
     await loadMyPermissionLevel(id)
 
-    // Load folder privacy level
+    // Load folder info, privacy level, and build breadcrumb path
     if (document.value.folderId) {
       try {
         const folderRes = await foldersApi.getById(document.value.folderId)
-        folderPrivacyLevelName.value = folderRes.data.privacyLevelName || null
-        folderPrivacyLevelColor.value = folderRes.data.privacyLevelColor || null
+        const folder = folderRes.data
+        folderPrivacyLevelName.value = folder.privacyLevelName || null
+        folderPrivacyLevelColor.value = folder.privacyLevelColor || null
+
+        // Build breadcrumb by walking up parent chain
+        const crumbs: { id: string; name: string; cabinetId: string }[] = [
+          { id: folder.id, name: folder.name, cabinetId: folder.cabinetId }
+        ]
+        let parentId = folder.parentFolderId
+        while (parentId) {
+          try {
+            const parentRes = await foldersApi.getById(parentId)
+            const parent = parentRes.data
+            crumbs.unshift({ id: parent.id, name: parent.name, cabinetId: parent.cabinetId })
+            parentId = parent.parentFolderId
+          } catch {
+            break
+          }
+        }
+        folderBreadcrumb.value = crumbs
+        cabinetId.value = folder.cabinetId
+
+        // Fetch cabinet name
+        try {
+          const cabRes = await cabinetsApi.getById(folder.cabinetId)
+          cabinetName.value = cabRes.data.name
+        } catch {
+          // Cabinet access might be restricted
+        }
       } catch {
         // Folder access might be restricted, ignore
       }
@@ -738,7 +770,25 @@ function getVersionLabel(version: DocumentVersion): string {
 }
 
 function goBack() {
-  router.back()
+  if (cabinetId.value && document.value?.folderId) {
+    router.push({ path: '/explorer', query: { cabinet: cabinetId.value, folder: document.value.folderId } })
+  } else if (cabinetId.value) {
+    router.push({ path: '/explorer', query: { cabinet: cabinetId.value } })
+  } else {
+    router.push('/explorer')
+  }
+}
+
+function navigateToBreadcrumbFolder(folderId: string) {
+  if (cabinetId.value) {
+    router.push({ path: '/explorer', query: { cabinet: cabinetId.value, folder: folderId } })
+  }
+}
+
+function navigateToCabinet() {
+  if (cabinetId.value) {
+    router.push({ path: '/explorer', query: { cabinet: cabinetId.value } })
+  }
 }
 
 const metadataFields = computed(() => {
@@ -824,6 +874,15 @@ watch(isEditMode, (newVal) => {
                 <span class="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">
                   v{{ document.currentMajorVersion || 1 }}.{{ document.currentMinorVersion || 0 }}
                 </span>
+              </div>
+              <!-- Folder breadcrumb path -->
+              <div v-if="cabinetName || folderBreadcrumb.length > 0" class="flex items-center gap-1 mt-1 text-[11px] text-zinc-500">
+                <span class="material-symbols-outlined" style="font-size: 13px;">folder_open</span>
+                <button v-if="cabinetName" @click="navigateToCabinet" class="hover:text-teal transition-colors">{{ cabinetName }}</button>
+                <template v-for="(crumb, idx) in folderBreadcrumb" :key="crumb.id">
+                  <span class="text-zinc-600">/</span>
+                  <button @click="navigateToBreadcrumbFolder(crumb.id)" class="hover:text-teal transition-colors truncate max-w-[120px]" :title="crumb.name">{{ crumb.name }}</button>
+                </template>
               </div>
             </div>
           </div>

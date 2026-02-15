@@ -1,3 +1,4 @@
+using DMS.DAL.DTOs;
 using DMS.DAL.Data;
 using DMS.DAL.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -93,6 +94,89 @@ public class ActivityLogRepository : IActivityLogRepository
             .OrderByDescending(a => a.CreatedAt)
             .Take(take)
             .ToListAsync();
+    }
+
+    public async Task<PagedResult<ActivityLog>> GetByNodePagedAsync(NodeType nodeType, Guid nodeId, int page = 1, int pageSize = 50)
+    {
+        pageSize = Math.Min(pageSize, 200);
+        var baseQuery = _context.ActivityLogs.AsNoTracking()
+            .Where(a => a.NodeType == nodeType && a.NodeId == nodeId);
+        var totalCount = await baseQuery.CountAsync();
+        var items = await baseQuery
+            .Join(_context.Users, a => a.UserId, u => u.Id, (a, u) => new { Activity = a, User = u })
+            .OrderByDescending(x => x.Activity.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(x => new ActivityLog
+            {
+                Id = x.Activity.Id,
+                Action = x.Activity.Action,
+                NodeType = x.Activity.NodeType,
+                NodeId = x.Activity.NodeId,
+                NodeName = x.Activity.NodeName,
+                Details = x.Activity.Details,
+                UserId = x.Activity.UserId,
+                UserName = x.Activity.UserName ?? x.User.DisplayName ?? x.User.Username,
+                IpAddress = x.Activity.IpAddress,
+                CreatedAt = x.Activity.CreatedAt
+            })
+            .ToListAsync();
+        return new PagedResult<ActivityLog> { Items = items, TotalCount = totalCount, PageNumber = page, PageSize = pageSize };
+    }
+
+    public async Task<PagedResult<ActivityLog>> GetByUserPagedAsync(Guid userId, int page = 1, int pageSize = 50)
+    {
+        pageSize = Math.Min(pageSize, 200);
+        var baseQuery = _context.ActivityLogs.AsNoTracking()
+            .Where(a => a.UserId == userId);
+        var totalCount = await baseQuery.CountAsync();
+        var items = await baseQuery
+            .Join(_context.Users, a => a.UserId, u => u.Id, (a, u) => new { Activity = a, User = u })
+            .OrderByDescending(x => x.Activity.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(x => new ActivityLog
+            {
+                Id = x.Activity.Id,
+                Action = x.Activity.Action,
+                NodeType = x.Activity.NodeType,
+                NodeId = x.Activity.NodeId,
+                NodeName = x.Activity.NodeName,
+                Details = x.Activity.Details,
+                UserId = x.Activity.UserId,
+                UserName = x.Activity.UserName ?? x.User.DisplayName ?? x.User.Username,
+                IpAddress = x.Activity.IpAddress,
+                CreatedAt = x.Activity.CreatedAt
+            })
+            .ToListAsync();
+        return new PagedResult<ActivityLog> { Items = items, TotalCount = totalCount, PageNumber = page, PageSize = pageSize };
+    }
+
+    public async Task<PagedResult<ActivityLog>> GetRecentPagedAsync(int page = 1, int pageSize = 50)
+    {
+        pageSize = Math.Min(pageSize, 200);
+        var baseQuery = _context.ActivityLogs.AsNoTracking();
+        var totalCount = await baseQuery.CountAsync();
+        var items = await baseQuery
+            .Join(_context.Users, a => a.UserId, u => u.Id, (a, u) => new { Activity = a, User = u })
+            .OrderByDescending(x => x.Activity.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(x => new ActivityLog
+            {
+                Id = x.Activity.Id,
+                Action = x.Activity.Action,
+                NodeType = x.Activity.NodeType,
+                NodeId = x.Activity.NodeId,
+                NodeName = x.Activity.NodeName,
+                Details = x.Activity.Details,
+                UserId = x.Activity.UserId,
+                UserName = x.Activity.UserName ?? x.User.DisplayName ?? x.User.Username,
+                IpAddress = x.Activity.IpAddress,
+                CreatedAt = x.Activity.CreatedAt
+            })
+            .ToListAsync();
+        return new PagedResult<ActivityLog> { Items = items, TotalCount = totalCount, PageNumber = page, PageSize = pageSize };
     }
 
     public async Task<Guid> CreateAsync(ActivityLog entity)

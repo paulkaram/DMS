@@ -11,6 +11,9 @@ public class DisposalCertificateConfiguration : IEntityTypeConfiguration<Disposa
         builder.ToTable("DisposalCertificates");
         builder.HasKey(e => e.Id);
 
+        // Indexes
+        builder.HasIndex(e => e.RetentionPolicyId);
+
         builder.Ignore(e => e.DisposedByName);
         builder.Ignore(e => e.ApprovedByName);
     }
@@ -32,6 +35,10 @@ public class LegalHoldDocumentConfiguration : IEntityTypeConfiguration<LegalHold
         builder.ToTable("LegalHoldDocuments");
         builder.HasKey(e => e.Id);
 
+        // Indexes
+        builder.HasIndex(e => e.LegalHoldId);
+        builder.HasIndex(e => e.DocumentId);
+
         builder.Ignore(e => e.DocumentName);
         builder.Ignore(e => e.HoldName);
     }
@@ -43,6 +50,9 @@ public class IntegrityVerificationLogConfiguration : IEntityTypeConfiguration<In
     {
         builder.ToTable("IntegrityVerificationLogs");
         builder.HasKey(e => e.Id);
+
+        // Indexes
+        builder.HasIndex(e => e.DocumentId);
     }
 }
 
@@ -52,5 +62,8 @@ public class PreservationMetadataConfiguration : IEntityTypeConfiguration<Preser
     {
         builder.ToTable("PreservationMetadata");
         builder.HasKey(e => e.Id);
+
+        // Indexes
+        builder.HasIndex(e => e.DocumentId);
     }
 }

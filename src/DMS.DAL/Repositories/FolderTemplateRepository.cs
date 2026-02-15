@@ -24,6 +24,7 @@ public class FolderTemplateRepository : IFolderTemplateRepository
         return await query
             .GroupJoin(_context.Users.AsNoTracking(), t => t.CreatedBy, u => u.Id, (t, users) => new { t, users })
             .SelectMany(x => x.users.DefaultIfEmpty(), (x, u) => new { x.t, u })
+            .GroupJoin(_context.FolderTemplateUsages.AsNoTracking(), x => x.t.Id, fu => fu.TemplateId, (x, usages) => new { x.t, x.u, UsageCount = usages.Count() })
             .Select(x => new FolderTemplate
             {
                 Id = x.t.Id,
@@ -38,7 +39,7 @@ public class FolderTemplateRepository : IFolderTemplateRepository
                 ModifiedBy = x.t.ModifiedBy,
                 ModifiedAt = x.t.ModifiedAt,
                 CreatedByName = x.u != null ? x.u.DisplayName : null,
-                UsageCount = _context.FolderTemplateUsages.Count(fu => fu.TemplateId == x.t.Id)
+                UsageCount = x.UsageCount
             })
             .OrderBy(t => t.Category)
             .ThenBy(t => t.Name)
@@ -51,6 +52,7 @@ public class FolderTemplateRepository : IFolderTemplateRepository
             .Where(t => t.Id == id)
             .GroupJoin(_context.Users.AsNoTracking(), t => t.CreatedBy, u => u.Id, (t, users) => new { t, users })
             .SelectMany(x => x.users.DefaultIfEmpty(), (x, u) => new { x.t, u })
+            .GroupJoin(_context.FolderTemplateUsages.AsNoTracking(), x => x.t.Id, fu => fu.TemplateId, (x, usages) => new { x.t, x.u, UsageCount = usages.Count() })
             .Select(x => new FolderTemplate
             {
                 Id = x.t.Id,
@@ -65,7 +67,7 @@ public class FolderTemplateRepository : IFolderTemplateRepository
                 ModifiedBy = x.t.ModifiedBy,
                 ModifiedAt = x.t.ModifiedAt,
                 CreatedByName = x.u != null ? x.u.DisplayName : null,
-                UsageCount = _context.FolderTemplateUsages.Count(fu => fu.TemplateId == x.t.Id)
+                UsageCount = x.UsageCount
             })
             .FirstOrDefaultAsync();
     }
@@ -86,6 +88,7 @@ public class FolderTemplateRepository : IFolderTemplateRepository
             .Where(t => t.Category == category)
             .GroupJoin(_context.Users.AsNoTracking(), t => t.CreatedBy, u => u.Id, (t, users) => new { t, users })
             .SelectMany(x => x.users.DefaultIfEmpty(), (x, u) => new { x.t, u })
+            .GroupJoin(_context.FolderTemplateUsages.AsNoTracking(), x => x.t.Id, fu => fu.TemplateId, (x, usages) => new { x.t, x.u, UsageCount = usages.Count() })
             .Select(x => new FolderTemplate
             {
                 Id = x.t.Id,
@@ -100,7 +103,7 @@ public class FolderTemplateRepository : IFolderTemplateRepository
                 ModifiedBy = x.t.ModifiedBy,
                 ModifiedAt = x.t.ModifiedAt,
                 CreatedByName = x.u != null ? x.u.DisplayName : null,
-                UsageCount = _context.FolderTemplateUsages.Count(fu => fu.TemplateId == x.t.Id)
+                UsageCount = x.UsageCount
             })
             .OrderBy(t => t.Name)
             .ToListAsync();
@@ -111,6 +114,7 @@ public class FolderTemplateRepository : IFolderTemplateRepository
             .Where(t => t.IsDefault)
             .GroupJoin(_context.Users.AsNoTracking(), t => t.CreatedBy, u => u.Id, (t, users) => new { t, users })
             .SelectMany(x => x.users.DefaultIfEmpty(), (x, u) => new { x.t, u })
+            .GroupJoin(_context.FolderTemplateUsages.AsNoTracking(), x => x.t.Id, fu => fu.TemplateId, (x, usages) => new { x.t, x.u, UsageCount = usages.Count() })
             .Select(x => new FolderTemplate
             {
                 Id = x.t.Id,
@@ -125,7 +129,7 @@ public class FolderTemplateRepository : IFolderTemplateRepository
                 ModifiedBy = x.t.ModifiedBy,
                 ModifiedAt = x.t.ModifiedAt,
                 CreatedByName = x.u != null ? x.u.DisplayName : null,
-                UsageCount = _context.FolderTemplateUsages.Count(fu => fu.TemplateId == x.t.Id)
+                UsageCount = x.UsageCount
             })
             .FirstOrDefaultAsync();
 

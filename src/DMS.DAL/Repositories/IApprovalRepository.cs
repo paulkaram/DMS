@@ -1,3 +1,4 @@
+using DMS.DAL.DTOs;
 using DMS.DAL.Entities;
 
 namespace DMS.DAL.Repositories;
@@ -24,6 +25,7 @@ public interface IApprovalRequestRepository
     Task<IEnumerable<ApprovalRequest>> GetPendingForUserAsync(Guid userId);
     Task<IEnumerable<ApprovalRequest>> GetByRequestedByAsync(Guid userId);
     Task<IEnumerable<ApprovalRequest>> GetAllAsync(int? status = null);
+    Task<PagedResult<ApprovalRequest>> GetAllPagedAsync(int page = 1, int pageSize = 50, int? status = null);
     Task<IEnumerable<ApprovalAction>> GetActionsAsync(Guid requestId);
     Task<Guid> CreateAsync(ApprovalRequest entity);
     Task<bool> UpdateStatusAsync(Guid id, int status, DateTime? completedAt = null);

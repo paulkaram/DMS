@@ -14,6 +14,11 @@ public class DocumentCommentConfiguration : IEntityTypeConfiguration<DocumentCom
         // Self-referencing relationship
         builder.HasOne<DocumentComment>().WithMany().HasForeignKey(e => e.ParentCommentId).OnDelete(DeleteBehavior.Restrict);
 
+        // Indexes
+        builder.HasIndex(e => e.DocumentId);
+        builder.HasIndex(e => e.ParentCommentId);
+        builder.HasIndex(e => e.CreatedBy);
+
         // Ignore computed/display properties
         builder.Ignore(e => e.CreatedByName);
         builder.Ignore(e => e.ReplyCount);

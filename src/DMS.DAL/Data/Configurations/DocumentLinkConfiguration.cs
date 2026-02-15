@@ -11,6 +11,10 @@ public class DocumentLinkConfiguration : IEntityTypeConfiguration<DocumentLink>
         builder.ToTable("DocumentLinks");
         builder.HasKey(e => e.Id);
 
+        // Indexes
+        builder.HasIndex(e => e.SourceDocumentId);
+        builder.HasIndex(e => e.TargetDocumentId);
+
         // Ignore computed/display properties
         builder.Ignore(e => e.SourceDocumentName);
         builder.Ignore(e => e.TargetDocumentName);

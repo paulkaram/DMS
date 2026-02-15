@@ -20,6 +20,9 @@ public class CaseConfiguration : IEntityTypeConfiguration<Case>
         builder.ToTable("Cases");
         builder.HasKey(e => e.Id);
 
+        // Indexes
+        builder.HasIndex(e => e.FolderId);
+
         builder.Ignore(e => e.AssignedToUserName);
         builder.Ignore(e => e.FolderName);
     }
@@ -49,6 +52,9 @@ public class NamingConventionConfiguration : IEntityTypeConfiguration<NamingConv
     {
         builder.ToTable("NamingConventions");
         builder.HasKey(e => e.Id);
+
+        // Indexes
+        builder.HasIndex(e => e.FolderId);
 
         builder.Ignore(e => e.FolderName);
         builder.Ignore(e => e.DocumentTypeName);
@@ -88,6 +94,9 @@ public class ScanConfigConfiguration : IEntityTypeConfiguration<ScanConfig>
     {
         builder.ToTable("ScanConfigs");
         builder.HasKey(e => e.Id);
+
+        // Indexes
+        builder.HasIndex(e => e.TargetFolderId);
 
         builder.Ignore(e => e.TargetFolderName);
     }

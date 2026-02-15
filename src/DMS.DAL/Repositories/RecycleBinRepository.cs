@@ -19,23 +19,22 @@ public class RecycleBinRepository : IRecycleBinRepository
         return await _context.RecycleBinItems
             .AsNoTracking()
             .Where(rb => rb.DeletedBy == userId)
-            .OrderByDescending(rb => rb.DeletedAt)
-            .Select(rb => new RecycleBinItem
+            .GroupJoin(_context.Users.AsNoTracking(), rb => rb.DeletedBy, u => u.Id, (rb, users) => new { rb, users })
+            .SelectMany(x => x.users.DefaultIfEmpty(), (x, u) => new { x.rb, u })
+            .OrderByDescending(x => x.rb.DeletedAt)
+            .Select(x => new RecycleBinItem
             {
-                Id = rb.Id,
-                NodeType = rb.NodeType,
-                NodeId = rb.NodeId,
-                NodeName = rb.NodeName,
-                OriginalPath = rb.OriginalPath,
-                OriginalParentId = rb.OriginalParentId,
-                DeletedBy = rb.DeletedBy,
-                DeletedAt = rb.DeletedAt,
-                ExpiresAt = rb.ExpiresAt,
-                Metadata = rb.Metadata,
-                DeletedByUserName = _context.Users
-                    .Where(u => u.Id == rb.DeletedBy)
-                    .Select(u => u.DisplayName)
-                    .FirstOrDefault()
+                Id = x.rb.Id,
+                NodeType = x.rb.NodeType,
+                NodeId = x.rb.NodeId,
+                NodeName = x.rb.NodeName,
+                OriginalPath = x.rb.OriginalPath,
+                OriginalParentId = x.rb.OriginalParentId,
+                DeletedBy = x.rb.DeletedBy,
+                DeletedAt = x.rb.DeletedAt,
+                ExpiresAt = x.rb.ExpiresAt,
+                Metadata = x.rb.Metadata,
+                DeletedByUserName = x.u != null ? x.u.DisplayName : null
             })
             .ToListAsync();
     }
@@ -48,23 +47,22 @@ public class RecycleBinRepository : IRecycleBinRepository
             query = query.Where(rb => rb.NodeType == nodeType.Value);
 
         return await query
-            .OrderByDescending(rb => rb.DeletedAt)
-            .Select(rb => new RecycleBinItem
+            .GroupJoin(_context.Users.AsNoTracking(), rb => rb.DeletedBy, u => u.Id, (rb, users) => new { rb, users })
+            .SelectMany(x => x.users.DefaultIfEmpty(), (x, u) => new { x.rb, u })
+            .OrderByDescending(x => x.rb.DeletedAt)
+            .Select(x => new RecycleBinItem
             {
-                Id = rb.Id,
-                NodeType = rb.NodeType,
-                NodeId = rb.NodeId,
-                NodeName = rb.NodeName,
-                OriginalPath = rb.OriginalPath,
-                OriginalParentId = rb.OriginalParentId,
-                DeletedBy = rb.DeletedBy,
-                DeletedAt = rb.DeletedAt,
-                ExpiresAt = rb.ExpiresAt,
-                Metadata = rb.Metadata,
-                DeletedByUserName = _context.Users
-                    .Where(u => u.Id == rb.DeletedBy)
-                    .Select(u => u.DisplayName)
-                    .FirstOrDefault()
+                Id = x.rb.Id,
+                NodeType = x.rb.NodeType,
+                NodeId = x.rb.NodeId,
+                NodeName = x.rb.NodeName,
+                OriginalPath = x.rb.OriginalPath,
+                OriginalParentId = x.rb.OriginalParentId,
+                DeletedBy = x.rb.DeletedBy,
+                DeletedAt = x.rb.DeletedAt,
+                ExpiresAt = x.rb.ExpiresAt,
+                Metadata = x.rb.Metadata,
+                DeletedByUserName = x.u != null ? x.u.DisplayName : null
             })
             .ToListAsync();
     }
@@ -78,25 +76,24 @@ public class RecycleBinRepository : IRecycleBinRepository
         var totalCount = await query.CountAsync();
 
         var items = await query
-            .OrderByDescending(rb => rb.DeletedAt)
+            .GroupJoin(_context.Users.AsNoTracking(), rb => rb.DeletedBy, u => u.Id, (rb, users) => new { rb, users })
+            .SelectMany(x => x.users.DefaultIfEmpty(), (x, u) => new { x.rb, u })
+            .OrderByDescending(x => x.rb.DeletedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(rb => new RecycleBinItem
+            .Select(x => new RecycleBinItem
             {
-                Id = rb.Id,
-                NodeType = rb.NodeType,
-                NodeId = rb.NodeId,
-                NodeName = rb.NodeName,
-                OriginalPath = rb.OriginalPath,
-                OriginalParentId = rb.OriginalParentId,
-                DeletedBy = rb.DeletedBy,
-                DeletedAt = rb.DeletedAt,
-                ExpiresAt = rb.ExpiresAt,
-                Metadata = rb.Metadata,
-                DeletedByUserName = _context.Users
-                    .Where(u => u.Id == rb.DeletedBy)
-                    .Select(u => u.DisplayName)
-                    .FirstOrDefault()
+                Id = x.rb.Id,
+                NodeType = x.rb.NodeType,
+                NodeId = x.rb.NodeId,
+                NodeName = x.rb.NodeName,
+                OriginalPath = x.rb.OriginalPath,
+                OriginalParentId = x.rb.OriginalParentId,
+                DeletedBy = x.rb.DeletedBy,
+                DeletedAt = x.rb.DeletedAt,
+                ExpiresAt = x.rb.ExpiresAt,
+                Metadata = x.rb.Metadata,
+                DeletedByUserName = x.u != null ? x.u.DisplayName : null
             })
             .ToListAsync();
 
@@ -113,25 +110,24 @@ public class RecycleBinRepository : IRecycleBinRepository
         var totalCount = await query.CountAsync();
 
         var items = await query
-            .OrderByDescending(rb => rb.DeletedAt)
+            .GroupJoin(_context.Users.AsNoTracking(), rb => rb.DeletedBy, u => u.Id, (rb, users) => new { rb, users })
+            .SelectMany(x => x.users.DefaultIfEmpty(), (x, u) => new { x.rb, u })
+            .OrderByDescending(x => x.rb.DeletedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(rb => new RecycleBinItem
+            .Select(x => new RecycleBinItem
             {
-                Id = rb.Id,
-                NodeType = rb.NodeType,
-                NodeId = rb.NodeId,
-                NodeName = rb.NodeName,
-                OriginalPath = rb.OriginalPath,
-                OriginalParentId = rb.OriginalParentId,
-                DeletedBy = rb.DeletedBy,
-                DeletedAt = rb.DeletedAt,
-                ExpiresAt = rb.ExpiresAt,
-                Metadata = rb.Metadata,
-                DeletedByUserName = _context.Users
-                    .Where(u => u.Id == rb.DeletedBy)
-                    .Select(u => u.DisplayName)
-                    .FirstOrDefault()
+                Id = x.rb.Id,
+                NodeType = x.rb.NodeType,
+                NodeId = x.rb.NodeId,
+                NodeName = x.rb.NodeName,
+                OriginalPath = x.rb.OriginalPath,
+                OriginalParentId = x.rb.OriginalParentId,
+                DeletedBy = x.rb.DeletedBy,
+                DeletedAt = x.rb.DeletedAt,
+                ExpiresAt = x.rb.ExpiresAt,
+                Metadata = x.rb.Metadata,
+                DeletedByUserName = x.u != null ? x.u.DisplayName : null
             })
             .ToListAsync();
 
@@ -143,22 +139,21 @@ public class RecycleBinRepository : IRecycleBinRepository
         return await _context.RecycleBinItems
             .AsNoTracking()
             .Where(rb => rb.Id == id)
-            .Select(rb => new RecycleBinItem
+            .GroupJoin(_context.Users.AsNoTracking(), rb => rb.DeletedBy, u => u.Id, (rb, users) => new { rb, users })
+            .SelectMany(x => x.users.DefaultIfEmpty(), (x, u) => new { x.rb, u })
+            .Select(x => new RecycleBinItem
             {
-                Id = rb.Id,
-                NodeType = rb.NodeType,
-                NodeId = rb.NodeId,
-                NodeName = rb.NodeName,
-                OriginalPath = rb.OriginalPath,
-                OriginalParentId = rb.OriginalParentId,
-                DeletedBy = rb.DeletedBy,
-                DeletedAt = rb.DeletedAt,
-                ExpiresAt = rb.ExpiresAt,
-                Metadata = rb.Metadata,
-                DeletedByUserName = _context.Users
-                    .Where(u => u.Id == rb.DeletedBy)
-                    .Select(u => u.DisplayName)
-                    .FirstOrDefault()
+                Id = x.rb.Id,
+                NodeType = x.rb.NodeType,
+                NodeId = x.rb.NodeId,
+                NodeName = x.rb.NodeName,
+                OriginalPath = x.rb.OriginalPath,
+                OriginalParentId = x.rb.OriginalParentId,
+                DeletedBy = x.rb.DeletedBy,
+                DeletedAt = x.rb.DeletedAt,
+                ExpiresAt = x.rb.ExpiresAt,
+                Metadata = x.rb.Metadata,
+                DeletedByUserName = x.u != null ? x.u.DisplayName : null
             })
             .FirstOrDefaultAsync();
     }

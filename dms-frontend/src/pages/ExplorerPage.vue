@@ -320,6 +320,23 @@ const breadcrumbs = computed(() => {
   return items
 })
 
+// Sync URL query params with current cabinet/folder selection
+const isRestoringFromUrl = ref(false)
+
+watch(
+  () => ({ cabinet: store.currentCabinet?.id, folder: store.currentFolder?.id }),
+  (newVal) => {
+    if (isRestoringFromUrl.value) return
+    const query: Record<string, string> = {}
+    if (newVal.cabinet) query.cabinet = newVal.cabinet
+    if (newVal.folder) query.folder = newVal.folder
+    // Only replace if params actually changed
+    if (route.query.cabinet !== query.cabinet || route.query.folder !== query.folder) {
+      router.replace({ query })
+    }
+  }
+)
+
 onMounted(async () => {
   await Promise.all([
     store.loadCabinets(),
@@ -331,6 +348,7 @@ onMounted(async () => {
   const folderId = route.query.folder as string | undefined
 
   if (folderId) {
+    isRestoringFromUrl.value = true
     try {
       const folderRes = await foldersApi.getById(folderId)
       const folder = folderRes.data as Folder
@@ -343,14 +361,28 @@ onMounted(async () => {
       }
     } catch {
       // Folder not found or no access — stay on default view
+    } finally {
+      isRestoringFromUrl.value = false
     }
   } else if (cabinetId) {
-    const cabinet = store.cabinets.find(c => c.id === cabinetId)
-    if (cabinet) {
-      store.selectCabinet(cabinet)
-      await store.loadFolderTree(cabinet.id)
-      await store.loadSubFolders(cabinet.id)
+    isRestoringFromUrl.value = true
+    try {
+      const cabinet = store.cabinets.find(c => c.id === cabinetId)
+      if (cabinet) {
+        store.selectCabinet(cabinet)
+        await store.loadFolderTree(cabinet.id)
+        await store.loadSubFolders(cabinet.id)
+      }
+    } finally {
+      isRestoringFromUrl.value = false
     }
+  } else {
+    // No query params — clear stale state so user sees a clean Explorer
+    store.currentCabinet = null
+    store.currentFolder = null
+    store.folderPath = []
+    store.documents = []
+    store.subFolders = []
   }
 })
 

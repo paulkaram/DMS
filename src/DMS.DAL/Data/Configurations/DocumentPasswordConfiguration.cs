@@ -10,5 +10,8 @@ public class DocumentPasswordConfiguration : IEntityTypeConfiguration<DocumentPa
     {
         builder.ToTable("DocumentPasswords");
         builder.HasKey(e => e.Id);
+
+        // Indexes
+        builder.HasIndex(e => e.DocumentId);
     }
 }

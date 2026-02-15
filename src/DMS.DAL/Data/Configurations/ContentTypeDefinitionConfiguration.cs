@@ -24,6 +24,9 @@ public class ContentTypeFieldConfiguration : IEntityTypeConfiguration<ContentTyp
     {
         builder.ToTable("ContentTypeFields");
         builder.HasKey(e => e.Id);
+
+        // Indexes
+        builder.HasIndex(e => e.ContentTypeId);
     }
 }
 
@@ -33,6 +36,10 @@ public class DocumentMetadataConfiguration : IEntityTypeConfiguration<DocumentMe
     {
         builder.ToTable("DocumentMetadata");
         builder.HasKey(e => e.Id);
+
+        // Indexes
+        builder.HasIndex(e => e.DocumentId);
+        builder.HasIndex(e => new { e.DocumentId, e.ContentTypeId });
     }
 }
 
@@ -58,6 +65,10 @@ public class FolderContentTypeAssignmentConfiguration : IEntityTypeConfiguration
         builder.Ignore(e => e.ContentTypeIcon);
         builder.Ignore(e => e.ContentTypeColor);
 
+        // Indexes
+        builder.HasIndex(e => e.FolderId);
+        builder.HasIndex(e => e.ContentTypeId);
+
         // Navigation
         builder.HasOne(e => e.ContentType)
             .WithMany()
@@ -77,6 +88,10 @@ public class CabinetContentTypeAssignmentConfiguration : IEntityTypeConfiguratio
         builder.Ignore(e => e.ContentTypeDescription);
         builder.Ignore(e => e.ContentTypeIcon);
         builder.Ignore(e => e.ContentTypeColor);
+
+        // Indexes
+        builder.HasIndex(e => e.CabinetId);
+        builder.HasIndex(e => e.ContentTypeId);
 
         // Navigation
         builder.HasOne(e => e.ContentType)
