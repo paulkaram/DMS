@@ -62,7 +62,7 @@ public class IntegrityService : IIntegrityService
         {
             Hash = hashString,
             Algorithm = "SHA256",
-            ComputedAt = DateTime.UtcNow,
+            ComputedAt = DateTime.Now,
             ContentLength = contentLength
         };
     }
@@ -76,7 +76,7 @@ public class IntegrityService : IIntegrityService
         {
             ExpectedHash = expectedHash,
             Algorithm = algorithm,
-            VerifiedAt = DateTime.UtcNow
+            VerifiedAt = DateTime.Now
         };
 
         try
@@ -178,7 +178,7 @@ public class IntegrityService : IIntegrityService
             ComputedHash = result.ComputedHash,
             HashAlgorithm = algorithm,
             IsValid = result.IsValid,
-            VerifiedAt = DateTime.UtcNow,
+            VerifiedAt = DateTime.Now,
             VerificationType = userId.HasValue ? "Manual" : "Scheduled",
             VerifiedBy = userId,
             ErrorMessage = result.ErrorMessage
@@ -189,12 +189,12 @@ public class IntegrityService : IIntegrityService
         // Update document/version verification timestamp if successful
         if (result.IsValid)
         {
-            version.IntegrityVerifiedAt = DateTime.UtcNow;
+            version.IntegrityVerifiedAt = DateTime.Now;
             await _versionRepository.UpdateAsync(version);
 
             if (versionNumber == document.CurrentVersion)
             {
-                document.IntegrityVerifiedAt = DateTime.UtcNow;
+                document.IntegrityVerifiedAt = DateTime.Now;
                 await _documentRepository.UpdateAsync(document);
             }
         }
@@ -222,7 +222,7 @@ public class IntegrityService : IIntegrityService
     {
         var result = new IntegrityBatchResult
         {
-            StartedAt = DateTime.UtcNow
+            StartedAt = DateTime.Now
         };
 
         try
@@ -232,7 +232,7 @@ public class IntegrityService : IIntegrityService
             var documentsToVerify = documents
                 .Where(d => d.IntegrityHash != null &&
                            (d.IntegrityVerifiedAt == null ||
-                            d.IntegrityVerifiedAt < DateTime.UtcNow.AddDays(-30)))
+                            d.IntegrityVerifiedAt < DateTime.Now.AddDays(-30)))
                 .Take(batchSize)
                 .ToList();
 
@@ -271,7 +271,7 @@ public class IntegrityService : IIntegrityService
             _logger.LogError(ex, "Error during batch integrity verification");
         }
 
-        result.CompletedAt = DateTime.UtcNow;
+        result.CompletedAt = DateTime.Now;
         return result;
     }
 

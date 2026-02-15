@@ -29,7 +29,7 @@ public class ContentTypeRepository : IContentTypeRepository
     public async Task<Guid> CreateAsync(ContentType entity)
     {
         entity.Id = Guid.NewGuid();
-        entity.CreatedAt = DateTime.UtcNow;
+        entity.CreatedAt = DateTime.Now;
         entity.Extension = entity.Extension.ToLower();
 
         _context.ContentTypes.Add(entity);

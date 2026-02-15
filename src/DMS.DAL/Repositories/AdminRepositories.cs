@@ -41,7 +41,7 @@ public class BookmarkRepository : IBookmarkRepository
     public async Task<Guid> CreateAsync(Bookmark bookmark)
     {
         bookmark.Id = Guid.NewGuid();
-        bookmark.CreatedAt = DateTime.UtcNow;
+        bookmark.CreatedAt = DateTime.Now;
 
         _context.Bookmarks.Add(bookmark);
         await _context.SaveChangesAsync();
@@ -50,7 +50,7 @@ public class BookmarkRepository : IBookmarkRepository
 
     public async Task<bool> UpdateAsync(Bookmark bookmark)
     {
-        bookmark.ModifiedAt = DateTime.UtcNow;
+        bookmark.ModifiedAt = DateTime.Now;
 
         var existing = await _context.Bookmarks.FindAsync(bookmark.Id);
         if (existing == null) return false;
@@ -76,7 +76,7 @@ public class BookmarkRepository : IBookmarkRepository
             .Where(b => b.Id == id)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(b => b.IsActive, false)
-                .SetProperty(b => b.ModifiedAt, DateTime.UtcNow)) > 0;
+                .SetProperty(b => b.ModifiedAt, DateTime.Now)) > 0;
     }
 }
 
@@ -182,7 +182,7 @@ public class CaseRepository : ICaseRepository
     public async Task<Guid> CreateAsync(Case caseEntity)
     {
         caseEntity.Id = Guid.NewGuid();
-        caseEntity.CreatedAt = DateTime.UtcNow;
+        caseEntity.CreatedAt = DateTime.Now;
 
         _context.Cases.Add(caseEntity);
         await _context.SaveChangesAsync();
@@ -191,7 +191,7 @@ public class CaseRepository : ICaseRepository
 
     public async Task<bool> UpdateAsync(Case caseEntity)
     {
-        caseEntity.ModifiedAt = DateTime.UtcNow;
+        caseEntity.ModifiedAt = DateTime.Now;
 
         var existing = await _context.Cases.FindAsync(caseEntity.Id);
         if (existing == null) return false;
@@ -214,7 +214,7 @@ public class CaseRepository : ICaseRepository
 
     public async Task<bool> UpdateStatusAsync(Guid id, string status, Guid userId)
     {
-        var now = DateTime.UtcNow;
+        var now = DateTime.Now;
         var closedDate = status == "Closed" || status == "Archived" ? now : (DateTime?)null;
 
         return await _context.Cases
@@ -232,7 +232,7 @@ public class CaseRepository : ICaseRepository
             .Where(c => c.Id == id)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(c => c.IsActive, false)
-                .SetProperty(c => c.ModifiedAt, DateTime.UtcNow)) > 0;
+                .SetProperty(c => c.ModifiedAt, DateTime.Now)) > 0;
     }
 }
 
@@ -273,7 +273,7 @@ public class EndpointRepository : IEndpointRepository
     public async Task<Guid> CreateAsync(ServiceEndpoint endpoint)
     {
         endpoint.Id = Guid.NewGuid();
-        endpoint.CreatedAt = DateTime.UtcNow;
+        endpoint.CreatedAt = DateTime.Now;
 
         _context.ServiceEndpoints.Add(endpoint);
         await _context.SaveChangesAsync();
@@ -282,7 +282,7 @@ public class EndpointRepository : IEndpointRepository
 
     public async Task<bool> UpdateAsync(ServiceEndpoint endpoint)
     {
-        endpoint.ModifiedAt = DateTime.UtcNow;
+        endpoint.ModifiedAt = DateTime.Now;
 
         var existing = await _context.ServiceEndpoints.FindAsync(endpoint.Id);
         if (existing == null) return false;
@@ -308,7 +308,7 @@ public class EndpointRepository : IEndpointRepository
         return await _context.ServiceEndpoints
             .Where(e => e.Id == id)
             .ExecuteUpdateAsync(s => s
-                .SetProperty(e => e.LastHealthCheck, DateTime.UtcNow)
+                .SetProperty(e => e.LastHealthCheck, DateTime.Now)
                 .SetProperty(e => e.LastHealthStatus, status)) > 0;
     }
 
@@ -318,7 +318,7 @@ public class EndpointRepository : IEndpointRepository
             .Where(e => e.Id == id)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(e => e.IsActive, false)
-                .SetProperty(e => e.ModifiedAt, DateTime.UtcNow)) > 0;
+                .SetProperty(e => e.ModifiedAt, DateTime.Now)) > 0;
     }
 }
 
@@ -358,7 +358,7 @@ public class ExportConfigRepository : IExportConfigRepository
     public async Task<Guid> CreateAsync(ExportConfig config)
     {
         config.Id = Guid.NewGuid();
-        config.CreatedAt = DateTime.UtcNow;
+        config.CreatedAt = DateTime.Now;
 
         _context.ExportConfigs.Add(config);
         await _context.SaveChangesAsync();
@@ -367,7 +367,7 @@ public class ExportConfigRepository : IExportConfigRepository
 
     public async Task<bool> UpdateAsync(ExportConfig config)
     {
-        config.ModifiedAt = DateTime.UtcNow;
+        config.ModifiedAt = DateTime.Now;
 
         var existing = await _context.ExportConfigs.FindAsync(config.Id);
         if (existing == null) return false;
@@ -422,7 +422,7 @@ public class ExportConfigRepository : IExportConfigRepository
             .Where(e => e.Id == id)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(e => e.IsActive, false)
-                .SetProperty(e => e.ModifiedAt, DateTime.UtcNow)) > 0;
+                .SetProperty(e => e.ModifiedAt, DateTime.Now)) > 0;
     }
 }
 
@@ -527,7 +527,7 @@ public class NamingConventionRepository : INamingConventionRepository
     public async Task<Guid> CreateAsync(NamingConvention convention)
     {
         convention.Id = Guid.NewGuid();
-        convention.CreatedAt = DateTime.UtcNow;
+        convention.CreatedAt = DateTime.Now;
 
         _context.NamingConventions.Add(convention);
         await _context.SaveChangesAsync();
@@ -536,7 +536,7 @@ public class NamingConventionRepository : INamingConventionRepository
 
     public async Task<bool> UpdateAsync(NamingConvention convention)
     {
-        convention.ModifiedAt = DateTime.UtcNow;
+        convention.ModifiedAt = DateTime.Now;
 
         var existing = await _context.NamingConventions.FindAsync(convention.Id);
         if (existing == null) return false;
@@ -564,7 +564,7 @@ public class NamingConventionRepository : INamingConventionRepository
             .Where(nc => nc.Id == id)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(nc => nc.IsActive, false)
-                .SetProperty(nc => nc.ModifiedAt, DateTime.UtcNow)) > 0;
+                .SetProperty(nc => nc.ModifiedAt, DateTime.Now)) > 0;
     }
 
     public Task<string> GenerateNameAsync(Guid conventionId, Dictionary<string, string> values)
@@ -610,7 +610,7 @@ public class OrganizationTemplateRepository : IOrganizationTemplateRepository
     public async Task<Guid> CreateAsync(OrganizationTemplate template)
     {
         template.Id = Guid.NewGuid();
-        template.CreatedAt = DateTime.UtcNow;
+        template.CreatedAt = DateTime.Now;
 
         _context.OrganizationTemplates.Add(template);
         await _context.SaveChangesAsync();
@@ -619,7 +619,7 @@ public class OrganizationTemplateRepository : IOrganizationTemplateRepository
 
     public async Task<bool> UpdateAsync(OrganizationTemplate template)
     {
-        template.ModifiedAt = DateTime.UtcNow;
+        template.ModifiedAt = DateTime.Now;
 
         var existing = await _context.OrganizationTemplates.FindAsync(template.Id);
         if (existing == null) return false;
@@ -669,7 +669,7 @@ public class OrganizationTemplateRepository : IOrganizationTemplateRepository
             .Where(t => t.Id == id)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(t => t.IsActive, false)
-                .SetProperty(t => t.ModifiedAt, DateTime.UtcNow)) > 0;
+                .SetProperty(t => t.ModifiedAt, DateTime.Now)) > 0;
     }
 }
 
@@ -710,7 +710,7 @@ public class PermissionLevelDefinitionRepository : IPermissionLevelDefinitionRep
     public async Task<Guid> CreateAsync(PermissionLevelDefinition definition)
     {
         definition.Id = Guid.NewGuid();
-        definition.CreatedAt = DateTime.UtcNow;
+        definition.CreatedAt = DateTime.Now;
 
         _context.PermissionLevelDefinitions.Add(definition);
         await _context.SaveChangesAsync();
@@ -719,7 +719,7 @@ public class PermissionLevelDefinitionRepository : IPermissionLevelDefinitionRep
 
     public async Task<bool> UpdateAsync(PermissionLevelDefinition definition)
     {
-        definition.ModifiedAt = DateTime.UtcNow;
+        definition.ModifiedAt = DateTime.Now;
 
         var existing = await _context.PermissionLevelDefinitions.FindAsync(definition.Id);
         if (existing == null) return false;
@@ -750,7 +750,7 @@ public class PermissionLevelDefinitionRepository : IPermissionLevelDefinitionRep
             .Where(p => p.Id == id && !p.IsSystem)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(p => p.IsActive, false)
-                .SetProperty(p => p.ModifiedAt, DateTime.UtcNow)) > 0;
+                .SetProperty(p => p.ModifiedAt, DateTime.Now)) > 0;
     }
 }
 
@@ -800,7 +800,7 @@ public class PurposeRepository : IPurposeRepository
     public async Task<Guid> CreateAsync(Purpose purpose)
     {
         purpose.Id = Guid.NewGuid();
-        purpose.CreatedAt = DateTime.UtcNow;
+        purpose.CreatedAt = DateTime.Now;
 
         _context.Purposes.Add(purpose);
         await _context.SaveChangesAsync();
@@ -809,7 +809,7 @@ public class PurposeRepository : IPurposeRepository
 
     public async Task<bool> UpdateAsync(Purpose purpose)
     {
-        purpose.ModifiedAt = DateTime.UtcNow;
+        purpose.ModifiedAt = DateTime.Now;
 
         var existing = await _context.Purposes.FindAsync(purpose.Id);
         if (existing == null) return false;
@@ -834,7 +834,7 @@ public class PurposeRepository : IPurposeRepository
             .Where(p => p.Id == id)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(p => p.IsActive, false)
-                .SetProperty(p => p.ModifiedAt, DateTime.UtcNow)) > 0;
+                .SetProperty(p => p.ModifiedAt, DateTime.Now)) > 0;
     }
 }
 
@@ -923,7 +923,7 @@ public class ScanConfigRepository : IScanConfigRepository
     public async Task<Guid> CreateAsync(ScanConfig config)
     {
         config.Id = Guid.NewGuid();
-        config.CreatedAt = DateTime.UtcNow;
+        config.CreatedAt = DateTime.Now;
 
         _context.ScanConfigs.Add(config);
         await _context.SaveChangesAsync();
@@ -932,7 +932,7 @@ public class ScanConfigRepository : IScanConfigRepository
 
     public async Task<bool> UpdateAsync(ScanConfig config)
     {
-        config.ModifiedAt = DateTime.UtcNow;
+        config.ModifiedAt = DateTime.Now;
 
         var existing = await _context.ScanConfigs.FindAsync(config.Id);
         if (existing == null) return false;
@@ -989,7 +989,7 @@ public class ScanConfigRepository : IScanConfigRepository
             .Where(sc => sc.Id == id)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(sc => sc.IsActive, false)
-                .SetProperty(sc => sc.ModifiedAt, DateTime.UtcNow)) > 0;
+                .SetProperty(sc => sc.ModifiedAt, DateTime.Now)) > 0;
     }
 }
 
@@ -1047,7 +1047,7 @@ public class SearchConfigRepository : ISearchConfigRepository
     public async Task<Guid> CreateAsync(SearchConfig config)
     {
         config.Id = Guid.NewGuid();
-        config.CreatedAt = DateTime.UtcNow;
+        config.CreatedAt = DateTime.Now;
 
         _context.SearchConfigs.Add(config);
         await _context.SaveChangesAsync();
@@ -1056,7 +1056,7 @@ public class SearchConfigRepository : ISearchConfigRepository
 
     public async Task<bool> UpdateAsync(SearchConfig config)
     {
-        config.ModifiedAt = DateTime.UtcNow;
+        config.ModifiedAt = DateTime.Now;
 
         var existing = await _context.SearchConfigs.FindAsync(config.Id);
         if (existing == null) return false;
@@ -1114,6 +1114,6 @@ public class SearchConfigRepository : ISearchConfigRepository
             .Where(s => s.Id == id)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(x => x.IsActive, false)
-                .SetProperty(x => x.ModifiedAt, DateTime.UtcNow)) > 0;
+                .SetProperty(x => x.ModifiedAt, DateTime.Now)) > 0;
     }
 }

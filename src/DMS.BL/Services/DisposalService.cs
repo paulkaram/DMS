@@ -61,7 +61,7 @@ public class DisposalService : IDisposalService
             Reason = dto.Reason,
             LegalBasis = dto.LegalBasis,
             RequestedBy = userId,
-            RequestedAt = DateTime.UtcNow
+            RequestedAt = DateTime.Now
         };
 
         await _activityLogService.LogActivityAsync(
@@ -119,7 +119,7 @@ public class DisposalService : IDisposalService
             DocumentPath = document.StoragePath,
             DocumentCreatedAt = document.CreatedAt,
             DisposalMethod = disposalMethod,
-            DisposedAt = DateTime.UtcNow,
+            DisposedAt = DateTime.Now,
             DisposedBy = userId,
             ContentHashAtDisposal = contentHash ?? document.IntegrityHash,
             FileSizeAtDisposal = document.Size,
@@ -151,7 +151,7 @@ public class DisposalService : IDisposalService
 
         // Verify disposal
         certificate.DisposalVerified = true;
-        certificate.VerifiedAt = DateTime.UtcNow;
+        certificate.VerifiedAt = DateTime.Now;
 
         // Save certificate
         await _certificateRepository.CreateAsync(certificate);
@@ -206,7 +206,7 @@ public class DisposalService : IDisposalService
             // Assume 7 years (2555 days) default retention if not specified
             var expirationDate = retentionStart.AddDays(2555);
 
-            if (expirationDate <= DateTime.UtcNow)
+            if (expirationDate <= DateTime.Now)
             {
                 var isOnHold = await _legalHoldService.IsDocumentOnHoldAsync(doc.Id);
                 pending.Add(new DocumentDisposalStatusDto
@@ -217,7 +217,7 @@ public class DisposalService : IDisposalService
                     DocumentCreatedAt = doc.CreatedAt,
                     RetentionStartDate = retentionStart,
                     RetentionExpirationDate = expirationDate,
-                    DaysUntilExpiration = (int)(expirationDate - DateTime.UtcNow).TotalDays,
+                    DaysUntilExpiration = (int)(expirationDate - DateTime.Now).TotalDays,
                     IsExpired = true,
                     IsOnLegalHold = isOnHold,
                     RequiresApproval = true
@@ -232,14 +232,14 @@ public class DisposalService : IDisposalService
     {
         var documents = await _documentRepository.GetAllAsync();
         var upcoming = new List<DocumentDisposalStatusDto>();
-        var cutoffDate = DateTime.UtcNow.AddDays(daysAhead);
+        var cutoffDate = DateTime.Now.AddDays(daysAhead);
 
         foreach (var doc in documents.Where(d => d.RetentionPolicyId.HasValue))
         {
             var retentionStart = doc.CreatedAt;
             var expirationDate = retentionStart.AddDays(2555); // Default 7 years
 
-            if (expirationDate > DateTime.UtcNow && expirationDate <= cutoffDate)
+            if (expirationDate > DateTime.Now && expirationDate <= cutoffDate)
             {
                 var isOnHold = await _legalHoldService.IsDocumentOnHoldAsync(doc.Id);
                 upcoming.Add(new DocumentDisposalStatusDto
@@ -250,7 +250,7 @@ public class DisposalService : IDisposalService
                     DocumentCreatedAt = doc.CreatedAt,
                     RetentionStartDate = retentionStart,
                     RetentionExpirationDate = expirationDate,
-                    DaysUntilExpiration = (int)(expirationDate - DateTime.UtcNow).TotalDays,
+                    DaysUntilExpiration = (int)(expirationDate - DateTime.Now).TotalDays,
                     IsExpired = false,
                     IsOnLegalHold = isOnHold,
                     RequiresApproval = true
@@ -265,7 +265,7 @@ public class DisposalService : IDisposalService
     {
         var result = new DisposalBatchResult
         {
-            StartedAt = DateTime.UtcNow
+            StartedAt = DateTime.Now
         };
 
         try
@@ -273,7 +273,7 @@ public class DisposalService : IDisposalService
             var pendingResult = await GetPendingDisposalsAsync();
             if (!pendingResult.Success)
             {
-                result.CompletedAt = DateTime.UtcNow;
+                result.CompletedAt = DateTime.Now;
                 return result;
             }
 
@@ -304,7 +304,7 @@ public class DisposalService : IDisposalService
             _logger.LogError(ex, "Error during batch disposal processing");
         }
 
-        result.CompletedAt = DateTime.UtcNow;
+        result.CompletedAt = DateTime.Now;
         return result;
     }
 

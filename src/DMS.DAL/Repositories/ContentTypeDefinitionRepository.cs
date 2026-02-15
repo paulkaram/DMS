@@ -68,7 +68,7 @@ public class ContentTypeDefinitionRepository : IContentTypeDefinitionRepository
 
             try
             {
-                var now = DateTime.UtcNow;
+                var now = DateTime.Now;
 
                 // Clear existing system default
                 await _context.ContentTypeDefinitions
@@ -104,7 +104,7 @@ public class ContentTypeDefinitionRepository : IContentTypeDefinitionRepository
 
     public async Task<bool> ClearSystemDefaultAsync(Guid userId)
     {
-        var now = DateTime.UtcNow;
+        var now = DateTime.Now;
         var affected = await _context.ContentTypeDefinitions
             .Where(ct => ct.IsSystemDefault)
             .ExecuteUpdateAsync(s => s
@@ -118,7 +118,7 @@ public class ContentTypeDefinitionRepository : IContentTypeDefinitionRepository
     public async Task<Guid> CreateAsync(ContentTypeDefinition contentType)
     {
         contentType.Id = Guid.NewGuid();
-        contentType.CreatedAt = DateTime.UtcNow;
+        contentType.CreatedAt = DateTime.Now;
 
         _context.ContentTypeDefinitions.Add(contentType);
         await _context.SaveChangesAsync();
@@ -127,7 +127,7 @@ public class ContentTypeDefinitionRepository : IContentTypeDefinitionRepository
 
     public async Task<bool> UpdateAsync(ContentTypeDefinition contentType)
     {
-        contentType.ModifiedAt = DateTime.UtcNow;
+        contentType.ModifiedAt = DateTime.Now;
 
         var existing = await _context.ContentTypeDefinitions.FindAsync(contentType.Id);
         if (existing == null) return false;
@@ -143,7 +143,7 @@ public class ContentTypeDefinitionRepository : IContentTypeDefinitionRepository
         if (entity == null) return false;
 
         entity.IsActive = false;
-        entity.ModifiedAt = DateTime.UtcNow;
+        entity.ModifiedAt = DateTime.Now;
         return await _context.SaveChangesAsync() > 0;
     }
 
@@ -170,7 +170,7 @@ public class ContentTypeDefinitionRepository : IContentTypeDefinitionRepository
     public async Task<Guid> CreateFieldAsync(ContentTypeField field)
     {
         field.Id = Guid.NewGuid();
-        field.CreatedAt = DateTime.UtcNow;
+        field.CreatedAt = DateTime.Now;
 
         // Get max sort order
         var maxOrder = await _context.ContentTypeFields
@@ -294,7 +294,7 @@ public class ContentTypeDefinitionRepository : IContentTypeDefinitionRepository
                     item.DocumentId = documentId;
                     item.ContentTypeId = contentTypeId;
                     item.CreatedBy = userId;
-                    item.CreatedAt = DateTime.UtcNow;
+                    item.CreatedAt = DateTime.Now;
 
                     _context.DocumentMetadata.Add(item);
                 }
@@ -381,7 +381,7 @@ public class ContentTypeDefinitionRepository : IContentTypeDefinitionRepository
             try
             {
                 assignment.Id = Guid.NewGuid();
-                assignment.CreatedAt = DateTime.UtcNow;
+                assignment.CreatedAt = DateTime.Now;
 
                 // If setting as default, clear existing default first
                 if (assignment.IsDefault)
@@ -540,7 +540,7 @@ public class ContentTypeDefinitionRepository : IContentTypeDefinitionRepository
             try
             {
                 assignment.Id = Guid.NewGuid();
-                assignment.CreatedAt = DateTime.UtcNow;
+                assignment.CreatedAt = DateTime.Now;
 
                 // If setting as default, clear existing default first
                 if (assignment.IsDefault)

@@ -47,7 +47,7 @@ public class StructureRepository : IStructureRepository
     public async Task<Guid> CreateAsync(Structure entity)
     {
         entity.Id = Guid.NewGuid();
-        entity.CreatedAt = DateTime.UtcNow;
+        entity.CreatedAt = DateTime.Now;
 
         // Calculate level based on parent
         if (entity.ParentId.HasValue)
@@ -70,7 +70,7 @@ public class StructureRepository : IStructureRepository
 
     public async Task<bool> UpdateAsync(Structure entity)
     {
-        entity.ModifiedAt = DateTime.UtcNow;
+        entity.ModifiedAt = DateTime.Now;
 
         var existing = await _context.Structures.FindAsync(entity.Id);
         if (existing == null) return false;
@@ -92,7 +92,7 @@ public class StructureRepository : IStructureRepository
 
         // Soft delete - mark as inactive
         entity.IsActive = false;
-        entity.ModifiedAt = DateTime.UtcNow;
+        entity.ModifiedAt = DateTime.Now;
         var affected = await _context.SaveChangesAsync();
         return affected > 0;
     }
@@ -175,7 +175,7 @@ public class StructureRepository : IStructureRepository
             .AsNoTracking()
             .Include(sm => sm.User)
             .Where(sm => sm.StructureId == structureId
-                && (sm.EndDate == null || sm.EndDate > DateTime.UtcNow))
+                && (sm.EndDate == null || sm.EndDate > DateTime.Now))
             .OrderByDescending(sm => sm.IsPrimary)
             .ThenBy(sm => sm.User!.DisplayName)
             .ToListAsync();
@@ -188,7 +188,7 @@ public class StructureRepository : IStructureRepository
             .Where(s => _context.StructureMembers
                 .Any(sm => sm.StructureId == s.Id
                     && sm.UserId == userId
-                    && (sm.EndDate == null || sm.EndDate > DateTime.UtcNow)))
+                    && (sm.EndDate == null || sm.EndDate > DateTime.Now)))
             .OrderBy(s => s.Name)
             .ToListAsync();
     }
@@ -201,14 +201,14 @@ public class StructureRepository : IStructureRepository
                 .Any(sm => sm.StructureId == s.Id
                     && sm.UserId == userId
                     && sm.IsPrimary
-                    && (sm.EndDate == null || sm.EndDate > DateTime.UtcNow)))
+                    && (sm.EndDate == null || sm.EndDate > DateTime.Now)))
             .FirstOrDefaultAsync();
     }
 
     public async Task<Guid> AddMemberAsync(StructureMember member)
     {
         member.Id = Guid.NewGuid();
-        member.CreatedAt = DateTime.UtcNow;
+        member.CreatedAt = DateTime.Now;
 
         // If this is primary, clear other primary flags
         if (member.IsPrimary)
@@ -234,7 +234,7 @@ public class StructureRepository : IStructureRepository
 
         if (member == null) return false;
 
-        member.EndDate = DateTime.UtcNow;
+        member.EndDate = DateTime.Now;
         var affected = await _context.SaveChangesAsync();
         return affected > 0;
     }
@@ -363,7 +363,7 @@ public class EffectivePermissionRepository : IEffectivePermissionRepository
             .FirstOrDefaultAsync(ep => ep.NodeType == nodeType
                 && ep.NodeId == nodeId
                 && ep.UserId == userId
-                && (ep.ExpiresAt == null || ep.ExpiresAt > DateTime.UtcNow));
+                && (ep.ExpiresAt == null || ep.ExpiresAt > DateTime.Now));
     }
 
     public async Task<IEnumerable<EffectivePermission>> GetByNodeAsync(NodeType nodeType, Guid nodeId)
@@ -389,12 +389,12 @@ public class EffectivePermissionRepository : IEffectivePermissionRepository
             .FirstOrDefaultAsync(ep => ep.NodeType == entity.NodeType
                 && ep.NodeId == entity.NodeId
                 && ep.UserId == entity.UserId
-                && (ep.ExpiresAt == null || ep.ExpiresAt > DateTime.UtcNow));
+                && (ep.ExpiresAt == null || ep.ExpiresAt > DateTime.Now));
 
         if (existing != null)
         {
             entity.Id = existing.Id;
-            entity.CalculatedAt = DateTime.UtcNow;
+            entity.CalculatedAt = DateTime.Now;
 
             existing.EffectiveLevel = entity.EffectiveLevel;
             existing.SourceType = entity.SourceType;
@@ -410,7 +410,7 @@ public class EffectivePermissionRepository : IEffectivePermissionRepository
         }
 
         entity.Id = Guid.NewGuid();
-        entity.CalculatedAt = DateTime.UtcNow;
+        entity.CalculatedAt = DateTime.Now;
 
         _context.EffectivePermissions.Add(entity);
         await _context.SaveChangesAsync();
@@ -457,7 +457,7 @@ public class EffectivePermissionRepository : IEffectivePermissionRepository
             var userIds = await _context.StructureMembers
                 .AsNoTracking()
                 .Where(sm => sm.StructureId == principalId
-                    && (sm.EndDate == null || sm.EndDate > DateTime.UtcNow))
+                    && (sm.EndDate == null || sm.EndDate > DateTime.Now))
                 .Select(sm => sm.UserId)
                 .ToListAsync();
 
@@ -470,7 +470,7 @@ public class EffectivePermissionRepository : IEffectivePermissionRepository
     public async Task CleanupExpiredAsync()
     {
         await _context.EffectivePermissions
-            .Where(ep => ep.ExpiresAt < DateTime.UtcNow)
+            .Where(ep => ep.ExpiresAt < DateTime.Now)
             .ExecuteDeleteAsync();
     }
 }
@@ -487,7 +487,7 @@ public class PermissionAuditRepository : IPermissionAuditRepository
     public async Task<Guid> LogAsync(PermissionAuditLog entry)
     {
         entry.Id = Guid.NewGuid();
-        entry.PerformedAt = DateTime.UtcNow;
+        entry.PerformedAt = DateTime.Now;
 
         _context.PermissionAuditLogs.Add(entry);
         await _context.SaveChangesAsync();
@@ -575,8 +575,8 @@ public class PermissionDelegationRepository : IPermissionDelegationRepository
             .AsNoTracking()
             .Where(pd => pd.DelegateId == delegateId
                 && pd.IsActive
-                && pd.StartDate <= DateTime.UtcNow
-                && pd.EndDate > DateTime.UtcNow)
+                && pd.StartDate <= DateTime.Now
+                && pd.EndDate > DateTime.Now)
             .OrderByDescending(pd => pd.CreatedAt)
             .ToListAsync();
     }
@@ -584,7 +584,7 @@ public class PermissionDelegationRepository : IPermissionDelegationRepository
     public async Task<Guid> CreateAsync(PermissionDelegation entity)
     {
         entity.Id = Guid.NewGuid();
-        entity.CreatedAt = DateTime.UtcNow;
+        entity.CreatedAt = DateTime.Now;
 
         _context.PermissionDelegations.Add(entity);
         await _context.SaveChangesAsync();
@@ -598,7 +598,7 @@ public class PermissionDelegationRepository : IPermissionDelegationRepository
         if (entity == null) return false;
 
         entity.IsActive = false;
-        entity.RevokedAt = DateTime.UtcNow;
+        entity.RevokedAt = DateTime.Now;
         entity.RevokedBy = revokedBy;
 
         var affected = await _context.SaveChangesAsync();
@@ -608,7 +608,7 @@ public class PermissionDelegationRepository : IPermissionDelegationRepository
     public async Task ExpireOldDelegationsAsync()
     {
         await _context.PermissionDelegations
-            .Where(pd => pd.IsActive && pd.EndDate < DateTime.UtcNow)
+            .Where(pd => pd.IsActive && pd.EndDate < DateTime.Now)
             .ExecuteUpdateAsync(s => s.SetProperty(pd => pd.IsActive, false));
     }
 }

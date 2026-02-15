@@ -18,7 +18,7 @@ public class Bookmark : IAuditable, ISoftDeletable
     public bool IsActive { get; set; } = true;
     public int SortOrder { get; set; } = 0;
     public Guid? CreatedBy { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
     public Guid? ModifiedBy { get; set; }
     public DateTime? ModifiedAt { get; set; }
 }
@@ -40,7 +40,7 @@ public class Case : IAuditable, ISoftDeletable
     public DateTime? ClosedDate { get; set; }
     public bool IsActive { get; set; } = true;
     public Guid? CreatedBy { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
     public Guid? ModifiedBy { get; set; }
     public DateTime? ModifiedAt { get; set; }
 
@@ -68,7 +68,7 @@ public class ServiceEndpoint : IAuditable, ISoftDeletable
     public DateTime? LastHealthCheck { get; set; }
     public string? LastHealthStatus { get; set; }
     public Guid? CreatedBy { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
     public Guid? ModifiedBy { get; set; }
     public DateTime? ModifiedAt { get; set; }
 }
@@ -92,7 +92,7 @@ public class ExportConfig : IAuditable, ISoftDeletable
     public bool IsDefault { get; set; } = false;
     public bool IsActive { get; set; } = true;
     public Guid? CreatedBy { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
     public Guid? ModifiedBy { get; set; }
     public DateTime? ModifiedAt { get; set; }
 }
@@ -115,7 +115,7 @@ public class NamingConvention : IAuditable, ISoftDeletable
     public bool IsActive { get; set; } = true;
     public int SortOrder { get; set; } = 0;
     public Guid? CreatedBy { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
     public Guid? ModifiedBy { get; set; }
     public DateTime? ModifiedAt { get; set; }
 
@@ -138,7 +138,7 @@ public class OrganizationTemplate : IAuditable, ISoftDeletable
     public bool IsDefault { get; set; } = false;
     public bool IsActive { get; set; } = true;
     public Guid? CreatedBy { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
     public Guid? ModifiedBy { get; set; }
     public DateTime? ModifiedAt { get; set; }
 }
@@ -164,7 +164,7 @@ public class PermissionLevelDefinition : IAuditable, ISoftDeletable
     public bool IsActive { get; set; } = true;
     public int SortOrder { get; set; } = 0;
     public Guid? CreatedBy { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
     public Guid? ModifiedBy { get; set; }
     public DateTime? ModifiedAt { get; set; }
 }
@@ -184,7 +184,7 @@ public class Purpose : IAuditable, ISoftDeletable
     public bool IsActive { get; set; } = true;
     public int SortOrder { get; set; } = 0;
     public Guid? CreatedBy { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
     public Guid? ModifiedBy { get; set; }
     public DateTime? ModifiedAt { get; set; }
 }
@@ -210,7 +210,7 @@ public class ScanConfig : IAuditable, ISoftDeletable
     public bool IsDefault { get; set; } = false;
     public bool IsActive { get; set; } = true;
     public Guid? CreatedBy { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
     public Guid? ModifiedBy { get; set; }
     public DateTime? ModifiedAt { get; set; }
 
@@ -240,7 +240,7 @@ public class SearchConfig : IAuditable, ISoftDeletable
     public bool IsDefault { get; set; } = false;
     public bool IsActive { get; set; } = true;
     public Guid? CreatedBy { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
     public Guid? ModifiedBy { get; set; }
     public DateTime? ModifiedAt { get; set; }
 }

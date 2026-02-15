@@ -140,7 +140,7 @@ public class FolderTemplateRepository : IFolderTemplateRepository
     public async Task<Guid> CreateAsync(FolderTemplate template)
     {
         template.Id = Guid.NewGuid();
-        template.CreatedAt = DateTime.UtcNow;
+        template.CreatedAt = DateTime.Now;
 
         // If setting as default, clear other defaults first
         if (template.IsDefault)
@@ -159,7 +159,7 @@ public class FolderTemplateRepository : IFolderTemplateRepository
 
     public async Task<bool> UpdateAsync(FolderTemplate template)
     {
-        template.ModifiedAt = DateTime.UtcNow;
+        template.ModifiedAt = DateTime.Now;
 
         // If setting as default, clear other defaults first
         if (template.IsDefault)
@@ -189,7 +189,7 @@ public class FolderTemplateRepository : IFolderTemplateRepository
             .Where(t => t.Id == id)
             .ExecuteUpdateAsync(setters => setters
                 .SetProperty(t => t.IsActive, false)
-                .SetProperty(t => t.ModifiedAt, DateTime.UtcNow)) > 0;
+                .SetProperty(t => t.ModifiedAt, DateTime.Now)) > 0;
 
     #endregion
 
@@ -267,7 +267,7 @@ public class FolderTemplateRepository : IFolderTemplateRepository
     public async Task<Guid> RecordUsageAsync(FolderTemplateUsage usage)
     {
         usage.Id = Guid.NewGuid();
-        usage.AppliedAt = DateTime.UtcNow;
+        usage.AppliedAt = DateTime.Now;
 
         _context.FolderTemplateUsages.Add(usage);
         await _context.SaveChangesAsync();

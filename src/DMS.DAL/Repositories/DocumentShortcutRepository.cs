@@ -60,7 +60,7 @@ public class DocumentShortcutRepository : IDocumentShortcutRepository
     public async Task<Guid> CreateAsync(DocumentShortcut entity)
     {
         entity.Id = Guid.NewGuid();
-        entity.CreatedAt = DateTime.UtcNow;
+        entity.CreatedAt = DateTime.Now;
 
         _context.DocumentShortcuts.Add(entity);
         await _context.SaveChangesAsync();

@@ -56,7 +56,7 @@ public class ClassificationRepository : IClassificationRepository
     public async Task<Guid> CreateAsync(Classification entity)
     {
         entity.Id = Guid.NewGuid();
-        entity.CreatedAt = DateTime.UtcNow;
+        entity.CreatedAt = DateTime.Now;
         _context.Classifications.Add(entity);
         await _context.SaveChangesAsync();
         return entity.Id;
@@ -112,7 +112,7 @@ public class ImportanceRepository : IImportanceRepository
     public async Task<Guid> CreateAsync(Importance entity)
     {
         entity.Id = Guid.NewGuid();
-        entity.CreatedAt = DateTime.UtcNow;
+        entity.CreatedAt = DateTime.Now;
         _context.Importances.Add(entity);
         await _context.SaveChangesAsync();
         return entity.Id;
@@ -185,7 +185,7 @@ public class DocumentTypeRepository : IDocumentTypeRepository
     public async Task<Guid> CreateAsync(DocumentType entity)
     {
         entity.Id = Guid.NewGuid();
-        entity.CreatedAt = DateTime.UtcNow;
+        entity.CreatedAt = DateTime.Now;
         _context.DocumentTypes.Add(entity);
         await _context.SaveChangesAsync();
         return entity.Id;
@@ -278,7 +278,7 @@ public class LookupRepository : ILookupRepository
     public async Task<Guid> CreateAsync(Lookup entity)
     {
         entity.Id = Guid.NewGuid();
-        entity.CreatedAt = DateTime.UtcNow;
+        entity.CreatedAt = DateTime.Now;
         _context.Lookups.Add(entity);
         await _context.SaveChangesAsync();
         return entity.Id;

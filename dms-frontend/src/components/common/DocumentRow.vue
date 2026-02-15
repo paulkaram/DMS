@@ -118,6 +118,26 @@ const expiryInfo = computed(() => getExpiryInfo(props.document.expiryDate))
               >attach_file</span>
               <span class="text-[9px] font-bold text-violet-600 dark:text-violet-400 tabular-nums pr-0.5">{{ document.attachmentCount }}</span>
             </div>
+            <!-- Privacy Level Badge -->
+            <div
+              v-if="document.privacyLevelName"
+              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border"
+              :style="{
+                backgroundColor: (document.privacyLevelColor || '#6b7280') + '15',
+                borderColor: (document.privacyLevelColor || '#6b7280') + '30'
+              }"
+              :title="`Privacy: ${document.privacyLevelName}`"
+            >
+              <span
+                class="material-symbols-outlined"
+                style="font-size: 12px;"
+                :style="{ color: document.privacyLevelColor || '#6b7280' }"
+              >shield</span>
+              <span
+                class="text-[9px] font-semibold uppercase tracking-wide pr-0.5"
+                :style="{ color: document.privacyLevelColor || '#6b7280' }"
+              >{{ document.privacyLevelName }}</span>
+            </div>
             <!-- Expiry Badge -->
             <div
               v-if="expiryInfo?.status === 'expired'"

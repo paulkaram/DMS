@@ -7,7 +7,7 @@ public class IntegrityHashResult
 {
     public string Hash { get; set; } = string.Empty;
     public string Algorithm { get; set; } = "SHA256";
-    public DateTime ComputedAt { get; set; } = DateTime.UtcNow;
+    public DateTime ComputedAt { get; set; } = DateTime.Now;
     public long ContentLength { get; set; }
 }
 
@@ -20,7 +20,7 @@ public class IntegrityVerificationResult
     public string ExpectedHash { get; set; } = string.Empty;
     public string ComputedHash { get; set; } = string.Empty;
     public string Algorithm { get; set; } = "SHA256";
-    public DateTime VerifiedAt { get; set; } = DateTime.UtcNow;
+    public DateTime VerifiedAt { get; set; } = DateTime.Now;
     public string? ErrorMessage { get; set; }
     public Guid? DocumentId { get; set; }
     public int? VersionNumber { get; set; }

@@ -188,6 +188,7 @@ public class DocumentService : IDocumentService
             ImportanceId = dto.ImportanceId,
             DocumentTypeId = dto.DocumentTypeId,
             ExpiryDate = dto.ExpiryDate,
+            PrivacyLevelId = dto.PrivacyLevelId,
             CreatedBy = userId,
             IsActive = true,
             IsOriginalRecord = true,
@@ -202,7 +203,7 @@ public class DocumentService : IDocumentService
         document.StoragePath = storageResult.StoragePath;
         document.IntegrityHash = storageResult.IntegrityHash;
         document.HashAlgorithm = storageResult.HashAlgorithm;
-        document.IntegrityVerifiedAt = DateTime.UtcNow;
+        document.IntegrityVerifiedAt = DateTime.Now;
         document.Size = storageResult.Size;
 
         // Create first version (1.0 Major)
@@ -216,7 +217,7 @@ public class DocumentService : IDocumentService
             CreatedBy = userId,
             IntegrityHash = storageResult.IntegrityHash,
             HashAlgorithm = storageResult.HashAlgorithm,
-            IntegrityVerifiedAt = DateTime.UtcNow,
+            IntegrityVerifiedAt = DateTime.Now,
             ContentType = validatedContentType,
             OriginalFileName = fileName,
             IsOriginalRecord = true,
@@ -267,7 +268,7 @@ public class DocumentService : IDocumentService
         workingCopy.DraftClassificationId = dto.ClassificationId;
         workingCopy.DraftImportanceId = dto.ImportanceId;
         workingCopy.DraftDocumentTypeId = dto.DocumentTypeId;
-        workingCopy.LastModifiedAt = DateTime.UtcNow;
+        workingCopy.LastModifiedAt = DateTime.Now;
 
         await _workingCopyRepository.UpdateAsync(workingCopy);
 
@@ -311,7 +312,7 @@ public class DocumentService : IDocumentService
         workingCopy.DraftContentType = validatedContentType;
         workingCopy.DraftOriginalFileName = fileName;
         workingCopy.DraftIntegrityHash = draftStorageResult.IntegrityHash;
-        workingCopy.LastModifiedAt = DateTime.UtcNow;
+        workingCopy.LastModifiedAt = DateTime.Now;
 
         await _workingCopyRepository.UpdateAsync(workingCopy);
 
@@ -399,6 +400,7 @@ public class DocumentService : IDocumentService
             ClassificationId = document.ClassificationId,
             ImportanceId = document.ImportanceId,
             DocumentTypeId = document.DocumentTypeId,
+            PrivacyLevelId = document.PrivacyLevelId,
             CreatedBy = userId,
             IsActive = true,
             IsOriginalRecord = false,
@@ -414,7 +416,7 @@ public class DocumentService : IDocumentService
         newDocument.StoragePath = storageResult.StoragePath;
         newDocument.IntegrityHash = storageResult.IntegrityHash;
         newDocument.HashAlgorithm = storageResult.HashAlgorithm;
-        newDocument.IntegrityVerifiedAt = DateTime.UtcNow;
+        newDocument.IntegrityVerifiedAt = DateTime.Now;
 
         var version = new DocumentVersion
         {
@@ -525,7 +527,7 @@ public class DocumentService : IDocumentService
 
         await _activityLogService.LogActivityAsync(
             ActivityActions.CheckedOut, "Document", id, document.Name,
-            $"Checked out at {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC",
+            $"Checked out at {DateTime.Now:yyyy-MM-dd HH:mm:ss} UTC",
             userId, null, null);
 
         return ServiceResult.Ok("Document checked out successfully. You can now edit metadata or upload new content.");
@@ -631,7 +633,7 @@ public class DocumentService : IDocumentService
             CreatedBy = userId,
             IntegrityHash = integrityHash,
             HashAlgorithm = hashAlgorithm,
-            IntegrityVerifiedAt = DateTime.UtcNow,
+            IntegrityVerifiedAt = DateTime.Now,
             ContentType = finalContentType,
             OriginalFileName = originalFileName ?? document.Name + document.Extension,
             IsOriginalRecord = true,
@@ -660,7 +662,7 @@ public class DocumentService : IDocumentService
         document.Size = size;
         document.IntegrityHash = integrityHash;
         document.HashAlgorithm = hashAlgorithm;
-        document.IntegrityVerifiedAt = DateTime.UtcNow;
+        document.IntegrityVerifiedAt = DateTime.Now;
         document.ContentType = finalContentType;
         document.ModifiedBy = userId;
 
@@ -685,6 +687,10 @@ public class DocumentService : IDocumentService
             document.ImportanceId = workingCopy.DraftImportanceId;
         if (workingCopy.DraftDocumentTypeId.HasValue)
             document.DocumentTypeId = workingCopy.DraftDocumentTypeId;
+        if (workingCopy.DraftExpiryDateChanged)
+            document.ExpiryDate = workingCopy.DraftExpiryDate;
+        if (workingCopy.DraftPrivacyLevelChanged)
+            document.PrivacyLevelId = workingCopy.DraftPrivacyLevelId;
 
         // Apply content type metadata changes from working copy
         if (!string.IsNullOrEmpty(workingCopy.DraftMetadataJson))
@@ -740,7 +746,7 @@ public class DocumentService : IDocumentService
             workingCopy.DraftOriginalFileName = null;
             workingCopy.DraftIntegrityHash = null;
             workingCopy.DraftMetadataJson = null;
-            workingCopy.LastModifiedAt = DateTime.UtcNow;
+            workingCopy.LastModifiedAt = DateTime.Now;
             await _workingCopyRepository.UpdateAsync(workingCopy);
         }
 
@@ -872,6 +878,10 @@ public class DocumentService : IDocumentService
             DraftClassificationId = workingCopy.DraftClassificationId,
             DraftImportanceId = workingCopy.DraftImportanceId,
             DraftDocumentTypeId = workingCopy.DraftDocumentTypeId,
+            DraftExpiryDate = workingCopy.DraftExpiryDate,
+            DraftExpiryDateChanged = workingCopy.DraftExpiryDateChanged,
+            DraftPrivacyLevelId = workingCopy.DraftPrivacyLevelId,
+            DraftPrivacyLevelChanged = workingCopy.DraftPrivacyLevelChanged,
             LastModifiedAt = workingCopy.LastModifiedAt,
             AutoSaveEnabled = workingCopy.AutoSaveEnabled,
             HasUnsavedChanges = HasMetadataChanges(document, workingCopy) ||
@@ -920,13 +930,23 @@ public class DocumentService : IDocumentService
         if (dto.ClassificationId.HasValue) workingCopy.DraftClassificationId = dto.ClassificationId;
         if (dto.ImportanceId.HasValue) workingCopy.DraftImportanceId = dto.ImportanceId;
         if (dto.DocumentTypeId.HasValue) workingCopy.DraftDocumentTypeId = dto.DocumentTypeId;
+        if (dto.ExpiryDateChanged == true)
+        {
+            workingCopy.DraftExpiryDate = dto.ExpiryDate;
+            workingCopy.DraftExpiryDateChanged = true;
+        }
+        if (dto.PrivacyLevelChanged == true)
+        {
+            workingCopy.DraftPrivacyLevelId = dto.PrivacyLevelId;
+            workingCopy.DraftPrivacyLevelChanged = true;
+        }
 
         if (dto.Metadata != null)
         {
             workingCopy.DraftMetadataJson = JsonSerializer.Serialize(dto.Metadata, _jsonOptions);
         }
 
-        workingCopy.LastModifiedAt = DateTime.UtcNow;
+        workingCopy.LastModifiedAt = DateTime.Now;
         await _workingCopyRepository.UpdateAsync(workingCopy);
 
         return ServiceResult.Ok("Draft saved successfully");
@@ -967,7 +987,7 @@ public class DocumentService : IDocumentService
         workingCopy.DraftContentType = validatedContentType;
         workingCopy.DraftOriginalFileName = fileName;
         workingCopy.DraftIntegrityHash = storageResult.IntegrityHash;
-        workingCopy.LastModifiedAt = DateTime.UtcNow;
+        workingCopy.LastModifiedAt = DateTime.Now;
 
         await _workingCopyRepository.UpdateAsync(workingCopy);
 
@@ -1092,7 +1112,7 @@ public class DocumentService : IDocumentService
             CreatedBy = userId,
             IntegrityHash = dto.RestoreContent ? versionToRestore.IntegrityHash : document.IntegrityHash,
             HashAlgorithm = dto.RestoreContent ? versionToRestore.HashAlgorithm : document.HashAlgorithm,
-            IntegrityVerifiedAt = DateTime.UtcNow,
+            IntegrityVerifiedAt = DateTime.Now,
             ContentType = dto.RestoreContent ? versionToRestore.ContentType : document.ContentType,
             OriginalFileName = versionToRestore.OriginalFileName,
             VersionType = "Major",
@@ -1282,7 +1302,11 @@ public class DocumentService : IDocumentService
             CreatedBy = document.CreatedBy,
             CreatedAt = document.CreatedAt,
             ModifiedAt = document.ModifiedAt,
-            ExpiryDate = document.ExpiryDate
+            ExpiryDate = document.ExpiryDate,
+            PrivacyLevelId = document.PrivacyLevelId,
+            PrivacyLevelName = document.PrivacyLevel?.Name,
+            PrivacyLevelColor = document.PrivacyLevel?.Color,
+            PrivacyLevelValue = document.PrivacyLevel?.Level
         };
     }
 
@@ -1316,7 +1340,11 @@ public class DocumentService : IDocumentService
             IsShortcut = document.IsShortcut,
             ShortcutId = document.ShortcutId,
             AttachmentCount = document.AttachmentCount,
-            ExpiryDate = document.ExpiryDate
+            ExpiryDate = document.ExpiryDate,
+            PrivacyLevelId = document.PrivacyLevelId,
+            PrivacyLevelName = document.PrivacyLevelName,
+            PrivacyLevelColor = document.PrivacyLevelColor,
+            PrivacyLevelValue = document.PrivacyLevelValue
         };
     }
 

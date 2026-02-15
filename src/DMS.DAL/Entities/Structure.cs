@@ -22,7 +22,7 @@ public class Structure : IAuditable, ISoftDeletable
     public int SortOrder { get; set; }
     public string? Description { get; set; }
     public Guid? CreatedBy { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
     public Guid? ModifiedBy { get; set; }
     public DateTime? ModifiedAt { get; set; }
 
@@ -60,7 +60,7 @@ public class StructureMember
     public DateTime? StartDate { get; set; }
     public DateTime? EndDate { get; set; } // NULL = still active
     public Guid? CreatedBy { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
 
     // Navigation properties
     [JsonIgnore]
@@ -88,7 +88,7 @@ public class EffectivePermission
     public Guid? SourceNodeId { get; set; }
     public string? InheritancePath { get; set; } // Full path for debugging
 
-    public DateTime CalculatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CalculatedAt { get; set; } = DateTime.Now;
     public DateTime? ExpiresAt { get; set; }
 }
 
@@ -122,7 +122,7 @@ public class PermissionAuditLog
     // Who performed the action
     public Guid PerformedBy { get; set; }
     public string? PerformedByName { get; set; }
-    public DateTime PerformedAt { get; set; } = DateTime.UtcNow;
+    public DateTime PerformedAt { get; set; } = DateTime.Now;
 
     // Additional context
     public string? IPAddress { get; set; }
@@ -148,7 +148,7 @@ public class PermissionDelegation
     public PermissionLevel PermissionLevel { get; set; }
 
     // Validity period
-    public DateTime StartDate { get; set; } = DateTime.UtcNow;
+    public DateTime StartDate { get; set; } = DateTime.Now;
     public DateTime EndDate { get; set; } // Must have end date
 
     // Status
@@ -157,7 +157,7 @@ public class PermissionDelegation
     public Guid? RevokedBy { get; set; }
 
     public string? Reason { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
 
     // Navigation
     [JsonIgnore]

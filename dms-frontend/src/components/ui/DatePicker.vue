@@ -112,9 +112,9 @@ const yearRange = computed(() => {
 
 const sizeClasses = computed(() => {
   switch (props.size) {
-    case 'sm': return 'px-3 py-1.5 text-sm'
-    case 'lg': return 'px-4 py-3 text-base'
-    default: return 'px-4 py-2.5 text-sm'
+    case 'sm': return 'px-3 py-1.5 text-sm h-[34px]'
+    case 'lg': return 'px-4 py-3 text-base h-[50px]'
+    default: return 'px-3 text-sm h-[42px]'
   }
 })
 

@@ -50,7 +50,7 @@ public class AuthService : IAuthService
         return ServiceResult<LoginResponseDto>.Ok(new LoginResponseDto
         {
             Token = token,
-            ExpiresAt = DateTime.UtcNow.AddHours(24),
+            ExpiresAt = DateTime.Now.AddHours(24),
             User = new UserDto
             {
                 Id = user.Id,
@@ -61,7 +61,7 @@ public class AuthService : IAuthService
                 DisplayName = user.DisplayName,
                 PrivacyLevel = user.PrivacyLevel,
                 IsActive = user.IsActive,
-                LastLoginAt = DateTime.UtcNow,
+                LastLoginAt = DateTime.Now,
                 Roles = roles.Select(r => new RoleDto { Id = r.Id, Name = r.Name, Description = r.Description }).ToList()
             }
         });
@@ -104,7 +104,7 @@ public class AuthService : IAuthService
             issuer: _configuration["Jwt:Issuer"] ?? "DMS",
             audience: _configuration["Jwt:Audience"] ?? "DMS-API",
             claims: claims,
-            expires: DateTime.UtcNow.AddHours(24),
+            expires: DateTime.Now.AddHours(24),
             signingCredentials: credentials
         );
 

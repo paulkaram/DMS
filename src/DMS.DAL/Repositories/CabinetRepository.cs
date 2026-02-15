@@ -69,7 +69,7 @@ public class CabinetRepository : ICabinetRepository
             .Where(c => c.Id == id)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(c => c.IsActive, false)
-                .SetProperty(c => c.ModifiedAt, DateTime.UtcNow));
+                .SetProperty(c => c.ModifiedAt, DateTime.Now));
         return affected > 0;
     }
 }

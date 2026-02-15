@@ -133,7 +133,7 @@ public class DisposalCertificate
     /// </summary>
     public DateTime? VerifiedAt { get; set; }
 
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
 }
 
 /// <summary>
@@ -219,7 +219,7 @@ public class LegalHold
     public string? Notes { get; set; }
 
     public bool IsActive { get; set; } = true;
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
     public DateTime? ModifiedAt { get; set; }
 }
 
@@ -389,7 +389,7 @@ public class PreservationMetadata
     /// </summary>
     public string? SignificantProperties { get; set; }
 
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
     public DateTime? ModifiedAt { get; set; }
 }
 

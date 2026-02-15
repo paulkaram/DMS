@@ -44,7 +44,7 @@ public class FavoriteRepository : IFavoriteRepository
     public async Task<Guid> AddAsync(Favorite entity)
     {
         entity.Id = Guid.NewGuid();
-        entity.CreatedAt = DateTime.UtcNow;
+        entity.CreatedAt = DateTime.Now;
         _context.Favorites.Add(entity);
         await _context.SaveChangesAsync();
         return entity.Id;

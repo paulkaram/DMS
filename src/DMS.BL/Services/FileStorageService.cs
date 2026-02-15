@@ -198,7 +198,7 @@ public class FileStorageService : IFileStorageService
             IntegrityHash = hash,
             HashAlgorithm = "SHA256",
             Size = fileSize,
-            StoredAt = DateTime.UtcNow
+            StoredAt = DateTime.Now
         };
     }
 

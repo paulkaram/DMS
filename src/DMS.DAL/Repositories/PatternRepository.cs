@@ -163,7 +163,7 @@ public class PatternRepository : IPatternRepository
     public async Task<Guid> CreateAsync(Pattern pattern)
     {
         pattern.Id = Guid.NewGuid();
-        pattern.CreatedAt = DateTime.UtcNow;
+        pattern.CreatedAt = DateTime.Now;
 
         _context.Patterns.Add(pattern);
         await _context.SaveChangesAsync();
@@ -172,7 +172,7 @@ public class PatternRepository : IPatternRepository
 
     public async Task<bool> UpdateAsync(Pattern pattern)
     {
-        pattern.ModifiedAt = DateTime.UtcNow;
+        pattern.ModifiedAt = DateTime.Now;
 
         var existing = await _context.Patterns.FindAsync(pattern.Id);
         if (existing == null) return false;
@@ -199,7 +199,7 @@ public class PatternRepository : IPatternRepository
             .Where(p => p.Id == id)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(p => p.IsActive, false)
-                .SetProperty(p => p.ModifiedAt, DateTime.UtcNow)) > 0;
+                .SetProperty(p => p.ModifiedAt, DateTime.Now)) > 0;
     }
 
     public Task<bool> TestPatternAsync(string regex, string testValue)

@@ -83,7 +83,7 @@ public class DocumentShareRepository : IDocumentShareRepository
         return await _context.DocumentShares
             .AsNoTracking()
             .Where(s => s.SharedWithUserId == userId
-                && (s.ExpiresAt == null || s.ExpiresAt > DateTime.UtcNow))
+                && (s.ExpiresAt == null || s.ExpiresAt > DateTime.Now))
             .OrderByDescending(s => s.CreatedAt)
             .Select(s => new DocumentShare
             {
@@ -148,7 +148,7 @@ public class DocumentShareRepository : IDocumentShareRepository
     public async Task<Guid> CreateAsync(DocumentShare entity)
     {
         entity.Id = Guid.NewGuid();
-        entity.CreatedAt = DateTime.UtcNow;
+        entity.CreatedAt = DateTime.Now;
 
         _context.DocumentShares.Add(entity);
         await _context.SaveChangesAsync();

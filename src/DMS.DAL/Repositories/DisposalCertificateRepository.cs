@@ -46,7 +46,7 @@ public class DisposalCertificateRepository : IDisposalCertificateRepository
     public async Task<Guid> CreateAsync(DisposalCertificate entity)
     {
         entity.Id = Guid.NewGuid();
-        entity.CreatedAt = DateTime.UtcNow;
+        entity.CreatedAt = DateTime.Now;
 
         _context.DisposalCertificates.Add(entity);
         await _context.SaveChangesAsync();
@@ -68,7 +68,7 @@ public class DisposalCertificateRepository : IDisposalCertificateRepository
     public async Task<string> GenerateCertificateNumberAsync()
     {
         // Generate format: DC-YYYYMMDD-XXXX (where XXXX is sequential for the day)
-        var today = DateTime.UtcNow.ToString("yyyyMMdd");
+        var today = DateTime.Now.ToString("yyyyMMdd");
         var pattern = $"DC-{today}%";
 
         var count = await _context.DisposalCertificates

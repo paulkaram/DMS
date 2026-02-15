@@ -46,7 +46,7 @@ public class ContentTypeDefinition : IAuditable, ISoftDeletable
     public bool IsActive { get; set; } = true;
     public int SortOrder { get; set; } = 0;
     public Guid? CreatedBy { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
     public Guid? ModifiedBy { get; set; }
     public DateTime? ModifiedAt { get; set; }
 
@@ -142,7 +142,7 @@ public class ContentTypeField
     public int ColumnSpan { get; set; } = 12;
 
     public bool IsActive { get; set; } = true;
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
 
     // Navigation
     [JsonIgnore]
@@ -180,7 +180,7 @@ public class DocumentMetadata : IAuditable
     public DateTime? DateValue { get; set; }
 
     public Guid? CreatedBy { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
     public Guid? ModifiedBy { get; set; }
     public DateTime? ModifiedAt { get; set; }
 }
@@ -215,7 +215,7 @@ public class FolderContentTypeAssignment
     public int DisplayOrder { get; set; } = 0;
 
     public Guid? CreatedBy { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
 
     // Navigation
     [JsonIgnore]
@@ -259,7 +259,7 @@ public class CabinetContentTypeAssignment
     public int DisplayOrder { get; set; } = 0;
 
     public Guid? CreatedBy { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
 
     // Navigation
     [JsonIgnore]

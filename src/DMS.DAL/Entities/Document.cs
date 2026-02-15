@@ -109,6 +109,13 @@ public class Document : IAuditable, ISoftDeletable
     /// </summary>
     public DateTime? ExpiryDate { get; set; }
 
+    /// <summary>
+    /// Optional privacy level assigned directly to this document.
+    /// If set, overrides the folder's privacy level for access control.
+    /// </summary>
+    public Guid? PrivacyLevelId { get; set; }
+    public PrivacyLevel? PrivacyLevel { get; set; }
+
     public bool IsActive { get; set; } = true;
     public Guid? CreatedBy { get; set; }
     public DateTime CreatedAt { get; set; }
@@ -127,4 +134,7 @@ public class DocumentWithNames : Document
     public bool IsShortcut { get; set; }
     public Guid? ShortcutId { get; set; }
     public int AttachmentCount { get; set; }
+    public string? PrivacyLevelName { get; set; }
+    public string? PrivacyLevelColor { get; set; }
+    public int? PrivacyLevelValue { get; set; }
 }

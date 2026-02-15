@@ -27,14 +27,14 @@ public class DashboardRepository : IDashboardRepository
 
     public async Task<int> GetDocumentsThisMonthAsync()
     {
-        var startOfMonth = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
+        var startOfMonth = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
         return await _context.Documents.AsNoTracking()
             .CountAsync(d => d.CreatedAt >= startOfMonth);
     }
 
     public async Task<int> GetDocumentsThisYearAsync()
     {
-        var startOfYear = new DateTime(DateTime.UtcNow.Year, 1, 1);
+        var startOfYear = new DateTime(DateTime.Now.Year, 1, 1);
         return await _context.Documents.AsNoTracking()
             .CountAsync(d => d.CreatedAt >= startOfYear);
     }
@@ -93,7 +93,7 @@ public class DashboardRepository : IDashboardRepository
 
     public async Task<IEnumerable<MonthlyStat>> GetMonthlyDocumentStatsAsync(int months = 12)
     {
-        var startDate = DateTime.UtcNow.AddMonths(-months + 1);
+        var startDate = DateTime.Now.AddMonths(-months + 1);
         startDate = new DateTime(startDate.Year, startDate.Month, 1);
 
         return await _context.Documents.AsNoTracking()
@@ -112,14 +112,14 @@ public class DashboardRepository : IDashboardRepository
 
     public async Task<int> GetExpiredDocumentCountAsync()
     {
-        var now = DateTime.UtcNow;
+        var now = DateTime.Now;
         return await _context.Documents.AsNoTracking()
             .CountAsync(d => d.ExpiryDate != null && d.ExpiryDate <= now);
     }
 
     public async Task<int> GetExpiringSoonCountAsync(int days = 7)
     {
-        var now = DateTime.UtcNow;
+        var now = DateTime.Now;
         var cutoff = now.AddDays(days);
         return await _context.Documents.AsNoTracking()
             .CountAsync(d => d.ExpiryDate != null && d.ExpiryDate > now && d.ExpiryDate <= cutoff);
@@ -127,7 +127,7 @@ public class DashboardRepository : IDashboardRepository
 
     public async Task<IEnumerable<ExpiredDocument>> GetExpiredDocumentsAsync(int take = 5, int? userPrivacyLevel = null)
     {
-        var now = DateTime.UtcNow;
+        var now = DateTime.Now;
         var cutoff = now.AddDays(7);
 
         var query = _context.Documents.AsNoTracking()

@@ -122,7 +122,7 @@ public class RetentionPolicyRepository : IRetentionPolicyRepository
     public async Task<Guid> CreateAsync(RetentionPolicy policy)
     {
         policy.Id = Guid.NewGuid();
-        policy.CreatedAt = DateTime.UtcNow;
+        policy.CreatedAt = DateTime.Now;
 
         _context.RetentionPolicies.Add(policy);
         await _context.SaveChangesAsync();
@@ -131,7 +131,7 @@ public class RetentionPolicyRepository : IRetentionPolicyRepository
 
     public async Task<bool> UpdateAsync(RetentionPolicy policy)
     {
-        policy.ModifiedAt = DateTime.UtcNow;
+        policy.ModifiedAt = DateTime.Now;
 
         var existing = await _context.RetentionPolicies.FindAsync(policy.Id);
         if (existing == null) return false;
@@ -161,7 +161,7 @@ public class RetentionPolicyRepository : IRetentionPolicyRepository
             .Where(rp => rp.Id == id)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(rp => rp.IsActive, false)
-                .SetProperty(rp => rp.ModifiedAt, DateTime.UtcNow)) > 0;
+                .SetProperty(rp => rp.ModifiedAt, DateTime.Now)) > 0;
     }
 
     #endregion
@@ -196,7 +196,7 @@ public class RetentionPolicyRepository : IRetentionPolicyRepository
 
     public async Task<IEnumerable<DocumentRetention>> GetExpiringDocumentsAsync(int daysAhead = 30)
     {
-        var cutoffDate = DateTime.UtcNow.AddDays(daysAhead);
+        var cutoffDate = DateTime.Now.AddDays(daysAhead);
 
         return await _context.DocumentRetentions
             .AsNoTracking()
@@ -254,7 +254,7 @@ public class RetentionPolicyRepository : IRetentionPolicyRepository
 
     public async Task<(List<DocumentRetention> Items, int TotalCount)> GetExpiringDocumentsPaginatedAsync(int daysAhead, int page, int pageSize)
     {
-        var cutoffDate = DateTime.UtcNow.AddDays(daysAhead);
+        var cutoffDate = DateTime.Now.AddDays(daysAhead);
 
         var query = _context.DocumentRetentions
             .AsNoTracking()
@@ -329,7 +329,7 @@ public class RetentionPolicyRepository : IRetentionPolicyRepository
     public async Task<Guid> CreateDocumentRetentionAsync(DocumentRetention retention)
     {
         retention.Id = Guid.NewGuid();
-        retention.CreatedAt = DateTime.UtcNow;
+        retention.CreatedAt = DateTime.Now;
 
         _context.DocumentRetentions.Add(retention);
         await _context.SaveChangesAsync();
@@ -338,7 +338,7 @@ public class RetentionPolicyRepository : IRetentionPolicyRepository
 
     public async Task<bool> UpdateDocumentRetentionAsync(DocumentRetention retention)
     {
-        retention.ModifiedAt = DateTime.UtcNow;
+        retention.ModifiedAt = DateTime.Now;
 
         var existing = await _context.DocumentRetentions.FindAsync(retention.Id);
         if (existing == null) return false;
@@ -364,12 +364,12 @@ public class RetentionPolicyRepository : IRetentionPolicyRepository
             Id = Guid.NewGuid(),
             DocumentId = documentId,
             PolicyId = policyId,
-            RetentionStartDate = DateTime.UtcNow,
+            RetentionStartDate = DateTime.Now,
             ExpirationDate = policy.RetentionDays > 0
-                ? DateTime.UtcNow.AddDays(policy.RetentionDays)
+                ? DateTime.Now.AddDays(policy.RetentionDays)
                 : null,
             Status = "Active",
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.Now
         };
 
         _context.DocumentRetentions.Add(retention);
@@ -378,7 +378,7 @@ public class RetentionPolicyRepository : IRetentionPolicyRepository
 
     public async Task<bool> ApproveRetentionActionAsync(Guid retentionId, Guid userId, string? notes = null)
     {
-        var now = DateTime.UtcNow;
+        var now = DateTime.Now;
         return await _context.DocumentRetentions
             .Where(dr => dr.Id == retentionId && dr.Status == "PendingReview")
             .ExecuteUpdateAsync(s => s
@@ -391,7 +391,7 @@ public class RetentionPolicyRepository : IRetentionPolicyRepository
 
     public async Task<bool> PlaceOnHoldAsync(Guid documentId, Guid userId, string? notes = null)
     {
-        var now = DateTime.UtcNow;
+        var now = DateTime.Now;
         var holdNote = $" | Legal hold placed by {userId} on {now}: {notes}";
 
         var affected = await _context.DocumentRetentions
@@ -406,7 +406,7 @@ public class RetentionPolicyRepository : IRetentionPolicyRepository
 
     public async Task<bool> ReleaseHoldAsync(Guid documentId, Guid userId)
     {
-        var now = DateTime.UtcNow;
+        var now = DateTime.Now;
         var releaseNote = $" | Hold released by {userId} on {now}";
 
         var affected = await _context.DocumentRetentions

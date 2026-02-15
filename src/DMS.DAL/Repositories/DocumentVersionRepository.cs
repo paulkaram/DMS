@@ -41,7 +41,7 @@ public class DocumentVersionRepository : IDocumentVersionRepository
     public async Task<Guid> CreateAsync(DocumentVersion entity)
     {
         entity.Id = Guid.NewGuid();
-        entity.CreatedAt = DateTime.UtcNow;
+        entity.CreatedAt = DateTime.Now;
 
         // Set version label if not provided
         if (string.IsNullOrEmpty(entity.VersionLabel))

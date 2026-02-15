@@ -87,6 +87,10 @@ export interface Document {
   attachmentCount?: number
   approvalStatus?: number | null
   expiryDate?: string | null
+  privacyLevelId?: string
+  privacyLevelName?: string
+  privacyLevelColor?: string
+  privacyLevelValue?: number
 }
 
 // Document Shortcut
@@ -150,6 +154,10 @@ export interface WorkingCopy {
   draftClassificationId?: string
   draftImportanceId?: string
   draftDocumentTypeId?: string
+  draftExpiryDate?: string
+  draftExpiryDateChanged?: boolean
+  draftPrivacyLevelId?: string
+  draftPrivacyLevelChanged?: boolean
   draftMetadata?: WorkingCopyMetadataItem[]
   lastModifiedAt?: string
   autoSaveEnabled: boolean
@@ -170,6 +178,10 @@ export interface SaveWorkingCopy {
   classificationId?: string
   importanceId?: string
   documentTypeId?: string
+  expiryDate?: string | null
+  expiryDateChanged?: boolean
+  privacyLevelId?: string | null
+  privacyLevelChanged?: boolean
   metadata?: WorkingCopyMetadataItem[]
 }
 
@@ -227,6 +239,7 @@ export interface CreateDocument {
   classificationId?: string
   importanceId?: string
   documentTypeId?: string
+  privacyLevelId?: string
 }
 
 export interface UpdateDocument {

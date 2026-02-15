@@ -193,7 +193,7 @@ public class RolePermissionRepository : IRolePermissionRepository
         {
             existing.IsAllowed = true;
             existing.GrantedBy = grantedBy;
-            existing.GrantedAt = DateTime.UtcNow;
+            existing.GrantedAt = DateTime.Now;
         }
         else
         {
@@ -203,7 +203,7 @@ public class RolePermissionRepository : IRolePermissionRepository
                 ActionId = actionId,
                 IsAllowed = true,
                 GrantedBy = grantedBy,
-                GrantedAt = DateTime.UtcNow
+                GrantedAt = DateTime.Now
             });
         }
 
@@ -232,7 +232,7 @@ public class RolePermissionRepository : IRolePermissionRepository
                     .ExecuteDeleteAsync();
 
                 // Add new permissions
-                var now = DateTime.UtcNow;
+                var now = DateTime.Now;
                 foreach (var actionId in actionIds)
                 {
                     _context.RoleActionPermissions.Add(new RoleActionPermission

@@ -188,7 +188,7 @@ public class FolderRepository : IFolderRepository
             .Where(f => f.Id == folderId)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(f => f.Path, newPath)
-                .SetProperty(f => f.ModifiedAt, DateTime.UtcNow));
+                .SetProperty(f => f.ModifiedAt, DateTime.Now));
     }
 
     public async Task<Guid> CreateAsync(Folder entity)

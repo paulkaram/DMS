@@ -19,6 +19,7 @@ public class DocumentConfiguration : IEntityTypeConfiguration<Document>
         builder.HasOne<ContentTypeDefinition>().WithMany().HasForeignKey(e => e.ContentTypeId).OnDelete(DeleteBehavior.SetNull);
         builder.HasOne<RetentionPolicy>().WithMany().HasForeignKey(e => e.RetentionPolicyId).OnDelete(DeleteBehavior.SetNull);
         builder.HasOne<LegalHold>().WithMany().HasForeignKey(e => e.LegalHoldId).OnDelete(DeleteBehavior.SetNull);
+        builder.HasOne(e => e.PrivacyLevel).WithMany().HasForeignKey(e => e.PrivacyLevelId).OnDelete(DeleteBehavior.SetNull);
 
         // Performance indexes
         builder.HasIndex(e => e.FolderId);
@@ -27,5 +28,6 @@ public class DocumentConfiguration : IEntityTypeConfiguration<Document>
         builder.HasIndex(e => new { e.CreatedBy, e.CreatedAt }).IsDescending(false, true);
         builder.HasIndex(e => e.Name);
         builder.HasIndex(e => e.ExpiryDate).HasFilter("[ExpiryDate] IS NOT NULL");
+        builder.HasIndex(e => e.PrivacyLevelId).HasFilter("[PrivacyLevelId] IS NOT NULL");
     }
 }

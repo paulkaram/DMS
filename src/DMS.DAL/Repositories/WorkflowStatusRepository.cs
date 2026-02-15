@@ -36,7 +36,7 @@ public class WorkflowStatusRepository : IWorkflowStatusRepository
     public async Task<Guid> CreateAsync(WorkflowStatus entity)
     {
         entity.Id = Guid.NewGuid();
-        entity.CreatedAt = DateTime.UtcNow;
+        entity.CreatedAt = DateTime.Now;
 
         _context.WorkflowStatuses.Add(entity);
         await _context.SaveChangesAsync();

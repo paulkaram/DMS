@@ -50,5 +50,5 @@ public class FileStorageResult
     public string IntegrityHash { get; set; } = string.Empty;
     public string HashAlgorithm { get; set; } = "SHA256";
     public long Size { get; set; }
-    public DateTime StoredAt { get; set; } = DateTime.UtcNow;
+    public DateTime StoredAt { get; set; } = DateTime.Now;
 }

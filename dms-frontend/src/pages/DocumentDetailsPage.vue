@@ -3,7 +3,8 @@ import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { Document, DocumentVersion, WorkingCopy, VersionComparison } from '@/types'
 import { CheckInType, DiffType } from '@/types'
-import { documentsApi, permissionsApi, activityLogsApi, contentTypeDefinitionsApi, foldersApi } from '@/api/client'
+import { documentsApi, permissionsApi, activityLogsApi, contentTypeDefinitionsApi, foldersApi, referenceDataApi, privacyLevelsApi } from '@/api/client'
+import type { PrivacyLevel, Classification, Importance, DocumentType as DocType } from '@/types'
 import { PermissionLevels } from '@/types'
 import { UiSelect, UiDatePicker } from '@/components/ui'
 import { PermissionManagementModal } from '@/components/permissions'
@@ -35,6 +36,19 @@ const draftFile = ref<File | null>(null)
 const isSavingDraft = ref(false)
 const isUploadingFile = ref(false)
 const draftSaveMessage = ref<{ type: 'success' | 'error'; text: string } | null>(null)
+
+// Draft classification, importance, document type, expiry, privacy
+const draftClassificationId = ref<string | null>(null)
+const draftImportanceId = ref<string | null>(null)
+const draftDocumentTypeId = ref<string | null>(null)
+const draftExpiryDate = ref<string>('')
+const draftPrivacyLevelId = ref<string | null>(null)
+
+// Reference data for dropdowns
+const classifications = ref<Classification[]>([])
+const importances = ref<Importance[]>([])
+const documentTypes = ref<DocType[]>([])
+const privacyLevels = ref<PrivacyLevel[]>([])
 
 // File upload drag-and-drop
 const isDragging = ref(false)
@@ -160,6 +174,11 @@ function initializeDraftValues() {
 
   draftName.value = wc?.draftName || document.value.name || ''
   draftDescription.value = wc?.draftDescription || document.value.description || ''
+  draftClassificationId.value = wc?.draftClassificationId || document.value.classificationId || null
+  draftImportanceId.value = wc?.draftImportanceId || document.value.importanceId || null
+  draftDocumentTypeId.value = wc?.draftDocumentTypeId || document.value.documentTypeId || null
+  draftExpiryDate.value = wc?.draftExpiryDateChanged ? (wc.draftExpiryDate ? formatDateForInput(wc.draftExpiryDate) : '') : (document.value.expiryDate ? formatDateForInput(document.value.expiryDate) : '')
+  draftPrivacyLevelId.value = wc?.draftPrivacyLevelChanged ? (wc.draftPrivacyLevelId || null) : (document.value.privacyLevelId || null)
 
   if (wc?.draftMetadata && wc.draftMetadata.length > 0) {
     draftMetadata.value = wc.draftMetadata.map(m => {
@@ -271,6 +290,13 @@ async function saveDraft() {
     await documentsApi.saveWorkingCopy(document.value.id, {
       name: draftName.value,
       description: draftDescription.value,
+      classificationId: draftClassificationId.value || undefined,
+      importanceId: draftImportanceId.value || undefined,
+      documentTypeId: draftDocumentTypeId.value || undefined,
+      expiryDate: draftExpiryDate.value || null,
+      expiryDateChanged: true,
+      privacyLevelId: draftPrivacyLevelId.value || null,
+      privacyLevelChanged: true,
       metadata: metadataToSave
     })
 
@@ -350,10 +376,28 @@ async function loadActivities() {
   }
 }
 
+async function loadReferenceData() {
+  try {
+    const [classRes, impRes, dtRes, plRes] = await Promise.all([
+      referenceDataApi.getClassifications(),
+      referenceDataApi.getImportances(),
+      referenceDataApi.getDocumentTypes(),
+      privacyLevelsApi.getAll()
+    ])
+    classifications.value = classRes.data || []
+    importances.value = impRes.data || []
+    documentTypes.value = dtRes.data || []
+    privacyLevels.value = (plRes.data || []).filter((p: PrivacyLevel) => p.isActive)
+  } catch { /* silently fail */ }
+}
+
 function handleSidebarTabChange(tab: typeof sidebarTab.value) {
   sidebarTab.value = tab
   if (tab === 'activity' && activities.value.length === 0) {
     loadActivities()
+  }
+  if (tab === 'edit' && classifications.value.length === 0) {
+    loadReferenceData()
   }
 }
 
@@ -445,6 +489,7 @@ async function handleCheckout() {
     await documentsApi.checkout(document.value.id)
     document.value.isCheckedOut = true
     await loadWorkingCopy()
+    loadReferenceData()
     sidebarTab.value = 'edit'
   } catch (err: any) {
     alert(err.response?.data?.errors?.[0] || 'Checkout failed')
@@ -508,6 +553,13 @@ async function handleCheckin() {
     await documentsApi.saveWorkingCopy(document.value.id, {
       name: draftName.value,
       description: draftDescription.value,
+      classificationId: draftClassificationId.value || undefined,
+      importanceId: draftImportanceId.value || undefined,
+      documentTypeId: draftDocumentTypeId.value || undefined,
+      expiryDate: draftExpiryDate.value || null,
+      expiryDateChanged: true,
+      privacyLevelId: draftPrivacyLevelId.value || null,
+      privacyLevelChanged: true,
       metadata: metadataToSave
     })
 
@@ -674,7 +726,7 @@ function getDiffTypeLabel(diffType: DiffType): string {
 
 function getDiffTypeClass(diffType: DiffType): string {
   switch (diffType) {
-    case DiffType.Added: return 'bg-green-100 text-green-700'
+    case DiffType.Added: return 'bg-teal/10 text-teal'
     case DiffType.Removed: return 'bg-red-100 text-red-700'
     case DiffType.Modified: return 'bg-amber-100 text-amber-700'
     default: return 'bg-gray-100 text-gray-700'
@@ -761,10 +813,13 @@ watch(isEditMode, (newVal) => {
               <div class="flex items-center gap-2 mt-0.5">
                 <span class="text-zinc-500 text-xs">{{ document.extension?.replace('.', '').toUpperCase() || 'FILE' }} &middot; {{ formatSize(document.size) }}</span>
                 <span
-                  :class="document.isCheckedOut ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'"
+                  :class="isEditMode ? 'bg-teal/20 text-teal border-teal/30' : document.isCheckedOut ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'"
                   class="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-full border"
                 >
-                  {{ document.isCheckedOut ? 'Checked Out' : 'Available' }}
+                  {{ isEditMode ? 'Editing' : document.isCheckedOut ? 'Checked Out' : 'Available' }}
+                </span>
+                <span v-if="isEditMode && workingCopy?.hasDraftFile" class="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-full bg-teal/15 text-teal border border-teal/30">
+                  Draft file
                 </span>
                 <span class="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">
                   v{{ document.currentMajorVersion || 1 }}.{{ document.currentMinorVersion || 0 }}
@@ -775,6 +830,34 @@ watch(isEditMode, (newVal) => {
 
           <!-- Right: Action Buttons -->
           <div class="flex items-center gap-1.5 flex-shrink-0">
+            <!-- Edit mode actions -->
+            <template v-if="isEditMode">
+              <button
+                @click="saveDraft"
+                :disabled="isSavingDraft"
+                class="px-3 py-1.5 bg-teal text-white rounded-lg hover:bg-teal/90 transition-colors flex items-center gap-1.5 text-xs font-medium disabled:opacity-50"
+              >
+                <span v-if="isSavingDraft" class="material-symbols-outlined animate-spin text-sm">refresh</span>
+                <span v-else class="material-symbols-outlined text-sm">save</span>
+                {{ isSavingDraft ? 'Saving...' : 'Save Draft' }}
+              </button>
+              <button
+                @click="openCheckinModal"
+                class="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors flex items-center gap-1.5 text-xs font-medium"
+              >
+                <span class="material-symbols-outlined text-sm">check_circle</span>
+                Check In
+              </button>
+              <button
+                @click="handleDiscardCheckout"
+                class="px-3 py-1.5 text-zinc-400 hover:text-white hover:bg-white/10 border border-zinc-600 rounded-lg transition-colors text-xs font-medium flex items-center gap-1.5"
+              >
+                <span class="material-symbols-outlined text-sm">undo</span>
+                Discard
+              </button>
+              <div class="w-px h-5 bg-zinc-700 mx-0.5"></div>
+            </template>
+            <!-- Normal mode actions -->
             <button
               v-if="canWrite && !document.isCheckedOut"
               @click="handleCheckout"
@@ -817,51 +900,10 @@ watch(isEditMode, (newVal) => {
         </div>
       </div>
 
-      <!-- 2. Edit Mode Banner (conditional, slim) -->
-      <div
-        v-if="isEditMode"
-        class="shrink-0 bg-teal/5 border-x border-zinc-200 dark:border-border-dark px-5 py-2.5 flex items-center justify-between"
-      >
-        <div class="flex items-center gap-2.5">
-          <div class="w-7 h-7 rounded-md bg-teal/15 flex items-center justify-center">
-            <span class="material-symbols-outlined text-teal text-base">edit_document</span>
-          </div>
-          <div>
-            <span class="text-sm font-semibold text-zinc-800 dark:text-white">Edit Mode</span>
-            <span v-if="workingCopy?.hasDraftFile" class="text-xs text-teal font-medium ml-2">(Draft file uploaded)</span>
-          </div>
-        </div>
-        <div class="flex items-center gap-2">
-          <button
-            @click="saveDraft"
-            :disabled="isSavingDraft"
-            class="px-3 py-1.5 bg-teal text-white rounded-lg hover:bg-teal/90 transition-colors flex items-center gap-1.5 text-xs font-medium disabled:opacity-50"
-          >
-            <span v-if="isSavingDraft" class="material-symbols-outlined animate-spin text-sm">refresh</span>
-            <span v-else class="material-symbols-outlined text-sm">save</span>
-            {{ isSavingDraft ? 'Saving...' : 'Save Draft' }}
-          </button>
-          <button
-            @click="openCheckinModal"
-            class="px-3 py-1.5 bg-[#1e3a5f] text-white rounded-lg hover:bg-[#1e3a5f]/90 transition-colors flex items-center gap-1.5 text-xs font-medium"
-          >
-            <span class="material-symbols-outlined text-sm">check_circle</span>
-            Check In
-          </button>
-          <button
-            @click="handleDiscardCheckout"
-            class="px-3 py-1.5 border border-zinc-300 dark:border-border-dark text-zinc-600 dark:text-zinc-400 rounded-lg hover:bg-zinc-100 dark:hover:bg-surface-dark transition-colors text-xs font-medium flex items-center gap-1.5"
-          >
-            <span class="material-symbols-outlined text-sm">undo</span>
-            Discard
-          </button>
-        </div>
-      </div>
-
-      <!-- Draft save message (conditional, very slim) -->
-      <div v-if="draftSaveMessage" class="shrink-0 px-5 py-1.5 border-x border-zinc-200 dark:border-border-dark">
+      <!-- Draft save message (conditional, overlays top of content) -->
+      <div v-if="draftSaveMessage" class="shrink-0 px-5 py-1.5 bg-[#111318] dark:bg-[#0d1117] border-t border-zinc-800">
         <div
-          :class="draftSaveMessage.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'"
+          :class="draftSaveMessage.type === 'success' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/15 text-red-400 border border-red-500/30'"
           class="px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5"
         >
           <span class="material-symbols-outlined text-sm">{{ draftSaveMessage.type === 'success' ? 'check_circle' : 'error' }}</span>
@@ -871,62 +913,62 @@ watch(isEditMode, (newVal) => {
 
       <!-- 3. Main Content (flex row, fills viewport) -->
       <div class="flex-1 flex overflow-hidden border border-zinc-200 dark:border-border-dark border-t-0 rounded-b-lg">
-        <!-- Left: Inline Preview -->
-        <div class="flex-1 min-w-0 relative bg-zinc-100">
+        <!-- Left: Inline Preview (50%) -->
+        <div class="w-1/2 shrink-0 min-w-0 relative bg-zinc-50 dark:bg-zinc-900/50">
           <InlineDocumentPreview :document="document" @open-full-viewer="showPreview = true" />
         </div>
 
-        <!-- Right: Sidebar -->
-        <aside class="w-[380px] shrink-0 border-l border-zinc-200 dark:border-border-dark flex flex-col bg-white dark:bg-background-dark">
-          <!-- Tab icons -->
-          <div class="shrink-0 border-b border-zinc-200 dark:border-border-dark flex">
+        <!-- Right: Details Panel (dominant) -->
+        <aside class="flex-1 border-l border-zinc-200 dark:border-border-dark flex flex-col bg-white dark:bg-background-dark">
+          <!-- Tab navigation with labels -->
+          <div class="shrink-0 border-b border-zinc-200 dark:border-border-dark px-4 flex gap-1">
             <button
               @click="handleSidebarTabChange('info')"
-              class="flex-1 py-3 flex items-center justify-center transition-colors relative"
+              class="px-3 py-2.5 flex items-center gap-1.5 transition-colors relative text-xs font-medium"
               :class="sidebarTab === 'info' ? 'text-teal' : 'text-zinc-400 hover:text-zinc-600'"
-              title="Info"
             >
-              <span class="material-symbols-outlined text-xl">info</span>
-              <div v-if="sidebarTab === 'info'" class="absolute bottom-0 left-2 right-2 h-0.5 bg-teal rounded-full"></div>
+              <span class="material-symbols-outlined text-base">info</span>
+              Details
+              <div v-if="sidebarTab === 'info'" class="absolute bottom-0 left-1 right-1 h-0.5 bg-teal rounded-full"></div>
             </button>
             <button
               @click="handleSidebarTabChange('meta')"
-              class="flex-1 py-3 flex items-center justify-center transition-colors relative"
+              class="px-3 py-2.5 flex items-center gap-1.5 transition-colors relative text-xs font-medium"
               :class="sidebarTab === 'meta' ? 'text-teal' : 'text-zinc-400 hover:text-zinc-600'"
-              title="Metadata"
             >
-              <span class="material-symbols-outlined text-xl">category</span>
-              <div v-if="sidebarTab === 'meta'" class="absolute bottom-0 left-2 right-2 h-0.5 bg-teal rounded-full"></div>
+              <span class="material-symbols-outlined text-base">category</span>
+              Metadata
+              <div v-if="sidebarTab === 'meta'" class="absolute bottom-0 left-1 right-1 h-0.5 bg-teal rounded-full"></div>
             </button>
             <button
               @click="handleSidebarTabChange('versions')"
-              class="flex-1 py-3 flex items-center justify-center transition-colors relative"
+              class="px-3 py-2.5 flex items-center gap-1.5 transition-colors relative text-xs font-medium"
               :class="sidebarTab === 'versions' ? 'text-teal' : 'text-zinc-400 hover:text-zinc-600'"
-              title="Versions"
             >
-              <span class="material-symbols-outlined text-xl">history</span>
-              <span class="absolute top-1.5 right-3 px-1 py-0 text-[9px] font-bold rounded bg-zinc-200 dark:bg-border-dark text-zinc-500">{{ versions.length }}</span>
-              <div v-if="sidebarTab === 'versions'" class="absolute bottom-0 left-2 right-2 h-0.5 bg-teal rounded-full"></div>
+              <span class="material-symbols-outlined text-base">history</span>
+              Versions
+              <span class="ml-0.5 px-1.5 py-0 text-[9px] font-bold rounded-full bg-zinc-100 dark:bg-border-dark text-zinc-500">{{ versions.length }}</span>
+              <div v-if="sidebarTab === 'versions'" class="absolute bottom-0 left-1 right-1 h-0.5 bg-teal rounded-full"></div>
             </button>
             <button
               v-if="canWrite"
               @click="handleSidebarTabChange('activity')"
-              class="flex-1 py-3 flex items-center justify-center transition-colors relative"
+              class="px-3 py-2.5 flex items-center gap-1.5 transition-colors relative text-xs font-medium"
               :class="sidebarTab === 'activity' ? 'text-teal' : 'text-zinc-400 hover:text-zinc-600'"
-              title="Activity"
             >
-              <span class="material-symbols-outlined text-xl">timeline</span>
-              <div v-if="sidebarTab === 'activity'" class="absolute bottom-0 left-2 right-2 h-0.5 bg-teal rounded-full"></div>
+              <span class="material-symbols-outlined text-base">timeline</span>
+              Activity
+              <div v-if="sidebarTab === 'activity'" class="absolute bottom-0 left-1 right-1 h-0.5 bg-teal rounded-full"></div>
             </button>
             <button
               v-if="isEditMode"
               @click="handleSidebarTabChange('edit')"
-              class="flex-1 py-3 flex items-center justify-center transition-colors relative"
+              class="px-3 py-2.5 flex items-center gap-1.5 transition-colors relative text-xs font-medium"
               :class="sidebarTab === 'edit' ? 'text-teal' : 'text-zinc-400 hover:text-zinc-600'"
-              title="Edit"
             >
-              <span class="material-symbols-outlined text-xl">edit_document</span>
-              <div v-if="sidebarTab === 'edit'" class="absolute bottom-0 left-2 right-2 h-0.5 bg-teal rounded-full"></div>
+              <span class="material-symbols-outlined text-base">edit_document</span>
+              Edit
+              <div v-if="sidebarTab === 'edit'" class="absolute bottom-0 left-1 right-1 h-0.5 bg-teal rounded-full"></div>
             </button>
           </div>
 
@@ -1000,33 +1042,44 @@ watch(isEditMode, (newVal) => {
                       </span>
                     </dd>
                   </div>
-                  <div>
+                  <div class="flex items-center justify-between">
                     <dt class="text-xs text-zinc-500">Expiry Date</dt>
                     <dd>
-                      <template v-if="document.expiryDate">
-                        <span
-                          class="px-2 py-0.5 text-xs font-medium rounded flex items-center gap-1"
-                          :class="{
-                            'bg-red-100 text-red-700': new Date(document.expiryDate) <= new Date(),
-                            'bg-amber-100 text-amber-700': new Date(document.expiryDate) > new Date() && new Date(document.expiryDate) <= new Date(Date.now() + 7 * 86400000),
-                            'bg-zinc-100 text-zinc-600': new Date(document.expiryDate) > new Date(Date.now() + 7 * 86400000)
-                          }"
-                        >
-                          <span class="material-symbols-outlined text-xs">
-                            {{ new Date(document.expiryDate) <= new Date() ? 'event_busy' : 'event' }}
-                          </span>
-                          {{ new Date(document.expiryDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
-                          <template v-if="new Date(document.expiryDate) <= new Date()"> &middot; Expired</template>
-                          <template v-else-if="new Date(document.expiryDate) <= new Date(Date.now() + 7 * 86400000)"> &middot; Expiring Soon</template>
+                      <span
+                        v-if="document.expiryDate"
+                        class="px-2 py-0.5 text-xs font-medium rounded-full inline-flex items-center gap-1"
+                        :class="{
+                          'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400': new Date(document.expiryDate) <= new Date(),
+                          'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400': new Date(document.expiryDate) > new Date() && new Date(document.expiryDate) <= new Date(Date.now() + 7 * 86400000),
+                          'bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300': new Date(document.expiryDate) > new Date(Date.now() + 7 * 86400000)
+                        }"
+                      >
+                        <span class="material-symbols-outlined text-xs">
+                          {{ new Date(document.expiryDate) <= new Date() ? 'event_busy' : 'event' }}
                         </span>
-                      </template>
+                        {{ new Date(document.expiryDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}
+                        <template v-if="new Date(document.expiryDate) <= new Date()"> &middot; Expired</template>
+                        <template v-else-if="new Date(document.expiryDate) <= new Date(Date.now() + 7 * 86400000)"> &middot; Expiring Soon</template>
+                      </span>
                       <span v-else class="text-sm text-zinc-400">-</span>
                     </dd>
                   </div>
-                  <div v-if="folderPrivacyLevelName" class="flex items-center justify-between">
-                    <dt class="text-xs text-zinc-500">Privacy Level</dt>
-                    <dd>
+                  <div v-if="document.privacyLevelName || folderPrivacyLevelName" class="flex items-center justify-between">
+                    <dt class="text-xs text-zinc-500">Privacy</dt>
+                    <dd class="flex items-center gap-1.5">
                       <span
+                        v-if="document.privacyLevelName"
+                        class="px-2 py-0.5 text-xs font-semibold rounded-full flex items-center gap-1"
+                        :style="{
+                          backgroundColor: (document.privacyLevelColor || '#6b7280') + '18',
+                          color: document.privacyLevelColor || '#6b7280'
+                        }"
+                      >
+                        <span class="material-symbols-outlined text-xs">shield</span>
+                        {{ document.privacyLevelName }}
+                      </span>
+                      <span
+                        v-else-if="folderPrivacyLevelName"
                         class="px-2 py-0.5 text-xs font-semibold rounded-full flex items-center gap-1"
                         :style="{
                           backgroundColor: (folderPrivacyLevelColor || '#6b7280') + '18',
@@ -1035,6 +1088,7 @@ watch(isEditMode, (newVal) => {
                       >
                         <span class="material-symbols-outlined text-xs">shield</span>
                         {{ folderPrivacyLevelName }}
+                        <span class="text-[8px] opacity-60">(folder)</span>
                       </span>
                     </dd>
                   </div>
@@ -1280,37 +1334,34 @@ watch(isEditMode, (newVal) => {
             </div>
 
             <!-- ============ EDIT TAB ============ -->
-            <div v-else-if="sidebarTab === 'edit' && isEditMode" class="p-4 space-y-4">
-              <!-- File Upload -->
+            <div v-else-if="sidebarTab === 'edit' && isEditMode" class="p-5 space-y-5">
+              <!-- File Replacement (compact) -->
               <div>
-                <h3 class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3">Replace File</h3>
-
-                <!-- Current/Draft file info -->
-                <div class="mb-3 p-3 bg-zinc-50 dark:bg-surface-dark rounded-lg">
+                <h3 class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2">File</h3>
+                <div class="p-3 bg-zinc-50 dark:bg-surface-dark rounded-lg">
                   <div class="flex items-center gap-2.5">
-                    <div class="w-9 h-9 rounded-lg bg-zinc-200 dark:bg-border-dark flex items-center justify-center">
-                      <span class="material-symbols-outlined text-zinc-500 text-lg">description</span>
+                    <div class="w-8 h-8 rounded-lg bg-zinc-200 dark:bg-border-dark flex items-center justify-center flex-shrink-0">
+                      <span class="material-symbols-outlined text-zinc-500 text-base">description</span>
                     </div>
                     <div class="flex-1 min-w-0">
                       <p class="text-sm font-medium text-zinc-800 dark:text-white truncate">{{ document.name }}{{ document.extension }}</p>
-                      <p class="text-xs text-zinc-500">Current &middot; {{ formatSize(document.size) }}</p>
+                      <p class="text-[11px] text-zinc-500">{{ formatSize(document.size) }}</p>
                     </div>
                   </div>
                   <div v-if="workingCopy?.hasDraftFile" class="mt-2 pt-2 border-t border-zinc-200 dark:border-border-dark flex items-center gap-2.5">
-                    <div class="w-9 h-9 rounded-lg bg-teal/20 flex items-center justify-center">
-                      <span class="material-symbols-outlined text-teal text-lg">draft</span>
+                    <div class="w-8 h-8 rounded-lg bg-teal/20 flex items-center justify-center flex-shrink-0">
+                      <span class="material-symbols-outlined text-teal text-base">draft</span>
                     </div>
                     <div class="flex-1 min-w-0">
                       <p class="text-sm font-medium text-teal truncate">{{ workingCopy.draftFileName }}</p>
-                      <p class="text-xs text-zinc-500">Draft &middot; {{ formatSize(workingCopy.draftSize || 0) }}</p>
+                      <p class="text-[11px] text-zinc-500">Draft &middot; {{ formatSize(workingCopy.draftSize || 0) }}</p>
                     </div>
-                    <span class="material-symbols-outlined text-teal text-lg">check_circle</span>
+                    <span class="material-symbols-outlined text-teal text-base">check_circle</span>
                   </div>
                 </div>
-
-                <!-- Drag & Drop Upload Area -->
+                <!-- Drop zone -->
                 <div
-                  class="relative border-2 border-dashed rounded-lg p-6 text-center transition-all cursor-pointer hover:border-teal hover:bg-teal/5"
+                  class="mt-2 relative border-2 border-dashed rounded-lg p-4 text-center transition-all cursor-pointer hover:border-teal hover:bg-teal/5"
                   :class="isDragging ? 'border-teal bg-teal/10' : 'border-zinc-300 dark:border-border-dark'"
                   @dragenter.prevent="isDragging = true"
                   @dragover.prevent="isDragging = true"
@@ -1318,58 +1369,39 @@ watch(isEditMode, (newVal) => {
                   @drop.prevent="handleFileDrop"
                   @click="triggerFileInput"
                 >
-                  <input
-                    ref="fileInputRef"
-                    type="file"
-                    @change="handleDraftFileSelect"
-                    class="hidden"
-                  />
-                  <div class="flex flex-col items-center gap-2">
-                    <div class="w-12 h-12 rounded-full bg-zinc-100 dark:bg-surface-dark flex items-center justify-center">
-                      <span class="material-symbols-outlined text-2xl" :class="isDragging ? 'text-teal' : 'text-zinc-400'">cloud_upload</span>
-                    </div>
-                    <div>
-                      <p class="text-xs font-medium text-zinc-700 dark:text-zinc-300">
-                        <span class="text-teal">Click to upload</span> or drag and drop
-                      </p>
-                    </div>
+                  <input ref="fileInputRef" type="file" @change="handleDraftFileSelect" class="hidden" />
+                  <div class="flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-lg" :class="isDragging ? 'text-teal' : 'text-zinc-400'">cloud_upload</span>
+                    <p class="text-xs text-zinc-500"><span class="text-teal font-medium">Click to upload</span> or drag and drop</p>
                   </div>
                 </div>
-
-                <!-- Selected File Preview -->
-                <div v-if="draftFile" class="mt-3 p-3 bg-teal/5 border border-teal/20 rounded-lg">
-                  <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-lg bg-teal/20 flex items-center justify-center">
-                      <span class="material-symbols-outlined text-teal text-base">insert_drive_file</span>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                      <p class="text-sm font-medium text-zinc-800 dark:text-white truncate">{{ draftFile.name }}</p>
-                      <p class="text-xs text-zinc-500">{{ formatSize(draftFile.size) }}</p>
-                    </div>
-                    <button
-                      @click.stop="draftFile = null"
-                      class="p-1 text-zinc-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                    >
+                <!-- Selected file -->
+                <div v-if="draftFile" class="mt-2 p-2.5 bg-teal/5 border border-teal/20 rounded-lg">
+                  <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-teal text-base">insert_drive_file</span>
+                    <span class="text-sm font-medium text-zinc-800 dark:text-white truncate flex-1">{{ draftFile.name }}</span>
+                    <button @click.stop="draftFile = null" class="p-0.5 text-zinc-400 hover:text-red-500 rounded transition-colors">
                       <span class="material-symbols-outlined text-sm">close</span>
                     </button>
                   </div>
                   <button
                     @click.stop="uploadDraftFile"
                     :disabled="isUploadingFile"
-                    class="mt-2 w-full py-2 bg-teal text-white rounded-lg hover:bg-teal/90 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 text-xs font-medium"
+                    class="mt-2 w-full py-1.5 bg-teal text-white rounded-lg hover:bg-teal/90 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50 text-xs font-medium"
                   >
                     <span v-if="isUploadingFile" class="material-symbols-outlined animate-spin text-sm">refresh</span>
                     <span v-else class="material-symbols-outlined text-sm">cloud_upload</span>
-                    {{ isUploadingFile ? 'Uploading...' : 'Upload' }}
+                    {{ isUploadingFile ? 'Uploading...' : 'Upload to Draft' }}
                   </button>
                 </div>
               </div>
 
-              <!-- Name & Description -->
-              <div class="pt-2 border-t border-zinc-100 dark:border-border-dark">
-                <h3 class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3">Document Properties</h3>
-                <div class="space-y-3">
-                  <div>
+              <!-- Document Properties -->
+              <div class="pt-3 border-t border-zinc-100 dark:border-border-dark">
+                <h3 class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3">Properties</h3>
+                <div class="grid grid-cols-2 gap-3">
+                  <!-- Name (full width) -->
+                  <div class="col-span-2">
                     <label class="block text-xs font-medium text-zinc-500 mb-1">Name</label>
                     <input
                       v-model="draftName"
@@ -1377,25 +1409,93 @@ watch(isEditMode, (newVal) => {
                       class="w-full px-3 py-2 text-sm border border-zinc-300 dark:border-border-dark rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-surface-dark text-zinc-800 dark:text-white"
                     />
                   </div>
-                  <div>
+                  <!-- Description (full width) -->
+                  <div class="col-span-2">
                     <label class="block text-xs font-medium text-zinc-500 mb-1">Description</label>
                     <textarea
                       v-model="draftDescription"
-                      rows="3"
+                      rows="2"
                       class="w-full px-3 py-2 text-sm border border-zinc-300 dark:border-border-dark rounded-lg focus:ring-2 focus:ring-teal/50 bg-white dark:bg-surface-dark text-zinc-800 dark:text-white"
                       placeholder="Enter a description..."
                     ></textarea>
                   </div>
+                  <!-- Classification -->
+                  <div>
+                    <label class="block text-xs font-medium text-zinc-500 mb-1">Classification</label>
+                    <UiSelect
+                      v-model="draftClassificationId"
+                      :options="[{ value: '', label: 'None' }, ...classifications.map(c => ({ value: c.id, label: c.name }))]"
+                      size="md"
+                      placeholder="Select..."
+                    />
+                  </div>
+                  <!-- Importance -->
+                  <div>
+                    <label class="block text-xs font-medium text-zinc-500 mb-1">Importance</label>
+                    <UiSelect
+                      v-model="draftImportanceId"
+                      :options="[{ value: '', label: 'None' }, ...importances.map(i => ({ value: i.id, label: i.name }))]"
+                      size="md"
+                      placeholder="Select..."
+                    />
+                  </div>
+                  <!-- Document Type -->
+                  <div>
+                    <label class="block text-xs font-medium text-zinc-500 mb-1">Document Type</label>
+                    <UiSelect
+                      v-model="draftDocumentTypeId"
+                      :options="[{ value: '', label: 'None' }, ...documentTypes.map(d => ({ value: d.id, label: d.name }))]"
+                      size="md"
+                      placeholder="Select..."
+                    />
+                  </div>
+                  <!-- Expiry Date -->
+                  <div>
+                    <label class="block text-xs font-medium text-zinc-500 mb-1">Expiry Date</label>
+                    <UiDatePicker
+                      v-model="draftExpiryDate"
+                      placeholder="No expiry"
+                      size="md"
+                      clearable
+                    />
+                  </div>
+                  <!-- Privacy Level (full width) -->
+                  <div class="col-span-2">
+                    <label class="block text-xs font-medium text-zinc-500 mb-1">Privacy Level</label>
+                    <div class="flex flex-wrap gap-1.5">
+                      <button
+                        @click="draftPrivacyLevelId = null"
+                        class="px-3 py-1.5 text-xs font-medium rounded-lg border transition-all"
+                        :class="!draftPrivacyLevelId ? 'border-teal bg-teal/10 text-teal' : 'border-zinc-200 dark:border-border-dark text-zinc-500 hover:border-zinc-300'"
+                      >
+                        None
+                      </button>
+                      <button
+                        v-for="pl in privacyLevels"
+                        :key="pl.id"
+                        @click="draftPrivacyLevelId = pl.id"
+                        class="px-3 py-1.5 text-xs font-medium rounded-lg border transition-all flex items-center gap-1.5"
+                        :class="draftPrivacyLevelId === pl.id
+                          ? 'border-current bg-current/10'
+                          : 'border-zinc-200 dark:border-border-dark text-zinc-500 hover:border-zinc-300'"
+                        :style="draftPrivacyLevelId === pl.id ? { color: pl.color || '#6b7280' } : {}"
+                      >
+                        <span class="w-2 h-2 rounded-full" :style="{ backgroundColor: pl.color || '#6b7280' }"></span>
+                        {{ pl.name }}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <!-- Editable Metadata Fields -->
-              <div v-if="draftMetadata.length > 0" class="pt-2 border-t border-zinc-100 dark:border-border-dark">
+              <!-- Content Type Metadata Fields -->
+              <div v-if="draftMetadata.length > 0" class="pt-3 border-t border-zinc-100 dark:border-border-dark">
                 <h3 class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3">{{ contentTypeInfo?.name || 'Metadata' }}</h3>
-                <div class="space-y-3">
+                <div class="grid grid-cols-2 gap-3">
                   <div
                     v-for="(field, index) in draftMetadata"
                     :key="field.fieldId"
+                    :class="isTextAreaFieldType(field.fieldType) ? 'col-span-2' : ''"
                   >
                     <label class="block text-xs font-medium text-zinc-500 mb-1">
                       {{ metadataFields.find(f => f.id === field.fieldId)?.displayName || field.fieldName }}
@@ -1591,12 +1691,12 @@ watch(isEditMode, (newVal) => {
           <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" @click="showCompareModal = false" />
           <div class="flex min-h-full items-center justify-center p-4">
             <div class="relative w-full max-w-4xl bg-white dark:bg-background-dark rounded-lg shadow-2xl overflow-hidden" @click.stop>
-              <div class="relative bg-gradient-to-r from-navy via-[#1e1e2b] to-purple-900 p-5 overflow-hidden">
-                <div class="absolute top-0 right-0 w-40 h-40 bg-purple-500/20 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+              <div class="relative bg-gradient-to-r from-navy via-navy/95 to-teal p-5 overflow-hidden">
+                <div class="absolute top-0 right-0 w-40 h-40 bg-teal/20 rounded-full -translate-y-1/2 translate-x-1/2"></div>
                 <div class="absolute bottom-0 left-0 w-24 h-24 bg-teal/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
                 <div class="relative flex items-center justify-between">
                   <div class="flex items-center gap-3">
-                    <div class="w-11 h-11 bg-purple-500/30 backdrop-blur rounded-lg flex items-center justify-center">
+                    <div class="w-11 h-11 bg-teal/30 backdrop-blur rounded-lg flex items-center justify-center">
                       <span class="material-symbols-outlined text-white text-xl">compare</span>
                     </div>
                     <div>
@@ -1611,13 +1711,13 @@ watch(isEditMode, (newVal) => {
                 <div class="mt-5 grid grid-cols-2 gap-4">
                   <div>
                     <label class="block text-xs font-bold text-white/60 uppercase tracking-wider mb-2">Source (Older)</label>
-                    <select v-model="compareSourceVersion" class="w-full px-4 py-2.5 bg-white/10 border border-white/20 rounded-lg text-white text-sm focus:ring-2 focus:ring-purple-500/50 focus:border-purple-400">
+                    <select v-model="compareSourceVersion" class="w-full px-4 py-2.5 bg-white/10 border border-white/20 rounded-lg text-white text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal">
                       <option v-for="v in versions" :key="v.id" :value="v.id" class="text-zinc-900">v{{ getVersionLabel(v) }} - {{ formatDateShort(v.createdAt) }}</option>
                     </select>
                   </div>
                   <div>
                     <label class="block text-xs font-bold text-white/60 uppercase tracking-wider mb-2">Target (Newer)</label>
-                    <select v-model="compareTargetVersion" class="w-full px-4 py-2.5 bg-white/10 border border-white/20 rounded-lg text-white text-sm focus:ring-2 focus:ring-purple-500/50 focus:border-purple-400">
+                    <select v-model="compareTargetVersion" class="w-full px-4 py-2.5 bg-white/10 border border-white/20 rounded-lg text-white text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal">
                       <option v-for="v in versions" :key="v.id" :value="v.id" class="text-zinc-900">v{{ getVersionLabel(v) }} - {{ formatDateShort(v.createdAt) }}</option>
                     </select>
                   </div>
@@ -1631,7 +1731,7 @@ watch(isEditMode, (newVal) => {
 
               <div class="max-h-[60vh] overflow-y-auto">
                 <div v-if="isComparing" class="p-12 text-center">
-                  <div class="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                  <div class="w-12 h-12 border-4 border-teal border-t-transparent rounded-full animate-spin mx-auto"></div>
                   <p class="text-sm text-zinc-500 mt-4">Analyzing versions...</p>
                 </div>
 
@@ -1639,7 +1739,7 @@ watch(isEditMode, (newVal) => {
                   <div class="grid grid-cols-2 gap-4">
                     <div class="p-4 bg-zinc-50 dark:bg-surface-dark rounded-lg border-2 border-zinc-200 dark:border-border-dark">
                       <div class="flex items-center gap-3 mb-3">
-                        <div class="w-10 h-10 rounded-lg bg-zinc-600 flex items-center justify-center">
+                        <div class="w-10 h-10 rounded-lg bg-[#0d1117] flex items-center justify-center">
                           <span class="text-white font-bold text-sm">{{ versionComparison.sourceVersion.versionLabel }}</span>
                         </div>
                         <div>
@@ -1650,13 +1750,13 @@ watch(isEditMode, (newVal) => {
                       <p class="text-xs text-zinc-500">{{ formatDate(versionComparison.sourceVersion.createdAt) }}</p>
                       <p class="text-xs text-zinc-500 mt-1">{{ formatSize(versionComparison.sourceVersion.size) }}</p>
                     </div>
-                    <div class="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border-2 border-purple-200 dark:border-purple-800">
+                    <div class="p-4 bg-teal/5 dark:bg-teal/10 rounded-lg border-2 border-teal/30 dark:border-teal/40">
                       <div class="flex items-center gap-3 mb-3">
-                        <div class="w-10 h-10 rounded-lg bg-purple-600 flex items-center justify-center">
+                        <div class="w-10 h-10 rounded-lg bg-teal flex items-center justify-center">
                           <span class="text-white font-bold text-sm">{{ versionComparison.targetVersion.versionLabel }}</span>
                         </div>
                         <div>
-                          <p class="text-xs font-bold text-purple-500 uppercase tracking-wider">Target</p>
+                          <p class="text-xs font-bold text-teal uppercase tracking-wider">Target</p>
                           <p class="text-sm font-semibold text-zinc-900 dark:text-white">Version {{ versionComparison.targetVersion.versionLabel }}</p>
                         </div>
                       </div>
@@ -1666,12 +1766,12 @@ watch(isEditMode, (newVal) => {
                   </div>
 
                   <div class="grid grid-cols-3 gap-3">
-                    <div class="p-4 rounded-lg border-2 transition-colors" :class="versionComparison.contentChanged ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : 'bg-zinc-50 dark:bg-surface-dark border-zinc-200 dark:border-border-dark'">
+                    <div class="p-4 rounded-lg border-2 transition-colors" :class="versionComparison.contentChanged ? 'bg-teal/5 dark:bg-teal/10 border-teal/30 dark:border-teal/40' : 'bg-zinc-50 dark:bg-surface-dark border-zinc-200 dark:border-border-dark'">
                       <div class="flex items-center gap-2 mb-2">
-                        <span class="material-symbols-outlined text-lg" :class="versionComparison.contentChanged ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-400'">description</span>
-                        <span class="text-xs font-bold uppercase tracking-wider" :class="versionComparison.contentChanged ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-400'">Content</span>
+                        <span class="material-symbols-outlined text-lg" :class="versionComparison.contentChanged ? 'text-teal' : 'text-zinc-400'">description</span>
+                        <span class="text-xs font-bold uppercase tracking-wider" :class="versionComparison.contentChanged ? 'text-teal' : 'text-zinc-400'">Content</span>
                       </div>
-                      <p class="text-sm font-semibold" :class="versionComparison.contentChanged ? 'text-blue-700 dark:text-blue-300' : 'text-zinc-500'">{{ versionComparison.contentChanged ? 'Changed' : 'Unchanged' }}</p>
+                      <p class="text-sm font-semibold" :class="versionComparison.contentChanged ? 'text-teal' : 'text-zinc-500'">{{ versionComparison.contentChanged ? 'Changed' : 'Unchanged' }}</p>
                       <p v-if="versionComparison.sizeDifference !== 0" class="text-xs text-zinc-500 mt-1">{{ versionComparison.sizeDifference > 0 ? '+' : '' }}{{ formatSize(Math.abs(versionComparison.sizeDifference)) }}</p>
                     </div>
                     <div class="p-4 rounded-lg border-2 transition-colors" :class="versionComparison.metadataChanged ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800' : 'bg-zinc-50 dark:bg-surface-dark border-zinc-200 dark:border-border-dark'">
@@ -1700,21 +1800,21 @@ watch(isEditMode, (newVal) => {
                     </div>
                     <div class="divide-y divide-zinc-100 dark:divide-zinc-700">
                       <div v-for="diff in versionComparison.metadataDifferences" :key="diff.fieldId" class="p-4 hover:bg-zinc-50 dark:hover:bg-surface-dark/50 transition-colors"
-                        :class="{ 'bg-green-50/50 dark:bg-green-900/10': diff.diffType === DiffType.Added, 'bg-red-50/50 dark:bg-red-900/10': diff.diffType === DiffType.Removed, 'bg-amber-50/50 dark:bg-amber-900/10': diff.diffType === DiffType.Modified }">
+                        :class="{ 'bg-teal/5 dark:bg-teal/10': diff.diffType === DiffType.Added, 'bg-red-50/50 dark:bg-red-900/10': diff.diffType === DiffType.Removed, 'bg-amber-50/50 dark:bg-amber-900/10': diff.diffType === DiffType.Modified }">
                         <div class="flex items-start justify-between gap-4">
                           <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-2 mb-2">
                               <span class="text-sm font-semibold text-zinc-900 dark:text-white">{{ diff.displayName }}</span>
-                              <span :class="{ 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400': diff.diffType === DiffType.Added, 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400': diff.diffType === DiffType.Removed, 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400': diff.diffType === DiffType.Modified, 'bg-zinc-100 dark:bg-surface-dark text-zinc-600 dark:text-zinc-400': diff.diffType === DiffType.Unchanged }" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase">{{ getDiffTypeLabel(diff.diffType) }}</span>
+                              <span :class="{ 'bg-teal/10 text-teal': diff.diffType === DiffType.Added, 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400': diff.diffType === DiffType.Removed, 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400': diff.diffType === DiffType.Modified, 'bg-zinc-100 dark:bg-surface-dark text-zinc-600 dark:text-zinc-400': diff.diffType === DiffType.Unchanged }" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase">{{ getDiffTypeLabel(diff.diffType) }}</span>
                             </div>
                             <div class="grid grid-cols-2 gap-4">
                               <div class="p-3 rounded-lg overflow-hidden" :class="diff.diffType === DiffType.Removed || diff.diffType === DiffType.Modified ? 'bg-red-100/70 dark:bg-red-900/20 border border-red-200 dark:border-red-800' : 'bg-zinc-100 dark:bg-background-dark'">
                                 <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Previous</p>
                                 <p class="text-sm break-words" :class="diff.oldValue ? (diff.diffType === DiffType.Removed || diff.diffType === DiffType.Modified ? 'text-red-700 dark:text-red-400 line-through' : 'text-zinc-600 dark:text-zinc-400') : 'text-zinc-400 italic'">{{ diff.oldValue || '(empty)' }}</p>
                               </div>
-                              <div class="p-3 rounded-lg overflow-hidden" :class="diff.diffType === DiffType.Added || diff.diffType === DiffType.Modified ? 'bg-green-100/70 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-zinc-100 dark:bg-background-dark'">
+                              <div class="p-3 rounded-lg overflow-hidden" :class="diff.diffType === DiffType.Added || diff.diffType === DiffType.Modified ? 'bg-teal/5 dark:bg-teal/10 border border-teal/30' : 'bg-zinc-100 dark:bg-background-dark'">
                                 <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">New</p>
-                                <p class="text-sm break-words" :class="diff.newValue ? (diff.diffType === DiffType.Added || diff.diffType === DiffType.Modified ? 'text-green-700 dark:text-green-400 font-medium' : 'text-zinc-600 dark:text-zinc-400') : 'text-zinc-400 italic'">{{ diff.newValue || '(empty)' }}</p>
+                                <p class="text-sm break-words" :class="diff.newValue ? (diff.diffType === DiffType.Added || diff.diffType === DiffType.Modified ? 'text-teal font-medium' : 'text-zinc-600 dark:text-zinc-400') : 'text-zinc-400 italic'">{{ diff.newValue || '(empty)' }}</p>
                               </div>
                             </div>
                           </div>

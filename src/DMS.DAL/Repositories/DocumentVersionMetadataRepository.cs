@@ -61,7 +61,7 @@ public class DocumentVersionMetadataRepository : IDocumentVersionMetadataReposit
             item.Id = Guid.NewGuid();
             item.DocumentVersionId = versionId;
             item.DocumentId = documentId;
-            item.CreatedAt = DateTime.UtcNow;
+            item.CreatedAt = DateTime.Now;
         }
 
         _context.DocumentVersionMetadata.AddRange(metadataList);

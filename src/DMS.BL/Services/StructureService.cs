@@ -132,7 +132,7 @@ public class StructureService : IStructureService
         structure.IsActive = dto.IsActive;
         structure.SortOrder = dto.SortOrder ?? 0;
         structure.ModifiedBy = userId;
-        structure.ModifiedAt = DateTime.UtcNow;
+        structure.ModifiedAt = DateTime.Now;
 
         await _structureRepo.UpdateAsync(structure);
 
@@ -289,7 +289,7 @@ public class StructureService : IStructureService
                 IsPrimary = m.IsPrimary,
                 StartDate = m.StartDate ?? DateTime.MinValue,
                 EndDate = m.EndDate,
-                IsActive = m.EndDate == null || m.EndDate > DateTime.UtcNow
+                IsActive = m.EndDate == null || m.EndDate > DateTime.Now
             });
         }
 

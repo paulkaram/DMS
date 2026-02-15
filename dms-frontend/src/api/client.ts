@@ -1,5 +1,5 @@
 import axios, { type AxiosInstance, type AxiosError } from 'axios'
-import type { ApiError } from '@/types'
+import type { ApiError, SaveWorkingCopy } from '@/types'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:144'
 
@@ -122,14 +122,8 @@ export const documentsApi = {
   // Working Copy Management
   getWorkingCopy: (id: string) =>
     apiClient.get(`/documents/${id}/working-copy`),
-  saveWorkingCopy: (id: string, data: {
-    name?: string
-    description?: string
-    classificationId?: string
-    importanceId?: string
-    documentTypeId?: string
-    metadata?: { fieldId: string; fieldName: string; value?: string; numericValue?: number; dateValue?: string }[]
-  }) => apiClient.put(`/documents/${id}/working-copy`, data),
+  saveWorkingCopy: (id: string, data: SaveWorkingCopy) =>
+    apiClient.put(`/documents/${id}/working-copy`, data),
   saveWorkingCopyContent: (id: string, file: File) => {
     const formData = new FormData()
     formData.append('file', file)

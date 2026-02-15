@@ -37,7 +37,7 @@ public class ReportsService : IReportsService
         var totalDocuments = allDocuments.Count;
         var totalSizeBytes = allDocuments.Sum(d => d.Size);
 
-        var thisMonthStart = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
+        var thisMonthStart = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
         var lastMonthStart = thisMonthStart.AddMonths(-1);
 
         var documentsThisMonth = allDocuments.Count(d => d.CreatedAt >= thisMonthStart);
@@ -76,7 +76,7 @@ public class ReportsService : IReportsService
 
     public async Task<ServiceResult<List<MonthlyGrowthDto>>> GetMonthlyGrowthAsync(int? year = null)
     {
-        var targetYear = year ?? DateTime.UtcNow.Year;
+        var targetYear = year ?? DateTime.Now.Year;
         var allDocuments = await GetAllDocumentsAsync();
 
         var months = new List<MonthlyGrowthDto>();
@@ -95,8 +95,8 @@ public class ReportsService : IReportsService
             });
         }
 
-        if (targetYear == DateTime.UtcNow.Year)
-            months = months.Take(DateTime.UtcNow.Month).ToList();
+        if (targetYear == DateTime.Now.Year)
+            months = months.Take(DateTime.Now.Month).ToList();
 
         return ServiceResult<List<MonthlyGrowthDto>>.Ok(months);
     }
@@ -251,7 +251,7 @@ public class ReportsService : IReportsService
 
     private static string FormatDate(DateTime date)
     {
-        var today = DateTime.UtcNow.Date;
+        var today = DateTime.Now.Date;
         var yesterday = today.AddDays(-1);
 
         if (date.Date == today)

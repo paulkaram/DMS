@@ -35,7 +35,7 @@ public class PrivacyLevelRepository : IPrivacyLevelRepository
     public async Task<Guid> CreateAsync(PrivacyLevel entity)
     {
         entity.Id = Guid.NewGuid();
-        entity.CreatedAt = DateTime.UtcNow;
+        entity.CreatedAt = DateTime.Now;
         _context.PrivacyLevels.Add(entity);
         await _context.SaveChangesAsync();
         return entity.Id;

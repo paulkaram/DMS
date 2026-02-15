@@ -34,7 +34,7 @@ public class DocumentsController : BaseApiController
     /// Checks if the current user has sufficient privacy level to access a document's folder.
     /// Returns true if access is allowed, false if blocked.
     /// </summary>
-    private async Task<bool> HasPrivacyAccessAsync(Guid folderId)
+    private async Task<bool> HasFolderPrivacyAccessAsync(Guid folderId)
     {
         var privacyLevel = GetCurrentUserPrivacyLevel();
         if (privacyLevel == null) return true; // Admin bypasses
@@ -46,6 +46,23 @@ public class DocumentsController : BaseApiController
         if (folder.PrivacyLevelValue == null) return true; // No privacy restriction
 
         return folder.PrivacyLevelValue.Value <= privacyLevel.Value;
+    }
+
+    /// <summary>
+    /// Checks if the current user has sufficient privacy level to access a document.
+    /// Checks both the document's own privacy level and the folder's privacy level.
+    /// </summary>
+    private async Task<bool> HasDocumentPrivacyAccessAsync(DocumentDto doc)
+    {
+        var privacyLevel = GetCurrentUserPrivacyLevel();
+        if (privacyLevel == null) return true; // Admin bypasses
+
+        // Check document-level privacy
+        if (doc.PrivacyLevelValue != null && doc.PrivacyLevelValue.Value > privacyLevel.Value)
+            return false;
+
+        // Check folder-level privacy
+        return await HasFolderPrivacyAccessAsync(doc.FolderId);
     }
 
     [HttpGet]
@@ -108,7 +125,7 @@ public class DocumentsController : BaseApiController
         {
             pagedResult.Items = pagedResult.Items.Where(doc =>
                 doc.ExpiryDate == null ||
-                doc.ExpiryDate > DateTime.UtcNow ||
+                doc.ExpiryDate > DateTime.Now ||
                 doc.CreatedBy == userId
             ).ToList();
         }
@@ -130,8 +147,8 @@ public class DocumentsController : BaseApiController
 
         var doc = result.Data!;
 
-        // Check privacy level on folder
-        if (!await HasPrivacyAccessAsync(doc.FolderId))
+        // Check privacy level on document and folder
+        if (!await HasDocumentPrivacyAccessAsync(doc))
             return NotFound(new[] { ErrorMessages.Permissions.InsufficientPrivacyLevel });
 
         // Block access to pending/rejected documents for non-creators/non-admins/non-approvers
@@ -145,7 +162,7 @@ public class DocumentsController : BaseApiController
 
         // Block access to expired documents for non-creators/non-admins
         if (!IsAdmin() && doc.CreatedBy != userId &&
-            doc.ExpiryDate.HasValue && doc.ExpiryDate.Value <= DateTime.UtcNow)
+            doc.ExpiryDate.HasValue && doc.ExpiryDate.Value <= DateTime.Now)
         {
             return NotFound(new[] { ErrorMessages.Permissions.DocumentExpired });
         }
@@ -181,8 +198,8 @@ public class DocumentsController : BaseApiController
 
         var doc = docResult.Data!;
 
-        // Check privacy level on folder
-        if (!await HasPrivacyAccessAsync(doc.FolderId))
+        // Check privacy level on document and folder
+        if (!await HasDocumentPrivacyAccessAsync(doc))
             return NotFound(new[] { ErrorMessages.Permissions.InsufficientPrivacyLevel });
 
         // Block download of pending/rejected documents for non-creators/non-admins/non-approvers
@@ -195,7 +212,7 @@ public class DocumentsController : BaseApiController
 
         // Block download of expired documents for non-creators/non-admins
         if (!IsAdmin() && doc.CreatedBy != userId &&
-            doc.ExpiryDate.HasValue && doc.ExpiryDate.Value <= DateTime.UtcNow)
+            doc.ExpiryDate.HasValue && doc.ExpiryDate.Value <= DateTime.Now)
         {
             return NotFound(new[] { ErrorMessages.Permissions.DocumentExpired });
         }
@@ -279,9 +296,9 @@ public class DocumentsController : BaseApiController
         if (!await HasPermissionAsync(userId, "Document", id, (int)PermissionLevel.Write))
             return Forbid(ErrorMessages.Permissions.CheckOutDocument);
 
-        // Check privacy level
+        // Check privacy level on document and folder
         var docResult = await _documentService.GetByIdAsync(id);
-        if (docResult.Success && !await HasPrivacyAccessAsync(docResult.Data!.FolderId))
+        if (docResult.Success && !await HasDocumentPrivacyAccessAsync(docResult.Data!))
             return NotFound(new[] { ErrorMessages.Permissions.InsufficientPrivacyLevel });
 
         var result = await _documentService.CheckOutAsync(id, userId);
@@ -469,7 +486,7 @@ public class DocumentsController : BaseApiController
             return Forbid(ErrorMessages.Permissions.MoveDocumentsToFolder);
 
         // Check privacy level on destination folder
-        if (!await HasPrivacyAccessAsync(dto.NewFolderId))
+        if (!await HasFolderPrivacyAccessAsync(dto.NewFolderId))
             return NotFound(new[] { ErrorMessages.Permissions.InsufficientPrivacyLevel });
 
         var result = await _documentService.MoveAsync(id, dto, userId);
@@ -490,7 +507,7 @@ public class DocumentsController : BaseApiController
             return Forbid(ErrorMessages.Permissions.CopyDocumentsToFolder);
 
         // Check privacy level on destination folder
-        if (!await HasPrivacyAccessAsync(dto.TargetFolderId))
+        if (!await HasFolderPrivacyAccessAsync(dto.TargetFolderId))
             return NotFound(new[] { ErrorMessages.Permissions.InsufficientPrivacyLevel });
 
         var result = await _documentService.CopyAsync(id, dto, userId);
@@ -526,8 +543,8 @@ public class DocumentsController : BaseApiController
         {
             var doc = docResult.Data!;
 
-            // Check privacy level on folder
-            if (!await HasPrivacyAccessAsync(doc.FolderId))
+            // Check privacy level on document and folder
+            if (!await HasDocumentPrivacyAccessAsync(doc))
                 return NotFound(new[] { ErrorMessages.Permissions.InsufficientPrivacyLevel });
 
             if (!IsAdmin() && doc.CreatedBy != userId &&
@@ -539,7 +556,7 @@ public class DocumentsController : BaseApiController
 
             // Block preview of expired documents for non-creators/non-admins
             if (!IsAdmin() && doc.CreatedBy != userId &&
-                doc.ExpiryDate.HasValue && doc.ExpiryDate.Value <= DateTime.UtcNow)
+                doc.ExpiryDate.HasValue && doc.ExpiryDate.Value <= DateTime.Now)
             {
                 return NotFound(new[] { ErrorMessages.Permissions.DocumentExpired });
             }
@@ -583,6 +600,6 @@ public class DocumentsController : BaseApiController
         if (!result.Success)
             return BadRequest(result.Errors);
 
-        return File(result.Data!, "application/zip", $"documents-{DateTime.UtcNow:yyyyMMdd-HHmmss}.zip");
+        return File(result.Data!, "application/zip", $"documents-{DateTime.Now:yyyyMMdd-HHmmss}.zip");
     }
 }

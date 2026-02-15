@@ -23,6 +23,10 @@ public class WorkingCopyDto
     public Guid? DraftClassificationId { get; set; }
     public Guid? DraftImportanceId { get; set; }
     public Guid? DraftDocumentTypeId { get; set; }
+    public DateTime? DraftExpiryDate { get; set; }
+    public bool DraftExpiryDateChanged { get; set; }
+    public Guid? DraftPrivacyLevelId { get; set; }
+    public bool DraftPrivacyLevelChanged { get; set; }
 
     // Draft metadata (parsed from JSON)
     public List<WorkingCopyMetadataItem>? DraftMetadata { get; set; }
@@ -55,6 +59,10 @@ public class SaveWorkingCopyDto
     public Guid? ClassificationId { get; set; }
     public Guid? ImportanceId { get; set; }
     public Guid? DocumentTypeId { get; set; }
+    public DateTime? ExpiryDate { get; set; }
+    public bool? ExpiryDateChanged { get; set; }
+    public Guid? PrivacyLevelId { get; set; }
+    public bool? PrivacyLevelChanged { get; set; }
     public List<WorkingCopyMetadataItem>? Metadata { get; set; }
 }
 

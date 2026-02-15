@@ -150,7 +150,7 @@ public class PdfPageService : IPdfPageService
                 CreatedBy = userId,
                 IntegrityHash = storageResult.IntegrityHash,
                 HashAlgorithm = storageResult.HashAlgorithm,
-                IntegrityVerifiedAt = DateTime.UtcNow,
+                IntegrityVerifiedAt = DateTime.Now,
                 ContentType = "application/pdf",
                 OriginalFileName = fileName,
                 VersionType = "Major",

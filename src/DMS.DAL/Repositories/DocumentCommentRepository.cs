@@ -92,7 +92,7 @@ public class DocumentCommentRepository : IDocumentCommentRepository
     public async Task<Guid> AddAsync(DocumentComment comment)
     {
         comment.Id = Guid.NewGuid();
-        comment.CreatedAt = DateTime.UtcNow;
+        comment.CreatedAt = DateTime.Now;
         comment.IsDeleted = false;
 
         _context.DocumentComments.Add(comment);
@@ -109,7 +109,7 @@ public class DocumentCommentRepository : IDocumentCommentRepository
 
         existing.Content = comment.Content;
         existing.ModifiedBy = comment.ModifiedBy;
-        existing.ModifiedAt = DateTime.UtcNow;
+        existing.ModifiedAt = DateTime.Now;
 
         return await _context.SaveChangesAsync() > 0;
     }
@@ -121,7 +121,7 @@ public class DocumentCommentRepository : IDocumentCommentRepository
 
         entity.IsDeleted = true;
         entity.ModifiedBy = deletedBy;
-        entity.ModifiedAt = DateTime.UtcNow;
+        entity.ModifiedAt = DateTime.Now;
 
         return await _context.SaveChangesAsync() > 0;
     }

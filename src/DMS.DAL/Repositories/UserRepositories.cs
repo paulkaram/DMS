@@ -100,7 +100,7 @@ public class UserRepository : IUserRepository
     public async Task<Guid> CreateAsync(User entity)
     {
         entity.Id = Guid.NewGuid();
-        entity.CreatedAt = DateTime.UtcNow;
+        entity.CreatedAt = DateTime.Now;
         _context.Users.Add(entity);
         await _context.SaveChangesAsync();
         return entity.Id;
@@ -108,7 +108,7 @@ public class UserRepository : IUserRepository
 
     public async Task<bool> UpdateAsync(User entity)
     {
-        entity.ModifiedAt = DateTime.UtcNow;
+        entity.ModifiedAt = DateTime.Now;
         _context.Users.Update(entity);
         var affected = await _context.SaveChangesAsync();
         return affected > 0;
@@ -119,7 +119,7 @@ public class UserRepository : IUserRepository
         var affected = await _context.Users
             .Where(u => u.Id == id)
             .ExecuteUpdateAsync(s => s
-                .SetProperty(u => u.LastLoginAt, DateTime.UtcNow));
+                .SetProperty(u => u.LastLoginAt, DateTime.Now));
         return affected > 0;
     }
 }
@@ -166,7 +166,7 @@ public class RoleRepository : IRoleRepository
     public async Task<Guid> CreateAsync(Role entity)
     {
         entity.Id = Guid.NewGuid();
-        entity.CreatedAt = DateTime.UtcNow;
+        entity.CreatedAt = DateTime.Now;
         _context.Roles.Add(entity);
         await _context.SaveChangesAsync();
         return entity.Id;
@@ -181,7 +181,7 @@ public class RoleRepository : IRoleRepository
                 Id = Guid.NewGuid(),
                 UserId = userId,
                 RoleId = roleId,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now
             };
             _context.UserRoles.Add(userRole);
             await _context.SaveChangesAsync();

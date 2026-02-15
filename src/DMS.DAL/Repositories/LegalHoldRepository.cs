@@ -42,7 +42,7 @@ public class LegalHoldRepository : ILegalHoldRepository
     public async Task<Guid> CreateAsync(LegalHold entity)
     {
         entity.Id = Guid.NewGuid();
-        entity.CreatedAt = DateTime.UtcNow;
+        entity.CreatedAt = DateTime.Now;
 
         _context.LegalHolds.Add(entity);
         await _context.SaveChangesAsync();
@@ -51,7 +51,7 @@ public class LegalHoldRepository : ILegalHoldRepository
 
     public async Task<bool> UpdateAsync(LegalHold entity)
     {
-        entity.ModifiedAt = DateTime.UtcNow;
+        entity.ModifiedAt = DateTime.Now;
 
         var existing = await _context.LegalHolds
             .IgnoreQueryFilters()

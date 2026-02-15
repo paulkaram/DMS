@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
-import { documentsApi, contentTypeDefinitionsApi, referenceDataApi, usersApi } from '@/api/client'
-import type { ContentTypeDefinition, ContentTypeField, EffectiveContentType, LookupItem, User } from '@/types'
+import { documentsApi, contentTypeDefinitionsApi, referenceDataApi, usersApi, privacyLevelsApi } from '@/api/client'
+import type { ContentTypeDefinition, ContentTypeField, EffectiveContentType, LookupItem, User, PrivacyLevel } from '@/types'
 import { UiCheckbox, UiDatePicker, UiSelect } from '@/components/ui'
 
 interface Props {
@@ -40,6 +40,7 @@ interface FileConfig {
   name: string
   description: string
   expiryDate: string | null
+  privacyLevelId: string | null
   contentTypeId: string | null
   fieldValues: Record<string, any>
   configured: boolean
@@ -51,6 +52,10 @@ const effectiveContentTypes = ref<EffectiveContentType[]>([])
 const selectedContentTypeId = ref<string | null>(null)
 const selectedContentType = ref<ContentTypeDefinition | null>(null)
 const isLoadingContentTypes = ref(false)
+
+// Privacy Level state
+const privacyLevels = ref<PrivacyLevel[]>([])
+const selectedPrivacyLevelId = ref<string | null>(null)
 
 // Metadata state
 const basicMetadata = ref({
@@ -137,10 +142,19 @@ const currentFile = computed(() => isWizardMode.value ? uploadFiles.value[curren
 const totalWizardSteps = computed(() => uploadFiles.value.length)
 const wizardProgress = computed(() => Math.round(((currentFileIndex.value + 1) / totalWizardSteps.value) * 100))
 
-// Load content types assigned to folder
+// Load content types and privacy levels
 onMounted(async () => {
-  await loadFolderContentTypes()
+  await Promise.all([loadFolderContentTypes(), loadPrivacyLevels()])
 })
+
+async function loadPrivacyLevels() {
+  try {
+    const response = await privacyLevelsApi.getAll()
+    privacyLevels.value = (response.data || []).filter((pl: PrivacyLevel) => pl.isActive)
+  } catch {
+    // Non-critical, privacy levels are optional
+  }
+}
 
 async function loadFolderContentTypes() {
   isLoadingContentTypes.value = true
@@ -381,6 +395,7 @@ function initializeFileConfigs() {
     name: file.name.replace(/\.[^/.]+$/, ''),
     description: '',
     expiryDate: null,
+    privacyLevelId: null,
     contentTypeId: null,
     fieldValues: {},
     configured: false
@@ -401,6 +416,7 @@ function loadConfigForCurrentFile() {
     basicMetadata.value.name = config.name
     basicMetadata.value.description = config.description
     basicMetadata.value.expiryDate = config.expiryDate
+    selectedPrivacyLevelId.value = config.privacyLevelId
     selectedContentTypeId.value = config.contentTypeId
     // Field values will be loaded via the watcher on selectedContentTypeId
     // We need to restore them after content type loads
@@ -419,6 +435,7 @@ function saveCurrentFileConfig() {
       name: basicMetadata.value.name,
       description: basicMetadata.value.description,
       expiryDate: basicMetadata.value.expiryDate,
+      privacyLevelId: selectedPrivacyLevelId.value,
       contentTypeId: selectedContentTypeId.value,
       fieldValues: { ...fieldValues.value },
       configured: true
@@ -435,6 +452,7 @@ function wizardNext() {
     for (let i = currentFileIndex.value + 1; i < fileConfigs.value.length; i++) {
       fileConfigs.value[i] = {
         ...fileConfigs.value[i],
+        privacyLevelId: currentConfig.privacyLevelId,
         contentTypeId: currentConfig.contentTypeId,
         fieldValues: { ...currentConfig.fieldValues },
         configured: true
@@ -537,6 +555,7 @@ async function handleUpload() {
             name: basicMetadata.value.name || file.name.replace(/\.[^/.]+$/, ''),
             description: basicMetadata.value.description,
             expiryDate: basicMetadata.value.expiryDate,
+            privacyLevelId: selectedPrivacyLevelId.value,
             contentTypeId: selectedContentTypeId.value,
             fieldValues: fieldValues.value
           }
@@ -551,6 +570,9 @@ async function handleUpload() {
       }
       if (config.expiryDate) {
         formData.append('expiryDate', config.expiryDate)
+      }
+      if (config.privacyLevelId) {
+        formData.append('privacyLevelId', config.privacyLevelId)
       }
       if (config.contentTypeId) {
         formData.append('contentTypeId', config.contentTypeId)
@@ -1001,8 +1023,59 @@ function getMaterialIcon(iconName?: string): string {
                     </div>
                   </Transition>
 
-                  <!-- Privacy Level Notice -->
-                  <div v-if="folderPrivacyLevelName && !isWizardMode && uploadFiles.length > 0" class="mt-4 flex items-center gap-2.5 px-4 py-3 rounded-lg border"
+                  <!-- Privacy Level Selector -->
+                  <div v-if="privacyLevels.length > 0 && !isWizardMode && uploadFiles.length > 0" class="mt-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      <span class="flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-sm">shield</span>
+                        Privacy Level
+                      </span>
+                    </label>
+                    <div class="flex flex-wrap gap-2">
+                      <button
+                        @click="selectedPrivacyLevelId = null"
+                        :class="[
+                          'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium transition-all duration-200',
+                          !selectedPrivacyLevelId
+                            ? 'border-gray-400 bg-gray-100 dark:bg-surface-dark text-gray-800 dark:text-gray-200 shadow-sm'
+                            : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-300'
+                        ]"
+                      >
+                        <span class="w-2.5 h-2.5 rounded-full bg-gray-400"></span>
+                        None
+                      </button>
+                      <button
+                        v-for="pl in privacyLevels"
+                        :key="pl.id"
+                        @click="selectedPrivacyLevelId = pl.id"
+                        :class="[
+                          'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-medium transition-all duration-200',
+                          selectedPrivacyLevelId === pl.id
+                            ? 'shadow-sm'
+                            : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-300'
+                        ]"
+                        :style="selectedPrivacyLevelId === pl.id ? {
+                          borderColor: pl.color || '#6b7280',
+                          backgroundColor: (pl.color || '#6b7280') + '15',
+                          color: pl.color || '#6b7280'
+                        } : {}"
+                      >
+                        <span class="w-2.5 h-2.5 rounded-full" :style="{ backgroundColor: pl.color || '#6b7280' }"></span>
+                        {{ pl.name }}
+                      </button>
+                    </div>
+                    <p v-if="selectedPrivacyLevelId" class="mt-1.5 text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                      <span class="material-symbols-outlined text-xs">info</span>
+                      Only users with sufficient privacy clearance will see this document.
+                    </p>
+                    <p v-else-if="folderPrivacyLevelName" class="mt-1.5 text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                      <span class="material-symbols-outlined text-xs">info</span>
+                      Document will inherit the <strong :style="{ color: folderPrivacyLevelColor || '#6b7280' }">{{ folderPrivacyLevelName }}</strong> privacy level from this folder.
+                    </p>
+                  </div>
+
+                  <!-- Folder Privacy Notice (when no privacy levels are available to select) -->
+                  <div v-else-if="folderPrivacyLevelName && !isWizardMode && uploadFiles.length > 0" class="mt-4 flex items-center gap-2.5 px-4 py-3 rounded-lg border"
                     :style="{
                       backgroundColor: (folderPrivacyLevelColor || '#6b7280') + '08',
                       borderColor: (folderPrivacyLevelColor || '#6b7280') + '30'

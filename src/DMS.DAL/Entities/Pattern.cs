@@ -44,7 +44,7 @@ public class Pattern : IAuditable, ISoftDeletable
 
     public bool IsActive { get; set; } = true;
     public Guid? CreatedBy { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
     public Guid? ModifiedBy { get; set; }
     public DateTime? ModifiedAt { get; set; }
 

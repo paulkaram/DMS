@@ -17,6 +17,7 @@ public class DocumentRepository : IDocumentRepository
     {
         return await _context.Documents
             .AsNoTracking()
+            .Include(d => d.PrivacyLevel)
             .FirstOrDefaultAsync(d => d.Id == id);
     }
 
@@ -127,11 +128,15 @@ public class DocumentRepository : IDocumentRepository
         if (documentTypeId.HasValue)
             query = query.Where(d => d.DocumentTypeId == documentTypeId.Value);
 
-        // Privacy level filtering: exclude documents in folders above user's privacy level
+        // Privacy level filtering: exclude documents above user's privacy level
+        // Check both document-level privacy AND folder-level privacy
         if (userPrivacyLevel != null)
         {
             query = query.Where(d =>
-                !_context.Folders.Any(f => f.Id == d.FolderId && f.PrivacyLevelId != null
+                // Document-level privacy: if document has its own privacy level, check it
+                (d.PrivacyLevelId == null || !_context.PrivacyLevels.Any(pl => pl.Id == d.PrivacyLevelId && pl.Level > userPrivacyLevel.Value))
+                // Folder-level privacy: also check folder's privacy level
+                && !_context.Folders.Any(f => f.Id == d.FolderId && f.PrivacyLevelId != null
                     && _context.PrivacyLevels.Any(pl => pl.Id == f.PrivacyLevelId && pl.Level > userPrivacyLevel.Value)));
         }
 
@@ -216,7 +221,7 @@ public class DocumentRepository : IDocumentRepository
             .ExecuteUpdateAsync(setters => setters
                 .SetProperty(d => d.IsCheckedOut, true)
                 .SetProperty(d => d.CheckedOutBy, userId)
-                .SetProperty(d => d.CheckedOutAt, DateTime.UtcNow));
+                .SetProperty(d => d.CheckedOutAt, DateTime.Now));
 
         return affected > 0;
     }
@@ -240,7 +245,7 @@ public class DocumentRepository : IDocumentRepository
                 .SetProperty(d => d.CheckedOutAt, (DateTime?)null)
                 .SetProperty(d => d.CurrentVersion, newVersion)
                 .SetProperty(d => d.ModifiedBy, (Guid?)userId)
-                .SetProperty(d => d.ModifiedAt, DateTime.UtcNow));
+                .SetProperty(d => d.ModifiedAt, DateTime.Now));
 
         return true;
     }
@@ -267,7 +272,7 @@ public class DocumentRepository : IDocumentRepository
     public async Task<Guid> CreateAsync(Document entity)
     {
         entity.Id = Guid.NewGuid();
-        entity.CreatedAt = DateTime.UtcNow;
+        entity.CreatedAt = DateTime.Now;
 
         _context.Documents.Add(entity);
         await _context.SaveChangesAsync();
@@ -277,7 +282,7 @@ public class DocumentRepository : IDocumentRepository
 
     public async Task<bool> UpdateAsync(Document entity)
     {
-        entity.ModifiedAt = DateTime.UtcNow;
+        entity.ModifiedAt = DateTime.Now;
 
         _context.Documents.Update(entity);
         var affected = await _context.SaveChangesAsync();
@@ -291,7 +296,7 @@ public class DocumentRepository : IDocumentRepository
             .Where(d => d.Id == id)
             .ExecuteUpdateAsync(setters => setters
                 .SetProperty(d => d.IsActive, false)
-                .SetProperty(d => d.ModifiedAt, DateTime.UtcNow));
+                .SetProperty(d => d.ModifiedAt, DateTime.Now));
 
         return affected > 0;
     }
@@ -347,12 +352,25 @@ public class DocumentRepository : IDocumentRepository
             .Select(g => new { DocumentId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.DocumentId, x => x.Count);
 
+        // Batch load privacy levels for documents that have one
+        var plIds = allDocs
+            .Select(d => d.PrivacyLevelId)
+            .Where(id => id.HasValue)
+            .Select(id => id!.Value)
+            .Distinct().ToList();
+
+        var privacyLevels = plIds.Count > 0
+            ? await _context.PrivacyLevels.AsNoTracking()
+                .Where(pl => plIds.Contains(pl.Id))
+                .ToDictionaryAsync(pl => pl.Id)
+            : new Dictionary<Guid, PrivacyLevel>();
+
         // Map regular documents
         var result = new List<DocumentWithNames>();
 
         foreach (var d in documents)
         {
-            result.Add(MapToWithNames(d, userNames, ctNames, attachCounts, false, null));
+            result.Add(MapToWithNames(d, userNames, ctNames, attachCounts, privacyLevels, false, null));
         }
 
         // Map shortcut documents
@@ -360,7 +378,7 @@ public class DocumentRepository : IDocumentRepository
         {
             foreach (var (doc, shortcutId) in shortcuts)
             {
-                result.Add(MapToWithNames(doc, userNames, ctNames, attachCounts, true, shortcutId));
+                result.Add(MapToWithNames(doc, userNames, ctNames, attachCounts, privacyLevels, true, shortcutId));
             }
         }
 
@@ -372,9 +390,14 @@ public class DocumentRepository : IDocumentRepository
         Dictionary<Guid, string> userNames,
         Dictionary<Guid, string> ctNames,
         Dictionary<Guid, int> attachCounts,
+        Dictionary<Guid, PrivacyLevel> privacyLevels,
         bool isShortcut,
         Guid? shortcutId)
     {
+        PrivacyLevel? pl = null;
+        if (d.PrivacyLevelId.HasValue)
+            privacyLevels.TryGetValue(d.PrivacyLevelId.Value, out pl);
+
         return new DocumentWithNames
         {
             Id = d.Id,
@@ -407,6 +430,7 @@ public class DocumentRepository : IDocumentRepository
             IsOriginalRecord = d.IsOriginalRecord,
             SourceDocumentId = d.SourceDocumentId,
             ContentCategory = d.ContentCategory,
+            PrivacyLevelId = d.PrivacyLevelId,
             IsActive = d.IsActive,
             CreatedBy = d.CreatedBy,
             CreatedAt = d.CreatedAt,
@@ -417,7 +441,10 @@ public class DocumentRepository : IDocumentRepository
             ContentTypeName = d.ContentTypeId.HasValue && ctNames.TryGetValue(d.ContentTypeId.Value, out var ctn) ? ctn : null,
             IsShortcut = isShortcut,
             ShortcutId = shortcutId,
-            AttachmentCount = attachCounts.TryGetValue(d.Id, out var ac) ? ac : 0
+            AttachmentCount = attachCounts.TryGetValue(d.Id, out var ac) ? ac : 0,
+            PrivacyLevelName = pl?.Name,
+            PrivacyLevelColor = pl?.Color,
+            PrivacyLevelValue = pl?.Level
         };
     }
 }

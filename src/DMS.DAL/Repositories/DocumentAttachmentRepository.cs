@@ -55,7 +55,7 @@ public class DocumentAttachmentRepository : IDocumentAttachmentRepository
     public async Task<Guid> AddAsync(DocumentAttachment attachment)
     {
         attachment.Id = Guid.NewGuid();
-        attachment.CreatedAt = DateTime.UtcNow;
+        attachment.CreatedAt = DateTime.Now;
 
         _context.DocumentAttachments.Add(attachment);
         await _context.SaveChangesAsync();

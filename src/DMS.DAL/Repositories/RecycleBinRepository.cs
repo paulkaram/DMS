@@ -166,8 +166,8 @@ public class RecycleBinRepository : IRecycleBinRepository
     public async Task<Guid> AddAsync(RecycleBinItem entity)
     {
         entity.Id = Guid.NewGuid();
-        entity.DeletedAt = DateTime.UtcNow;
-        entity.ExpiresAt = DateTime.UtcNow.AddDays(RetentionDays);
+        entity.DeletedAt = DateTime.Now;
+        entity.ExpiresAt = DateTime.Now.AddDays(RetentionDays);
 
         _context.RecycleBinItems.Add(entity);
         await _context.SaveChangesAsync();
@@ -187,7 +187,7 @@ public class RecycleBinRepository : IRecycleBinRepository
     public async Task<bool> PurgeExpiredAsync()
     {
         var affected = await _context.RecycleBinItems
-            .Where(rb => rb.ExpiresAt < DateTime.UtcNow)
+            .Where(rb => rb.ExpiresAt < DateTime.Now)
             .ExecuteDeleteAsync();
 
         return affected > 0;

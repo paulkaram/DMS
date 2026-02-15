@@ -69,7 +69,7 @@ public class FilingPlanRepository : IFilingPlanRepository
     public async Task<Guid> CreateAsync(FilingPlan entity)
     {
         entity.Id = Guid.NewGuid();
-        entity.CreatedAt = DateTime.UtcNow;
+        entity.CreatedAt = DateTime.Now;
 
         _context.FilingPlans.Add(entity);
         await _context.SaveChangesAsync();

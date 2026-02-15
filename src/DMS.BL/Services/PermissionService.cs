@@ -157,7 +157,7 @@ public class PermissionService : IPermissionService
             return ServiceResult<PermissionDto>.Fail("Invalid principal type");
 
         // Validate expiry date
-        if (dto.ExpiresAt.HasValue && dto.ExpiresAt.Value <= DateTime.UtcNow)
+        if (dto.ExpiresAt.HasValue && dto.ExpiresAt.Value <= DateTime.Now)
             return ServiceResult<PermissionDto>.Fail("Expiry date must be in the future");
 
         var permission = new Permission
@@ -775,7 +775,7 @@ public class PermissionService : IPermissionService
             StartDate = d.StartDate,
             EndDate = d.EndDate,
             Reason = d.Reason,
-            IsActive = d.RevokedAt == null && d.StartDate <= DateTime.UtcNow && d.EndDate > DateTime.UtcNow,
+            IsActive = d.RevokedAt == null && d.StartDate <= DateTime.Now && d.EndDate > DateTime.Now,
             CreatedAt = d.CreatedAt
         };
     }

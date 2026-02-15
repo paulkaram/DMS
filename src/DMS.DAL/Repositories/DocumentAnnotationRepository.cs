@@ -91,14 +91,14 @@ public class DocumentAnnotationRepository : IDocumentAnnotationRepository
                     .SetProperty(a => a.AnnotationData, annotation.AnnotationData)
                     .SetProperty(a => a.VersionNumber, existing.VersionNumber + 1)
                     .SetProperty(a => a.ModifiedBy, annotation.CreatedBy)
-                    .SetProperty(a => a.ModifiedAt, DateTime.UtcNow));
+                    .SetProperty(a => a.ModifiedAt, DateTime.Now));
             return existing.Id;
         }
         else
         {
             // Insert new
             annotation.Id = Guid.NewGuid();
-            annotation.CreatedAt = DateTime.UtcNow;
+            annotation.CreatedAt = DateTime.Now;
             annotation.IsDeleted = false;
             annotation.VersionNumber = 1;
 
@@ -114,7 +114,7 @@ public class DocumentAnnotationRepository : IDocumentAnnotationRepository
             .ExecuteUpdateAsync(setters => setters
                 .SetProperty(a => a.IsDeleted, true)
                 .SetProperty(a => a.ModifiedBy, deletedBy)
-                .SetProperty(a => a.ModifiedAt, DateTime.UtcNow)) > 0;
+                .SetProperty(a => a.ModifiedAt, DateTime.Now)) > 0;
 
     public async Task<bool> DeleteAllByDocumentAsync(Guid documentId, Guid deletedBy) =>
         await _context.DocumentAnnotations
@@ -122,7 +122,7 @@ public class DocumentAnnotationRepository : IDocumentAnnotationRepository
             .ExecuteUpdateAsync(setters => setters
                 .SetProperty(a => a.IsDeleted, true)
                 .SetProperty(a => a.ModifiedBy, deletedBy)
-                .SetProperty(a => a.ModifiedAt, DateTime.UtcNow)) > 0;
+                .SetProperty(a => a.ModifiedAt, DateTime.Now)) > 0;
 
     public async Task<int> GetCountAsync(Guid documentId) =>
         await _context.DocumentAnnotations.AsNoTracking()
@@ -152,7 +152,7 @@ public class SavedSignatureRepository : ISavedSignatureRepository
     public async Task<Guid> AddAsync(SavedSignature signature)
     {
         signature.Id = Guid.NewGuid();
-        signature.CreatedAt = DateTime.UtcNow;
+        signature.CreatedAt = DateTime.Now;
 
         _context.SavedSignatures.Add(signature);
         await _context.SaveChangesAsync();

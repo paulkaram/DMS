@@ -87,6 +87,26 @@ public class DocumentWorkingCopy
     /// </summary>
     public Guid? DraftDocumentTypeId { get; set; }
 
+    /// <summary>
+    /// Draft expiry date (if changed). Null means "not changed", use sentinel to clear.
+    /// </summary>
+    public DateTime? DraftExpiryDate { get; set; }
+
+    /// <summary>
+    /// Whether the expiry date was explicitly set in the draft (to distinguish null = unchanged vs null = cleared).
+    /// </summary>
+    public bool DraftExpiryDateChanged { get; set; }
+
+    /// <summary>
+    /// Draft privacy level ID (if changed).
+    /// </summary>
+    public Guid? DraftPrivacyLevelId { get; set; }
+
+    /// <summary>
+    /// Whether the privacy level was explicitly set in the draft.
+    /// </summary>
+    public bool DraftPrivacyLevelChanged { get; set; }
+
     // Tracking
 
     /// <summary>

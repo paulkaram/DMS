@@ -31,6 +31,10 @@ public class DocumentDto
     public int AttachmentCount { get; set; }
     public int? ApprovalStatus { get; set; }
     public DateTime? ExpiryDate { get; set; }
+    public Guid? PrivacyLevelId { get; set; }
+    public string? PrivacyLevelName { get; set; }
+    public string? PrivacyLevelColor { get; set; }
+    public int? PrivacyLevelValue { get; set; }
 }
 
 public class DocumentShortcutDto
@@ -84,6 +88,7 @@ public class CreateDocumentDto
     public Guid? ImportanceId { get; set; }
     public Guid? DocumentTypeId { get; set; }
     public DateTime? ExpiryDate { get; set; }
+    public Guid? PrivacyLevelId { get; set; }
 }
 
 public class UpdateDocumentDto
@@ -94,6 +99,7 @@ public class UpdateDocumentDto
     public Guid? ImportanceId { get; set; }
     public Guid? DocumentTypeId { get; set; }
     public DateTime? ExpiryDate { get; set; }
+    public Guid? PrivacyLevelId { get; set; }
 }
 
 /// <summary>

@@ -59,7 +59,7 @@ public class AddStructureMemberDto
     public Guid UserId { get; set; }
     public string? Position { get; set; }
     public bool IsPrimary { get; set; }
-    public DateTime StartDate { get; set; } = DateTime.UtcNow;
+    public DateTime StartDate { get; set; } = DateTime.Now;
     public DateTime? EndDate { get; set; }
 }
 

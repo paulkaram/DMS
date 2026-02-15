@@ -42,10 +42,10 @@ public class LegalHoldService : ILegalHoldService
             RequestedBy = dto.RequestedBy,
             RequestedAt = dto.RequestedAt,
             Status = LegalHoldStatus.Active,
-            EffectiveFrom = dto.EffectiveFrom ?? DateTime.UtcNow,
+            EffectiveFrom = dto.EffectiveFrom ?? DateTime.Now,
             EffectiveUntil = dto.EffectiveUntil,
             AppliedBy = userId,
-            AppliedAt = DateTime.UtcNow,
+            AppliedAt = DateTime.Now,
             Notes = dto.Notes,
             IsActive = true
         };
@@ -137,7 +137,7 @@ public class LegalHoldService : ILegalHoldService
             {
                 LegalHoldId = holdId,
                 DocumentId = documentId,
-                AddedAt = DateTime.UtcNow,
+                AddedAt = DateTime.Now,
                 AddedBy = userId,
                 Notes = notes
             };
@@ -147,7 +147,7 @@ public class LegalHoldService : ILegalHoldService
             // Update document to indicate it's on hold
             document.IsOnLegalHold = true;
             document.LegalHoldId = holdId;
-            document.LegalHoldAppliedAt = DateTime.UtcNow;
+            document.LegalHoldAppliedAt = DateTime.Now;
             document.LegalHoldAppliedBy = userId;
             await _documentRepository.UpdateAsync(document);
 
@@ -175,7 +175,7 @@ public class LegalHoldService : ILegalHoldService
         if (holdDoc == null)
             return ServiceResult.Fail("Document is not under this legal hold");
 
-        holdDoc.ReleasedAt = DateTime.UtcNow;
+        holdDoc.ReleasedAt = DateTime.Now;
         holdDoc.ReleasedBy = userId;
         await _holdDocumentRepository.UpdateAsync(holdDoc);
 
@@ -252,7 +252,7 @@ public class LegalHoldService : ILegalHoldService
 
         hold.Status = LegalHoldStatus.Released;
         hold.ReleasedBy = userId;
-        hold.ReleasedAt = DateTime.UtcNow;
+        hold.ReleasedAt = DateTime.Now;
         hold.ReleaseReason = reason;
 
         await _holdRepository.UpdateAsync(hold);
@@ -261,7 +261,7 @@ public class LegalHoldService : ILegalHoldService
         var holdDocs = await _holdDocumentRepository.GetByHoldIdAsync(holdId);
         foreach (var holdDoc in holdDocs.Where(h => h.ReleasedAt == null))
         {
-            holdDoc.ReleasedAt = DateTime.UtcNow;
+            holdDoc.ReleasedAt = DateTime.Now;
             holdDoc.ReleasedBy = userId;
             await _holdDocumentRepository.UpdateAsync(holdDoc);
 
@@ -314,7 +314,7 @@ public class LegalHoldService : ILegalHoldService
     {
         // Generate format: LH-YYYYMMDD-XXXX
         var holds = await _holdRepository.GetAllAsync();
-        var today = DateTime.UtcNow.ToString("yyyyMMdd");
+        var today = DateTime.Now.ToString("yyyyMMdd");
         var todayHolds = holds.Count(h => h.HoldNumber.StartsWith($"LH-{today}"));
         return $"LH-{today}-{(todayHolds + 1):D4}";
     }

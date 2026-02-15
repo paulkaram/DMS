@@ -124,7 +124,7 @@ public class PermissionRepository : IPermissionRepository
         var structures = await _context.StructureMembers
             .AsNoTracking()
             .Where(sm => sm.UserId == userId
-                && (sm.EndDate == null || sm.EndDate > DateTime.UtcNow))
+                && (sm.EndDate == null || sm.EndDate > DateTime.Now))
             .Select(sm => sm.StructureId)
             .ToListAsync();
         results.AddRange(structures.Select(s => (PrincipalType.Structure, s)));
@@ -135,7 +135,7 @@ public class PermissionRepository : IPermissionRepository
     public async Task<Guid> CreateAsync(Permission entity)
     {
         entity.Id = Guid.NewGuid();
-        entity.CreatedAt = DateTime.UtcNow;
+        entity.CreatedAt = DateTime.Now;
 
         _context.Permissions.Add(entity);
         await _context.SaveChangesAsync();
@@ -176,7 +176,7 @@ public class PermissionRepository : IPermissionRepository
     public async Task<int> DeleteExpiredPermissionsAsync()
     {
         return await _context.Permissions
-            .Where(p => p.ExpiresAt != null && p.ExpiresAt < DateTime.UtcNow)
+            .Where(p => p.ExpiresAt != null && p.ExpiresAt < DateTime.Now)
             .ExecuteDeleteAsync();
     }
 }

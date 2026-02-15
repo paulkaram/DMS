@@ -32,7 +32,7 @@ public class Permission
     public string? GrantedReason { get; set; }
     public Guid? GrantedBy { get; set; }
     public Guid? CreatedBy { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
 }
 
 /// <summary>

@@ -98,7 +98,7 @@ public class ActivityLogRepository : IActivityLogRepository
     public async Task<Guid> CreateAsync(ActivityLog entity)
     {
         entity.Id = Guid.NewGuid();
-        entity.CreatedAt = DateTime.UtcNow;
+        entity.CreatedAt = DateTime.Now;
 
         _context.ActivityLogs.Add(entity);
         await _context.SaveChangesAsync();

@@ -142,7 +142,7 @@ public class DmsDbContext : DbContext
     private void SetAuditFields()
     {
         var entries = ChangeTracker.Entries<IAuditable>();
-        var now = DateTime.UtcNow;
+        var now = DateTime.Now;
 
         foreach (var entry in entries)
         {

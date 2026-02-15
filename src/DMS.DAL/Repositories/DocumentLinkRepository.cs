@@ -37,7 +37,7 @@ public class DocumentLinkRepository : IDocumentLinkRepository
     public async Task<Guid> AddAsync(DocumentLink link)
     {
         link.Id = Guid.NewGuid();
-        link.CreatedAt = DateTime.UtcNow;
+        link.CreatedAt = DateTime.Now;
 
         _context.DocumentLinks.Add(link);
         await _context.SaveChangesAsync();

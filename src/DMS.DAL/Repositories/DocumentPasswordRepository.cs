@@ -33,7 +33,7 @@ public class DocumentPasswordRepository : IDocumentPasswordRepository
     public async Task<Guid> AddAsync(DocumentPassword password)
     {
         password.Id = Guid.NewGuid();
-        password.CreatedAt = DateTime.UtcNow;
+        password.CreatedAt = DateTime.Now;
         password.IsActive = true;
 
         // Deactivate any existing password (bypass soft-delete filter to deactivate all)
@@ -50,7 +50,7 @@ public class DocumentPasswordRepository : IDocumentPasswordRepository
 
     public async Task<bool> UpdateAsync(DocumentPassword password)
     {
-        password.ModifiedAt = DateTime.UtcNow;
+        password.ModifiedAt = DateTime.Now;
 
         // Global query filter ensures only IsActive == true records are matched
         var affected = await _context.DocumentPasswords
@@ -78,7 +78,7 @@ public class DocumentPasswordRepository : IDocumentPasswordRepository
 
     public async Task<bool> HasPasswordAsync(Guid documentId)
     {
-        var now = DateTime.UtcNow;
+        var now = DateTime.Now;
         // Global query filter handles IsActive == true
         return await _context.DocumentPasswords
             .AsNoTracking()
@@ -88,7 +88,7 @@ public class DocumentPasswordRepository : IDocumentPasswordRepository
 
     public async Task<bool> ValidatePasswordAsync(Guid documentId, string passwordHash)
     {
-        var now = DateTime.UtcNow;
+        var now = DateTime.Now;
         // Global query filter handles IsActive == true
         return await _context.DocumentPasswords
             .AsNoTracking()
@@ -102,7 +102,7 @@ public class DocumentPasswordRepository : IDocumentPasswordRepository
         if (documentIds.Count == 0)
             return new Dictionary<Guid, bool>();
 
-        var now = DateTime.UtcNow;
+        var now = DateTime.Now;
         // Global query filter handles IsActive == true
         var documentsWithPassword = await _context.DocumentPasswords
             .AsNoTracking()

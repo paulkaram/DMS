@@ -178,7 +178,7 @@ public class ApprovalWorkflowRepository : IApprovalWorkflowRepository
     public async Task<Guid> CreateAsync(ApprovalWorkflow entity)
     {
         entity.Id = Guid.NewGuid();
-        entity.CreatedAt = DateTime.UtcNow;
+        entity.CreatedAt = DateTime.Now;
 
         _context.ApprovalWorkflows.Add(entity);
         await _context.SaveChangesAsync();
@@ -217,7 +217,7 @@ public class ApprovalWorkflowRepository : IApprovalWorkflowRepository
     public async Task<Guid> AddStepAsync(ApprovalWorkflowStep step)
     {
         step.Id = Guid.NewGuid();
-        step.CreatedAt = DateTime.UtcNow;
+        step.CreatedAt = DateTime.Now;
 
         _context.ApprovalWorkflowSteps.Add(step);
         await _context.SaveChangesAsync();
@@ -245,7 +245,7 @@ public class ApprovalWorkflowRepository : IApprovalWorkflowRepository
         {
             step.Id = Guid.NewGuid();
             step.WorkflowId = workflowId;
-            step.CreatedAt = DateTime.UtcNow;
+            step.CreatedAt = DateTime.Now;
             _context.ApprovalWorkflowSteps.Add(step);
         }
 
@@ -572,7 +572,7 @@ public class ApprovalRequestRepository : IApprovalRequestRepository
     public async Task<Guid> CreateAsync(ApprovalRequest entity)
     {
         entity.Id = Guid.NewGuid();
-        entity.CreatedAt = DateTime.UtcNow;
+        entity.CreatedAt = DateTime.Now;
 
         _context.ApprovalRequests.Add(entity);
         await _context.SaveChangesAsync();
@@ -586,7 +586,7 @@ public class ApprovalRequestRepository : IApprovalRequestRepository
         if (entity == null) return false;
 
         entity.Status = status;
-        entity.CompletedAt = completedAt ?? DateTime.UtcNow;
+        entity.CompletedAt = completedAt ?? DateTime.Now;
 
         return await _context.SaveChangesAsync() > 0;
     }
@@ -594,7 +594,7 @@ public class ApprovalRequestRepository : IApprovalRequestRepository
     public async Task<Guid> AddActionAsync(ApprovalAction action)
     {
         action.Id = Guid.NewGuid();
-        action.ActionDate = DateTime.UtcNow;
+        action.ActionDate = DateTime.Now;
 
         _context.ApprovalActions.Add(action);
         await _context.SaveChangesAsync();
