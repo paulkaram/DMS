@@ -21,6 +21,8 @@ public class DocumentService : IDocumentService
     private readonly IDocumentPasswordRepository _passwordRepository;
     private readonly IDocumentShortcutRepository _shortcutRepository;
     private readonly IApprovalService _approvalService;
+    private readonly IDocumentStateService _documentStateService;
+    private readonly IStorageProvider? _wormProvider;
 
     // JSON options for consistent serialization with camelCase
     private static readonly JsonSerializerOptions _jsonOptions = new()
@@ -42,7 +44,9 @@ public class DocumentService : IDocumentService
         IFileValidationService fileValidationService,
         IDocumentPasswordRepository passwordRepository,
         IDocumentShortcutRepository shortcutRepository,
-        IApprovalService approvalService)
+        IApprovalService approvalService,
+        IDocumentStateService documentStateService,
+        IStorageProvider? wormProvider = null)
     {
         _documentRepository = documentRepository;
         _versionRepository = versionRepository;
@@ -57,6 +61,8 @@ public class DocumentService : IDocumentService
         _passwordRepository = passwordRepository;
         _shortcutRepository = shortcutRepository;
         _approvalService = approvalService;
+        _documentStateService = documentStateService;
+        _wormProvider = wormProvider;
     }
 
     #region Basic CRUD Operations
@@ -205,6 +211,19 @@ public class DocumentService : IDocumentService
         document.HashAlgorithm = storageResult.HashAlgorithm;
         document.IntegrityVerifiedAt = DateTime.Now;
         document.Size = storageResult.Size;
+        document.IsEncrypted = storageResult.IsEncrypted;
+
+        // Check PDF/A compliance for PDF files (ISO 19005)
+        var isPdf = (document.Extension ?? "").Equals(".pdf", StringComparison.OrdinalIgnoreCase);
+        if (isPdf)
+        {
+            var pdfStream = await _fileStorageService.GetFileAsync(storageResult.StoragePath, storageResult.IsEncrypted);
+            if (pdfStream != null)
+            {
+                document.IsPdfACompliant = await _fileValidationService.CheckPdfAComplianceAsync(pdfStream);
+                await pdfStream.DisposeAsync();
+            }
+        }
 
         // Create first version (1.0 Major)
         var version = new DocumentVersion
@@ -251,6 +270,10 @@ public class DocumentService : IDocumentService
         if (document == null)
             return ServiceResult<DocumentDto>.Fail("Document not found");
 
+        // Immutability enforcement
+        if (_documentStateService.IsImmutable(document.State))
+            return ServiceResult<DocumentDto>.Fail($"Document is in {document.State} state and cannot be modified");
+
         // ISO 15489: Enforce checkout for metadata editing
         if (!document.IsCheckedOut)
             return ServiceResult<DocumentDto>.Fail("Document must be checked out before editing. Please check out the document first.");
@@ -290,6 +313,10 @@ public class DocumentService : IDocumentService
         var document = await _documentRepository.GetByIdAsync(id);
         if (document == null)
             return ServiceResult<DocumentDto>.Fail("Document not found");
+
+        // Immutability enforcement
+        if (_documentStateService.IsImmutable(document.State))
+            return ServiceResult<DocumentDto>.Fail($"Document is in {document.State} state and cannot be modified");
 
         // ISO 15489: Enforce checkout for content replacement
         if (!document.IsCheckedOut)
@@ -349,7 +376,7 @@ public class DocumentService : IDocumentService
         if (string.IsNullOrEmpty(storagePath))
             return ServiceResult<Stream>.Fail("File not found");
 
-        var stream = await _fileStorageService.GetFileAsync(storagePath);
+        var stream = await _fileStorageService.GetFileAsync(storagePath, document.IsEncrypted);
         if (stream == null)
             return ServiceResult<Stream>.Fail("File not found");
 
@@ -417,6 +444,7 @@ public class DocumentService : IDocumentService
         newDocument.IntegrityHash = storageResult.IntegrityHash;
         newDocument.HashAlgorithm = storageResult.HashAlgorithm;
         newDocument.IntegrityVerifiedAt = DateTime.Now;
+        newDocument.IsEncrypted = storageResult.IsEncrypted;
 
         var version = new DocumentVersion
         {
@@ -453,6 +481,10 @@ public class DocumentService : IDocumentService
 
         if (document.IsCheckedOut)
             return ServiceResult.Fail("Cannot delete a checked out document");
+
+        // Immutability enforcement
+        if (_documentStateService.IsImmutable(document.State))
+            return ServiceResult.Fail($"Document is in {document.State} state and cannot be deleted");
 
         if (document.IsOnLegalHold)
             return ServiceResult.Fail("Cannot delete a document under legal hold");
@@ -502,6 +534,10 @@ public class DocumentService : IDocumentService
 
         if (document.IsCheckedOut)
             return ServiceResult.Fail($"Document is already checked out");
+
+        // Immutability enforcement
+        if (_documentStateService.IsImmutable(document.State))
+            return ServiceResult.Fail($"Document is in {document.State} state and cannot be checked out");
 
         if (document.IsOnLegalHold)
             return ServiceResult.Fail("Cannot check out a document under legal hold");
@@ -1019,6 +1055,21 @@ public class DocumentService : IDocumentService
 
     #endregion
 
+    #region Document Lifecycle State Machine
+
+    public async Task<ServiceResult<DocumentDto>> TransitionStateAsync(Guid id, TransitionStateDto dto, Guid userId)
+    {
+        // Delegate to the new data-driven state service
+        var request = new StateTransitionRequestDto
+        {
+            TargetState = dto.TargetState,
+            Reason = dto.Reason
+        };
+        return await _documentStateService.TransitionAsync(id, request, userId);
+    }
+
+    #endregion
+
     #region Version Comparison
 
     public async Task<ServiceResult<VersionComparisonDto>> CompareVersionsAsync(Guid documentId,
@@ -1306,7 +1357,10 @@ public class DocumentService : IDocumentService
             PrivacyLevelId = document.PrivacyLevelId,
             PrivacyLevelName = document.PrivacyLevel?.Name,
             PrivacyLevelColor = document.PrivacyLevel?.Color,
-            PrivacyLevelValue = document.PrivacyLevel?.Level
+            PrivacyLevelValue = document.PrivacyLevel?.Level,
+            State = document.State.ToString(),
+            IsEncrypted = document.IsEncrypted,
+            IsPdfACompliant = document.IsPdfACompliant
         };
     }
 
@@ -1344,7 +1398,10 @@ public class DocumentService : IDocumentService
             PrivacyLevelId = document.PrivacyLevelId,
             PrivacyLevelName = document.PrivacyLevelName,
             PrivacyLevelColor = document.PrivacyLevelColor,
-            PrivacyLevelValue = document.PrivacyLevelValue
+            PrivacyLevelValue = document.PrivacyLevelValue,
+            State = document.State.ToString(),
+            IsEncrypted = document.IsEncrypted,
+            IsPdfACompliant = document.IsPdfACompliant
         };
     }
 

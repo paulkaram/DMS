@@ -1,31 +1,40 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import type { Document, Classification, Importance, DocumentType } from '@/types'
-import { documentsApi, referenceDataApi } from '@/api/client'
-import { UiSelect, UiDatePicker } from '@/components/ui'
+import { searchApi, referenceDataApi } from '@/api/client'
+import type { Classification, DocumentType } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
 
 const searchQuery = ref('')
-const results = ref<Document[]>([])
+const results = ref<any[]>([])
+const totalCount = ref(0)
+const elapsedMs = ref(0)
+const searchAfterToken = ref<string | null>(null)
+const facets = ref<any[]>([])
 const isLoading = ref(false)
-const showFilters = ref(false)
+const isLoadingMore = ref(false)
+const hasSearched = ref(false)
 
 // Filters
 const filters = ref({
   classificationId: '',
-  importanceId: '',
   documentTypeId: '',
+  state: '',
+  extension: '',
   dateFrom: '',
-  dateTo: ''
+  dateTo: '',
+  sortBy: 'relevance',
+  sortDescending: true
 })
 
-// Reference data
+// Reference data for filter labels
 const classifications = ref<Classification[]>([])
-const importances = ref<Importance[]>([])
 const documentTypes = ref<DocumentType[]>([])
+
+// Document states for filter
+const documentStates = ['Draft', 'Active', 'Record', 'Archived', 'OnHold', 'PendingDisposal', 'Disposed']
 
 onMounted(async () => {
   await loadReferenceData()
@@ -36,7 +45,7 @@ onMounted(async () => {
 })
 
 watch(() => route.query.q, (newQuery) => {
-  if (newQuery) {
+  if (newQuery && newQuery !== searchQuery.value) {
     searchQuery.value = newQuery as string
     performSearch()
   }
@@ -44,39 +53,62 @@ watch(() => route.query.q, (newQuery) => {
 
 async function loadReferenceData() {
   try {
-    const [classRes, impRes, docTypeRes] = await Promise.all([
+    const [classRes, docTypeRes] = await Promise.all([
       referenceDataApi.getClassifications(),
-      referenceDataApi.getImportances(),
       referenceDataApi.getDocumentTypes()
     ])
     classifications.value = classRes.data
-    importances.value = impRes.data
     documentTypes.value = docTypeRes.data
-  } catch (err) {
+  } catch { /* silently fail */ }
+}
+
+function buildRequest(loadMore = false) {
+  const req: any = {
+    query: searchQuery.value.trim(),
+    page: 1,
+    pageSize: 25,
+    sortBy: filters.value.sortBy,
+    sortDescending: filters.value.sortDescending
   }
+  if (filters.value.classificationId) req.classificationId = filters.value.classificationId
+  if (filters.value.documentTypeId) req.documentTypeId = filters.value.documentTypeId
+  if (filters.value.state) req.state = filters.value.state
+  if (filters.value.extension) req.extension = filters.value.extension
+  if (filters.value.dateFrom) req.dateFrom = filters.value.dateFrom
+  if (filters.value.dateTo) req.dateTo = filters.value.dateTo
+  if (loadMore && searchAfterToken.value) req.searchAfterToken = searchAfterToken.value
+  return req
 }
 
 async function performSearch() {
   isLoading.value = true
+  hasSearched.value = true
   try {
-    const params: any = {}
-    if (searchQuery.value.trim()) {
-      params.search = searchQuery.value
-    }
-    if (filters.value.classificationId) {
-      params.classificationId = filters.value.classificationId
-    }
-    if (filters.value.documentTypeId) {
-      params.documentTypeId = filters.value.documentTypeId
-    }
-
-    const response = await documentsApi.search(params)
-    const data = response.data
-    results.value = Array.isArray(data) ? data : data.items ?? []
-  } catch (err) {
+    const res = await searchApi.searchDocuments(buildRequest())
+    const data = res.data
+    results.value = data.items || []
+    totalCount.value = data.totalCount || 0
+    elapsedMs.value = data.elapsedMs || 0
+    searchAfterToken.value = data.searchAfterToken || null
+    facets.value = data.facets || []
+  } catch {
+    results.value = []
+    totalCount.value = 0
   } finally {
     isLoading.value = false
   }
+}
+
+async function loadMore() {
+  if (!searchAfterToken.value || isLoadingMore.value) return
+  isLoadingMore.value = true
+  try {
+    const res = await searchApi.searchDocuments(buildRequest(true))
+    const data = res.data
+    results.value.push(...(data.items || []))
+    searchAfterToken.value = data.searchAfterToken || null
+  } catch { /* silently fail */ }
+  finally { isLoadingMore.value = false }
 }
 
 function handleSearch() {
@@ -84,19 +116,44 @@ function handleSearch() {
   performSearch()
 }
 
-function clearFilters() {
-  filters.value = {
-    classificationId: '',
-    importanceId: '',
-    documentTypeId: '',
-    dateFrom: '',
-    dateTo: ''
+function applyFacetFilter(field: string, value: string) {
+  if (field === 'classificationName' || field === 'classification') {
+    // Find classification ID by name
+    const cls = classifications.value.find(c => c.name === value)
+    filters.value.classificationId = cls ? cls.id : ''
+  } else if (field === 'documentTypeName' || field === 'documentType') {
+    const dt = documentTypes.value.find(d => d.name === value)
+    filters.value.documentTypeId = dt ? dt.id : ''
+  } else if (field === 'state') {
+    filters.value.state = value
+  } else if (field === 'extension') {
+    filters.value.extension = value
   }
   performSearch()
 }
 
+function clearFilters() {
+  filters.value = {
+    classificationId: '',
+    documentTypeId: '',
+    state: '',
+    extension: '',
+    dateFrom: '',
+    dateTo: '',
+    sortBy: 'relevance',
+    sortDescending: true
+  }
+  performSearch()
+}
+
+const hasActiveFilters = computed(() =>
+  filters.value.classificationId || filters.value.documentTypeId ||
+  filters.value.state || filters.value.extension ||
+  filters.value.dateFrom || filters.value.dateTo
+)
+
 function formatSize(bytes: number): string {
-  if (bytes === 0) return '0 B'
+  if (!bytes || bytes === 0) return '0 B'
   const k = 1024
   const sizes = ['B', 'KB', 'MB', 'GB']
   const i = Math.floor(Math.log(bytes) / Math.log(k))
@@ -104,230 +161,257 @@ function formatSize(bytes: number): string {
 }
 
 function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  })
+  if (!dateStr) return '-'
+  return new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
-function viewDocument(doc: Document) {
-  router.push(`/documents/${doc.id}`)
+function viewDocument(item: any) {
+  router.push(`/documents/${item.id}`)
 }
 
-function getClassificationName(id?: string) {
-  if (!id) return '-'
-  const c = classifications.value.find(x => x.id === id)
-  return c?.name || '-'
+const stateColors: Record<string, string> = {
+  Draft: 'bg-zinc-100 text-zinc-600 dark:bg-zinc-700/50 dark:text-zinc-300',
+  Active: 'bg-teal/10 text-teal',
+  Record: 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400',
+  Archived: 'bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400',
+  Disposed: 'bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400',
+  OnHold: 'bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400',
+  PendingDisposal: 'bg-orange-50 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400'
 }
 
-function getImportanceName(id?: string) {
-  if (!id) return '-'
-  const i = importances.value.find(x => x.id === id)
-  return i?.name || '-'
-}
-
-function getDocumentTypeName(id?: string) {
-  if (!id) return '-'
-  const dt = documentTypes.value.find(x => x.id === id)
-  return dt?.name || '-'
-}
-
-const classificationOptions = computed(() => [
-  { value: '', label: 'All' },
-  ...classifications.value.map(c => ({ value: c.id, label: c.name }))
-])
-
-const importanceOptions = computed(() => [
-  { value: '', label: 'All' },
-  ...importances.value.map(i => ({ value: i.id, label: i.name }))
-])
-
-const documentTypeOptions = computed(() => [
-  { value: '', label: 'All' },
-  ...documentTypes.value.map(dt => ({ value: dt.id, label: dt.name }))
-])
+const sortOptions = [
+  { value: 'relevance', label: 'Relevance' },
+  { value: 'name', label: 'Name' },
+  { value: 'date', label: 'Date' },
+  { value: 'size', label: 'Size' }
+]
 </script>
 
 <template>
   <div class="space-y-6">
+    <!-- Header -->
     <div>
-      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Search Documents</h1>
-      <p class="text-gray-500 dark:text-zinc-400 mt-1">Find documents across all cabinets and folders</p>
+      <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Search Documents</h1>
+      <p class="text-zinc-500 text-sm mt-0.5">Full-text search across all cabinets and folders</p>
     </div>
 
     <!-- Search Box -->
-    <div class="bg-white dark:bg-background-dark rounded-lg shadow-sm border border-gray-200 dark:border-border-dark p-5 mb-6">
-      <div class="flex gap-4">
+    <div class="bg-white dark:bg-background-dark rounded-lg shadow-sm border border-zinc-200 dark:border-border-dark p-5">
+      <div class="flex gap-3">
         <div class="flex-1 relative">
-          <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
+          <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 text-xl">search</span>
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="Search documents by name, description..."
-            class="w-full pl-12 pr-4 py-3 border border-gray-200 dark:border-border-dark rounded-lg focus:ring-2 focus:ring-teal/30 focus:border-teal bg-white dark:bg-surface-dark text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-zinc-500 transition-all"
+            placeholder="Search by name, content, OCR text..."
+            class="w-full pl-12 pr-4 py-3 border border-zinc-200 dark:border-border-dark rounded-lg focus:ring-2 focus:ring-teal/30 focus:border-teal bg-white dark:bg-surface-dark text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-500 transition-all text-sm"
             @keyup.enter="handleSearch"
           />
         </div>
         <button
-          @click="showFilters = !showFilters"
-          :class="[
-            'px-4 py-2 border rounded-lg flex items-center gap-2 transition-all font-medium',
-            showFilters ? 'border-teal bg-teal/10 text-teal' : 'border-gray-200 dark:border-border-dark text-gray-600 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-surface-dark hover:border-teal/50'
-          ]"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-          </svg>
-          Filters
-        </button>
-        <button
           @click="handleSearch"
-          class="px-6 py-2 bg-teal text-white rounded-lg hover:bg-teal/90 transition-colors font-medium shadow-sm hover:shadow-md"
+          class="px-6 py-2.5 bg-teal text-white rounded-lg hover:bg-teal/90 transition-colors font-medium text-sm shadow-sm"
         >
           Search
         </button>
       </div>
 
-      <!-- Filters Panel -->
-      <div v-if="showFilters" class="mt-4 pt-4 border-t border-gray-200 dark:border-border-dark">
-        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          <UiSelect
-            v-model="filters.classificationId"
-            :options="classificationOptions"
-            label="Classification"
-            placeholder="All"
-            @update:model-value="performSearch"
-          />
-          <UiSelect
-            v-model="filters.importanceId"
-            :options="importanceOptions"
-            label="Importance"
-            placeholder="All"
-            @update:model-value="performSearch"
-          />
-          <UiSelect
-            v-model="filters.documentTypeId"
-            :options="documentTypeOptions"
-            label="Document Type"
-            placeholder="All"
-            @update:model-value="performSearch"
-          />
-          <UiDatePicker
-            v-model="filters.dateFrom"
-            label="Date From"
-            placeholder="Select date"
-          />
-          <UiDatePicker
-            v-model="filters.dateTo"
-            label="Date To"
-            placeholder="Select date"
-          />
-        </div>
-        <div class="mt-4 flex justify-end">
-          <button @click="clearFilters" class="text-sm text-teal hover:text-teal/80">
-            Clear all filters
+      <!-- Quick filters row -->
+      <div v-if="hasSearched" class="mt-3 flex items-center gap-2 flex-wrap">
+        <!-- Sort -->
+        <div class="flex items-center gap-1.5">
+          <span class="text-[10px] font-medium text-zinc-400 uppercase">Sort:</span>
+          <select
+            v-model="filters.sortBy"
+            @change="performSearch"
+            class="text-xs bg-zinc-50 dark:bg-surface-dark border border-zinc-200 dark:border-border-dark rounded px-2 py-1 text-zinc-700 dark:text-zinc-300"
+          >
+            <option v-for="opt in sortOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+          </select>
+          <button
+            @click="filters.sortDescending = !filters.sortDescending; performSearch()"
+            class="p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+            :title="filters.sortDescending ? 'Descending' : 'Ascending'"
+          >
+            <span class="material-symbols-outlined text-sm">{{ filters.sortDescending ? 'arrow_downward' : 'arrow_upward' }}</span>
           </button>
         </div>
+
+        <span class="text-zinc-200 dark:text-zinc-700">|</span>
+
+        <!-- State filter -->
+        <select
+          v-model="filters.state"
+          @change="performSearch"
+          class="text-xs bg-zinc-50 dark:bg-surface-dark border border-zinc-200 dark:border-border-dark rounded px-2 py-1 text-zinc-700 dark:text-zinc-300"
+        >
+          <option value="">All States</option>
+          <option v-for="s in documentStates" :key="s" :value="s">{{ s }}</option>
+        </select>
+
+        <!-- Date range -->
+        <input
+          v-model="filters.dateFrom"
+          type="date"
+          @change="performSearch"
+          class="text-xs bg-zinc-50 dark:bg-surface-dark border border-zinc-200 dark:border-border-dark rounded px-2 py-1 text-zinc-700 dark:text-zinc-300"
+          placeholder="From"
+        />
+        <span class="text-zinc-400 text-xs">to</span>
+        <input
+          v-model="filters.dateTo"
+          type="date"
+          @change="performSearch"
+          class="text-xs bg-zinc-50 dark:bg-surface-dark border border-zinc-200 dark:border-border-dark rounded px-2 py-1 text-zinc-700 dark:text-zinc-300"
+          placeholder="To"
+        />
+
+        <!-- Clear -->
+        <button
+          v-if="hasActiveFilters"
+          @click="clearFilters"
+          class="text-xs text-teal hover:text-teal/80 font-medium ml-auto"
+        >
+          Clear filters
+        </button>
       </div>
     </div>
 
-    <!-- Loading State -->
-    <div v-if="isLoading" class="flex items-center justify-center py-12">
-      <svg class="w-8 h-8 animate-spin text-teal" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-      </svg>
-    </div>
-
-    <!-- No Results -->
-    <div v-else-if="results.length === 0 && (searchQuery || Object.values(filters).some(v => v))" class="bg-white dark:bg-background-dark rounded-lg shadow-sm border border-gray-200 dark:border-border-dark p-12 text-center">
-      <div class="w-16 h-16 mx-auto bg-gray-100 dark:bg-surface-dark rounded-full flex items-center justify-center mb-4">
-        <svg class="w-8 h-8 text-gray-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      </div>
-      <p class="text-gray-700 dark:text-zinc-300 text-lg font-medium">No documents found</p>
-      <p class="text-gray-500 dark:text-zinc-500 mt-1">Try adjusting your search or filters</p>
-    </div>
-
-    <!-- Initial State -->
-    <div v-else-if="results.length === 0" class="bg-white dark:bg-background-dark rounded-lg shadow-sm border border-gray-200 dark:border-border-dark p-12 text-center">
-      <div class="w-16 h-16 mx-auto bg-teal/10 rounded-full flex items-center justify-center mb-4">
-        <svg class="w-8 h-8 text-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-      </div>
-      <p class="text-gray-700 dark:text-zinc-300 text-lg font-medium">Start searching</p>
-      <p class="text-gray-500 dark:text-zinc-500 mt-1">Enter a search term or use filters to find documents</p>
-    </div>
-
-    <!-- Results -->
-    <div v-else>
-      <div class="mb-4 flex items-center justify-between">
-        <p class="text-sm text-gray-500 dark:text-zinc-400">Found <span class="font-semibold text-teal">{{ results.length }}</span> document(s)</p>
-      </div>
-
-      <div class="bg-white dark:bg-background-dark rounded-lg shadow-sm border border-gray-200 dark:border-border-dark overflow-hidden">
-        <table class="w-full">
-          <thead class="bg-gray-50 dark:bg-surface-dark/50">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Document</th>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Classification</th>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Type</th>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Size</th>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Modified</th>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-zinc-400 uppercase tracking-wider">Status</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100 dark:divide-zinc-800">
-            <tr
-              v-for="doc in results"
-              :key="doc.id"
-              @click="viewDocument(doc)"
-              class="hover:bg-teal/5 dark:hover:bg-teal/10 cursor-pointer transition-colors"
+    <!-- Results area -->
+    <div v-if="hasSearched" class="flex gap-6">
+      <!-- Facet Sidebar -->
+      <aside v-if="facets.length > 0" class="w-56 shrink-0 space-y-4">
+        <div v-for="facetGroup in facets" :key="facetGroup.field" class="bg-white dark:bg-background-dark rounded-lg border border-zinc-200 dark:border-border-dark overflow-hidden">
+          <h3 class="px-3 py-2.5 text-[10px] font-bold text-zinc-400 uppercase tracking-widest bg-zinc-50 dark:bg-surface-dark/50 border-b border-zinc-200 dark:border-border-dark">
+            {{ facetGroup.field === 'classificationName' ? 'Classification' : facetGroup.field === 'documentTypeName' ? 'Document Type' : facetGroup.field === 'extension' ? 'File Type' : facetGroup.field }}
+          </h3>
+          <div class="p-2 space-y-0.5">
+            <button
+              v-for="fv in facetGroup.values.slice(0, 8)"
+              :key="fv.value"
+              @click="applyFacetFilter(facetGroup.field, fv.value)"
+              class="w-full flex items-center justify-between px-2.5 py-1.5 rounded text-xs hover:bg-teal/5 dark:hover:bg-teal/10 transition-colors group"
             >
-              <td class="px-6 py-4">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 bg-teal/10 rounded-lg flex items-center justify-center">
-                    <svg class="w-5 h-5 text-teal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
+              <span class="text-zinc-600 dark:text-zinc-300 group-hover:text-teal truncate">{{ fv.label || fv.value }}</span>
+              <span class="text-[10px] font-medium text-zinc-400 bg-zinc-100 dark:bg-zinc-700 px-1.5 py-0.5 rounded-full">{{ fv.count }}</span>
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Results Column -->
+      <div class="flex-1 min-w-0">
+        <!-- Loading -->
+        <div v-if="isLoading" class="flex items-center justify-center py-16 gap-3">
+          <div class="w-6 h-6 border-2 border-teal border-t-transparent rounded-full animate-spin"></div>
+          <span class="text-zinc-500 text-sm">Searching...</span>
+        </div>
+
+        <!-- No Results -->
+        <div v-else-if="results.length === 0" class="bg-white dark:bg-background-dark rounded-lg border border-zinc-200 dark:border-border-dark p-12 text-center">
+          <span class="material-symbols-outlined text-zinc-300 text-5xl mb-3 block">search_off</span>
+          <p class="text-zinc-700 dark:text-zinc-300 font-medium">No documents found</p>
+          <p class="text-zinc-500 text-sm mt-1">Try adjusting your search terms or filters</p>
+        </div>
+
+        <!-- Results List -->
+        <template v-else>
+          <!-- Stats bar -->
+          <div class="flex items-center justify-between mb-3">
+            <p class="text-xs text-zinc-500">
+              Found <span class="font-semibold text-teal">{{ totalCount.toLocaleString() }}</span> result(s)
+              <span v-if="elapsedMs" class="text-zinc-400">&middot; {{ elapsedMs.toFixed(0) }}ms</span>
+            </p>
+          </div>
+
+          <!-- Result cards -->
+          <div class="space-y-2">
+            <div
+              v-for="item in results"
+              :key="item.id"
+              @click="viewDocument(item)"
+              class="bg-white dark:bg-background-dark rounded-lg border border-zinc-200 dark:border-border-dark p-4 hover:border-teal/50 hover:shadow-sm cursor-pointer transition-all group"
+            >
+              <div class="flex items-start gap-3">
+                <!-- Icon -->
+                <div class="w-10 h-10 rounded-lg bg-teal/10 flex items-center justify-center shrink-0 group-hover:bg-teal/20 transition-colors">
+                  <span class="material-symbols-outlined text-teal text-xl">description</span>
+                </div>
+
+                <!-- Content -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-0.5">
+                    <h3 class="text-sm font-semibold text-zinc-900 dark:text-white truncate group-hover:text-teal transition-colors">{{ item.name }}</h3>
+                    <span v-if="item.state" class="px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-full shrink-0" :class="stateColors[item.state] || 'bg-zinc-100 text-zinc-500'">
+                      {{ item.state }}
+                    </span>
+                    <span v-if="item.score" class="text-[9px] text-zinc-400 ml-auto shrink-0">Score: {{ item.score.toFixed(2) }}</span>
                   </div>
-                  <div>
-                    <p class="font-medium text-gray-900 dark:text-white">{{ doc.name }}</p>
-                    <p class="text-sm text-gray-500 dark:text-zinc-500">{{ doc.extension || 'Unknown' }}</p>
+
+                  <!-- Highlights -->
+                  <div v-if="item.highlights && item.highlights.length" class="mb-1.5">
+                    <p v-for="(hl, idx) in item.highlights.slice(0, 2)" :key="idx" class="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed" v-html="hl"></p>
+                  </div>
+                  <p v-else-if="item.description" class="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-1 mb-1.5">{{ item.description }}</p>
+
+                  <!-- Meta row -->
+                  <div class="flex items-center gap-3 text-[10px] text-zinc-400 flex-wrap">
+                    <span v-if="item.extension" class="inline-flex items-center gap-0.5">
+                      <span class="material-symbols-outlined" style="font-size: 11px;">insert_drive_file</span>
+                      {{ item.extension.toUpperCase() }}
+                    </span>
+                    <span v-if="item.size" class="inline-flex items-center gap-0.5">
+                      <span class="material-symbols-outlined" style="font-size: 11px;">straighten</span>
+                      {{ formatSize(item.size) }}
+                    </span>
+                    <span v-if="item.classificationName" class="inline-flex items-center gap-0.5">
+                      <span class="material-symbols-outlined" style="font-size: 11px;">label</span>
+                      {{ item.classificationName }}
+                    </span>
+                    <span v-if="item.documentTypeName" class="inline-flex items-center gap-0.5">
+                      <span class="material-symbols-outlined" style="font-size: 11px;">category</span>
+                      {{ item.documentTypeName }}
+                    </span>
+                    <span v-if="item.folderPath" class="inline-flex items-center gap-0.5 truncate max-w-[200px]">
+                      <span class="material-symbols-outlined" style="font-size: 11px;">folder</span>
+                      {{ item.folderPath }}
+                    </span>
+                    <span class="inline-flex items-center gap-0.5">
+                      <span class="material-symbols-outlined" style="font-size: 11px;">calendar_today</span>
+                      {{ formatDate(item.createdAt) }}
+                    </span>
+                    <span v-if="item.createdByName">by {{ item.createdByName }}</span>
                   </div>
                 </div>
-              </td>
-              <td class="px-6 py-4 text-sm text-gray-600 dark:text-zinc-400">
-                {{ getClassificationName(doc.classificationId) }}
-              </td>
-              <td class="px-6 py-4 text-sm text-gray-600 dark:text-zinc-400">
-                {{ getDocumentTypeName(doc.documentTypeId) }}
-              </td>
-              <td class="px-6 py-4 text-sm text-gray-600 dark:text-zinc-400">
-                {{ formatSize(doc.size) }}
-              </td>
-              <td class="px-6 py-4 text-sm text-gray-600 dark:text-zinc-400">
-                {{ formatDate(doc.modifiedAt || doc.createdAt) }}
-              </td>
-              <td class="px-6 py-4">
-                <span
-                  :class="[
-                    'px-2.5 py-1 rounded-full text-xs font-medium',
-                    doc.isCheckedOut ? 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400' : 'bg-teal/10 text-teal'
-                  ]"
-                >
-                  {{ doc.isCheckedOut ? 'Checked Out' : 'Available' }}
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Load More -->
+          <div v-if="searchAfterToken" class="mt-4 text-center">
+            <button
+              @click="loadMore"
+              :disabled="isLoadingMore"
+              class="px-6 py-2.5 bg-zinc-100 dark:bg-surface-dark hover:bg-zinc-200 dark:hover:bg-border-dark text-zinc-700 dark:text-zinc-300 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+            >
+              <span v-if="isLoadingMore" class="inline-flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm animate-spin">refresh</span>
+                Loading...
+              </span>
+              <span v-else>Load more results</span>
+            </button>
+          </div>
+        </template>
       </div>
+    </div>
+
+    <!-- Initial State (no search yet) -->
+    <div v-if="!hasSearched" class="bg-white dark:bg-background-dark rounded-lg border border-zinc-200 dark:border-border-dark p-16 text-center">
+      <div class="w-16 h-16 mx-auto bg-teal/10 rounded-full flex items-center justify-center mb-4">
+        <span class="material-symbols-outlined text-teal text-3xl">search</span>
+      </div>
+      <p class="text-zinc-700 dark:text-zinc-300 font-medium text-lg">Start searching</p>
+      <p class="text-zinc-500 text-sm mt-1">Enter a search term to find documents by name, content, or metadata</p>
     </div>
   </div>
 </template>

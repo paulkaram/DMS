@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using DMS.BL.DTOs;
 using DMS.BL.Interfaces;
 using DMS.DAL.Entities;
@@ -57,7 +58,9 @@ public class ShareService : IShareService
                     SharedAt = share.CreatedAt,
                     ExpiresAt = share.ExpiresAt,
                     Message = share.Message,
-                    HasPassword = passwordStatuses.TryGetValue(share.DocumentId, out var hasPassword) && hasPassword
+                    HasPassword = passwordStatuses.TryGetValue(share.DocumentId, out var hasPassword) && hasPassword,
+                    RequiresOtp = share.RequiresOtp,
+                    OtpVerified = share.OtpVerified
                 });
             }
         }
@@ -85,11 +88,12 @@ public class ShareService : IShareService
                     DocumentId = share.DocumentId,
                     DocumentName = doc.Name,
                     Extension = doc.Extension,
-                    SharedWithUserName = share.SharedWithUserName ?? "Unknown",
+                    SharedWithUserName = share.IsLinkShare ? "Anyone with the link" : (share.SharedWithUserName ?? "Unknown"),
                     PermissionLevel = share.PermissionLevel,
                     SharedAt = share.CreatedAt,
                     ExpiresAt = share.ExpiresAt,
-                    HasPassword = passwordStatuses.TryGetValue(share.DocumentId, out var hasPassword) && hasPassword
+                    HasPassword = passwordStatuses.TryGetValue(share.DocumentId, out var hasPassword) && hasPassword,
+                    IsLinkShare = share.IsLinkShare
                 });
             }
         }
@@ -111,6 +115,8 @@ public class ShareService : IShareService
             Message = s.Message,
             IsActive = s.IsActive,
             CreatedAt = s.CreatedAt,
+            IsLinkShare = s.IsLinkShare,
+            ShareToken = s.ShareToken,
             DocumentName = s.DocumentName,
             SharedWithUserName = s.SharedWithUserName,
             SharedByUserName = s.SharedByUserName
@@ -127,8 +133,17 @@ public class ShareService : IShareService
             PermissionLevel = request.PermissionLevel,
             ExpiresAt = request.ExpiresAt,
             Message = request.Message,
+            RequiresOtp = request.RequiresOtp,
             IsActive = true
         };
+
+        // Generate OTP if required (NCA secure sharing requirement)
+        if (request.RequiresOtp)
+        {
+            share.OtpCode = GenerateOtp();
+            share.OtpExpiresAt = DateTime.Now.AddMinutes(10);
+            share.OtpVerified = false;
+        }
 
         var shareId = await _shareRepository.CreateAsync(share);
 
@@ -149,7 +164,9 @@ public class ShareService : IShareService
                     sharedWithName,
                     document.Name,
                     sharedByName,
-                    request.Message);
+                    request.RequiresOtp
+                        ? $"{request.Message}\n\nYour OTP code is: {share.OtpCode} (expires in 10 minutes)"
+                        : request.Message);
 
                 _logger.LogInformation("Share notification email sent to {Email} for document {DocumentName}",
                     sharedWithUser.Email, document.Name);
@@ -178,5 +195,165 @@ public class ShareService : IShareService
     public async Task<bool> RevokeShareAsync(Guid shareId)
     {
         return await _shareRepository.DeleteAsync(shareId);
+    }
+
+    public async Task<ServiceResult> VerifyOtpAsync(Guid shareId, string otpCode, Guid userId)
+    {
+        var share = await _shareRepository.GetByIdAsync(shareId);
+        if (share == null)
+            return ServiceResult.Fail("Share not found");
+
+        if (share.SharedWithUserId == null || share.SharedWithUserId != userId)
+            return ServiceResult.Fail("Unauthorized");
+
+        if (!share.RequiresOtp)
+            return ServiceResult.Fail("This share does not require OTP verification");
+
+        if (share.OtpVerified)
+            return ServiceResult.Ok("Already verified");
+
+        if (share.OtpExpiresAt.HasValue && share.OtpExpiresAt.Value < DateTime.Now)
+            return ServiceResult.Fail("OTP has expired. Please request a new code.");
+
+        if (share.OtpCode != otpCode)
+            return ServiceResult.Fail("Invalid OTP code");
+
+        share.OtpVerified = true;
+        await _shareRepository.UpdateAsync(share);
+
+        _logger.LogInformation("OTP verified for share {ShareId} by user {UserId}", shareId, userId);
+        return ServiceResult.Ok("OTP verified successfully");
+    }
+
+    public async Task<ServiceResult> ResendOtpAsync(Guid shareId, Guid userId)
+    {
+        var share = await _shareRepository.GetByIdAsync(shareId);
+        if (share == null)
+            return ServiceResult.Fail("Share not found");
+
+        if (share.SharedWithUserId == null || share.SharedWithUserId != userId)
+            return ServiceResult.Fail("Unauthorized");
+
+        if (!share.RequiresOtp)
+            return ServiceResult.Fail("This share does not require OTP verification");
+
+        // Generate new OTP
+        share.OtpCode = GenerateOtp();
+        share.OtpExpiresAt = DateTime.Now.AddMinutes(10);
+        share.OtpVerified = false;
+        await _shareRepository.UpdateAsync(share);
+
+        // Send OTP via email
+        try
+        {
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user?.Email != null)
+            {
+                var document = await _documentRepository.GetByIdAsync(share.DocumentId);
+                await _emailService.SendDocumentSharedNotificationAsync(
+                    user.Email,
+                    user.DisplayName ?? user.Username,
+                    document?.Name ?? "Document",
+                    "System",
+                    $"Your new OTP code is: {share.OtpCode} (expires in 10 minutes)");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to send OTP resend email");
+        }
+
+        return ServiceResult.Ok("New OTP sent");
+    }
+
+    public async Task<ServiceResult<LinkShareDto>> CreateLinkShareAsync(Guid userId, CreateLinkShareRequest request)
+    {
+        // Check for existing active link share on this document
+        var existing = await _shareRepository.GetActiveLinkShareByDocumentAsync(request.DocumentId);
+        if (existing != null)
+        {
+            return ServiceResult<LinkShareDto>.Ok(new LinkShareDto
+            {
+                Id = existing.Id,
+                DocumentId = existing.DocumentId,
+                ShareToken = existing.ShareToken!,
+                PermissionLevel = existing.PermissionLevel,
+                ExpiresAt = existing.ExpiresAt,
+                IsActive = existing.IsActive,
+                CreatedAt = existing.CreatedAt,
+                SharedByUserName = existing.SharedByUserName
+            });
+        }
+
+        var share = new DocumentShare
+        {
+            DocumentId = request.DocumentId,
+            SharedWithUserId = null,
+            SharedByUserId = userId,
+            PermissionLevel = request.PermissionLevel,
+            ExpiresAt = request.ExpiresAt,
+            IsLinkShare = true,
+            ShareToken = GenerateShareToken(),
+            IsActive = true
+        };
+
+        await _shareRepository.CreateAsync(share);
+
+        var sharedByUser = await _userRepository.GetByIdAsync(userId);
+
+        return ServiceResult<LinkShareDto>.Ok(new LinkShareDto
+        {
+            Id = share.Id,
+            DocumentId = share.DocumentId,
+            ShareToken = share.ShareToken!,
+            PermissionLevel = share.PermissionLevel,
+            ExpiresAt = share.ExpiresAt,
+            IsActive = share.IsActive,
+            CreatedAt = share.CreatedAt,
+            SharedByUserName = sharedByUser?.DisplayName ?? sharedByUser?.Username
+        });
+    }
+
+    public async Task<ServiceResult<LinkShareDto>> GetLinkShareAsync(Guid documentId)
+    {
+        var share = await _shareRepository.GetActiveLinkShareByDocumentAsync(documentId);
+        if (share == null)
+            return ServiceResult<LinkShareDto>.Fail("No active link share found");
+
+        return ServiceResult<LinkShareDto>.Ok(new LinkShareDto
+        {
+            Id = share.Id,
+            DocumentId = share.DocumentId,
+            ShareToken = share.ShareToken!,
+            PermissionLevel = share.PermissionLevel,
+            ExpiresAt = share.ExpiresAt,
+            IsActive = share.IsActive,
+            CreatedAt = share.CreatedAt,
+            SharedByUserName = share.SharedByUserName
+        });
+    }
+
+    public async Task<ServiceResult<DocumentShare>> ValidateShareTokenAsync(string shareToken)
+    {
+        var share = await _shareRepository.GetByShareTokenAsync(shareToken);
+        if (share == null)
+            return ServiceResult<DocumentShare>.Fail("Share link is not available or has expired");
+
+        return ServiceResult<DocumentShare>.Ok(share);
+    }
+
+    private static string GenerateShareToken()
+    {
+        var bytes = new byte[24];
+        RandomNumberGenerator.Fill(bytes);
+        return Convert.ToBase64String(bytes)
+            .Replace("+", "-")
+            .Replace("/", "_")
+            .Replace("=", "");
+    }
+
+    private static string GenerateOtp()
+    {
+        return RandomNumberGenerator.GetInt32(100000, 999999).ToString();
     }
 }

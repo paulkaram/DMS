@@ -16,6 +16,15 @@ public class DocumentShareConfiguration : IEntityTypeConfiguration<DocumentShare
         builder.Ignore(e => e.SharedWithUserName);
         builder.Ignore(e => e.SharedByUserName);
 
+        // OTP field constraints
+        builder.Property(e => e.OtpCode).HasMaxLength(6);
+
+        // Link sharing
+        builder.Property(e => e.ShareToken).HasMaxLength(64);
+        builder.HasIndex(e => e.ShareToken)
+            .IsUnique()
+            .HasFilter("[ShareToken] IS NOT NULL");
+
         // Performance indexes
         builder.HasIndex(e => e.DocumentId);
         builder.HasIndex(e => e.SharedWithUserId);

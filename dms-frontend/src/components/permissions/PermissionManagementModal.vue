@@ -365,7 +365,7 @@ const inheritedPermissions = computed(() =>
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <div v-if="show" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" @click.self="emit('close')">
+      <div v-if="show" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
         <Transition
           enter-active-class="duration-300 ease-out"
           enter-from-class="opacity-0 scale-95 translate-y-4"

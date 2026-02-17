@@ -8,4 +8,5 @@ public interface IReportsService
     Task<ServiceResult<List<MonthlyGrowthDto>>> GetMonthlyGrowthAsync(int? year = null);
     Task<ServiceResult<List<DocumentTypeDistributionDto>>> GetDocumentTypesAsync();
     Task<ServiceResult<List<RecentActivityDto>>> GetRecentActivityAsync(int take = 10);
+    Task<ServiceResult<AccessReviewReportDto>> GetAccessReviewReportAsync(string nodeType, Guid nodeId);
 }

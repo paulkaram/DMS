@@ -2,6 +2,7 @@ using DMS.Api.Constants;
 using DMS.BL.DTOs;
 using DMS.BL.Interfaces;
 using DMS.DAL.Entities;
+using DMS.DAL.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,19 +16,34 @@ public class DocumentsController : BaseApiController
     private readonly IPreviewService _previewService;
     private readonly IFolderService _folderService;
     private readonly IApprovalService _approvalService;
+    private readonly IWatermarkService _watermarkService;
+    private readonly IArchivalExportService _archivalExportService;
+    private readonly IActivityLogService _activityLogService;
+    private readonly IUserRepository _userRepository;
+    private readonly IShareService _shareService;
 
     public DocumentsController(
         IDocumentService documentService,
         IBulkOperationService bulkOperationService,
         IPreviewService previewService,
         IFolderService folderService,
-        IApprovalService approvalService)
+        IApprovalService approvalService,
+        IWatermarkService watermarkService,
+        IArchivalExportService archivalExportService,
+        IActivityLogService activityLogService,
+        IUserRepository userRepository,
+        IShareService shareService)
     {
         _documentService = documentService;
         _bulkOperationService = bulkOperationService;
         _previewService = previewService;
         _folderService = folderService;
         _approvalService = approvalService;
+        _watermarkService = watermarkService;
+        _archivalExportService = archivalExportService;
+        _activityLogService = activityLogService;
+        _userRepository = userRepository;
+        _shareService = shareService;
     }
 
     /// <summary>
@@ -63,6 +79,20 @@ public class DocumentsController : BaseApiController
 
         // Check folder-level privacy
         return await HasFolderPrivacyAccessAsync(doc.FolderId);
+    }
+
+    /// <summary>
+    /// Checks if the request includes a valid share token granting at least the required permission level.
+    /// </summary>
+    private async Task<bool> HasAccessViaShareTokenAsync(Guid documentId, int requiredLevel)
+    {
+        var token = Request.Query["shareToken"].FirstOrDefault();
+        if (string.IsNullOrEmpty(token)) return false;
+
+        var result = await _shareService.ValidateShareTokenAsync(token);
+        return result.Success
+            && result.Data!.DocumentId == documentId
+            && result.Data.PermissionLevel >= requiredLevel;
     }
 
     [HttpGet]
@@ -138,8 +168,9 @@ public class DocumentsController : BaseApiController
     {
         var userId = GetCurrentUserId();
 
-        // Check read permission on document
-        if (!await HasPermissionAsync(userId, "Document", id, (int)PermissionLevel.Read))
+        // Check read permission on document (or valid share token)
+        if (!await HasPermissionAsync(userId, "Document", id, (int)PermissionLevel.Read)
+            && !await HasAccessViaShareTokenAsync(id, 1))
             return Forbid(ErrorMessages.Permissions.ViewDocument);
 
         var result = await _documentService.GetByIdAsync(id);
@@ -167,6 +198,10 @@ public class DocumentsController : BaseApiController
             return NotFound(new[] { ErrorMessages.Permissions.DocumentExpired });
         }
 
+        // Audit trail: log document view
+        await _activityLogService.LogActivityAsync(
+            "Viewed", "Document", id, doc.Name, null, userId, null, null);
+
         return Ok(doc);
     }
 
@@ -175,8 +210,9 @@ public class DocumentsController : BaseApiController
     {
         var userId = GetCurrentUserId();
 
-        // Check read permission on document
-        if (!await HasPermissionAsync(userId, "Document", id, (int)PermissionLevel.Read))
+        // Check read permission on document (or valid share token)
+        if (!await HasPermissionAsync(userId, "Document", id, (int)PermissionLevel.Read)
+            && !await HasAccessViaShareTokenAsync(id, 1))
             return Forbid(ErrorMessages.Permissions.ViewDocument);
 
         var result = await _documentService.GetVersionsAsync(id);
@@ -188,8 +224,9 @@ public class DocumentsController : BaseApiController
     {
         var userId = GetCurrentUserId();
 
-        // Check read permission on document
-        if (!await HasPermissionAsync(userId, "Document", id, (int)PermissionLevel.Read))
+        // Check read permission on document (or valid share token)
+        if (!await HasPermissionAsync(userId, "Document", id, (int)PermissionLevel.Read)
+            && !await HasAccessViaShareTokenAsync(id, 1))
             return Forbid(ErrorMessages.Permissions.DownloadDocument);
 
         var docResult = await _documentService.GetByIdAsync(id);
@@ -221,7 +258,25 @@ public class DocumentsController : BaseApiController
         if (!result.Success)
             return NotFound(result.Errors);
 
-        return File(result.Data!, doc.ContentType ?? "application/octet-stream", doc.Name + doc.Extension);
+        Stream outputStream = result.Data!;
+
+        // Apply watermark to all PDF downloads (NCA requirement)
+        var isPdf = (doc.Extension ?? "").Equals(".pdf", StringComparison.OrdinalIgnoreCase) ||
+                    (doc.ContentType ?? "").Contains("pdf", StringComparison.OrdinalIgnoreCase);
+        if (isPdf)
+        {
+            // Resolve the downloader's full display name for watermark
+            var user = await _userRepository.GetByIdAsync(userId);
+            var displayName = user?.DisplayName ?? user?.Username ?? User.Identity?.Name ?? "Unknown";
+            outputStream = await _watermarkService.ApplyWatermarkAsync(outputStream, displayName, doc.PrivacyLevelName);
+        }
+
+        // Audit trail: log document download
+        var versionInfo = version.HasValue ? $" (v{version.Value})" : "";
+        await _activityLogService.LogActivityAsync(
+            "Downloaded", "Document", id, doc.Name, $"Downloaded{versionInfo}", userId, null, null);
+
+        return File(outputStream, doc.ContentType ?? "application/octet-stream", doc.Name + doc.Extension);
     }
 
     [HttpGet("my-checkouts")]
@@ -472,6 +527,27 @@ public class DocumentsController : BaseApiController
 
     #endregion
 
+    #region Lifecycle State Management
+
+    /// <summary>
+    /// Transitions a document to a new lifecycle state (ISO 15489).
+    /// Valid transitions: Draft→Active, Active→Record, Record→Archived, Archived→Disposed.
+    /// </summary>
+    [HttpPost("{id:guid}/transition")]
+    [Authorize(Roles = $"{AppConstants.Roles.Administrator},{AppConstants.Roles.Records}")]
+    public async Task<IActionResult> TransitionState(Guid id, [FromBody] TransitionStateDto dto)
+    {
+        var userId = GetCurrentUserId();
+
+        if (!await HasPermissionAsync(userId, "Document", id, (int)PermissionLevel.Write))
+            return Forbid(ErrorMessages.Permissions.TransitionDocument);
+
+        var result = await _documentService.TransitionStateAsync(id, dto, userId);
+        return result.Success ? Ok(result.Data) : BadRequest(result.Errors);
+    }
+
+    #endregion
+
     [HttpPost("{id:guid}/move")]
     public async Task<IActionResult> Move(Guid id, [FromBody] MoveDocumentDto dto)
     {
@@ -533,8 +609,9 @@ public class DocumentsController : BaseApiController
     {
         var userId = GetCurrentUserId();
 
-        // Check read permission
-        if (!await HasPermissionAsync(userId, "Document", id, (int)PermissionLevel.Read))
+        // Check read permission (or valid share token)
+        if (!await HasPermissionAsync(userId, "Document", id, (int)PermissionLevel.Read)
+            && !await HasAccessViaShareTokenAsync(id, 1))
             return Forbid(ErrorMessages.Permissions.PreviewDocument);
 
         // Check privacy level and approval status for preview
@@ -565,6 +642,28 @@ public class DocumentsController : BaseApiController
         var result = await _previewService.GetPreviewInfoAsync(id, version);
         return result.Success ? Ok(result.Data) : NotFound(result.Errors);
     }
+
+    #region Archival Export (ISO 14721 OAIS)
+
+    [HttpPost("{id:guid}/export-archive")]
+    [Authorize(Roles = $"{AppConstants.Roles.Administrator},{AppConstants.Roles.Records}")]
+    public async Task<IActionResult> ExportArchive(Guid id)
+    {
+        var result = await _archivalExportService.ExportDocumentArchiveAsync(id);
+        if (!result.Success) return BadRequest(result.Errors);
+        return File(result.Data!, "application/zip", $"archive-{id:N}.zip");
+    }
+
+    [HttpPost("export-archive-batch/{folderId:guid}")]
+    [Authorize(Roles = $"{AppConstants.Roles.Administrator},{AppConstants.Roles.Records}")]
+    public async Task<IActionResult> ExportFolderArchive(Guid folderId)
+    {
+        var result = await _archivalExportService.ExportFolderArchiveAsync(folderId);
+        if (!result.Success) return BadRequest(result.Errors);
+        return File(result.Data!, "application/zip", $"archive-folder-{folderId:N}.zip");
+    }
+
+    #endregion
 
     // Bulk operation endpoints
     [HttpPost("bulk/delete")]

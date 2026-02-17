@@ -136,4 +136,64 @@ public class DisposalController : BaseApiController
         var result = await _disposalService.ProcessScheduledDisposalsAsync(userId);
         return Ok(result);
     }
+
+    // --- Batch Disposal with Multi-Level Approval ---
+
+    /// <summary>
+    /// Initiate a batch disposal request for multiple documents.
+    /// </summary>
+    [HttpPost("batch")]
+    [Authorize(Roles = "Administrator,Records")]
+    public async Task<IActionResult> InitiateBatchDisposal([FromBody] InitiateBatchDisposalDto dto)
+    {
+        var userId = GetCurrentUserId();
+        var result = await _disposalService.InitiateBatchDisposalAsync(dto, userId);
+        return OkOrBadRequest(result);
+    }
+
+    /// <summary>
+    /// Get paginated disposal requests.
+    /// </summary>
+    [HttpGet("requests")]
+    [Authorize(Roles = "Administrator,Records")]
+    public async Task<IActionResult> GetDisposalRequests([FromQuery] string? status, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+    {
+        var result = await _disposalService.GetDisposalRequestsAsync(status, page, pageSize);
+        return OkOrBadRequest(result);
+    }
+
+    /// <summary>
+    /// Get a disposal request with full details.
+    /// </summary>
+    [HttpGet("requests/{id:guid}")]
+    [Authorize(Roles = "Administrator,Records")]
+    public async Task<IActionResult> GetDisposalRequest(Guid id)
+    {
+        var result = await _disposalService.GetDisposalRequestAsync(id);
+        return OkOrNotFound(result);
+    }
+
+    /// <summary>
+    /// Submit an approval decision for a disposal request.
+    /// </summary>
+    [HttpPost("requests/{id:guid}/approve")]
+    [Authorize(Roles = "Administrator,Records")]
+    public async Task<IActionResult> SubmitDisposalApproval(Guid id, [FromBody] SubmitDisposalApprovalDto dto)
+    {
+        var userId = GetCurrentUserId();
+        var result = await _disposalService.SubmitDisposalApprovalAsync(id, dto, userId);
+        return OkOrBadRequest(result);
+    }
+
+    /// <summary>
+    /// Execute an approved batch disposal request.
+    /// </summary>
+    [HttpPost("requests/{id:guid}/execute")]
+    [Authorize(Roles = "Administrator")]
+    public async Task<IActionResult> ExecuteBatchDisposal(Guid id)
+    {
+        var userId = GetCurrentUserId();
+        var result = await _disposalService.ExecuteBatchDisposalAsync(id, userId);
+        return OkOrBadRequest(result);
+    }
 }

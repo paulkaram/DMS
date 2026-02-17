@@ -76,4 +76,12 @@ public interface IDocumentService
     /// Gets stale checkouts for admin cleanup.
     /// </summary>
     Task<ServiceResult<List<WorkingCopyDto>>> GetStaleCheckoutsAsync(int staleHours);
+
+    // Document Lifecycle State Machine (ISO 15489)
+    /// <summary>
+    /// Transitions a document to a new lifecycle state with validation.
+    /// Valid transitions: Draft→Active, Active→Record, Record→Archived, Archived→Disposed.
+    /// Documents under legal hold cannot be transitioned.
+    /// </summary>
+    Task<ServiceResult<DocumentDto>> TransitionStateAsync(Guid id, TransitionStateDto dto, Guid userId);
 }

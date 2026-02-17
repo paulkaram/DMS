@@ -86,6 +86,7 @@ export interface Document {
   shortcutId?: string
   attachmentCount?: number
   approvalStatus?: number | null
+  state?: string
   expiryDate?: string | null
   privacyLevelId?: string
   privacyLevelName?: string
@@ -261,7 +262,24 @@ export interface ActivityLog {
   userId?: string
   userName?: string
   ipAddress?: string
+  userAgent?: string
   createdAt: string
+}
+
+// Document Lifecycle States (ISO 15489)
+export const DocumentStates = {
+  Draft: 'Draft',
+  Active: 'Active',
+  Record: 'Record',
+  Archived: 'Archived',
+  Disposed: 'Disposed'
+} as const
+
+export type DocumentState = typeof DocumentStates[keyof typeof DocumentStates]
+
+export interface TransitionStateRequest {
+  targetState: string
+  reason?: string
 }
 
 // Tree Node type
@@ -485,18 +503,21 @@ export interface MySharedItem {
   sharedAt: string
   expiresAt?: string
   hasPassword?: boolean
+  isLinkShare?: boolean
 }
 
 export interface DocumentShare {
   id: string
   documentId: string
-  sharedWithUserId: string
+  sharedWithUserId?: string
   sharedByUserId: string
   permissionLevel: number
   expiresAt?: string
   message?: string
   isActive: boolean
   createdAt: string
+  isLinkShare?: boolean
+  shareToken?: string
   documentName?: string
   sharedWithUserName?: string
   sharedByUserName?: string
@@ -508,6 +529,17 @@ export interface ShareDocumentRequest {
   permissionLevel: number
   expiresAt?: string
   message?: string
+}
+
+export interface LinkShare {
+  id: string
+  documentId: string
+  shareToken: string
+  permissionLevel: number
+  expiresAt?: string
+  isActive: boolean
+  createdAt: string
+  sharedByUserName?: string
 }
 
 // Recycle Bin types
@@ -950,6 +982,10 @@ export interface RetentionPolicy {
   inheritToSubfolders: boolean
   isLegalHold: boolean
   isActive: boolean
+  retentionBasis?: string
+  suspendDuringLegalHold?: boolean
+  recalculateOnClassificationChange?: boolean
+  disposalApprovalLevels?: number
   createdAt: string
   modifiedAt?: string
   folderName?: string
@@ -1544,4 +1580,572 @@ export interface ManagedPage {
   uploadPageNumber?: number
   label: string
   thumbnailUrl?: string // blob URL for uploaded image previews
+}
+
+// =============================================
+// Disposal Types (ISO 15489)
+// =============================================
+export interface DisposalCertificate {
+  id: string
+  certificateNumber: string
+  documentId: string
+  documentName: string
+  documentPath?: string
+  classification?: string
+  retentionPolicyId?: string
+  retentionPolicyName?: string
+  documentCreatedAt: string
+  retentionStartDate?: string
+  retentionExpirationDate?: string
+  disposalMethod: string
+  disposedAt: string
+  disposedBy: string
+  disposedByName?: string
+  approvedBy?: string
+  approvedByName?: string
+  approvedAt?: string
+  legalBasis?: string
+  notes?: string
+  contentHashAtDisposal?: string
+  fileSizeAtDisposal: number
+  versionsDisposed: number
+  disposalVerified: boolean
+  verifiedAt?: string
+  createdAt: string
+}
+
+export interface DisposalRequest {
+  id: string
+  documentId: string
+  documentName: string
+  status: string
+  disposalMethod: string
+  reason?: string
+  legalBasis?: string
+  requestedBy: string
+  requestedByName?: string
+  requestedAt: string
+  approvedBy?: string
+  approvedByName?: string
+  approvedAt?: string
+  rejectedBy?: string
+  rejectedByName?: string
+  rejectedAt?: string
+  rejectionReason?: string
+}
+
+export interface DocumentDisposalStatus {
+  documentId: string
+  documentName: string
+  folderPath?: string
+  retentionPolicyId?: string
+  retentionPolicyName?: string
+  documentCreatedAt: string
+  retentionStartDate?: string
+  retentionExpirationDate?: string
+  daysUntilExpiration: number
+  isExpired: boolean
+  isOnLegalHold: boolean
+  expirationAction?: string
+  requiresApproval: boolean
+}
+
+export interface InitiateDisposalRequest {
+  reason?: string
+  legalBasis?: string
+  disposalMethod?: string
+  requiresApproval?: boolean
+}
+
+export interface DisposalBatchResult {
+  totalPending: number
+  processedCount: number
+  disposedCount: number
+  skippedCount: number
+  errorCount: number
+  errors: string[]
+  startedAt: string
+  completedAt: string
+}
+
+// =============================================
+// Legal Hold Types (ISO 15489)
+// =============================================
+export interface LegalHold {
+  id: string
+  holdNumber: string
+  name: string
+  description?: string
+  caseReference?: string
+  requestedBy?: string
+  requestedAt?: string
+  status: string
+  effectiveFrom: string
+  effectiveUntil?: string
+  appliedBy: string
+  appliedByName?: string
+  appliedAt: string
+  releasedBy?: string
+  releasedByName?: string
+  releasedAt?: string
+  releaseReason?: string
+  notes?: string
+  documentCount: number
+  createdAt: string
+}
+
+export interface CreateLegalHold {
+  name: string
+  description?: string
+  caseReference?: string
+  requestedBy?: string
+  requestedAt?: string
+  effectiveFrom?: string
+  effectiveUntil?: string
+  notes?: string
+  initialDocumentIds?: string[]
+}
+
+export interface UpdateLegalHold {
+  name?: string
+  description?: string
+  caseReference?: string
+  requestedBy?: string
+  effectiveUntil?: string
+  notes?: string
+}
+
+export interface LegalHoldDocument {
+  id: string
+  legalHoldId: string
+  holdName: string
+  documentId: string
+  documentName: string
+  addedAt: string
+  addedBy: string
+  addedByName?: string
+  releasedAt?: string
+  releasedBy?: string
+  notes?: string
+}
+
+// =============================================
+// Integrity Verification Types (ISO 27001)
+// =============================================
+export interface IntegrityVerificationResult {
+  isValid: boolean
+  expectedHash: string
+  computedHash: string
+  algorithm: string
+  verifiedAt: string
+  errorMessage?: string
+  documentId?: string
+  versionNumber?: number
+}
+
+export interface IntegrityVerificationLog {
+  id: string
+  documentId: string
+  versionNumber?: number
+  expectedHash: string
+  computedHash: string
+  hashAlgorithm: string
+  isValid: boolean
+  verifiedAt: string
+  verificationType: string
+  verifiedBy?: string
+  verifiedByName?: string
+  errorMessage?: string
+  actionTaken?: string
+}
+
+export interface IntegrityBatchResult {
+  totalDocuments: number
+  verifiedCount: number
+  passedCount: number
+  failedCount: number
+  skippedCount: number
+  failures: IntegrityVerificationResult[]
+  startedAt: string
+  completedAt: string
+}
+
+// =============================================
+// State Machine Types (NCAR Governance)
+// =============================================
+export interface StateTransitionRequest {
+  targetState: string
+  reason?: string
+}
+
+export interface AllowedTransition {
+  fromState: string
+  toState: string
+  description?: string
+  requiresApproval: boolean
+  requiresClassification: boolean
+  requiresRetentionPolicy: boolean
+}
+
+export interface StateTransitionLog {
+  id: string
+  documentId: string
+  fromState: string
+  toState: string
+  transitionedBy: string
+  transitionedByName?: string
+  transitionedAt: string
+  reason?: string
+  isSystemAction: boolean
+}
+
+// =============================================
+// Physical Archive Types
+// =============================================
+export type LocationType = 'Site' | 'Building' | 'Floor' | 'Room' | 'Rack' | 'Shelf' | 'Box' | 'File'
+export type PhysicalItemType = 'Document' | 'File' | 'Box' | 'Volume' | 'Map' | 'Photograph' | 'AudioTape' | 'VideoTape' | 'Microfilm' | 'DigitalMedia'
+export type ItemCondition = 'Good' | 'Fair' | 'Poor' | 'Damaged' | 'Destroyed'
+export type CirculationStatus = 'Available' | 'CheckedOut' | 'InTransit' | 'Overdue' | 'Returned' | 'Lost'
+
+export interface PhysicalLocation {
+  id: string
+  parentId?: string
+  name: string
+  nameAr?: string
+  code: string
+  locationType: LocationType
+  path?: string
+  level: number
+  capacity?: number
+  currentCount: number
+  environmentalConditions?: string
+  coordinates?: string
+  securityLevel?: string
+  sortOrder: number
+  isActive: boolean
+  createdAt: string
+}
+
+export interface CreatePhysicalLocation {
+  parentId?: string
+  name: string
+  nameAr?: string
+  code: string
+  locationType: string
+  capacity?: number
+  environmentalConditions?: string
+  coordinates?: string
+  securityLevel?: string
+  sortOrder?: number
+}
+
+export interface PhysicalItem {
+  id: string
+  barcode: string
+  barcodeFormat?: string
+  title: string
+  titleAr?: string
+  description?: string
+  itemType: PhysicalItemType
+  locationId?: string
+  locationName?: string
+  digitalDocumentId?: string
+  classificationId?: string
+  retentionPolicyId?: string
+  condition: ItemCondition
+  itemDate?: string
+  dateRangeStart?: string
+  dateRangeEnd?: string
+  pageCount?: number
+  dimensions?: string
+  circulationStatus: CirculationStatus
+  isOnLegalHold: boolean
+  lastConditionAssessment?: string
+  conditionNotes?: string
+  isActive: boolean
+  createdAt: string
+}
+
+export interface CreatePhysicalItem {
+  barcode: string
+  barcodeFormat?: string
+  title: string
+  titleAr?: string
+  description?: string
+  itemType: string
+  locationId?: string
+  digitalDocumentId?: string
+  classificationId?: string
+  retentionPolicyId?: string
+  condition?: string
+  itemDate?: string
+  pageCount?: number
+  dimensions?: string
+}
+
+export interface AccessionRequest {
+  id: string
+  accessionNumber: string
+  sourceStructureId?: string
+  sourceStructureName?: string
+  targetLocationId?: string
+  targetLocationName?: string
+  status: string
+  itemCount: number
+  recordsDateFrom?: string
+  recordsDateTo?: string
+  requestedTransferDate?: string
+  actualTransferDate?: string
+  reviewedByName?: string
+  reviewNotes?: string
+  acceptedByName?: string
+  rejectionReason?: string
+  createdAt: string
+}
+
+export interface CreateAccessionRequest {
+  sourceStructureId?: string
+  targetLocationId?: string
+  recordsDateFrom?: string
+  recordsDateTo?: string
+  requestedTransferDate?: string
+  notes?: string
+}
+
+export interface CirculationRecord {
+  id: string
+  physicalItemId: string
+  physicalItemTitle?: string
+  physicalItemBarcode?: string
+  borrowerId: string
+  borrowerName?: string
+  purpose?: string
+  checkedOutAt: string
+  dueDate: string
+  renewalCount: number
+  maxRenewals: number
+  returnedAt?: string
+  conditionAtCheckout: string
+  conditionAtReturn?: string
+  status: string
+  createdAt: string
+}
+
+export interface CheckoutRequest {
+  physicalItemId: string
+  borrowerId: string
+  borrowerStructureId?: string
+  purpose?: string
+  dueDate: string
+}
+
+export interface CustodyTransfer {
+  id: string
+  physicalItemId: string
+  fromUserName?: string
+  toUserName?: string
+  fromLocationName?: string
+  toLocationName?: string
+  transferType: string
+  conditionAtTransfer: string
+  isAcknowledged: boolean
+  acknowledgedAt?: string
+  transferredAt: string
+}
+
+// =============================================
+// Search Types
+// =============================================
+export interface SearchDocumentsRequest {
+  query: string
+  page?: number
+  pageSize?: number
+  classificationId?: string
+  documentTypeId?: string
+  state?: string
+  extension?: string
+  dateFrom?: string
+  dateTo?: string
+  sortBy?: string
+  sortDescending?: boolean
+  searchAfterToken?: string
+}
+
+export interface SearchResult {
+  items: SearchResultItem[]
+  totalCount: number
+  page: number
+  pageSize: number
+  searchAfterToken?: string
+  facets: FacetGroup[]
+  elapsedMs: number
+}
+
+export interface SearchResultItem {
+  id: string
+  entityType: string
+  name: string
+  description?: string
+  extension?: string
+  size: number
+  state?: string
+  classificationName?: string
+  documentTypeName?: string
+  folderPath?: string
+  createdAt: string
+  createdByName?: string
+  highlights: string[]
+  score: number
+}
+
+export interface FacetGroup {
+  field: string
+  values: FacetValue[]
+}
+
+export interface FacetValue {
+  value: string
+  label?: string
+  count: number
+}
+
+export interface SearchHealth {
+  isAvailable: boolean
+  provider: string
+  clusterName?: string
+  clusterStatus?: string
+  documentCount: number
+  pendingIndexCount: number
+}
+
+// =============================================
+// Access Review Types
+// =============================================
+export interface AccessReviewCampaign {
+  id: string
+  name: string
+  description?: string
+  status: string
+  startDate: string
+  dueDate: string
+  reviewerId?: string
+  totalEntries: number
+  completedEntries: number
+  createdAt: string
+}
+
+export interface CreateAccessReviewCampaign {
+  name: string
+  description?: string
+  dueDate: string
+  reviewerId?: string
+}
+
+export interface CampaignReviewEntry {
+  id: string
+  campaignId: string
+  userId: string
+  userName?: string
+  nodeType: string
+  nodeId: string
+  nodeName?: string
+  permissionLevel: number
+  permissionSource?: string
+  decision: string
+  comments?: string
+  decidedAt?: string
+}
+
+export interface SubmitAccessReview {
+  decision: string
+  comments?: string
+}
+
+export interface StalePermission {
+  userId: string
+  userName?: string
+  nodeType: string
+  nodeId: string
+  nodeName?: string
+  permissionLevel: number
+  lastLoginAt?: string
+  inactiveDays: number
+}
+
+// =============================================
+// System Health Types
+// =============================================
+export interface SystemHealth {
+  isHealthy: boolean
+  database: DatabaseHealth
+  search?: SearchHealth
+  storage: StorageHealth
+  recentJobs: JobExecutionSummary[]
+}
+
+export interface DatabaseHealth {
+  isAvailable: boolean
+  serverVersion?: string
+  totalDocuments: number
+  totalUsers: number
+  activeLegalHolds: number
+}
+
+export interface StorageHealth {
+  basePath: string
+  totalBytes: number
+  usedBytes: number
+  availableBytes: number
+  usagePercent: number
+}
+
+export interface JobExecutionSummary {
+  jobName: string
+  status: string
+  startedAt: string
+  completedAt?: string
+  durationMs?: number
+  itemsProcessed: number
+  itemsFailed: number
+  errorMessage?: string
+}
+
+// =============================================
+// Preservation Types
+// =============================================
+export interface PreservationMetadata {
+  id: string
+  documentId: string
+  versionNumber: number
+  formatName?: string
+  formatIdentifier?: string
+  formatRegistry?: string
+  isPreservationFormat: boolean
+  migrationTargetFormat?: string
+  identifiedAt: string
+  identificationTool?: string
+  creatingApplication?: string
+}
+
+export interface PreservationSummary {
+  totalDocuments: number
+  preservationCompliant: number
+  needsMigration: number
+  pdfACompliant: number
+  formatDistribution: FormatDistribution[]
+}
+
+export interface FormatDistribution {
+  extension: string
+  count: number
+  isPreservationFormat: boolean
+}
+
+export interface PreservationFormat {
+  extension: string
+  formatName: string
+  pronomPuid?: string
+  isApprovedForPreservation: boolean
+  migrationTargetFormat?: string
+  notes?: string
 }

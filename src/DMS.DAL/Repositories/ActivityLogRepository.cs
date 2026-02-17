@@ -7,9 +7,9 @@ namespace DMS.DAL.Repositories;
 
 public class ActivityLogRepository : IActivityLogRepository
 {
-    private readonly DmsDbContext _context;
+    private readonly AuditDbContext _context;
 
-    public ActivityLogRepository(DmsDbContext context)
+    public ActivityLogRepository(AuditDbContext context)
     {
         _context = context;
     }
@@ -18,23 +18,6 @@ public class ActivityLogRepository : IActivityLogRepository
     {
         return await _context.ActivityLogs
             .AsNoTracking()
-            .Join(_context.Users,
-                a => a.UserId,
-                u => u.Id,
-                (a, u) => new { Activity = a, User = u })
-            .Select(x => new ActivityLog
-            {
-                Id = x.Activity.Id,
-                Action = x.Activity.Action,
-                NodeType = x.Activity.NodeType,
-                NodeId = x.Activity.NodeId,
-                NodeName = x.Activity.NodeName,
-                Details = x.Activity.Details,
-                UserId = x.Activity.UserId,
-                UserName = x.Activity.UserName ?? x.User.DisplayName ?? x.User.Username,
-                IpAddress = x.Activity.IpAddress,
-                CreatedAt = x.Activity.CreatedAt
-            })
             .Where(a => a.NodeType == nodeType && a.NodeId == nodeId)
             .OrderByDescending(a => a.CreatedAt)
             .Skip(skip)
@@ -46,24 +29,7 @@ public class ActivityLogRepository : IActivityLogRepository
     {
         return await _context.ActivityLogs
             .AsNoTracking()
-            .Join(_context.Users,
-                a => a.UserId,
-                u => u.Id,
-                (a, u) => new { Activity = a, User = u })
-            .Where(x => x.Activity.UserId == userId)
-            .Select(x => new ActivityLog
-            {
-                Id = x.Activity.Id,
-                Action = x.Activity.Action,
-                NodeType = x.Activity.NodeType,
-                NodeId = x.Activity.NodeId,
-                NodeName = x.Activity.NodeName,
-                Details = x.Activity.Details,
-                UserId = x.Activity.UserId,
-                UserName = x.Activity.UserName ?? x.User.DisplayName ?? x.User.Username,
-                IpAddress = x.Activity.IpAddress,
-                CreatedAt = x.Activity.CreatedAt
-            })
+            .Where(a => a.UserId == userId)
             .OrderByDescending(a => a.CreatedAt)
             .Skip(skip)
             .Take(take)
@@ -74,23 +40,6 @@ public class ActivityLogRepository : IActivityLogRepository
     {
         return await _context.ActivityLogs
             .AsNoTracking()
-            .Join(_context.Users,
-                a => a.UserId,
-                u => u.Id,
-                (a, u) => new { Activity = a, User = u })
-            .Select(x => new ActivityLog
-            {
-                Id = x.Activity.Id,
-                Action = x.Activity.Action,
-                NodeType = x.Activity.NodeType,
-                NodeId = x.Activity.NodeId,
-                NodeName = x.Activity.NodeName,
-                Details = x.Activity.Details,
-                UserId = x.Activity.UserId,
-                UserName = x.Activity.UserName ?? x.User.DisplayName ?? x.User.Username,
-                IpAddress = x.Activity.IpAddress,
-                CreatedAt = x.Activity.CreatedAt
-            })
             .OrderByDescending(a => a.CreatedAt)
             .Take(take)
             .ToListAsync();
@@ -103,23 +52,9 @@ public class ActivityLogRepository : IActivityLogRepository
             .Where(a => a.NodeType == nodeType && a.NodeId == nodeId);
         var totalCount = await baseQuery.CountAsync();
         var items = await baseQuery
-            .Join(_context.Users, a => a.UserId, u => u.Id, (a, u) => new { Activity = a, User = u })
-            .OrderByDescending(x => x.Activity.CreatedAt)
+            .OrderByDescending(a => a.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(x => new ActivityLog
-            {
-                Id = x.Activity.Id,
-                Action = x.Activity.Action,
-                NodeType = x.Activity.NodeType,
-                NodeId = x.Activity.NodeId,
-                NodeName = x.Activity.NodeName,
-                Details = x.Activity.Details,
-                UserId = x.Activity.UserId,
-                UserName = x.Activity.UserName ?? x.User.DisplayName ?? x.User.Username,
-                IpAddress = x.Activity.IpAddress,
-                CreatedAt = x.Activity.CreatedAt
-            })
             .ToListAsync();
         return new PagedResult<ActivityLog> { Items = items, TotalCount = totalCount, PageNumber = page, PageSize = pageSize };
     }
@@ -131,23 +66,9 @@ public class ActivityLogRepository : IActivityLogRepository
             .Where(a => a.UserId == userId);
         var totalCount = await baseQuery.CountAsync();
         var items = await baseQuery
-            .Join(_context.Users, a => a.UserId, u => u.Id, (a, u) => new { Activity = a, User = u })
-            .OrderByDescending(x => x.Activity.CreatedAt)
+            .OrderByDescending(a => a.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(x => new ActivityLog
-            {
-                Id = x.Activity.Id,
-                Action = x.Activity.Action,
-                NodeType = x.Activity.NodeType,
-                NodeId = x.Activity.NodeId,
-                NodeName = x.Activity.NodeName,
-                Details = x.Activity.Details,
-                UserId = x.Activity.UserId,
-                UserName = x.Activity.UserName ?? x.User.DisplayName ?? x.User.Username,
-                IpAddress = x.Activity.IpAddress,
-                CreatedAt = x.Activity.CreatedAt
-            })
             .ToListAsync();
         return new PagedResult<ActivityLog> { Items = items, TotalCount = totalCount, PageNumber = page, PageSize = pageSize };
     }
@@ -158,31 +79,48 @@ public class ActivityLogRepository : IActivityLogRepository
         var baseQuery = _context.ActivityLogs.AsNoTracking();
         var totalCount = await baseQuery.CountAsync();
         var items = await baseQuery
-            .Join(_context.Users, a => a.UserId, u => u.Id, (a, u) => new { Activity = a, User = u })
-            .OrderByDescending(x => x.Activity.CreatedAt)
+            .OrderByDescending(a => a.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(x => new ActivityLog
-            {
-                Id = x.Activity.Id,
-                Action = x.Activity.Action,
-                NodeType = x.Activity.NodeType,
-                NodeId = x.Activity.NodeId,
-                NodeName = x.Activity.NodeName,
-                Details = x.Activity.Details,
-                UserId = x.Activity.UserId,
-                UserName = x.Activity.UserName ?? x.User.DisplayName ?? x.User.Username,
-                IpAddress = x.Activity.IpAddress,
-                CreatedAt = x.Activity.CreatedAt
-            })
             .ToListAsync();
         return new PagedResult<ActivityLog> { Items = items, TotalCount = totalCount, PageNumber = page, PageSize = pageSize };
+    }
+
+    public async Task<string?> GetLastEntryHashAsync()
+    {
+        return await _context.ActivityLogs
+            .AsNoTracking()
+            .OrderByDescending(a => a.CreatedAt)
+            .Select(a => a.EntryHash)
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<IEnumerable<ActivityLog>> SearchAsync(DateTime? dateFrom, DateTime? dateTo, string? action, string? nodeType, Guid? userId)
+    {
+        var query = _context.ActivityLogs.AsNoTracking().AsQueryable();
+
+        if (dateFrom.HasValue)
+            query = query.Where(a => a.CreatedAt >= dateFrom.Value);
+        if (dateTo.HasValue)
+            query = query.Where(a => a.CreatedAt <= dateTo.Value);
+        if (!string.IsNullOrEmpty(action))
+            query = query.Where(a => a.Action == action);
+        if (!string.IsNullOrEmpty(nodeType) && Enum.TryParse<NodeType>(nodeType, true, out var parsedNodeType))
+            query = query.Where(a => a.NodeType == parsedNodeType);
+        if (userId.HasValue)
+            query = query.Where(a => a.UserId == userId.Value);
+
+        return await query
+            .OrderByDescending(a => a.CreatedAt)
+            .Take(10000)
+            .ToListAsync();
     }
 
     public async Task<Guid> CreateAsync(ActivityLog entity)
     {
         entity.Id = Guid.NewGuid();
-        entity.CreatedAt = DateTime.Now;
+        if (entity.CreatedAt == default)
+            entity.CreatedAt = DateTime.Now;
 
         _context.ActivityLogs.Add(entity);
         await _context.SaveChangesAsync();

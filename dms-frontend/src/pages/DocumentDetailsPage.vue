@@ -3,16 +3,20 @@ import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { Document, DocumentVersion, WorkingCopy, VersionComparison } from '@/types'
 import { CheckInType, DiffType } from '@/types'
-import { documentsApi, permissionsApi, activityLogsApi, contentTypeDefinitionsApi, foldersApi, cabinetsApi, referenceDataApi, privacyLevelsApi } from '@/api/client'
-import type { PrivacyLevel, Classification, Importance, DocumentType as DocType } from '@/types'
+import { documentsApi, permissionsApi, activityLogsApi, contentTypeDefinitionsApi, foldersApi, cabinetsApi, referenceDataApi, privacyLevelsApi, retentionPoliciesApi, legalHoldsApi, integrityApi, documentStateApi } from '@/api/client'
+import type { PrivacyLevel, Classification, Importance, DocumentType as DocType, DocumentRetention, LegalHold, IntegrityVerificationLog, IntegrityVerificationResult } from '@/types'
 import { PermissionLevels } from '@/types'
 import { UiSelect, UiDatePicker } from '@/components/ui'
 import { PermissionManagementModal } from '@/components/permissions'
 import DocumentViewer from '@/components/documents/DocumentViewer.vue'
 import InlineDocumentPreview from '@/components/documents/InlineDocumentPreview.vue'
+import DocumentLifecycleState from '@/components/common/DocumentLifecycleState.vue'
 
 const route = useRoute()
 const router = useRouter()
+
+// Share token from link sharing (bypasses folder permissions)
+const shareToken = computed(() => route.query.shareToken as string | undefined)
 
 const document = ref<Document | null>(null)
 const versions = ref<DocumentVersion[]>([])
@@ -23,7 +27,7 @@ const isLoading = ref(true)
 const error = ref<string | null>(null)
 
 // Sidebar tab
-const sidebarTab = ref<'info' | 'meta' | 'versions' | 'activity' | 'edit'>('info')
+const sidebarTab = ref<'info' | 'meta' | 'versions' | 'activity' | 'edit' | 'compliance'>('info')
 
 // Working Copy (draft state during checkout)
 const workingCopy = ref<WorkingCopy | null>(null)
@@ -111,6 +115,16 @@ const showPermissionModal = ref(false)
 // Document Preview (full viewer modal)
 const showPreview = ref(false)
 
+// Compliance tab data
+const complianceLoaded = ref(false)
+const complianceLoading = ref(false)
+const docRetentions = ref<DocumentRetention[]>([])
+const docLegalHolds = ref<LegalHold[]>([])
+const integrityHistory = ref<IntegrityVerificationLog[]>([])
+const stateHistory = ref<any[]>([])
+const isVerifying = ref(false)
+const verifyResult = ref<IntegrityVerificationResult | null>(null)
+
 onMounted(async () => {
   await loadDocument()
 })
@@ -120,8 +134,8 @@ async function loadDocument() {
   isLoading.value = true
   try {
     const [docResponse, versionsResponse, metadataResponse] = await Promise.all([
-      documentsApi.getById(id),
-      documentsApi.getVersions(id),
+      documentsApi.getById(id, shareToken.value),
+      documentsApi.getVersions(id, shareToken.value),
       contentTypeDefinitionsApi.getDocumentMetadata(id)
     ])
     document.value = docResponse.data
@@ -431,6 +445,42 @@ function handleSidebarTabChange(tab: typeof sidebarTab.value) {
   if (tab === 'edit' && classifications.value.length === 0) {
     loadReferenceData()
   }
+  if (tab === 'compliance' && !complianceLoaded.value) {
+    loadComplianceData()
+  }
+}
+
+async function loadComplianceData() {
+  if (!document.value) return
+  complianceLoading.value = true
+  try {
+    const [retRes, holdsRes, histRes, stateRes] = await Promise.allSettled([
+      retentionPoliciesApi.getDocumentRetentions(document.value.id),
+      legalHoldsApi.getDocumentHolds(document.value.id),
+      integrityApi.getHistory(document.value.id),
+      documentStateApi.getHistory(document.value.id)
+    ])
+    if (retRes.status === 'fulfilled') docRetentions.value = retRes.value.data || []
+    if (holdsRes.status === 'fulfilled') docLegalHolds.value = holdsRes.value.data || []
+    if (histRes.status === 'fulfilled') integrityHistory.value = histRes.value.data || []
+    if (stateRes.status === 'fulfilled') stateHistory.value = stateRes.value.data || []
+    complianceLoaded.value = true
+  } catch { /* silently fail */ }
+  finally { complianceLoading.value = false }
+}
+
+async function verifyDocumentIntegrity() {
+  if (!document.value) return
+  isVerifying.value = true
+  verifyResult.value = null
+  try {
+    const res = await integrityApi.verifyDocument(document.value.id)
+    verifyResult.value = res.data
+    // Refresh history after verification
+    const histRes = await integrityApi.getHistory(document.value.id)
+    integrityHistory.value = histRes.data || []
+  } catch { /* silently fail */ }
+  finally { isVerifying.value = false }
 }
 
 function openPermissions() {
@@ -628,7 +678,7 @@ function handleFileSelect(event: Event) {
 async function handleDownload(version?: number) {
   if (!document.value) return
   try {
-    const response = await documentsApi.download(document.value.id, version)
+    const response = await documentsApi.download(document.value.id, version, shareToken.value)
     const url = window.URL.createObjectURL(new Blob([response.data]))
     const link = window.document.createElement('a')
     link.href = url
@@ -648,6 +698,20 @@ async function handleDelete() {
     router.push('/explorer')
   } catch (err: any) {
     alert(err.response?.data?.errors?.[0] || 'Delete failed')
+  }
+}
+
+// Lifecycle State Transition
+async function handleStateTransitioned(updatedDoc: any) {
+  if (document.value) {
+    document.value = { ...document.value, ...updatedDoc }
+    // Refresh state history if compliance tab was loaded
+    if (complianceLoaded.value) {
+      try {
+        const res = await documentStateApi.getHistory(document.value.id)
+        stateHistory.value = res.data || []
+      } catch { /* silently fail */ }
+    }
   }
 }
 
@@ -874,6 +938,18 @@ watch(isEditMode, (newVal) => {
                 <span class="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">
                   v{{ document.currentMajorVersion || 1 }}.{{ document.currentMinorVersion || 0 }}
                 </span>
+                <span
+                  v-if="document.state && document.state !== 'Draft'"
+                  class="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-full"
+                  :class="{
+                    'bg-teal/20 text-teal border border-teal/30': document.state === 'Active',
+                    'bg-blue-500/20 text-blue-400 border border-blue-500/30': document.state === 'Record',
+                    'bg-amber-500/20 text-amber-400 border border-amber-500/30': document.state === 'Archived',
+                    'bg-rose-500/20 text-rose-400 border border-rose-500/30': document.state === 'Disposed'
+                  }"
+                >
+                  {{ document.state }}
+                </span>
               </div>
               <!-- Folder breadcrumb path -->
               <div v-if="cabinetName || folderBreadcrumb.length > 0" class="flex items-center gap-1 mt-1 text-[11px] text-zinc-500">
@@ -1029,6 +1105,15 @@ watch(isEditMode, (newVal) => {
               Edit
               <div v-if="sidebarTab === 'edit'" class="absolute bottom-0 left-1 right-1 h-0.5 bg-teal rounded-full"></div>
             </button>
+            <button
+              @click="handleSidebarTabChange('compliance')"
+              class="px-3 py-2.5 flex items-center gap-1.5 transition-colors relative text-xs font-medium"
+              :class="sidebarTab === 'compliance' ? 'text-teal' : 'text-zinc-400 hover:text-zinc-600'"
+            >
+              <span class="material-symbols-outlined text-base">verified_user</span>
+              Compliance
+              <div v-if="sidebarTab === 'compliance'" class="absolute bottom-0 left-1 right-1 h-0.5 bg-teal rounded-full"></div>
+            </button>
           </div>
 
           <!-- Scrollable tab content -->
@@ -1069,6 +1154,18 @@ watch(isEditMode, (newVal) => {
                       </span>
                     </dd>
                   </div>
+                  <!-- Lifecycle State (ISO 15489) -->
+                  <div class="border-t border-zinc-100 dark:border-border-dark pt-3 mt-1">
+                    <dt class="text-xs text-zinc-500 mb-2">Lifecycle State</dt>
+                    <dd>
+                      <DocumentLifecycleState
+                        :document="document"
+                        :can-transition="canWrite"
+                        @transitioned="handleStateTransitioned"
+                      />
+                    </dd>
+                  </div>
+
                   <div class="flex items-center justify-between">
                     <dt class="text-xs text-zinc-500">Created</dt>
                     <dd class="text-sm font-medium text-zinc-800 dark:text-white text-right">
@@ -1594,6 +1691,150 @@ watch(isEditMode, (newVal) => {
                   </div>
                 </div>
               </div>
+            </div>
+
+            <!-- ============ COMPLIANCE TAB ============ -->
+            <div v-else-if="sidebarTab === 'compliance'" class="p-4 space-y-5">
+              <!-- Loading state -->
+              <div v-if="complianceLoading" class="flex items-center justify-center py-8 gap-2">
+                <div class="w-5 h-5 border-2 border-teal border-t-transparent rounded-full animate-spin"></div>
+                <span class="text-xs text-zinc-500">Loading compliance data...</span>
+              </div>
+
+              <template v-else>
+                <!-- State History Section -->
+                <div>
+                  <h3 class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3">State History</h3>
+                  <div v-if="stateHistory.length === 0" class="p-3 bg-zinc-50 dark:bg-surface-dark rounded-lg text-center">
+                    <span class="material-symbols-outlined text-zinc-300 text-2xl">history</span>
+                    <p class="text-xs text-zinc-400 mt-1">No state transitions recorded</p>
+                  </div>
+                  <div v-else class="relative pl-4 border-l-2 border-zinc-200 dark:border-border-dark space-y-3">
+                    <div v-for="entry in stateHistory.slice(0, 10)" :key="entry.id" class="relative">
+                      <!-- Timeline dot -->
+                      <div class="absolute -left-[21px] top-1 w-3 h-3 rounded-full border-2 border-white dark:border-background-dark"
+                        :class="entry.toState === 'Disposed' ? 'bg-rose-400' : entry.toState === 'OnHold' ? 'bg-purple-400' : entry.toState === 'Active' ? 'bg-teal' : 'bg-zinc-400'">
+                      </div>
+                      <div class="px-3 py-2 bg-zinc-50 dark:bg-surface-dark rounded-lg border border-zinc-100 dark:border-border-dark">
+                        <div class="flex items-center gap-1.5">
+                          <span class="text-[10px] font-medium text-zinc-500">{{ entry.fromState || '—' }}</span>
+                          <span class="material-symbols-outlined text-zinc-400" style="font-size: 12px;">arrow_forward</span>
+                          <span class="text-[10px] font-semibold text-zinc-700 dark:text-zinc-200">{{ entry.toState }}</span>
+                        </div>
+                        <p v-if="entry.reason" class="text-[10px] text-zinc-500 mt-0.5 italic">{{ entry.reason }}</p>
+                        <div class="flex items-center gap-2 mt-1 text-[9px] text-zinc-400">
+                          <span>{{ entry.changedByName || 'System' }}</span>
+                          <span>&middot;</span>
+                          <span>{{ new Date(entry.changedAt).toLocaleString() }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Retention Policies Section -->
+                <div>
+                  <h3 class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3">Retention Policies</h3>
+                  <div v-if="docRetentions.length === 0" class="p-3 bg-zinc-50 dark:bg-surface-dark rounded-lg text-center">
+                    <span class="material-symbols-outlined text-zinc-300 text-2xl">schedule</span>
+                    <p class="text-xs text-zinc-400 mt-1">No retention policies applied</p>
+                  </div>
+                  <div v-else class="space-y-2">
+                    <div v-for="ret in docRetentions" :key="ret.id" class="p-3 bg-zinc-50 dark:bg-surface-dark rounded-lg border border-zinc-100 dark:border-border-dark">
+                      <div class="flex items-center gap-2 mb-1">
+                        <span class="material-symbols-outlined text-teal text-sm">schedule</span>
+                        <span class="text-xs font-semibold text-zinc-700 dark:text-zinc-200">{{ ret.policyName || 'Policy' }}</span>
+                        <span class="ml-auto px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-full"
+                          :class="ret.status === 'Active' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                            : ret.status === 'OnHold' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                            : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400'">
+                          {{ ret.status }}
+                        </span>
+                      </div>
+                      <div class="text-[10px] text-zinc-500 space-y-0.5">
+                        <p>Started: {{ ret.retentionStartDate ? new Date(ret.retentionStartDate).toLocaleDateString() : '-' }}</p>
+                        <p>Expires: {{ ret.expirationDate ? new Date(ret.expirationDate).toLocaleDateString() : '-' }}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Legal Holds Section -->
+                <div>
+                  <h3 class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3">Legal Holds</h3>
+                  <div v-if="docLegalHolds.length === 0" class="p-3 bg-zinc-50 dark:bg-surface-dark rounded-lg text-center">
+                    <span class="material-symbols-outlined text-zinc-300 text-2xl">gavel</span>
+                    <p class="text-xs text-zinc-400 mt-1">No legal holds on this document</p>
+                  </div>
+                  <div v-else class="space-y-2">
+                    <div v-for="hold in docLegalHolds" :key="hold.id"
+                      class="p-3 rounded-lg border"
+                      :class="hold.status === 'Active' ? 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800/30' : 'bg-zinc-50 dark:bg-surface-dark border-zinc-100 dark:border-border-dark'">
+                      <div class="flex items-center gap-2 mb-1">
+                        <span class="material-symbols-outlined text-sm" :class="hold.status === 'Active' ? 'text-amber-600' : 'text-zinc-400'">gavel</span>
+                        <span class="text-xs font-semibold text-zinc-700 dark:text-zinc-200">{{ hold.name }}</span>
+                        <span class="ml-auto px-1.5 py-0.5 text-[9px] font-bold uppercase rounded-full"
+                          :class="hold.status === 'Active' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400'">
+                          {{ hold.status }}
+                        </span>
+                      </div>
+                      <div class="text-[10px] text-zinc-500 space-y-0.5">
+                        <p v-if="hold.caseReference">Case: {{ hold.caseReference }}</p>
+                        <p>From: {{ new Date(hold.effectiveFrom).toLocaleDateString() }}</p>
+                        <p v-if="hold.effectiveUntil">Until: {{ new Date(hold.effectiveUntil).toLocaleDateString() }}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Integrity Verification Section -->
+                <div>
+                  <h3 class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-3">Integrity Verification</h3>
+                  <button
+                    @click="verifyDocumentIntegrity"
+                    :disabled="isVerifying"
+                    class="w-full mb-3 py-2 flex items-center justify-center gap-2 bg-teal hover:bg-teal/90 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
+                  >
+                    <span v-if="isVerifying" class="material-symbols-outlined text-sm animate-spin">refresh</span>
+                    <span v-else class="material-symbols-outlined text-sm">verified_user</span>
+                    {{ isVerifying ? 'Verifying...' : 'Verify Now' }}
+                  </button>
+
+                  <!-- Verification result -->
+                  <div v-if="verifyResult" class="mb-3 p-3 rounded-lg border"
+                    :class="verifyResult.isValid ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800/30' : 'bg-rose-50 dark:bg-rose-900/10 border-rose-200 dark:border-rose-800/30'">
+                    <div class="flex items-center gap-2">
+                      <span class="material-symbols-outlined text-base" :class="verifyResult.isValid ? 'text-emerald-600' : 'text-rose-600'">
+                        {{ verifyResult.isValid ? 'check_circle' : 'error' }}
+                      </span>
+                      <span class="text-xs font-semibold" :class="verifyResult.isValid ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'">
+                        {{ verifyResult.isValid ? 'Integrity Verified' : 'Integrity Check Failed' }}
+                      </span>
+                    </div>
+                    <p class="text-[10px] text-zinc-500 mt-1">{{ verifyResult.algorithm }} &middot; {{ new Date(verifyResult.verifiedAt).toLocaleString() }}</p>
+                  </div>
+
+                  <!-- Verification history -->
+                  <div v-if="integrityHistory.length > 0" class="space-y-1.5">
+                    <div v-for="log in integrityHistory.slice(0, 5)" :key="log.id" class="flex items-center gap-2 px-3 py-2 bg-zinc-50 dark:bg-surface-dark rounded-lg">
+                      <span class="material-symbols-outlined text-sm" :class="log.isValid ? 'text-emerald-500' : 'text-rose-500'">
+                        {{ log.isValid ? 'check_circle' : 'cancel' }}
+                      </span>
+                      <div class="flex-1 min-w-0">
+                        <p class="text-[10px] font-medium text-zinc-600 dark:text-zinc-300">{{ log.verificationType }}</p>
+                        <p class="text-[10px] text-zinc-400">{{ new Date(log.verifiedAt).toLocaleString() }}</p>
+                      </div>
+                      <span class="text-[9px] font-bold uppercase rounded-full px-1.5 py-0.5"
+                        :class="log.isValid ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'">
+                        {{ log.isValid ? 'Pass' : 'Fail' }}
+                      </span>
+                    </div>
+                  </div>
+                  <div v-else class="p-3 bg-zinc-50 dark:bg-surface-dark rounded-lg text-center">
+                    <p class="text-xs text-zinc-400">No verification history yet</p>
+                  </div>
+                </div>
+              </template>
             </div>
           </div>
         </aside>

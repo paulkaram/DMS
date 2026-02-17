@@ -11,5 +11,7 @@ public interface IActivityLogRepository
     Task<PagedResult<ActivityLog>> GetByNodePagedAsync(NodeType nodeType, Guid nodeId, int page = 1, int pageSize = 50);
     Task<PagedResult<ActivityLog>> GetByUserPagedAsync(Guid userId, int page = 1, int pageSize = 50);
     Task<PagedResult<ActivityLog>> GetRecentPagedAsync(int page = 1, int pageSize = 50);
+    Task<string?> GetLastEntryHashAsync();
+    Task<IEnumerable<ActivityLog>> SearchAsync(DateTime? dateFrom, DateTime? dateTo, string? action, string? nodeType, Guid? userId);
     Task<Guid> CreateAsync(ActivityLog entity);
 }

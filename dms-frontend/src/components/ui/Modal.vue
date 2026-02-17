@@ -15,7 +15,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   modelValue: false,
   size: 'md',
-  closeOnOverlay: true,
+  closeOnOverlay: false,
   closeOnEsc: true,
   showClose: true,
   persistent: false,

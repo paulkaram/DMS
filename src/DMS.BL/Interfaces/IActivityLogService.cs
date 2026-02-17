@@ -11,4 +11,8 @@ public interface IActivityLogService
     Task<ServiceResult<PagedResultDto<ActivityLogDto>>> GetByUserPagedAsync(Guid userId, int page = 1, int pageSize = 50);
     Task<ServiceResult<PagedResultDto<ActivityLogDto>>> GetRecentPagedAsync(int page = 1, int pageSize = 50);
     Task LogActivityAsync(string action, string? nodeType, Guid? nodeId, string? nodeName, string? details, Guid? userId, string? userName, string? ipAddress);
+    Task LogActivityWithContextAsync(string action, string? nodeType, Guid? nodeId, string? nodeName, string? details, Guid? userId, string? userName, string? ipAddress, string? userAgent);
+    Task<ServiceResult<List<ActivityLogDto>>> SearchAsync(AuditExportQueryDto query);
+    Task<ServiceResult<byte[]>> ExportToCsvAsync(AuditExportQueryDto query);
+    Task<ServiceResult<AuditChainVerificationResult>> VerifyAuditChainAsync(DateTime? from, DateTime? to);
 }

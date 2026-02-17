@@ -1,3 +1,4 @@
+using DMS.Api.BackgroundJobs;
 using DMS.Api.Middleware;
 using DMS.Api.Validation;
 using DMS.BL;
@@ -25,10 +26,22 @@ builder.Host.UseSerilog();
 // Add services to the container
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+var auditConnectionString = builder.Configuration.GetConnectionString("AuditConnection");
 
 // Register DAL and BL layers
-builder.Services.AddDataAccessLayer(connectionString);
+builder.Services.AddDataAccessLayer(connectionString, auditConnectionString);
 builder.Services.AddBusinessLogicLayer();
+
+// WORM Storage Provider (ISO 14721 OAIS compliance)
+var wormConfig = builder.Configuration.GetSection("WormStorage").Get<DMS.BL.Interfaces.WormStorageConfig>()
+    ?? new DMS.BL.Interfaces.WormStorageConfig();
+if (wormConfig.Enabled)
+{
+    builder.Services.AddSingleton<DMS.BL.Interfaces.IStorageProvider>(sp =>
+        new DMS.BL.Services.FilesystemWormProvider(
+            wormConfig.BasePath,
+            sp.GetRequiredService<ILoggerFactory>().CreateLogger<DMS.BL.Services.FilesystemWormProvider>()));
+}
 
 // Scan configuration
 builder.Services.Configure<DMS.BL.DTOs.ScanOptions>(
@@ -95,6 +108,9 @@ builder.Services.AddControllers(options =>
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddScoped<ValidationFilter>();
 
+// HttpContextAccessor (for auto-capturing IP address and UserAgent in audit logs)
+builder.Services.AddHttpContextAccessor();
+
 // Response Compression
 builder.Services.AddResponseCompression(options =>
 {
@@ -123,6 +139,39 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromMinutes(1)
             }));
 });
+
+// OpenSearch (conditional - falls back to SQL search if not configured)
+var openSearchConfig = builder.Configuration.GetSection(DMS.BL.Interfaces.OpenSearchConfig.SectionName);
+if (openSearchConfig.Exists() && !string.IsNullOrWhiteSpace(openSearchConfig["Urls"]))
+{
+    builder.Services.Configure<DMS.BL.Interfaces.OpenSearchConfig>(openSearchConfig);
+    builder.Services.AddHttpClient<DMS.BL.Interfaces.ISearchService, DMS.BL.Services.OpenSearchService>(client =>
+    {
+        var urls = openSearchConfig["Urls"] ?? "http://localhost:9200";
+        client.BaseAddress = new Uri(urls.Split(',')[0].Trim());
+        var username = openSearchConfig["Username"];
+        var password = openSearchConfig["Password"];
+        if (!string.IsNullOrEmpty(username))
+        {
+            var credentials = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{username}:{password}"));
+            client.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", credentials);
+        }
+    });
+    // Override the SQL fallback registered in BL DependencyInjection
+}
+
+// Background Jobs (built-in .NET BackgroundService)
+builder.Services.AddHostedService<RetentionEvaluationJob>();
+builder.Services.AddHostedService<IntegrityVerificationJob>();
+builder.Services.AddHostedService<StaleCheckoutCleanupJob>();
+builder.Services.AddHostedService<SearchIndexingJob>();
+builder.Services.AddHostedService<OcrIndexingJob>();
+builder.Services.AddHostedService<PdfAConversionJob>();
+builder.Services.AddHostedService<OverdueCirculationJob>();
+builder.Services.AddHostedService<LegalHoldExpirationJob>();
+builder.Services.AddHostedService<PermissionExpirationJob>();
+builder.Services.AddHostedService<AccessReviewReminderJob>();
 
 // Configure Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();

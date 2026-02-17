@@ -220,6 +220,35 @@ public class FileValidationService : IFileValidationService
     }
 
     /// <summary>
+    /// Checks for PDF/A compliance by looking for XMP metadata markers in the PDF.
+    /// This is a lightweight check — looks for pdfaid:part in XMP metadata.
+    /// For full verification, an external tool like VeraPDF would be needed.
+    /// </summary>
+    public async Task<bool> CheckPdfAComplianceAsync(Stream pdfStream)
+    {
+        var originalPosition = pdfStream.Position;
+        pdfStream.Position = 0;
+
+        try
+        {
+            // Read the PDF content as text to search for PDF/A XMP metadata markers
+            using var reader = new StreamReader(pdfStream, System.Text.Encoding.Latin1, leaveOpen: true);
+            var content = await reader.ReadToEndAsync();
+
+            // PDF/A files contain XMP metadata with pdfaid namespace
+            // Look for: <pdfaid:part>1</pdfaid:part> (PDF/A-1)
+            //           <pdfaid:part>2</pdfaid:part> (PDF/A-2)
+            //           <pdfaid:part>3</pdfaid:part> (PDF/A-3)
+            return content.Contains("pdfaid:part", StringComparison.OrdinalIgnoreCase) ||
+                   content.Contains("PDF/A", StringComparison.Ordinal);
+        }
+        finally
+        {
+            pdfStream.Position = originalPosition;
+        }
+    }
+
+    /// <summary>
     /// Checks if the file content appears to be an executable (PE format).
     /// This is used to detect disguised executables.
     /// </summary>

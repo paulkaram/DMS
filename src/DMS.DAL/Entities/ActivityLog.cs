@@ -11,6 +11,13 @@ public class ActivityLog
     public Guid? UserId { get; set; }
     public string? UserName { get; set; }
     public string? IpAddress { get; set; }
+    public string? UserAgent { get; set; }
+    public string? DeviceType { get; set; }
+
+    // Tamper-detection hash chain (SHA-256)
+    public string? EntryHash { get; set; }
+    public string? PreviousEntryHash { get; set; }
+
     public DateTime CreatedAt { get; set; }
 }
 
@@ -30,4 +37,5 @@ public static class ActivityActions
     public const string PermissionRevoked = "PermissionRevoked";
     public const string VersionCreated = "VersionCreated";
     public const string VersionRestored = "VersionRestored";
+    public const string StateTransitioned = "StateTransitioned";
 }

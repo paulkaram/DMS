@@ -250,6 +250,91 @@ const router = createRouter({
       name: 'admin-privacy-levels',
       component: () => import('@/pages/admin/PrivacyLevelsPage.vue'),
       meta: { requiresAuth: true }
+    },
+    {
+      path: '/shared/:token',
+      name: 'shared-link',
+      component: () => import('@/pages/SharedLinkPage.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/admin/compliance',
+      name: 'admin-compliance',
+      component: () => import('@/pages/admin/ComplianceDashboardPage.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/admin/legal-holds',
+      name: 'admin-legal-holds',
+      component: () => import('@/pages/admin/LegalHoldsPage.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/admin/system-health',
+      name: 'admin-system-health',
+      component: () => import('@/pages/admin/SystemHealthPage.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/admin/access-review',
+      name: 'admin-access-review',
+      component: () => import('@/pages/admin/AccessReviewPage.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/admin/preservation',
+      name: 'admin-preservation',
+      component: () => import('@/pages/admin/PreservationPage.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/physical-archive',
+      name: 'physical-archive',
+      component: () => import('@/pages/PhysicalArchivePage.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/physical-archive/items/:id',
+      name: 'physical-item-detail',
+      component: () => import('@/pages/PhysicalItemDetailPage.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/accessions',
+      name: 'accessions',
+      component: () => import('@/pages/AccessionRequestsPage.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/circulation',
+      name: 'circulation',
+      component: () => import('@/pages/CirculationPage.vue'),
+      meta: { requiresAuth: true }
+    },
+    // Hub Pages
+    {
+      path: '/my-workspace',
+      name: 'my-workspace',
+      component: () => import('@/pages/MyWorkspacePage.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/records',
+      name: 'records',
+      component: () => import('@/pages/RecordsManagementPage.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/records/disposal',
+      name: 'records-disposal',
+      component: () => import('@/pages/admin/DisposalManagementPage.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/archive',
+      name: 'archive',
+      component: () => import('@/pages/ArchiveHubPage.vue'),
+      meta: { requiresAuth: true }
     }
   ]
 })

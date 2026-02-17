@@ -24,6 +24,13 @@ public class ReferenceDataController : BaseApiController
         return result.Success ? Ok(result.Data) : BadRequest(result.Errors);
     }
 
+    [HttpGet("classifications/tree")]
+    public async Task<IActionResult> GetClassificationTree([FromQuery] string? language)
+    {
+        var result = await _referenceDataService.GetClassificationTreeAsync(language);
+        return result.Success ? Ok(result.Data) : BadRequest(result.Errors);
+    }
+
     [HttpGet("classifications/{id:guid}")]
     public async Task<IActionResult> GetClassification(Guid id)
     {

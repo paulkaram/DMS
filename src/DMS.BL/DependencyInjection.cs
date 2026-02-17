@@ -55,6 +55,23 @@ public static class DependencyInjection
         services.AddScoped<ILegalHoldService, LegalHoldService>();
         services.AddScoped<IDisposalService, DisposalService>();
 
+        // Document State Machine (NCAR governance)
+        services.AddScoped<IDocumentStateService, DocumentStateService>();
+
+        // Retention Engine (event-based triggers, legal hold suspension)
+        services.AddScoped<IRetentionEngineService, RetentionEngineService>();
+
+        // Security Hardening
+        services.AddScoped<IKeyManagementService, KeyManagementService>();
+        services.AddScoped<IAccessReviewService, AccessReviewService>();
+
+        // Physical Archive Module
+        services.AddScoped<IPhysicalLocationService, PhysicalLocationService>();
+        services.AddScoped<IPhysicalItemService, PhysicalItemService>();
+        services.AddScoped<IAccessionService, AccessionService>();
+        services.AddScoped<ICirculationService, CirculationService>();
+        services.AddScoped<ICustodyService, CustodyService>();
+
         // Enterprise Permission System Services
         services.AddScoped<IStructureService, StructureService>();
 
@@ -85,6 +102,21 @@ public static class DependencyInjection
 
         // Workflow Statuses
         services.AddScoped<IWorkflowStatusService, WorkflowStatusService>();
+
+        // Security Services (NCA ECC compliance)
+        services.AddScoped<IWatermarkService, WatermarkService>();
+
+        // Archival & Preservation (ISO 14721 OAIS)
+        services.AddScoped<IArchivalExportService, ArchivalExportService>();
+
+        // Search (SQL fallback - OpenSearch registered conditionally in Program.cs)
+        services.AddScoped<ISearchService, SqlSearchService>();
+
+        // Preservation (ISO 14721 OAIS format management)
+        services.AddScoped<IPreservationService, PreservationService>();
+
+        // System Health & Monitoring
+        services.AddScoped<ISystemHealthService, SystemHealthService>();
 
         return services;
     }

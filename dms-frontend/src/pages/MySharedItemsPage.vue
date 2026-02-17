@@ -111,7 +111,10 @@ async function extendExpiry() {
 }
 
 async function revokeShare(item: MySharedItem) {
-  if (!confirm(`Revoke sharing for "${item.documentName}" with ${item.sharedWithUserName}?`)) return
+  const msg = item.isLinkShare
+    ? `Revoke the share link for "${item.documentName}"? Anyone with the link will lose access.`
+    : `Revoke sharing for "${item.documentName}" with ${item.sharedWithUserName}?`
+  if (!confirm(msg)) return
 
   try {
     await sharesApi.revoke(item.shareId)
@@ -388,7 +391,7 @@ const displayedItems = computed(() => {
                   {{ getPermissionLabel(item.permissionLevel) }}
                 </span>
                 <span class="truncate flex items-center gap-1.5">
-                  <span class="material-symbols-outlined text-sm text-zinc-400">person</span>
+                  <span class="material-symbols-outlined text-sm text-zinc-400">{{ item.isLinkShare ? 'link' : 'person' }}</span>
                   {{ item.sharedWithUserName }}
                 </span>
               </div>

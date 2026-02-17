@@ -103,3 +103,68 @@ public class DisposalBatchResult
     public DateTime CompletedAt { get; set; }
     public TimeSpan Duration => CompletedAt - StartedAt;
 }
+
+// --- Batch Disposal DTOs ---
+
+/// <summary>
+/// DTO for initiating a batch disposal request.
+/// </summary>
+public class InitiateBatchDisposalDto
+{
+    public List<Guid> DocumentIds { get; set; } = new();
+    public string DisposalMethod { get; set; } = "HardDelete";
+    public string? Reason { get; set; }
+    public string? LegalBasis { get; set; }
+    public string? BatchReference { get; set; }
+}
+
+/// <summary>
+/// DTO for submitting a disposal approval decision.
+/// </summary>
+public class SubmitDisposalApprovalDto
+{
+    public string Decision { get; set; } = "Approved";
+    public string? Comments { get; set; }
+}
+
+/// <summary>
+/// Full disposal request detail DTO with documents and approvals.
+/// </summary>
+public class DisposalRequestDetailDto
+{
+    public Guid Id { get; set; }
+    public string RequestNumber { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+    public string? BatchReference { get; set; }
+    public string DisposalMethod { get; set; } = string.Empty;
+    public string? Reason { get; set; }
+    public string? LegalBasis { get; set; }
+    public int RequiredApprovalLevels { get; set; }
+    public int CurrentApprovalLevel { get; set; }
+    public Guid RequestedBy { get; set; }
+    public DateTime RequestedAt { get; set; }
+    public DateTime? ExecutedAt { get; set; }
+    public List<DisposalRequestDocumentDto> Documents { get; set; } = new();
+    public List<DisposalApprovalDto> Approvals { get; set; } = new();
+}
+
+public class DisposalRequestDocumentDto
+{
+    public Guid Id { get; set; }
+    public Guid DocumentId { get; set; }
+    public string? DocumentName { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public Guid? CertificateId { get; set; }
+    public string? ErrorMessage { get; set; }
+}
+
+public class DisposalApprovalDto
+{
+    public Guid Id { get; set; }
+    public int ApprovalLevel { get; set; }
+    public Guid ApproverId { get; set; }
+    public string? ApproverName { get; set; }
+    public string Decision { get; set; } = string.Empty;
+    public string? Comments { get; set; }
+    public DateTime DecisionAt { get; set; }
+}

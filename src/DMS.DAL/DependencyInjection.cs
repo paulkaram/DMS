@@ -7,11 +7,20 @@ namespace DMS.DAL;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddDataAccessLayer(this IServiceCollection services, string connectionString)
+    public static IServiceCollection AddDataAccessLayer(this IServiceCollection services, string connectionString, string? auditConnectionString = null)
     {
-        // Register EF Core DbContext
+        // Register EF Core DbContext (main operational database)
         services.AddDbContext<DmsDbContext>(options =>
             options.UseSqlServer(connectionString, sqlOptions =>
+                sqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 3,
+                    maxRetryDelay: TimeSpan.FromSeconds(10),
+                    errorNumbersToAdd: null)));
+
+        // Register AuditDbContext (separate audit database for NCA/NCAR compliance)
+        var auditConnStr = auditConnectionString ?? connectionString;
+        services.AddDbContext<AuditDbContext>(options =>
+            options.UseSqlServer(auditConnStr, sqlOptions =>
                 sqlOptions.EnableRetryOnFailure(
                     maxRetryCount: 3,
                     maxRetryDelay: TimeSpan.FromSeconds(10),
@@ -82,6 +91,18 @@ public static class DependencyInjection
         services.AddScoped<ILegalHoldRepository, LegalHoldRepository>();
         services.AddScoped<ILegalHoldDocumentRepository, LegalHoldDocumentRepository>();
         services.AddScoped<IDisposalCertificateRepository, DisposalCertificateRepository>();
+        services.AddScoped<IDisposalRequestRepository, DisposalRequestRepository>();
+
+        // State Machine Repositories (NCAR governance)
+        services.AddScoped<IStateTransitionRuleRepository, StateTransitionRuleRepository>();
+        services.AddScoped<IStateTransitionLogRepository, StateTransitionLogRepository>();
+
+        // Physical Archive Repositories
+        services.AddScoped<IPhysicalLocationRepository, PhysicalLocationRepository>();
+        services.AddScoped<IPhysicalItemRepository, PhysicalItemRepository>();
+        services.AddScoped<IAccessionRequestRepository, AccessionRequestRepository>();
+        services.AddScoped<ICirculationRecordRepository, CirculationRecordRepository>();
+        services.AddScoped<ICustodyTransferRepository, CustodyTransferRepository>();
 
         // ISO 15489 Checkout System Repositories
         services.AddScoped<IDocumentVersionMetadataRepository, DocumentVersionMetadataRepository>();

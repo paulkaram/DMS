@@ -94,9 +94,12 @@ export const useAuthStore = defineStore('auth', () => {
       setUser(response.data)
       // Also fetch allowed actions
       await fetchAllowedActions()
-    } catch (err) {
-      // Token might be invalid, logout
-      logout()
+    } catch (err: any) {
+      // Only logout on 401 (invalid/expired token).
+      // Other errors (429, network, 500) are transient — keep the session alive.
+      if (err.response?.status === 401) {
+        logout()
+      }
     }
   }
 

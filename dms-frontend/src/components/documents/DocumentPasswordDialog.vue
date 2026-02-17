@@ -10,7 +10,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   close: []
-  updated: []
+  updated: [hasPassword: boolean]
 }>()
 
 const isLoading = ref(true)
@@ -65,7 +65,7 @@ async function setPassword() {
       hint: newHint.value || undefined,
       expiresAt: newExpiresAt.value || undefined
     })
-    emit('updated')
+    emit('updated', true)
     resetForm()
     await checkPasswordStatus()
   } catch (err) {
@@ -94,7 +94,7 @@ async function changePassword() {
       newPassword: newPassword.value,
       hint: newHint.value || undefined
     })
-    emit('updated')
+    emit('updated', true)
     resetForm()
     await checkPasswordStatus()
   } catch (err) {
@@ -112,7 +112,7 @@ async function removePassword() {
 
   try {
     await documentPasswordsApi.removePassword(props.documentId)
-    emit('updated')
+    emit('updated', false)
     resetForm()
     await checkPasswordStatus()
   } catch (err) {
@@ -154,7 +154,7 @@ const canSubmit = computed(() => {
 </script>
 
 <template>
-  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" @click.self="emit('close')">
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
     <div class="bg-white dark:bg-background-dark rounded-lg shadow-2xl ring-1 ring-black/5 dark:ring-white/10 w-full max-w-md mx-4 overflow-hidden">
       <!-- Header with brand gradient -->
       <div class="relative bg-gradient-to-r from-navy via-navy/95 to-primary px-6 py-5 overflow-hidden">

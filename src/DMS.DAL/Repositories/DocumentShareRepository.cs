@@ -35,8 +35,10 @@ public class DocumentShareRepository : IDocumentShareRepository
                 Message = x.s.Message,
                 IsActive = x.s.IsActive,
                 CreatedAt = x.s.CreatedAt,
+                IsLinkShare = x.s.IsLinkShare,
+                ShareToken = x.s.ShareToken,
                 DocumentName = x.d != null ? x.d.Name : null,
-                SharedWithUserName = x.swu != null ? x.swu.DisplayName : null,
+                SharedWithUserName = x.s.IsLinkShare ? "Anyone with the link" : (x.swu != null ? x.swu.DisplayName : null),
                 SharedByUserName = x.sbu != null ? x.sbu.DisplayName : null
             })
             .FirstOrDefaultAsync();
@@ -65,8 +67,10 @@ public class DocumentShareRepository : IDocumentShareRepository
                 Message = x.s.Message,
                 IsActive = x.s.IsActive,
                 CreatedAt = x.s.CreatedAt,
+                IsLinkShare = x.s.IsLinkShare,
+                ShareToken = x.s.ShareToken,
                 DocumentName = x.d != null ? x.d.Name : null,
-                SharedWithUserName = x.swu != null ? x.swu.DisplayName : null,
+                SharedWithUserName = x.s.IsLinkShare ? "Anyone with the link" : (x.swu != null ? x.swu.DisplayName : null),
                 SharedByUserName = x.sbu != null ? x.sbu.DisplayName : null
             })
             .ToListAsync();
@@ -96,6 +100,8 @@ public class DocumentShareRepository : IDocumentShareRepository
                 Message = x.s.Message,
                 IsActive = x.s.IsActive,
                 CreatedAt = x.s.CreatedAt,
+                IsLinkShare = x.s.IsLinkShare,
+                ShareToken = x.s.ShareToken,
                 DocumentName = x.d != null ? x.d.Name : null,
                 SharedWithUserName = x.swu != null ? x.swu.DisplayName : null,
                 SharedByUserName = x.sbu != null ? x.sbu.DisplayName : null
@@ -127,10 +133,45 @@ public class DocumentShareRepository : IDocumentShareRepository
                 IsActive = x.s.IsActive,
                 CreatedAt = x.s.CreatedAt,
                 DocumentName = x.d != null ? x.d.Name : null,
-                SharedWithUserName = x.swu != null ? x.swu.DisplayName : null,
-                SharedByUserName = x.sbu != null ? x.sbu.DisplayName : null
+                SharedWithUserName = x.s.IsLinkShare ? "Anyone with the link" : (x.swu != null ? x.swu.DisplayName : null),
+                SharedByUserName = x.sbu != null ? x.sbu.DisplayName : null,
+                IsLinkShare = x.s.IsLinkShare,
+                ShareToken = x.s.ShareToken
             })
             .ToListAsync();
+    }
+
+    public async Task<DocumentShare?> GetByShareTokenAsync(string shareToken)
+    {
+        return await _context.DocumentShares
+            .AsNoTracking()
+            .Where(s => s.ShareToken == shareToken && s.IsActive && s.IsLinkShare)
+            .Where(s => s.ExpiresAt == null || s.ExpiresAt > DateTime.Now)
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<DocumentShare?> GetActiveLinkShareByDocumentAsync(Guid documentId)
+    {
+        return await _context.DocumentShares
+            .AsNoTracking()
+            .Where(s => s.DocumentId == documentId && s.IsLinkShare && s.IsActive)
+            .GroupJoin(_context.Users.AsNoTracking(), s => s.SharedByUserId, u => u.Id, (s, users) => new { s, users })
+            .SelectMany(x => x.users.DefaultIfEmpty(), (x, sbu) => new { x.s, sbu })
+            .Select(x => new DocumentShare
+            {
+                Id = x.s.Id,
+                DocumentId = x.s.DocumentId,
+                SharedWithUserId = x.s.SharedWithUserId,
+                SharedByUserId = x.s.SharedByUserId,
+                PermissionLevel = x.s.PermissionLevel,
+                ExpiresAt = x.s.ExpiresAt,
+                IsActive = x.s.IsActive,
+                CreatedAt = x.s.CreatedAt,
+                IsLinkShare = x.s.IsLinkShare,
+                ShareToken = x.s.ShareToken,
+                SharedByUserName = x.sbu != null ? x.sbu.DisplayName : null
+            })
+            .FirstOrDefaultAsync();
     }
 
     public async Task<Guid> CreateAsync(DocumentShare entity)

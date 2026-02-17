@@ -56,7 +56,7 @@ const expiryInfo = computed(() => getExpiryInfo(props.document.expiryDate))
     :class="selected ? 'bg-teal/10 border-l-2 border-l-teal' : 'bg-white dark:bg-background-dark'"
   >
     <!-- Checkbox -->
-    <td v-if="selectable" class="px-5 py-4 w-12" @click.stop>
+    <td v-if="selectable" class="px-4 py-2.5 w-12" @click.stop>
       <UiCheckbox
         v-model="isSelected"
         size="sm"
@@ -64,7 +64,7 @@ const expiryInfo = computed(() => getExpiryInfo(props.document.expiryDate))
     </td>
 
     <!-- Name -->
-    <td class="px-5 py-4">
+    <td class="px-4 py-2.5">
       <div class="flex items-center gap-3">
         <DocumentIcon
           :extension="document.extension"
@@ -179,28 +179,28 @@ const expiryInfo = computed(() => getExpiryInfo(props.document.expiryDate))
     </td>
 
     <!-- Size -->
-    <td class="px-5 py-4">
+    <td class="px-4 py-2.5">
       <span class="text-sm text-zinc-500 dark:text-zinc-400 tabular-nums">
         {{ formatFileSize(document.size) }}
       </span>
     </td>
 
     <!-- Created By -->
-    <td class="px-5 py-4">
+    <td class="px-4 py-2.5">
       <span class="text-sm text-zinc-500 dark:text-zinc-400 truncate max-w-[120px] block">
         {{ document.createdByName || '-' }}
       </span>
     </td>
 
     <!-- Created -->
-    <td class="px-5 py-4">
+    <td class="px-4 py-2.5">
       <span class="text-sm text-zinc-500 dark:text-zinc-400">
         {{ formatRelativeDate(document.createdAt) }}
       </span>
     </td>
 
     <!-- Content Type -->
-    <td class="px-5 py-4">
+    <td class="px-4 py-2.5">
       <span
         v-if="document.contentTypeName"
         class="inline-flex items-center px-2.5 py-1 bg-teal/10 text-teal rounded-lg text-xs font-medium truncate max-w-[100px]"
@@ -212,49 +212,49 @@ const expiryInfo = computed(() => getExpiryInfo(props.document.expiryDate))
     </td>
 
     <!-- Version -->
-    <td class="px-5 py-4">
+    <td class="px-4 py-2.5">
       <span class="inline-flex items-center justify-center min-w-[40px] px-2.5 py-1 bg-[#0d1117] rounded-lg text-xs font-semibold text-white">
         v{{ document.currentMajorVersion || document.currentVersion }}.{{ document.currentMinorVersion || 0 }}
       </span>
     </td>
 
     <!-- Status -->
-    <td class="px-5 py-4">
+    <td class="px-4 py-2.5">
       <DocumentStatus :document="document" show-icon />
     </td>
 
     <!-- Actions -->
-    <td class="px-5 py-4">
-      <div class="flex items-center justify-end gap-0.5">
+    <td class="px-4 py-2.5">
+      <div class="flex items-center justify-end gap-0">
         <!-- Quick Actions -->
         <button
           @click.stop="emit('preview', document)"
-          class="p-2 text-teal/70 hover:text-teal hover:bg-teal/10 rounded-lg transition-all"
+          class="p-1.5 text-teal/70 hover:text-teal hover:bg-teal/10 rounded-md transition-all"
           title="Preview"
         >
-          <span class="material-symbols-outlined text-lg">open_in_new</span>
+          <span class="material-symbols-outlined text-[18px]">open_in_new</span>
         </button>
         <button
           @click.stop="emit('view', document)"
-          class="p-2 text-blue-500/70 hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-all"
+          class="p-1.5 text-blue-500/70 hover:text-blue-500 hover:bg-blue-500/10 rounded-md transition-all"
           title="Details"
         >
-          <span class="material-symbols-outlined text-lg">info</span>
+          <span class="material-symbols-outlined text-[18px]">info</span>
         </button>
         <button
           @click.stop="emit('download', document)"
-          class="p-2 text-emerald-500/70 hover:text-emerald-500 hover:bg-emerald-500/10 rounded-lg transition-all"
+          class="p-1.5 text-emerald-500/70 hover:text-emerald-500 hover:bg-emerald-500/10 rounded-md transition-all"
           title="Download"
         >
-          <span class="material-symbols-outlined text-lg">download</span>
+          <span class="material-symbols-outlined text-[18px]">download</span>
         </button>
         <!-- More Menu Button -->
         <button
           @click.stop="emit('context-menu', $event, document)"
-          class="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-border-dark rounded-lg transition-all"
+          class="p-1.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-border-dark rounded-md transition-all"
           title="More actions"
         >
-          <span class="material-symbols-outlined text-lg">more_vert</span>
+          <span class="material-symbols-outlined text-[18px]">more_vert</span>
         </button>
       </div>
     </td>

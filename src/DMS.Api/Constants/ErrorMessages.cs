@@ -67,6 +67,7 @@ public static class ErrorMessages
         public const string WriteAnnotations = "You don't have write permission on this document";
         public const string WritePages = "You don't have write permission on this document";
         public const string ReadPages = "You don't have permission to view this document";
+        public const string TransitionDocument = "You don't have permission to change document lifecycle state";
     }
 
     // Role-based permission keys

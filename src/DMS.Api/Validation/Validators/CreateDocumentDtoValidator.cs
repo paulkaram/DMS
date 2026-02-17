@@ -10,5 +10,6 @@ public class CreateDocumentDtoValidator : AbstractValidator<CreateDocumentDto>
         RuleFor(x => x.FolderId).NotEmpty().WithMessage("Folder ID is required");
         RuleFor(x => x.Name).NotEmpty().WithMessage("Document name is required")
             .MaximumLength(255).WithMessage("Document name must not exceed 255 characters");
+        RuleFor(x => x.ClassificationId).NotEmpty().WithMessage("Classification is required for all documents");
     }
 }

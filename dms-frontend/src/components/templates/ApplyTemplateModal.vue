@@ -97,7 +97,6 @@ function countTotalFolders(nodes: any[]): number {
 <template>
   <div
     class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
-    @click.self="emit('close')"
   >
     <div class="bg-white dark:bg-background-dark rounded-lg shadow-2xl ring-1 ring-black/5 dark:ring-white/10 w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden">
       <!-- Header with brand gradient -->

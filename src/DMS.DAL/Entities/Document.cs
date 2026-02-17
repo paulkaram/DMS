@@ -3,6 +3,21 @@ using DMS.DAL.Data;
 namespace DMS.DAL.Entities;
 
 /// <summary>
+/// Document lifecycle states per ISO 15489 records management.
+/// </summary>
+public enum DocumentState
+{
+    Draft = 0,
+    Active = 1,
+    Record = 2,
+    Archived = 3,
+    Disposed = 4,
+    OnHold = 5,
+    PendingDisposal = 6,
+    Quarantined = 7
+}
+
+/// <summary>
 /// Represents a document in the DMS with ISO 15489/23081 compliant metadata.
 /// </summary>
 public class Document : IAuditable, ISoftDeletable
@@ -116,6 +131,45 @@ public class Document : IAuditable, ISoftDeletable
     public Guid? PrivacyLevelId { get; set; }
     public PrivacyLevel? PrivacyLevel { get; set; }
 
+    // ISO 19005: PDF/A compliance for long-term preservation
+    /// <summary>
+    /// Whether the document is PDF/A compliant (long-term archival format).
+    /// </summary>
+    public bool? IsPdfACompliant { get; set; }
+
+    // Security: Encryption at rest
+    /// <summary>
+    /// Whether the stored file is encrypted with AES-256 (NCA ECC requirement).
+    /// </summary>
+    public bool IsEncrypted { get; set; } = false;
+
+    // ISO 15489: Document lifecycle state
+    public DocumentState State { get; set; } = DocumentState.Draft;
+    public DateTime? ArchivedAt { get; set; }
+    public Guid? ArchivedBy { get; set; }
+    public DateTime? DisposedAt { get; set; }
+    public Guid? DisposedBy { get; set; }
+
+    /// <summary>
+    /// Saved state before OnHold, restored when hold is released.
+    /// </summary>
+    public DocumentState? PreviousState { get; set; }
+
+    /// <summary>
+    /// Timestamp of last state transition.
+    /// </summary>
+    public DateTime? StateChangedAt { get; set; }
+
+    /// <summary>
+    /// User who performed the last state transition.
+    /// </summary>
+    public Guid? StateChangedBy { get; set; }
+
+    /// <summary>
+    /// OCR-extracted text for full-text search indexing.
+    /// </summary>
+    public string? OcrText { get; set; }
+
     public bool IsActive { get; set; } = true;
     public Guid? CreatedBy { get; set; }
     public DateTime CreatedAt { get; set; }
@@ -137,4 +191,5 @@ public class DocumentWithNames : Document
     public string? PrivacyLevelName { get; set; }
     public string? PrivacyLevelColor { get; set; }
     public int? PrivacyLevelValue { get; set; }
+    // State is inherited from Document
 }

@@ -21,7 +21,6 @@ public class DmsDbContext : DbContext
     // Permissions
     public DbSet<Permission> Permissions => Set<Permission>();
     public DbSet<EffectivePermission> EffectivePermissions => Set<EffectivePermission>();
-    public DbSet<PermissionAuditLog> PermissionAuditLogs => Set<PermissionAuditLog>();
     public DbSet<PermissionDelegation> PermissionDelegations => Set<PermissionDelegation>();
 
     // Organization Structure
@@ -63,9 +62,8 @@ public class DmsDbContext : DbContext
     public DbSet<FolderTemplateNode> FolderTemplateNodes => Set<FolderTemplateNode>();
     public DbSet<FolderTemplateUsage> FolderTemplateUsages => Set<FolderTemplateUsage>();
 
-    // Favorites & Activity
+    // Favorites & Recycle Bin
     public DbSet<Favorite> Favorites => Set<Favorite>();
-    public DbSet<ActivityLog> ActivityLogs => Set<ActivityLog>();
     public DbSet<RecycleBinItem> RecycleBinItems => Set<RecycleBinItem>();
 
     // Approval Workflows
@@ -78,11 +76,28 @@ public class DmsDbContext : DbContext
     // Retention & Compliance
     public DbSet<RetentionPolicy> RetentionPolicies => Set<RetentionPolicy>();
     public DbSet<DocumentRetention> DocumentRetentions => Set<DocumentRetention>();
+    public DbSet<RetentionTriggerEvent> RetentionTriggerEvents => Set<RetentionTriggerEvent>();
+    public DbSet<RetentionTriggerLog> RetentionTriggerLogs => Set<RetentionTriggerLog>();
     public DbSet<LegalHold> LegalHolds => Set<LegalHold>();
     public DbSet<LegalHoldDocument> LegalHoldDocuments => Set<LegalHoldDocument>();
     public DbSet<DisposalCertificate> DisposalCertificates => Set<DisposalCertificate>();
+    public DbSet<DisposalRequest> DisposalRequests => Set<DisposalRequest>();
+    public DbSet<DisposalRequestDocument> DisposalRequestDocuments => Set<DisposalRequestDocument>();
+    public DbSet<DisposalApproval> DisposalApprovals => Set<DisposalApproval>();
     public DbSet<IntegrityVerificationLog> IntegrityVerificationLogs => Set<IntegrityVerificationLog>();
     public DbSet<PreservationMetadata> PreservationMetadata => Set<PreservationMetadata>();
+
+    // State Machine
+    public DbSet<StateTransitionRule> StateTransitionRules => Set<StateTransitionRule>();
+    public DbSet<StateTransitionLog> StateTransitionLogs => Set<StateTransitionLog>();
+
+    // Physical Archive
+    public DbSet<PhysicalLocation> PhysicalLocations => Set<PhysicalLocation>();
+    public DbSet<PhysicalItem> PhysicalItems => Set<PhysicalItem>();
+    public DbSet<AccessionRequest> AccessionRequests => Set<AccessionRequest>();
+    public DbSet<AccessionRequestItem> AccessionRequestItems => Set<AccessionRequestItem>();
+    public DbSet<CirculationRecord> CirculationRecords => Set<CirculationRecord>();
+    public DbSet<CustodyTransfer> CustodyTransfers => Set<CustodyTransfer>();
 
     // Filing & Patterns
     public DbSet<FilingPlan> FilingPlans => Set<FilingPlan>();
@@ -100,6 +115,17 @@ public class DmsDbContext : DbContext
     public DbSet<ScanConfig> ScanConfigs => Set<ScanConfig>();
     public DbSet<SearchConfig> SearchConfigs => Set<SearchConfig>();
 
+    // Security & Encryption
+    public DbSet<EncryptionKeyStore> EncryptionKeyStore => Set<EncryptionKeyStore>();
+    public DbSet<AccessReviewCampaign> AccessReviewCampaigns => Set<AccessReviewCampaign>();
+    public DbSet<AccessReviewEntry> AccessReviewEntries => Set<AccessReviewEntry>();
+
+    // Search
+    public DbSet<SearchIndexQueue> SearchIndexQueue => Set<SearchIndexQueue>();
+
+    // Background Job Tracking
+    public DbSet<BackgroundJobExecution> BackgroundJobExecutions => Set<BackgroundJobExecution>();
+
     // Role Permissions
     public DbSet<SystemAction> SystemActions => Set<SystemAction>();
     public DbSet<RoleActionPermission> RoleActionPermissions => Set<RoleActionPermission>();
@@ -113,6 +139,10 @@ public class DmsDbContext : DbContext
 
         // Ignore query projection classes (not mapped to tables)
         modelBuilder.Ignore<DocumentWithNames>();
+
+        // Audit entities live in separate AuditDbContext (DMS_Audit database)
+        modelBuilder.Ignore<ActivityLog>();
+        modelBuilder.Ignore<PermissionAuditLog>();
 
         // Global query filter for soft-deletable entities
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())

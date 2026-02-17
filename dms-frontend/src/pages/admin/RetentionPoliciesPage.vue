@@ -2,8 +2,6 @@
 import { ref, onMounted, computed } from 'vue'
 import { retentionPoliciesApi } from '@/api/client'
 import type { RetentionPolicy, DocumentRetention } from '@/types'
-import { UiSelect, UiCheckbox } from '@/components/ui'
-import AdminBreadcrumb from '@/components/admin/AdminBreadcrumb.vue'
 
 const policies = ref<RetentionPolicy[]>([])
 const expiringDocuments = ref<DocumentRetention[]>([])
@@ -11,7 +9,7 @@ const pendingReviews = ref<DocumentRetention[]>([])
 const isLoading = ref(false)
 const showModal = ref(false)
 const isEditing = ref(false)
-const activeTab = ref<'policies' | 'expiring' | 'pending'>('policies')
+const isSaving = ref(false)
 
 const formData = ref({
   id: '',
@@ -24,59 +22,60 @@ const formData = ref({
   requiresApproval: true,
   inheritToSubfolders: true,
   isLegalHold: false,
-  isActive: true
+  isActive: true,
+  retentionBasis: 'CreationDate',
+  suspendDuringLegalHold: true,
+  recalculateOnClassificationChange: true,
+  disposalApprovalLevels: 1
 })
 
 const expirationActions = [
-  { value: 'Review', label: 'Review', description: 'Requires manual review before action' },
-  { value: 'Archive', label: 'Archive', description: 'Move to archive storage' },
-  { value: 'Delete', label: 'Delete', description: 'Permanently delete (if approved)' },
-  { value: 'Notify', label: 'Notify Only', description: 'Only send notification' }
+  { value: 'Review', label: 'Review', icon: 'visibility' },
+  { value: 'Archive', label: 'Archive', icon: 'archive' },
+  { value: 'Delete', label: 'Delete', icon: 'delete' },
+  { value: 'Notify', label: 'Notify Only', icon: 'notifications' }
+]
+
+const retentionBases = [
+  { value: 'CreationDate', label: 'Creation Date', desc: 'From when the document was created' },
+  { value: 'LastModifiedDate', label: 'Last Modified', desc: 'From last modification' },
+  { value: 'ClassificationDate', label: 'Classification Date', desc: 'From when classified' },
+  { value: 'CustomEvent', label: 'Custom Event', desc: 'Triggered by specific event' }
 ]
 
 const retentionPresets = [
-  { label: '30 Days', days: 30 },
-  { label: '90 Days', days: 90 },
-  { label: '1 Year', days: 365 },
-  { label: '3 Years', days: 1095 },
-  { label: '7 Years', days: 2555 },
-  { label: 'Permanent', days: 0 }
+  { label: '30d', days: 30 },
+  { label: '90d', days: 90 },
+  { label: '1y', days: 365 },
+  { label: '3y', days: 1095 },
+  { label: '7y', days: 2555 },
+  { label: '∞', days: 0 }
 ]
 
-onMounted(() => {
-  loadData()
-})
+onMounted(() => loadData())
 
 async function loadData() {
   isLoading.value = true
   try {
-    const [policiesRes, expiringRes, pendingRes] = await Promise.all([
+    const [policiesRes, expiringRes, pendingRes] = await Promise.allSettled([
       retentionPoliciesApi.getAll(true),
       retentionPoliciesApi.getExpiringDocuments(30),
       retentionPoliciesApi.getPendingReview()
     ])
-    policies.value = policiesRes.data
-    expiringDocuments.value = expiringRes.data
-    pendingReviews.value = pendingRes.data
-  } catch (err) {
-  } finally {
-    isLoading.value = false
-  }
+    if (policiesRes.status === 'fulfilled') policies.value = policiesRes.value.data || []
+    if (expiringRes.status === 'fulfilled') expiringDocuments.value = expiringRes.value.data || []
+    if (pendingRes.status === 'fulfilled') pendingReviews.value = pendingRes.value.data || []
+  } catch { /* silently fail */ }
+  finally { isLoading.value = false }
 }
 
 function openCreateModal() {
   formData.value = {
-    id: '',
-    name: '',
-    description: '',
-    retentionDays: 365,
-    expirationAction: 'Review',
-    notifyBeforeExpiration: true,
-    notificationDays: 30,
-    requiresApproval: true,
-    inheritToSubfolders: true,
-    isLegalHold: false,
-    isActive: true
+    id: '', name: '', description: '', retentionDays: 365, expirationAction: 'Review',
+    notifyBeforeExpiration: true, notificationDays: 30, requiresApproval: true,
+    inheritToSubfolders: true, isLegalHold: false, isActive: true,
+    retentionBasis: 'CreationDate', suspendDuringLegalHold: true,
+    recalculateOnClassificationChange: true, disposalApprovalLevels: 1
   }
   isEditing.value = false
   showModal.value = true
@@ -84,23 +83,22 @@ function openCreateModal() {
 
 function openEditModal(policy: RetentionPolicy) {
   formData.value = {
-    id: policy.id,
-    name: policy.name,
-    description: policy.description || '',
-    retentionDays: policy.retentionDays,
-    expirationAction: policy.expirationAction,
-    notifyBeforeExpiration: policy.notifyBeforeExpiration,
-    notificationDays: policy.notificationDays,
-    requiresApproval: policy.requiresApproval,
-    inheritToSubfolders: policy.inheritToSubfolders,
-    isLegalHold: policy.isLegalHold,
-    isActive: policy.isActive
+    id: policy.id, name: policy.name, description: policy.description || '',
+    retentionDays: policy.retentionDays, expirationAction: policy.expirationAction,
+    notifyBeforeExpiration: policy.notifyBeforeExpiration, notificationDays: policy.notificationDays,
+    requiresApproval: policy.requiresApproval, inheritToSubfolders: policy.inheritToSubfolders,
+    isLegalHold: policy.isLegalHold, isActive: policy.isActive,
+    retentionBasis: policy.retentionBasis || 'CreationDate',
+    suspendDuringLegalHold: policy.suspendDuringLegalHold ?? true,
+    recalculateOnClassificationChange: policy.recalculateOnClassificationChange ?? true,
+    disposalApprovalLevels: policy.disposalApprovalLevels ?? 1
   }
   isEditing.value = true
   showModal.value = true
 }
 
 async function handleSave() {
+  isSaving.value = true
   try {
     const data = {
       name: formData.value.name,
@@ -111,9 +109,12 @@ async function handleSave() {
       notificationDays: formData.value.notificationDays,
       requiresApproval: formData.value.requiresApproval,
       inheritToSubfolders: formData.value.inheritToSubfolders,
-      isLegalHold: formData.value.isLegalHold
+      isLegalHold: formData.value.isLegalHold,
+      retentionBasis: formData.value.retentionBasis,
+      suspendDuringLegalHold: formData.value.suspendDuringLegalHold,
+      recalculateOnClassificationChange: formData.value.recalculateOnClassificationChange,
+      disposalApprovalLevels: formData.value.disposalApprovalLevels
     }
-
     if (isEditing.value) {
       await retentionPoliciesApi.update(formData.value.id, { ...data, isActive: formData.value.isActive })
     } else {
@@ -121,8 +122,8 @@ async function handleSave() {
     }
     showModal.value = false
     await loadData()
-  } catch (err) {
-  }
+  } catch { /* silently fail */ }
+  finally { isSaving.value = false }
 }
 
 async function deletePolicy(id: string) {
@@ -130,8 +131,7 @@ async function deletePolicy(id: string) {
   try {
     await retentionPoliciesApi.delete(id)
     await loadData()
-  } catch (err) {
-  }
+  } catch { /* silently fail */ }
 }
 
 async function approveRetention(retentionId: string) {
@@ -139,158 +139,154 @@ async function approveRetention(retentionId: string) {
   try {
     await retentionPoliciesApi.approveRetentionAction(retentionId, notes || undefined)
     await loadData()
-  } catch (err) {
-  }
+  } catch { /* silently fail */ }
 }
 
 function formatRetentionPeriod(days: number): string {
   if (days === 0) return 'Permanent'
   if (days < 30) return `${days} days`
   if (days < 365) return `${Math.round(days / 30)} months`
-  return `${Math.round(days / 365)} years`
+  return `${(days / 365).toFixed(1).replace('.0', '')} years`
 }
 
 function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString()
+  if (!dateStr) return '-'
+  return new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
-function getActionColor(action: string): string {
-  const colors: Record<string, string> = {
-    Review: 'bg-amber-100 text-amber-700',
-    Archive: 'bg-blue-100 text-blue-700',
-    Delete: 'bg-red-100 text-red-700',
-    Notify: 'bg-green-100 text-green-700'
-  }
-  return colors[action] || 'bg-gray-100 text-gray-700'
+const actionColors: Record<string, string> = {
+  Review: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  Archive: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  Delete: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+  Notify: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
 }
-
-function getStatusColor(status: string): string {
-  const colors: Record<string, string> = {
-    Active: 'bg-green-100 text-green-700',
-    PendingReview: 'bg-amber-100 text-amber-700',
-    Approved: 'bg-blue-100 text-blue-700',
-    Archived: 'bg-gray-100 text-gray-500',
-    Deleted: 'bg-red-100 text-red-700',
-    OnHold: 'bg-purple-100 text-purple-700'
-  }
-  return colors[status] || 'bg-gray-100 text-gray-700'
-}
-
-const expirationActionOptions = computed(() =>
-  expirationActions.map(action => ({
-    value: action.value,
-    label: `${action.label} - ${action.description}`
-  }))
-)
 </script>
 
 <template>
-  <div class="p-6">
-    <div class="max-w-6xl mx-auto">
-      <!-- Breadcrumb -->
-      <AdminBreadcrumb current-page="Retention Policies" icon="schedule" />
-
-      <div class="flex items-center justify-between mb-6">
+  <div class="space-y-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <router-link to="/records" class="p-2 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-surface-dark transition-colors">
+          <span class="material-symbols-outlined">arrow_back</span>
+        </router-link>
         <div>
-          <h1 class="text-2xl font-bold text-gray-900">Retention Policies</h1>
-          <p class="text-gray-500 mt-1">Define document lifecycle and compliance policies</p>
+          <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Retention Policies</h1>
+          <p class="text-zinc-500 text-sm mt-0.5">Define document lifecycle and compliance policies</p>
         </div>
-        <button @click="openCreateModal" class="flex items-center gap-2 px-4 py-2 bg-teal text-white rounded-lg hover:bg-teal/90">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          New Policy
-        </button>
       </div>
+      <button @click="openCreateModal" class="flex items-center gap-2 px-4 py-2 bg-teal text-white rounded-lg hover:bg-teal/90 transition-colors font-medium text-sm shadow-sm">
+        <span class="material-symbols-outlined text-lg">add</span>
+        New Policy
+      </button>
+    </div>
 
-      <!-- Tabs -->
-      <div class="border-b border-gray-200 mb-6">
-        <nav class="flex gap-6">
-          <button
-            @click="activeTab = 'policies'"
-            :class="activeTab === 'policies' ? 'border-teal text-teal' : 'border-transparent text-gray-500 hover:text-gray-700'"
-            class="py-3 border-b-2 font-medium"
-          >
-            Policies
-          </button>
-          <button
-            @click="activeTab = 'expiring'"
-            :class="activeTab === 'expiring' ? 'border-teal text-teal' : 'border-transparent text-gray-500 hover:text-gray-700'"
-            class="py-3 border-b-2 font-medium flex items-center gap-2"
-          >
-            Expiring Soon
-            <span v-if="expiringDocuments.length > 0" class="px-2 py-0.5 text-xs bg-amber-100 text-amber-700 rounded-full">
-              {{ expiringDocuments.length }}
-            </span>
-          </button>
-          <button
-            @click="activeTab = 'pending'"
-            :class="activeTab === 'pending' ? 'border-teal text-teal' : 'border-transparent text-gray-500 hover:text-gray-700'"
-            class="py-3 border-b-2 font-medium flex items-center gap-2"
-          >
-            Pending Review
-            <span v-if="pendingReviews.length > 0" class="px-2 py-0.5 text-xs bg-red-100 text-red-700 rounded-full">
-              {{ pendingReviews.length }}
-            </span>
-          </button>
-        </nav>
+    <!-- Stats -->
+    <div class="grid grid-cols-3 gap-4">
+      <div class="bg-[#0d1117] p-5 rounded-lg text-white shadow-xl border border-zinc-800/50 relative overflow-hidden">
+        <svg class="absolute right-0 top-0 h-full w-20 opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 Q50,50 0,100 L100,100 L100,0 Z" fill="#00ae8c"/></svg>
+        <div class="relative z-10">
+          <div class="flex items-center justify-between mb-2">
+            <span class="material-symbols-outlined text-teal text-lg">schedule</span>
+            <span class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Policies</span>
+          </div>
+          <p class="text-2xl font-bold">{{ policies.length }}</p>
+          <p class="text-[10px] text-zinc-500 mt-1">{{ policies.filter(p => p.isActive).length }} active</p>
+        </div>
       </div>
+      <div class="bg-[#0d1117] p-5 rounded-lg text-white shadow-xl border border-zinc-800/50 relative overflow-hidden">
+        <svg class="absolute right-0 top-0 h-full w-20 opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 Q50,50 0,100 L100,100 L100,0 Z" fill="#00ae8c"/></svg>
+        <div class="relative z-10">
+          <div class="flex items-center justify-between mb-2">
+            <span class="material-symbols-outlined text-amber-400 text-lg">warning</span>
+            <span class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Expiring</span>
+          </div>
+          <p class="text-2xl font-bold">{{ expiringDocuments.length }}</p>
+          <p class="text-[10px] text-zinc-500 mt-1">Next 30 days</p>
+        </div>
+      </div>
+      <div class="bg-[#0d1117] p-5 rounded-lg text-white shadow-xl border border-zinc-800/50 relative overflow-hidden">
+        <svg class="absolute right-0 top-0 h-full w-20 opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 Q50,50 0,100 L100,100 L100,0 Z" fill="#00ae8c"/></svg>
+        <div class="relative z-10">
+          <div class="flex items-center justify-between mb-2">
+            <span class="material-symbols-outlined text-rose-400 text-lg">rate_review</span>
+            <span class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Pending</span>
+          </div>
+          <p class="text-2xl font-bold">{{ pendingReviews.length }}</p>
+          <p class="text-[10px] text-zinc-500 mt-1">Awaiting review</p>
+        </div>
+      </div>
+    </div>
 
-      <div v-if="isLoading" class="text-center py-12 text-gray-500">Loading...</div>
+    <!-- Loading -->
+    <div v-if="isLoading" class="flex items-center justify-center py-12 gap-3">
+      <div class="w-6 h-6 border-2 border-teal border-t-transparent rounded-full animate-spin"></div>
+      <span class="text-zinc-500">Loading policies...</span>
+    </div>
 
-      <!-- Policies Tab -->
-      <div v-else-if="activeTab === 'policies'" class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <table class="w-full">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">Policy Name</th>
-              <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">Retention</th>
-              <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">Action</th>
-              <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">Options</th>
-              <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">Status</th>
-              <th class="text-right py-3 px-4 text-sm font-medium text-gray-500">Actions</th>
+    <template v-else>
+      <!-- Policies List -->
+      <div class="bg-white dark:bg-background-dark rounded-lg border border-zinc-200 dark:border-border-dark overflow-hidden shadow-sm">
+        <div class="px-5 py-3.5 border-b border-zinc-200 dark:border-border-dark flex items-center justify-between">
+          <h2 class="text-sm font-bold text-zinc-700 dark:text-zinc-200 flex items-center gap-2">
+            <span class="material-symbols-outlined text-lg text-teal">schedule</span>
+            All Policies
+          </h2>
+        </div>
+        <div v-if="policies.length === 0" class="p-12 text-center text-zinc-400">
+          <span class="material-symbols-outlined text-4xl mb-2 block">schedule</span>
+          <p class="text-sm">No retention policies defined</p>
+        </div>
+        <table v-else class="w-full text-left">
+          <thead>
+            <tr class="border-b border-zinc-200 dark:border-border-dark">
+              <th class="px-5 pb-3 pt-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Policy</th>
+              <th class="px-5 pb-3 pt-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Retention</th>
+              <th class="px-5 pb-3 pt-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Basis</th>
+              <th class="px-5 pb-3 pt-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Action</th>
+              <th class="px-5 pb-3 pt-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Approvals</th>
+              <th class="px-5 pb-3 pt-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Flags</th>
+              <th class="px-5 pb-3 pt-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Status</th>
+              <th class="px-5 pb-3 pt-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-if="policies.length === 0">
-              <td colspan="6" class="py-12 text-center text-gray-500">No retention policies defined</td>
-            </tr>
-            <tr v-for="policy in policies" :key="policy.id" class="border-t border-gray-100 hover:bg-gray-50">
-              <td class="py-3 px-4">
+            <tr v-for="policy in policies" :key="policy.id" class="border-b border-zinc-50 dark:border-border-dark/50 hover:bg-zinc-50 dark:hover:bg-surface-dark/50 transition-colors">
+              <td class="px-5 py-3">
                 <div class="flex items-center gap-2">
-                  <p class="font-medium text-gray-900">{{ policy.name }}</p>
-                  <span v-if="policy.isLegalHold" class="px-2 py-0.5 text-xs bg-purple-100 text-purple-700 rounded-full">Legal Hold</span>
+                  <span class="text-sm font-medium text-zinc-700 dark:text-zinc-200">{{ policy.name }}</span>
+                  <span v-if="policy.isLegalHold" class="px-1.5 py-0.5 text-[9px] font-bold uppercase bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 rounded-full">Hold</span>
                 </div>
-                <p v-if="policy.description" class="text-xs text-gray-500">{{ policy.description }}</p>
+                <p v-if="policy.description" class="text-[10px] text-zinc-400 mt-0.5 line-clamp-1">{{ policy.description }}</p>
               </td>
-              <td class="py-3 px-4 text-sm">{{ formatRetentionPeriod(policy.retentionDays) }}</td>
-              <td class="py-3 px-4">
-                <span :class="getActionColor(policy.expirationAction)" class="px-2 py-1 text-xs rounded-full">
+              <td class="px-5 py-3 text-xs font-medium text-zinc-600 dark:text-zinc-300">{{ formatRetentionPeriod(policy.retentionDays) }}</td>
+              <td class="px-5 py-3 text-[10px] text-zinc-500">{{ policy.retentionBasis || 'CreationDate' }}</td>
+              <td class="px-5 py-3">
+                <span class="px-2 py-0.5 text-[10px] font-bold rounded-full" :class="actionColors[policy.expirationAction] || 'bg-zinc-100 text-zinc-500'">
                   {{ policy.expirationAction }}
                 </span>
               </td>
-              <td class="py-3 px-4 text-xs text-gray-500">
-                <div class="space-y-0.5">
-                  <div v-if="policy.notifyBeforeExpiration">Notify {{ policy.notificationDays }}d before</div>
-                  <div v-if="policy.requiresApproval">Requires approval</div>
-                  <div v-if="policy.inheritToSubfolders">Inherits to subfolders</div>
+              <td class="px-5 py-3 text-xs text-zinc-500">{{ policy.disposalApprovalLevels || 1 }} level{{ (policy.disposalApprovalLevels || 1) > 1 ? 's' : '' }}</td>
+              <td class="px-5 py-3">
+                <div class="flex items-center gap-1 flex-wrap">
+                  <span v-if="policy.suspendDuringLegalHold !== false" class="text-[9px] px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400 rounded" title="Suspends during legal hold">Hold</span>
+                  <span v-if="policy.recalculateOnClassificationChange !== false" class="text-[9px] px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400 rounded" title="Recalculates on classification change">Recalc</span>
+                  <span v-if="policy.notifyBeforeExpiration" class="text-[9px] px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400 rounded">{{ policy.notificationDays }}d</span>
+                  <span v-if="policy.inheritToSubfolders" class="text-[9px] px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-700 text-zinc-500 dark:text-zinc-400 rounded">Inherit</span>
                 </div>
               </td>
-              <td class="py-3 px-4">
-                <span :class="policy.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'" class="px-2 py-1 text-xs rounded-full">
+              <td class="px-5 py-3">
+                <span class="px-2 py-0.5 text-[9px] font-bold uppercase rounded-full"
+                  :class="policy.isActive ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-700 dark:text-zinc-400'">
                   {{ policy.isActive ? 'Active' : 'Inactive' }}
                 </span>
               </td>
-              <td class="py-3 px-4 text-right">
-                <button @click="openEditModal(policy)" class="p-1 text-gray-400 hover:text-teal mr-2">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
+              <td class="px-5 py-3 text-right">
+                <button @click="openEditModal(policy)" class="p-1.5 text-zinc-400 hover:text-teal transition-colors" title="Edit">
+                  <span class="material-symbols-outlined text-sm">edit</span>
                 </button>
-                <button @click="deletePolicy(policy.id)" class="p-1 text-gray-400 hover:text-red-600">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
+                <button @click="deletePolicy(policy.id)" class="p-1.5 text-zinc-400 hover:text-rose-600 transition-colors ml-1" title="Delete">
+                  <span class="material-symbols-outlined text-sm">delete</span>
                 </button>
               </td>
             </tr>
@@ -298,54 +294,62 @@ const expirationActionOptions = computed(() =>
         </table>
       </div>
 
-      <!-- Expiring Soon Tab -->
-      <div v-else-if="activeTab === 'expiring'" class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <table class="w-full">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">Document</th>
-              <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">Policy</th>
-              <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">Expires</th>
-              <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">Status</th>
+      <!-- Expiring Documents -->
+      <div v-if="expiringDocuments.length > 0" class="bg-white dark:bg-background-dark rounded-lg border border-zinc-200 dark:border-border-dark overflow-hidden shadow-sm">
+        <div class="px-5 py-3.5 border-b border-zinc-200 dark:border-border-dark">
+          <h2 class="text-sm font-bold text-zinc-700 dark:text-zinc-200 flex items-center gap-2">
+            <span class="material-symbols-outlined text-lg text-amber-500">warning</span>
+            Expiring Soon (30 days)
+            <span class="ml-1 px-2 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 rounded-full">{{ expiringDocuments.length }}</span>
+          </h2>
+        </div>
+        <table class="w-full text-left">
+          <thead>
+            <tr class="border-b border-zinc-200 dark:border-border-dark">
+              <th class="px-5 pb-3 pt-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Document</th>
+              <th class="px-5 pb-3 pt-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Policy</th>
+              <th class="px-5 pb-3 pt-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Expires</th>
+              <th class="px-5 pb-3 pt-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Status</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-if="expiringDocuments.length === 0">
-              <td colspan="4" class="py-12 text-center text-gray-500">No documents expiring soon</td>
-            </tr>
-            <tr v-for="doc in expiringDocuments" :key="doc.id" class="border-t border-gray-100 hover:bg-gray-50">
-              <td class="py-3 px-4 font-medium text-gray-900">{{ doc.documentName }}</td>
-              <td class="py-3 px-4 text-sm text-gray-500">{{ doc.policyName }}</td>
-              <td class="py-3 px-4 text-sm text-amber-600 font-medium">{{ doc.expirationDate ? formatDate(doc.expirationDate) : 'N/A' }}</td>
-              <td class="py-3 px-4">
-                <span :class="getStatusColor(doc.status)" class="px-2 py-1 text-xs rounded-full">{{ doc.status }}</span>
+            <tr v-for="doc in expiringDocuments" :key="doc.id" class="border-b border-zinc-50 dark:border-border-dark/50 hover:bg-zinc-50 dark:hover:bg-surface-dark/50 transition-colors">
+              <td class="px-5 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-200">{{ doc.documentName }}</td>
+              <td class="px-5 py-3 text-xs text-zinc-500">{{ doc.policyName }}</td>
+              <td class="px-5 py-3 text-xs text-amber-600 font-medium">{{ doc.expirationDate ? formatDate(doc.expirationDate) : '-' }}</td>
+              <td class="px-5 py-3">
+                <span class="px-2 py-0.5 text-[9px] font-bold uppercase rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">{{ doc.status }}</span>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <!-- Pending Review Tab -->
-      <div v-else-if="activeTab === 'pending'" class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <table class="w-full">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">Document</th>
-              <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">Policy</th>
-              <th class="text-left py-3 px-4 text-sm font-medium text-gray-500">Expired</th>
-              <th class="text-right py-3 px-4 text-sm font-medium text-gray-500">Actions</th>
+      <!-- Pending Review -->
+      <div v-if="pendingReviews.length > 0" class="bg-white dark:bg-background-dark rounded-lg border border-zinc-200 dark:border-border-dark overflow-hidden shadow-sm">
+        <div class="px-5 py-3.5 border-b border-zinc-200 dark:border-border-dark">
+          <h2 class="text-sm font-bold text-zinc-700 dark:text-zinc-200 flex items-center gap-2">
+            <span class="material-symbols-outlined text-lg text-rose-500">rate_review</span>
+            Pending Review
+            <span class="ml-1 px-2 py-0.5 text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400 rounded-full">{{ pendingReviews.length }}</span>
+          </h2>
+        </div>
+        <table class="w-full text-left">
+          <thead>
+            <tr class="border-b border-zinc-200 dark:border-border-dark">
+              <th class="px-5 pb-3 pt-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Document</th>
+              <th class="px-5 pb-3 pt-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Policy</th>
+              <th class="px-5 pb-3 pt-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Expired</th>
+              <th class="px-5 pb-3 pt-4 text-[10px] font-bold text-zinc-400 uppercase tracking-widest text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-if="pendingReviews.length === 0">
-              <td colspan="4" class="py-12 text-center text-gray-500">No documents pending review</td>
-            </tr>
-            <tr v-for="doc in pendingReviews" :key="doc.id" class="border-t border-gray-100 hover:bg-gray-50">
-              <td class="py-3 px-4 font-medium text-gray-900">{{ doc.documentName }}</td>
-              <td class="py-3 px-4 text-sm text-gray-500">{{ doc.policyName }}</td>
-              <td class="py-3 px-4 text-sm text-red-600">{{ doc.expirationDate ? formatDate(doc.expirationDate) : 'N/A' }}</td>
-              <td class="py-3 px-4 text-right">
-                <button @click="approveRetention(doc.id)" class="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700">
+            <tr v-for="doc in pendingReviews" :key="doc.id" class="border-b border-zinc-50 dark:border-border-dark/50 hover:bg-zinc-50 dark:hover:bg-surface-dark/50 transition-colors">
+              <td class="px-5 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-200">{{ doc.documentName }}</td>
+              <td class="px-5 py-3 text-xs text-zinc-500">{{ doc.policyName }}</td>
+              <td class="px-5 py-3 text-xs text-rose-500 font-medium">{{ doc.expirationDate ? formatDate(doc.expirationDate) : '-' }}</td>
+              <td class="px-5 py-3 text-right">
+                <button @click="approveRetention(doc.id)" class="px-3 py-1.5 text-xs font-medium text-white bg-teal hover:bg-teal/90 rounded-lg transition-colors">
                   Approve
                 </button>
               </td>
@@ -353,68 +357,170 @@ const expirationActionOptions = computed(() =>
           </tbody>
         </table>
       </div>
-    </div>
+    </template>
 
-    <!-- Modal -->
-    <div v-if="showModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 p-6 max-h-[90vh] overflow-y-auto">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ isEditing ? 'Edit Policy' : 'New Retention Policy' }}</h3>
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Policy Name *</label>
-            <input v-model="formData.name" type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="e.g., 7-Year Financial Records" />
-          </div>
+    <!-- Create/Edit Modal -->
+    <Teleport to="body">
+      <Transition
+        enter-active-class="transition duration-200 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition duration-150 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div v-if="showModal" class="fixed inset-0 z-[100] flex items-center justify-center">
+          <div class="absolute inset-0 bg-black/50" @click="showModal = false"></div>
+          <Transition
+            enter-active-class="transition duration-200 ease-out"
+            enter-from-class="opacity-0 scale-95"
+            enter-to-class="opacity-100 scale-100"
+            leave-active-class="transition duration-150 ease-in"
+            leave-from-class="opacity-100 scale-100"
+            leave-to-class="opacity-0 scale-95"
+          >
+            <div v-if="showModal" class="relative bg-white dark:bg-surface-dark rounded-xl shadow-2xl w-full max-w-lg overflow-hidden max-h-[90vh] flex flex-col">
+              <!-- Header -->
+              <div class="px-6 py-4 bg-gradient-to-r from-[#0d1117] to-teal/80 relative overflow-hidden shrink-0">
+                <div class="absolute -right-4 -top-4 w-24 h-24 bg-white/5 rounded-full"></div>
+                <div class="absolute -right-8 -bottom-8 w-32 h-32 bg-white/5 rounded-full"></div>
+                <div class="relative flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-white">schedule</span>
+                  </div>
+                  <div>
+                    <h3 class="text-white font-bold">{{ isEditing ? 'Edit Policy' : 'New Retention Policy' }}</h3>
+                    <p class="text-white/70 text-xs mt-0.5">Define document lifecycle rules</p>
+                  </div>
+                </div>
+              </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Retention Period</label>
-            <div class="flex gap-2 mb-2">
-              <button
-                v-for="preset in retentionPresets"
-                :key="preset.days"
-                @click="formData.retentionDays = preset.days"
-                :class="formData.retentionDays === preset.days ? 'bg-teal/10 border-teal text-teal' : 'border-gray-200 hover:border-gray-300'"
-                class="px-3 py-1 text-sm border rounded-full"
-              >
-                {{ preset.label }}
-              </button>
+              <!-- Body -->
+              <div class="p-6 space-y-4 overflow-y-auto">
+                <!-- Name -->
+                <div>
+                  <label class="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Policy Name *</label>
+                  <input v-model="formData.name" type="text" class="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-border-dark rounded-lg text-sm text-zinc-900 dark:text-white placeholder-zinc-400 focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none" placeholder="e.g., 7-Year Financial Records" />
+                </div>
+
+                <!-- Retention Period -->
+                <div>
+                  <label class="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Retention Period</label>
+                  <div class="flex gap-1.5 mb-2">
+                    <button
+                      v-for="preset in retentionPresets"
+                      :key="preset.days"
+                      @click="formData.retentionDays = preset.days"
+                      :class="formData.retentionDays === preset.days ? 'bg-teal/10 border-teal text-teal' : 'border-zinc-200 dark:border-zinc-600 hover:border-zinc-300 text-zinc-600 dark:text-zinc-400'"
+                      class="px-2.5 py-1 text-xs font-medium border rounded-full transition-colors"
+                    >
+                      {{ preset.label }}
+                    </button>
+                  </div>
+                  <input v-model.number="formData.retentionDays" type="number" min="0" class="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-border-dark rounded-lg text-sm text-zinc-900 dark:text-white focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none" />
+                  <p class="text-[10px] text-zinc-400 mt-1">Days (0 = permanent retention)</p>
+                </div>
+
+                <!-- Retention Basis -->
+                <div>
+                  <label class="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Retention Basis</label>
+                  <div class="grid grid-cols-2 gap-2">
+                    <button
+                      v-for="basis in retentionBases"
+                      :key="basis.value"
+                      @click="formData.retentionBasis = basis.value"
+                      :class="formData.retentionBasis === basis.value ? 'border-teal bg-teal/5 ring-1 ring-teal/30' : 'border-zinc-200 dark:border-zinc-600 hover:border-zinc-300'"
+                      class="p-2.5 border rounded-lg text-left transition-all"
+                    >
+                      <p class="text-xs font-medium text-zinc-700 dark:text-zinc-200">{{ basis.label }}</p>
+                      <p class="text-[10px] text-zinc-400 mt-0.5">{{ basis.desc }}</p>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Expiration Action -->
+                <div>
+                  <label class="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Expiration Action</label>
+                  <div class="grid grid-cols-4 gap-2">
+                    <button
+                      v-for="action in expirationActions"
+                      :key="action.value"
+                      @click="formData.expirationAction = action.value"
+                      :class="formData.expirationAction === action.value ? 'border-teal bg-teal/5 ring-1 ring-teal/30' : 'border-zinc-200 dark:border-zinc-600 hover:border-zinc-300'"
+                      class="p-2 border rounded-lg text-center transition-all"
+                    >
+                      <span class="material-symbols-outlined text-lg" :class="formData.expirationAction === action.value ? 'text-teal' : 'text-zinc-400'">{{ action.icon }}</span>
+                      <p class="text-[10px] font-medium text-zinc-600 dark:text-zinc-300 mt-0.5">{{ action.label }}</p>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Disposal Approval Levels -->
+                <div>
+                  <label class="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Disposal Approval Levels</label>
+                  <div class="flex items-center gap-3">
+                    <input v-model.number="formData.disposalApprovalLevels" type="number" min="1" max="5" class="w-20 px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-border-dark rounded-lg text-sm text-zinc-900 dark:text-white text-center focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none" />
+                    <p class="text-[10px] text-zinc-400">approval{{ formData.disposalApprovalLevels > 1 ? 's' : '' }} required before disposal</p>
+                  </div>
+                </div>
+
+                <!-- Notification -->
+                <div class="flex items-center gap-3">
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" v-model="formData.notifyBeforeExpiration" class="rounded border-zinc-300 text-teal focus:ring-teal" />
+                    <span class="text-xs text-zinc-700 dark:text-zinc-300">Notify before expiration</span>
+                  </label>
+                  <input v-if="formData.notifyBeforeExpiration" v-model.number="formData.notificationDays" type="number" min="1" class="w-16 px-2 py-1 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-border-dark rounded text-xs text-zinc-900 dark:text-white text-center" />
+                  <span v-if="formData.notifyBeforeExpiration" class="text-[10px] text-zinc-400">days before</span>
+                </div>
+
+                <!-- Toggles -->
+                <div class="space-y-2.5 pt-2 border-t border-zinc-100 dark:border-border-dark">
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" v-model="formData.requiresApproval" class="rounded border-zinc-300 text-teal focus:ring-teal" />
+                    <span class="text-xs text-zinc-700 dark:text-zinc-300">Require approval before action</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" v-model="formData.inheritToSubfolders" class="rounded border-zinc-300 text-teal focus:ring-teal" />
+                    <span class="text-xs text-zinc-700 dark:text-zinc-300">Inherit to subfolders</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" v-model="formData.suspendDuringLegalHold" class="rounded border-zinc-300 text-teal focus:ring-teal" />
+                    <span class="text-xs text-zinc-700 dark:text-zinc-300">Suspend during legal hold</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" v-model="formData.recalculateOnClassificationChange" class="rounded border-zinc-300 text-teal focus:ring-teal" />
+                    <span class="text-xs text-zinc-700 dark:text-zinc-300">Recalculate on classification change</span>
+                  </label>
+                  <label class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" v-model="formData.isLegalHold" class="rounded border-zinc-300 text-purple-600 focus:ring-purple-500" />
+                    <span class="text-xs text-zinc-700 dark:text-zinc-300">Legal hold (prevents deletion)</span>
+                  </label>
+                  <label v-if="isEditing" class="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" v-model="formData.isActive" class="rounded border-zinc-300 text-teal focus:ring-teal" />
+                    <span class="text-xs text-zinc-700 dark:text-zinc-300">Active</span>
+                  </label>
+                </div>
+
+                <!-- Description -->
+                <div>
+                  <label class="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Description</label>
+                  <textarea v-model="formData.description" rows="2" class="w-full px-3 py-2 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-border-dark rounded-lg text-sm text-zinc-900 dark:text-white placeholder-zinc-400 focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none resize-none" placeholder="Describe the purpose of this policy"></textarea>
+                </div>
+              </div>
+
+              <!-- Footer -->
+              <div class="px-6 py-4 bg-zinc-50 dark:bg-zinc-800/50 border-t border-zinc-200 dark:border-border-dark flex items-center justify-end gap-3 shrink-0">
+                <button @click="showModal = false" class="px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">Cancel</button>
+                <button @click="handleSave" :disabled="isSaving || !formData.name" class="px-4 py-2 bg-teal text-white text-sm font-medium rounded-lg hover:bg-teal/90 transition-colors disabled:opacity-50 flex items-center gap-2">
+                  <span v-if="isSaving" class="material-symbols-outlined text-sm animate-spin">refresh</span>
+                  {{ isSaving ? 'Saving...' : 'Save Policy' }}
+                </button>
+              </div>
             </div>
-            <input v-model.number="formData.retentionDays" type="number" min="0" class="w-full px-4 py-2 border border-gray-300 rounded-lg" />
-            <p class="text-xs text-gray-500 mt-1">Days (0 = permanent retention)</p>
-          </div>
-
-          <UiSelect
-            v-model="formData.expirationAction"
-            :options="expirationActionOptions"
-            label="Expiration Action"
-            placeholder="Select action"
-          />
-
-          <div class="grid grid-cols-2 gap-4">
-            <UiCheckbox v-model="formData.notifyBeforeExpiration" label="Notify before expiration" />
-            <div v-if="formData.notifyBeforeExpiration">
-              <input v-model.number="formData.notificationDays" type="number" min="1" class="w-full px-3 py-1 border border-gray-300 rounded-lg text-sm" />
-              <p class="text-xs text-gray-500">days before</p>
-            </div>
-          </div>
-
-          <div class="space-y-2">
-            <UiCheckbox v-model="formData.requiresApproval" label="Require approval before action" />
-            <UiCheckbox v-model="formData.inheritToSubfolders" label="Inherit to subfolders" />
-            <UiCheckbox v-model="formData.isLegalHold" label="Legal hold (prevents deletion)" color="purple" />
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <textarea v-model="formData.description" rows="2" class="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="Describe the purpose of this policy"></textarea>
-          </div>
-
-          <UiCheckbox v-if="isEditing" v-model="formData.isActive" label="Active" />
+          </Transition>
         </div>
-        <div class="mt-6 flex justify-end gap-3">
-          <button @click="showModal = false" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
-          <button @click="handleSave" class="px-4 py-2 bg-teal text-white rounded-lg hover:bg-teal/90">Save</button>
-        </div>
-      </div>
-    </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>

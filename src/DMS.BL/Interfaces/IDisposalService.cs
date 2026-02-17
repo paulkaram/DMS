@@ -57,4 +57,31 @@ public interface IDisposalService
     /// Processes scheduled disposals (for background job).
     /// </summary>
     Task<DisposalBatchResult> ProcessScheduledDisposalsAsync(Guid? userId = null);
+
+    // --- Batch Disposal with Multi-Level Approval ---
+
+    /// <summary>
+    /// Initiate a batch disposal request for multiple documents.
+    /// </summary>
+    Task<ServiceResult<DisposalRequestDetailDto>> InitiateBatchDisposalAsync(InitiateBatchDisposalDto dto, Guid userId);
+
+    /// <summary>
+    /// Get a disposal request with full details (documents + approvals).
+    /// </summary>
+    Task<ServiceResult<DisposalRequestDetailDto>> GetDisposalRequestAsync(Guid requestId);
+
+    /// <summary>
+    /// Get paginated list of disposal requests.
+    /// </summary>
+    Task<ServiceResult<PagedResultDto<DisposalRequestDto>>> GetDisposalRequestsAsync(string? status, int page, int pageSize);
+
+    /// <summary>
+    /// Submit an approval decision for a disposal request (level-by-level).
+    /// </summary>
+    Task<ServiceResult> SubmitDisposalApprovalAsync(Guid requestId, SubmitDisposalApprovalDto dto, Guid userId);
+
+    /// <summary>
+    /// Execute an approved batch disposal request.
+    /// </summary>
+    Task<ServiceResult<DisposalBatchResult>> ExecuteBatchDisposalAsync(Guid requestId, Guid userId);
 }

@@ -317,7 +317,7 @@ function toggleSelectDocument(docId: string) {
         <table class="w-full text-left border-collapse">
           <thead>
             <tr class="bg-[#0d1117] text-xs font-semibold text-zinc-300 uppercase tracking-wider">
-              <th v-if="selectable" class="px-5 py-4 w-12">
+              <th v-if="selectable" class="px-4 py-2.5 w-12">
                 <div class="flex items-center gap-3">
                   <UiCheckbox
                     v-model="isAllSelected"
@@ -374,8 +374,8 @@ function toggleSelectDocument(docId: string) {
                 :direction="sortDirection"
                 @sort="handleSort"
               />
-              <th class="px-4 py-3">Status</th>
-              <th class="px-4 py-3 text-right">Actions</th>
+              <th class="px-4 py-2.5">Status</th>
+              <th class="px-4 py-2.5 text-right">Actions</th>
             </tr>
           </thead>
           <tbody>

@@ -21,6 +21,11 @@ public interface IFileStorageService
     Task<Stream?> GetFileAsync(string storagePath);
 
     /// <summary>
+    /// Gets a file stream from storage, decrypting if the file is encrypted.
+    /// </summary>
+    Task<Stream?> GetFileAsync(string storagePath, bool isEncrypted);
+
+    /// <summary>
     /// Deletes a file from storage.
     /// </summary>
     Task<bool> DeleteFileAsync(string storagePath);
@@ -51,4 +56,5 @@ public class FileStorageResult
     public string HashAlgorithm { get; set; } = "SHA256";
     public long Size { get; set; }
     public DateTime StoredAt { get; set; } = DateTime.Now;
+    public bool IsEncrypted { get; set; }
 }

@@ -72,13 +72,13 @@ export const documentsApi = {
     apiClient.get('/documents', { params: { folderId } }),
   search: (params: { search?: string; folderId?: string; classificationId?: string; documentTypeId?: string }) =>
     apiClient.get('/documents', { params }),
-  getById: (id: string) =>
-    apiClient.get(`/documents/${id}`),
-  getVersions: (id: string) =>
-    apiClient.get(`/documents/${id}/versions`),
-  download: (id: string, version?: number) =>
+  getById: (id: string, shareToken?: string) =>
+    apiClient.get(`/documents/${id}`, { params: shareToken ? { shareToken } : {} }),
+  getVersions: (id: string, shareToken?: string) =>
+    apiClient.get(`/documents/${id}/versions`, { params: shareToken ? { shareToken } : {} }),
+  download: (id: string, version?: number, shareToken?: string) =>
     apiClient.get(`/documents/${id}/download`, {
-      params: { version },
+      params: { version, shareToken },
       responseType: 'blob'
     }),
   upload: (data: FormData) =>
@@ -143,6 +143,10 @@ export const documentsApi = {
     restoreMetadata?: boolean
   }) => apiClient.post(`/documents/${id}/versions/${versionId}/restore`, data),
 
+  // Document Lifecycle State Transition (ISO 15489)
+  transitionState: (id: string, data: { targetState: string; reason?: string }) =>
+    apiClient.post(`/documents/${id}/transition`, data),
+
   // Admin Checkout Management
   getStaleCheckouts: (staleHours = 24) =>
     apiClient.get('/documents/stale-checkouts', { params: { staleHours } }),
@@ -158,8 +162,8 @@ export const documentsApi = {
     apiClient.get('/documents/my-documents', { params: { take } }),
 
   // Preview
-  getPreviewInfo: (id: string, version?: number) =>
-    apiClient.get(`/documents/${id}/preview`, { params: { version } }),
+  getPreviewInfo: (id: string, version?: number, shareToken?: string) =>
+    apiClient.get(`/documents/${id}/preview`, { params: { version, shareToken } }),
 
   // Bulk operations
   bulkDelete: (documentIds: string[]) =>
@@ -189,7 +193,9 @@ export const activityLogsApi = {
   getByUser: (userId: string, page = 1, pageSize = 50) =>
     apiClient.get(`/activitylogs/by-user/${userId}`, { params: { page, pageSize } }),
   getMyActivity: (page = 1, pageSize = 50) =>
-    apiClient.get('/activitylogs/my-activity', { params: { page, pageSize } })
+    apiClient.get('/activitylogs/my-activity', { params: { page, pageSize } }),
+  exportCsv: (page = 1, pageSize = 5000) =>
+    apiClient.get('/activitylogs', { params: { page, pageSize } })
 }
 
 // Auth API
@@ -460,7 +466,15 @@ export const sharesApi = {
   update: (id: string, data: { permissionLevel: number; expiresAt?: string }) =>
     apiClient.put(`/shares/${id}`, data),
   revoke: (id: string) =>
-    apiClient.delete(`/shares/${id}`)
+    apiClient.delete(`/shares/${id}`),
+
+  // Link sharing
+  createLinkShare: (data: { documentId: string; permissionLevel: number; expiresAt?: string }) =>
+    apiClient.post('/shares/link', data),
+  getLinkShare: (documentId: string) =>
+    apiClient.get(`/shares/link/${documentId}`),
+  resolveShareToken: (token: string) =>
+    apiClient.get(`/shares/resolve/${token}`)
 }
 
 // Recycle Bin API
@@ -1199,4 +1213,208 @@ export const privacyLevelsApi = {
     apiClient.put(`/privacy-levels/${id}`, data),
   delete: (id: string) =>
     apiClient.delete(`/privacy-levels/${id}`)
+}
+
+// =============================================
+// Disposal API (ISO 15489)
+// =============================================
+export const disposalApi = {
+  getPending: () =>
+    apiClient.get('/disposal/pending'),
+  getUpcoming: (daysAhead = 30) =>
+    apiClient.get('/disposal/upcoming', { params: { daysAhead } }),
+  initiate: (documentId: string, data: { reason?: string; legalBasis?: string; disposalMethod?: string; requiresApproval?: boolean }) =>
+    apiClient.post(`/disposal/documents/${documentId}/initiate`, data),
+  execute: (documentId: string, method = 'HardDelete') =>
+    apiClient.post(`/disposal/documents/${documentId}/execute`, null, { params: { method } }),
+  getCertificates: (fromDate?: string, toDate?: string) =>
+    apiClient.get('/disposal/certificates', { params: { fromDate, toDate } }),
+  getCertificate: (id: string) =>
+    apiClient.get(`/disposal/certificates/${id}`),
+  getCertificateByDocument: (documentId: string) =>
+    apiClient.get(`/disposal/certificates/document/${documentId}`),
+  processScheduled: () =>
+    apiClient.post('/disposal/process-scheduled'),
+  // Batch disposal with multi-level approval
+  initiateBatch: (data: { documentIds: string[]; disposalMethod?: string; reason?: string; legalBasis?: string; batchReference?: string }) =>
+    apiClient.post('/disposal/batch', data),
+  getRequests: (params?: { status?: string; page?: number; pageSize?: number }) =>
+    apiClient.get('/disposal/requests', { params }),
+  getRequest: (id: string) =>
+    apiClient.get(`/disposal/requests/${id}`),
+  submitApproval: (id: string, data: { decision: string; comments?: string }) =>
+    apiClient.post(`/disposal/requests/${id}/approve`, data),
+  executeBatch: (id: string) =>
+    apiClient.post(`/disposal/requests/${id}/execute`)
+}
+
+// =============================================
+// Legal Holds API (ISO 15489)
+// =============================================
+export const legalHoldsApi = {
+  getAll: (activeOnly = false) =>
+    apiClient.get('/legalholds', { params: { activeOnly } }),
+  getById: (id: string) =>
+    apiClient.get(`/legalholds/${id}`),
+  create: (data: { name: string; description?: string; caseReference?: string; requestedBy?: string; requestedAt?: string; effectiveFrom?: string; effectiveUntil?: string; notes?: string; initialDocumentIds?: string[] }) =>
+    apiClient.post('/legalholds', data),
+  update: (id: string, data: { name?: string; description?: string; caseReference?: string; requestedBy?: string; effectiveUntil?: string; notes?: string }) =>
+    apiClient.put(`/legalholds/${id}`, data),
+  addDocuments: (id: string, data: { documentIds: string[]; notes?: string }) =>
+    apiClient.post(`/legalholds/${id}/documents`, data),
+  getDocuments: (id: string) =>
+    apiClient.get(`/legalholds/${id}/documents`),
+  removeDocument: (id: string, documentId: string) =>
+    apiClient.delete(`/legalholds/${id}/documents/${documentId}`),
+  getDocumentHolds: (documentId: string) =>
+    apiClient.get(`/legalholds/document/${documentId}`),
+  release: (id: string, reason: string) =>
+    apiClient.post(`/legalholds/${id}/release`, { reason })
+}
+
+// =============================================
+// Integrity Verification API (ISO 27001)
+// =============================================
+export const integrityApi = {
+  verifyDocument: (documentId: string) =>
+    apiClient.post(`/integrity/documents/${documentId}/verify`),
+  verifyVersion: (documentId: string, versionNumber: number) =>
+    apiClient.post(`/integrity/documents/${documentId}/versions/${versionNumber}/verify`),
+  getHistory: (documentId: string) =>
+    apiClient.get(`/integrity/documents/${documentId}/history`),
+  batchVerify: (batchSize = 100) =>
+    apiClient.post('/integrity/batch-verify', null, { params: { batchSize } })
+}
+
+// =============================================
+// Document State Machine API (NCAR Governance)
+// =============================================
+export const documentStateApi = {
+  transition: (documentId: string, data: { targetState: string; reason?: string }) =>
+    apiClient.post(`/document-state/${documentId}/transition`, data),
+  getAllowedTransitions: (documentId: string) =>
+    apiClient.get(`/document-state/${documentId}/allowed-transitions`),
+  getHistory: (documentId: string) =>
+    apiClient.get(`/document-state/${documentId}/history`),
+  placeOnHold: (documentId: string, data: { legalHoldId: string; reason?: string }) =>
+    apiClient.post(`/document-state/${documentId}/hold`, data),
+  releaseFromHold: (documentId: string) =>
+    apiClient.post(`/document-state/${documentId}/release-hold`)
+}
+
+// =============================================
+// Physical Archive API
+// =============================================
+export const physicalLocationsApi = {
+  getAll: () => apiClient.get('/physical-locations'),
+  getById: (id: string) => apiClient.get(`/physical-locations/${id}`),
+  getChildren: (id: string) => apiClient.get(`/physical-locations/${id}/children`),
+  getCapacity: (id: string) => apiClient.get(`/physical-locations/${id}/capacity`),
+  create: (data: any) => apiClient.post('/physical-locations', data),
+  update: (id: string, data: any) => apiClient.put(`/physical-locations/${id}`, data),
+  delete: (id: string) => apiClient.delete(`/physical-locations/${id}`)
+}
+
+export const physicalItemsApi = {
+  getAll: (params?: { locationId?: string; itemType?: string; page?: number; pageSize?: number }) =>
+    apiClient.get('/physical-items', { params }),
+  getById: (id: string) => apiClient.get(`/physical-items/${id}`),
+  getByBarcode: (barcode: string) => apiClient.get(`/physical-items/barcode/${barcode}`),
+  create: (data: any) => apiClient.post('/physical-items', data),
+  update: (id: string, data: any) => apiClient.put(`/physical-items/${id}`, data),
+  delete: (id: string) => apiClient.delete(`/physical-items/${id}`),
+  move: (id: string, targetLocationId: string) =>
+    apiClient.post(`/physical-items/${id}/move`, { targetLocationId }),
+  updateCondition: (id: string, data: { condition: string; notes?: string }) =>
+    apiClient.put(`/physical-items/${id}/condition`, data),
+  getCustody: (id: string) => apiClient.get(`/physical-items/${id}/custody`),
+  transferCustody: (id: string, data: any) =>
+    apiClient.post(`/physical-items/${id}/custody/transfer`, data),
+  acknowledgeCustody: (id: string, transferId: string) =>
+    apiClient.post(`/physical-items/${id}/custody/${transferId}/acknowledge`)
+}
+
+export const accessionsApi = {
+  getAll: (params?: { status?: string; page?: number; pageSize?: number }) =>
+    apiClient.get('/accessions', { params }),
+  getById: (id: string) => apiClient.get(`/accessions/${id}`),
+  create: (data: any) => apiClient.post('/accessions', data),
+  submit: (id: string) => apiClient.post(`/accessions/${id}/submit`),
+  review: (id: string, data: { notes?: string }) =>
+    apiClient.post(`/accessions/${id}/review`, data),
+  accept: (id: string, data: { notes?: string }) =>
+    apiClient.post(`/accessions/${id}/accept`, data),
+  reject: (id: string, data: { reason: string }) =>
+    apiClient.post(`/accessions/${id}/reject`, data),
+  transfer: (id: string) => apiClient.post(`/accessions/${id}/transfer`),
+  addItem: (id: string, data: any) => apiClient.post(`/accessions/${id}/items`, data),
+  removeItem: (id: string, itemId: string) =>
+    apiClient.delete(`/accessions/${id}/items/${itemId}`)
+}
+
+export const circulationApi = {
+  getAll: (params?: { status?: string; page?: number; pageSize?: number }) =>
+    apiClient.get('/circulation', { params }),
+  getOverdue: () => apiClient.get('/circulation/overdue'),
+  getHistory: (physicalItemId: string) =>
+    apiClient.get(`/circulation/history/${physicalItemId}`),
+  checkout: (data: { physicalItemId: string; borrowerId: string; borrowerStructureId?: string; purpose?: string; dueDate: string }) =>
+    apiClient.post('/circulation/checkout', data),
+  return: (id: string, data?: { condition?: string; notes?: string }) =>
+    apiClient.post(`/circulation/${id}/return`, data),
+  renew: (id: string, data: { newDueDate: string }) =>
+    apiClient.post(`/circulation/${id}/renew`, data),
+  reportLost: (id: string, data?: { notes?: string }) =>
+    apiClient.post(`/circulation/${id}/report-lost`, data)
+}
+
+// =============================================
+// Enterprise Search API
+// =============================================
+export const searchApi = {
+  searchDocuments: (data: any) =>
+    apiClient.post('/search/documents', data),
+  searchAll: (data: any) =>
+    apiClient.post('/search/all', data),
+  reindex: () =>
+    apiClient.post('/search/reindex'),
+  getHealth: () =>
+    apiClient.get('/search/health')
+}
+
+// =============================================
+// Access Review API
+// =============================================
+export const accessReviewApi = {
+  getCampaigns: () => apiClient.get('/access-review/campaigns'),
+  getCampaign: (id: string) => apiClient.get(`/access-review/campaigns/${id}`),
+  createCampaign: (data: { name: string; description?: string; dueDate: string; reviewerId?: string }) =>
+    apiClient.post('/access-review/campaigns', data),
+  getEntries: (campaignId: string) =>
+    apiClient.get(`/access-review/campaigns/${campaignId}/entries`),
+  submitDecision: (entryId: string, data: { decision: string; comments?: string }) =>
+    apiClient.post(`/access-review/entries/${entryId}/decide`, data),
+  getStalePermissions: (inactiveDays = 90) =>
+    apiClient.get('/access-review/stale-permissions', { params: { inactiveDays } })
+}
+
+// =============================================
+// System Health API
+// =============================================
+export const systemHealthApi = {
+  getHealth: () => apiClient.get('/system-health'),
+  getJobHistory: (params?: { jobName?: string; page?: number; pageSize?: number }) =>
+    apiClient.get('/system-health/jobs', { params })
+}
+
+// =============================================
+// Preservation API (ISO 14721 OAIS)
+// =============================================
+export const preservationApi = {
+  getDocumentPreservation: (documentId: string) =>
+    apiClient.get(`/preservation/documents/${documentId}`),
+  getSummary: () =>
+    apiClient.get('/preservation/summary'),
+  getApprovedFormats: () =>
+    apiClient.get('/preservation/formats')
 }

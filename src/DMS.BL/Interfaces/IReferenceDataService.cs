@@ -6,6 +6,7 @@ public interface IReferenceDataService
 {
     // Classifications
     Task<ServiceResult<List<ClassificationDto>>> GetClassificationsAsync(string? language = null);
+    Task<ServiceResult<List<ClassificationDto>>> GetClassificationTreeAsync(string? language = null);
     Task<ServiceResult<ClassificationDto>> GetClassificationByIdAsync(Guid id);
     Task<ServiceResult<ClassificationDto>> CreateClassificationAsync(ClassificationDto dto);
     Task<ServiceResult<ClassificationDto>> UpdateClassificationAsync(Guid id, ClassificationDto dto);

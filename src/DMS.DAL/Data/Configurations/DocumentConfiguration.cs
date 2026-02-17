@@ -29,5 +29,9 @@ public class DocumentConfiguration : IEntityTypeConfiguration<Document>
         builder.HasIndex(e => e.Name);
         builder.HasIndex(e => e.ExpiryDate).HasFilter("[ExpiryDate] IS NOT NULL");
         builder.HasIndex(e => e.PrivacyLevelId).HasFilter("[PrivacyLevelId] IS NOT NULL");
+
+        // Lifecycle state indexes
+        builder.HasIndex(e => e.State);
+        builder.HasIndex(e => new { e.State, e.RetentionPolicyId });
     }
 }

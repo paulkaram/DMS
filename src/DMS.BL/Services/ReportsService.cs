@@ -1,6 +1,7 @@
 using DMS.BL.Constants;
 using DMS.BL.DTOs;
 using DMS.BL.Interfaces;
+using DMS.DAL.Entities;
 using DMS.DAL.Repositories;
 
 namespace DMS.BL.Services;
@@ -12,6 +13,7 @@ public class ReportsService : IReportsService
     private readonly IActivityLogRepository _activityLogRepository;
     private readonly ICabinetRepository _cabinetRepository;
     private readonly IFolderRepository _folderRepository;
+    private readonly IPermissionRepository _permissionRepository;
 
     private static readonly string[] MonthNames =
         { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
@@ -21,13 +23,15 @@ public class ReportsService : IReportsService
         IUserRepository userRepository,
         IActivityLogRepository activityLogRepository,
         ICabinetRepository cabinetRepository,
-        IFolderRepository folderRepository)
+        IFolderRepository folderRepository,
+        IPermissionRepository permissionRepository)
     {
         _documentRepository = documentRepository;
         _userRepository = userRepository;
         _activityLogRepository = activityLogRepository;
         _cabinetRepository = cabinetRepository;
         _folderRepository = folderRepository;
+        _permissionRepository = permissionRepository;
     }
 
     public async Task<ServiceResult<ReportStatisticsDto>> GetStatisticsAsync()
@@ -167,6 +171,68 @@ public class ReportsService : IReportsService
         }).ToList();
 
         return ServiceResult<List<RecentActivityDto>>.Ok(result);
+    }
+
+    public async Task<ServiceResult<AccessReviewReportDto>> GetAccessReviewReportAsync(string nodeType, Guid nodeId)
+    {
+        if (!Enum.TryParse<NodeType>(nodeType, true, out var parsedNodeType))
+            return ServiceResult<AccessReviewReportDto>.Fail("Invalid node type");
+
+        // Get all permissions on this node
+        var permissions = (await _permissionRepository.GetByNodeWithPrincipalNamesAsync(parsedNodeType, nodeId)).ToList();
+
+        // Get node name
+        string nodeName = "Unknown";
+        if (parsedNodeType == NodeType.Folder)
+        {
+            var folder = await _folderRepository.GetByIdAsync(nodeId);
+            nodeName = folder?.Name ?? "Unknown Folder";
+        }
+        else if (parsedNodeType == NodeType.Document)
+        {
+            var doc = await _documentRepository.GetByIdAsync(nodeId);
+            nodeName = doc?.Name ?? "Unknown Document";
+        }
+
+        // Get all users to check effective permissions
+        var users = (await _userRepository.GetAllAsync()).ToList();
+        var entries = new List<AccessReviewEntryDto>();
+
+        foreach (var user in users)
+        {
+            var (level, sourceType, sourceNodeId) = await _permissionRepository.GetEffectivePermissionWithSourceAsync(
+                user.Id, parsedNodeType, nodeId);
+
+            if (level == PermissionLevel.None)
+                continue;
+
+            // Find last access from activity logs
+            var userLogs = await _activityLogRepository.GetByUserAsync(user.Id, 0, 1);
+            var lastAccess = userLogs.FirstOrDefault()?.CreatedAt;
+
+            entries.Add(new AccessReviewEntryDto
+            {
+                UserId = user.Id,
+                UserName = user.DisplayName ?? user.Username ?? "Unknown",
+                Email = user.Email,
+                PermissionLevel = level.ToString(),
+                PermissionSource = sourceType,
+                SourceNodeId = sourceNodeId,
+                LastAccessDate = lastAccess
+            });
+        }
+
+        var report = new AccessReviewReportDto
+        {
+            NodeId = nodeId,
+            NodeName = nodeName,
+            NodeType = nodeType,
+            TotalUsersWithAccess = entries.Count,
+            GeneratedAt = DateTime.Now,
+            Entries = entries.OrderByDescending(e => e.PermissionLevel).ToList()
+        };
+
+        return ServiceResult<AccessReviewReportDto>.Ok(report);
     }
 
     private async Task<List<DAL.Entities.Document>> GetAllDocumentsAsync()

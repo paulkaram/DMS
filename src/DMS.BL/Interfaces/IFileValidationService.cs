@@ -27,6 +27,11 @@ public interface IFileValidationService
     /// Checks if a file extension is in the blocked list (dangerous file types).
     /// </summary>
     bool IsBlockedExtension(string extension);
+
+    /// <summary>
+    /// Checks if a PDF stream contains PDF/A metadata markers (ISO 19005 compliance).
+    /// </summary>
+    Task<bool> CheckPdfAComplianceAsync(Stream pdfStream);
 }
 
 /// <summary>

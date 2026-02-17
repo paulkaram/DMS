@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 
 const searchQuery = ref('')
-const expandedSections = ref<Set<string>>(new Set(['documents', 'config', 'reference', 'users', 'system']))
+const expandedSections = ref<Set<string>>(new Set(['documents', 'config', 'reference', 'users', 'compliance', 'system']))
 
 const adminSections = [
   {
@@ -60,13 +60,24 @@ const adminSections = [
     ]
   },
   {
+    id: 'compliance',
+    title: 'Compliance & Governance',
+    icon: 'verified_user',
+    color: 'teal',
+    items: [
+      { name: 'Compliance Dashboard', path: '/admin/compliance', icon: 'shield', description: 'Audit trail, retention, jobs & integrity' },
+      { name: 'Legal Holds', path: '/admin/legal-holds', icon: 'gavel', description: 'Case-based document preservation' },
+      { name: 'Retention Policies', path: '/admin/retention-policies', icon: 'schedule', description: 'Document lifecycle & archival rules' },
+      { name: 'Activity Report', path: '/activity', icon: 'monitoring', description: 'Audit logs & activity tracking' }
+    ]
+  },
+  {
     id: 'system',
     title: 'System',
     icon: 'dns',
     color: 'slate',
     items: [
       { name: 'System Dashboard', path: '/', icon: 'dashboard', description: 'System overview & metrics' },
-      { name: 'Activity Report', path: '/activity', icon: 'monitoring', description: 'Audit logs & activity tracking' },
       { name: 'Endpoints', path: '/admin/endpoints', icon: 'api', description: 'External service endpoints' },
       { name: 'Recycle Bin', path: '/recycle-bin', icon: 'delete', description: 'Deleted items recovery' }
     ]
@@ -78,7 +89,7 @@ const quickAccess = [
   { name: 'Users', path: '/admin/users', icon: 'group', count: '1,208', label: 'Total Users' },
   { name: 'Roles', path: '/admin/roles', icon: 'badge', count: '12', label: 'Active Roles' },
   { name: 'Content Types', path: '/admin/content-type-builder', icon: 'build', count: '8', label: 'Defined Types' },
-  { name: 'Retention', path: '/admin/retention-policies', icon: 'schedule', count: '5', label: 'Policies' }
+  { name: 'Compliance', path: '/admin/compliance', icon: 'verified_user', count: '-', label: 'Governance' }
 ]
 
 const filteredSections = computed(() => {

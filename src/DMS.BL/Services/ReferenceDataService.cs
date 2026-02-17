@@ -31,36 +31,67 @@ public class ReferenceDataService : IReferenceDataService
     public async Task<ServiceResult<List<ClassificationDto>>> GetClassificationsAsync(string? language = null)
     {
         var items = await _classificationRepo.GetAllAsync(language);
-        return ServiceResult<List<ClassificationDto>>.Ok(items.Select(x => new ClassificationDto
+        return ServiceResult<List<ClassificationDto>>.Ok(items.Select(MapClassification).ToList());
+    }
+
+    public async Task<ServiceResult<List<ClassificationDto>>> GetClassificationTreeAsync(string? language = null)
+    {
+        var allItems = await _classificationRepo.GetTreeAsync(language);
+        var allDtos = allItems.Select(MapClassification).ToList();
+
+        // Build tree in memory
+        var lookup = allDtos.ToDictionary(d => d.Id);
+        var roots = new List<ClassificationDto>();
+
+        foreach (var dto in allDtos)
         {
-            Id = x.Id,
-            Name = x.Name,
-            Description = x.Description
-        }).ToList());
+            if (dto.ParentId.HasValue && lookup.TryGetValue(dto.ParentId.Value, out var parent))
+            {
+                parent.Children ??= new List<ClassificationDto>();
+                parent.Children.Add(dto);
+            }
+            else
+            {
+                roots.Add(dto);
+            }
+        }
+
+        return ServiceResult<List<ClassificationDto>>.Ok(roots);
     }
 
     public async Task<ServiceResult<ClassificationDto>> GetClassificationByIdAsync(Guid id)
     {
         var item = await _classificationRepo.GetByIdAsync(id);
         if (item == null) return ServiceResult<ClassificationDto>.Fail("Not found");
-        return ServiceResult<ClassificationDto>.Ok(new ClassificationDto
-        {
-            Id = item.Id,
-            Name = item.Name,
-            Description = item.Description
-        });
+        return ServiceResult<ClassificationDto>.Ok(MapClassification(item));
     }
 
     public async Task<ServiceResult<ClassificationDto>> CreateClassificationAsync(ClassificationDto dto)
     {
+        // Build FullPath from parent chain
+        string? fullPath = dto.Name;
+        if (dto.ParentId.HasValue)
+        {
+            var parent = await _classificationRepo.GetByIdAsync(dto.ParentId.Value);
+            if (parent == null)
+                return ServiceResult<ClassificationDto>.Fail("Parent classification not found");
+            fullPath = (parent.FullPath ?? parent.Name) + " > " + dto.Name;
+            dto.Level = parent.Level + 1;
+        }
+
         var entity = new Classification
         {
             Name = dto.Name,
             Description = dto.Description,
+            ParentId = dto.ParentId,
+            Level = dto.Level,
+            Code = dto.Code,
+            FullPath = fullPath,
             IsActive = true
         };
         var id = await _classificationRepo.CreateAsync(entity);
         dto.Id = id;
+        dto.FullPath = fullPath;
         return ServiceResult<ClassificationDto>.Ok(dto);
     }
 
@@ -68,11 +99,39 @@ public class ReferenceDataService : IReferenceDataService
     {
         var entity = await _classificationRepo.GetByIdAsync(id);
         if (entity == null) return ServiceResult<ClassificationDto>.Fail("Not found");
+
         entity.Name = dto.Name;
         entity.Description = dto.Description;
+        entity.Code = dto.Code;
+
+        // Recalculate FullPath if parent or name changed
+        if (entity.ParentId.HasValue)
+        {
+            var parent = await _classificationRepo.GetByIdAsync(entity.ParentId.Value);
+            entity.FullPath = parent != null
+                ? (parent.FullPath ?? parent.Name) + " > " + dto.Name
+                : dto.Name;
+        }
+        else
+        {
+            entity.FullPath = dto.Name;
+        }
+
         await _classificationRepo.UpdateAsync(entity);
+        dto.FullPath = entity.FullPath;
         return ServiceResult<ClassificationDto>.Ok(dto);
     }
+
+    private static ClassificationDto MapClassification(Classification x) => new()
+    {
+        Id = x.Id,
+        Name = x.Name,
+        Description = x.Description,
+        ParentId = x.ParentId,
+        Level = x.Level,
+        Code = x.Code,
+        FullPath = x.FullPath
+    };
 
     public async Task<ServiceResult> DeleteClassificationAsync(Guid id)
     {

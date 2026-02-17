@@ -11,4 +11,8 @@ public interface IDocumentShareRepository
     Task<Guid> CreateAsync(DocumentShare entity);
     Task<bool> UpdateAsync(DocumentShare entity);
     Task<bool> DeleteAsync(Guid id);
+
+    // Link sharing
+    Task<DocumentShare?> GetByShareTokenAsync(string shareToken);
+    Task<DocumentShare?> GetActiveLinkShareByDocumentAsync(Guid documentId);
 }

@@ -477,11 +477,11 @@ public class EffectivePermissionRepository : IEffectivePermissionRepository
 
 public class PermissionAuditRepository : IPermissionAuditRepository
 {
-    private readonly DmsDbContext _context;
+    private readonly AuditDbContext _auditContext;
 
-    public PermissionAuditRepository(DmsDbContext context)
+    public PermissionAuditRepository(AuditDbContext auditContext)
     {
-        _context = context;
+        _auditContext = auditContext;
     }
 
     public async Task<Guid> LogAsync(PermissionAuditLog entry)
@@ -489,15 +489,15 @@ public class PermissionAuditRepository : IPermissionAuditRepository
         entry.Id = Guid.NewGuid();
         entry.PerformedAt = DateTime.Now;
 
-        _context.PermissionAuditLogs.Add(entry);
-        await _context.SaveChangesAsync();
+        _auditContext.PermissionAuditLogs.Add(entry);
+        await _auditContext.SaveChangesAsync();
 
         return entry.Id;
     }
 
     public async Task<IEnumerable<PermissionAuditLog>> GetByNodeAsync(NodeType nodeType, Guid nodeId, int take = 100)
     {
-        return await _context.PermissionAuditLogs
+        return await _auditContext.PermissionAuditLogs
             .AsNoTracking()
             .Where(l => l.NodeType == nodeType && l.NodeId == nodeId)
             .OrderByDescending(l => l.PerformedAt)
@@ -507,7 +507,7 @@ public class PermissionAuditRepository : IPermissionAuditRepository
 
     public async Task<IEnumerable<PermissionAuditLog>> GetByPrincipalAsync(PrincipalType principalType, Guid principalId, int take = 100)
     {
-        return await _context.PermissionAuditLogs
+        return await _auditContext.PermissionAuditLogs
             .AsNoTracking()
             .Where(l => l.PrincipalType == principalType && l.PrincipalId == principalId)
             .OrderByDescending(l => l.PerformedAt)
@@ -517,7 +517,7 @@ public class PermissionAuditRepository : IPermissionAuditRepository
 
     public async Task<IEnumerable<PermissionAuditLog>> GetByPerformerAsync(Guid userId, int take = 100)
     {
-        return await _context.PermissionAuditLogs
+        return await _auditContext.PermissionAuditLogs
             .AsNoTracking()
             .Where(l => l.PerformedBy == userId)
             .OrderByDescending(l => l.PerformedAt)
@@ -527,7 +527,7 @@ public class PermissionAuditRepository : IPermissionAuditRepository
 
     public async Task<IEnumerable<PermissionAuditLog>> GetRecentAsync(int take = 100)
     {
-        return await _context.PermissionAuditLogs
+        return await _auditContext.PermissionAuditLogs
             .AsNoTracking()
             .OrderByDescending(l => l.PerformedAt)
             .Take(take)

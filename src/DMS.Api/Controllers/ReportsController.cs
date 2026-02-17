@@ -1,3 +1,4 @@
+using DMS.Api.Constants;
 using DMS.BL.DTOs;
 using DMS.BL.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -40,6 +41,14 @@ public class ReportsController : BaseApiController
     public async Task<IActionResult> GetRecentActivity([FromQuery] int take = 10)
     {
         var result = await _reportsService.GetRecentActivityAsync(take);
+        return OkOrBadRequest(result);
+    }
+
+    [HttpGet("access-review/{nodeType}/{nodeId:guid}")]
+    [Authorize(Roles = $"{AppConstants.Roles.Administrator},{AppConstants.Roles.Auditor}")]
+    public async Task<IActionResult> GetAccessReview(string nodeType, Guid nodeId)
+    {
+        var result = await _reportsService.GetAccessReviewReportAsync(nodeType, nodeId);
         return OkOrBadRequest(result);
     }
 }

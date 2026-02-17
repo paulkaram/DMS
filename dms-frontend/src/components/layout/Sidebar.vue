@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 
 const props = defineProps<{
@@ -12,28 +12,14 @@ const emit = defineEmits<{
 
 const route = useRoute()
 
-// Collapsible sections state
-const expandedSections = ref<Set<string>>(new Set(['main', 'myfiles', 'workflow']))
-
-const mainMenuItems = [
+const menuItems = [
   { name: 'Dashboard', path: '/', icon: 'dashboard' },
   { name: 'Explorer', path: '/explorer', icon: 'explore' },
-  { name: 'Scan', path: '/scan', icon: 'document_scanner' },
   { name: 'Search', path: '/search', icon: 'search' },
-  { name: 'Reports', path: '/reports', icon: 'monitoring' },
-  { name: 'Activity', path: '/activity', icon: 'history' }
-]
-
-const myFilesMenuItems = [
-  { name: 'Favorites', path: '/favorites', icon: 'star' },
-  { name: 'My Files', path: '/my-files', icon: 'folder_special' },
-  { name: 'Shared With Me', path: '/shared-with-me', icon: 'folder_shared' },
-  { name: 'My Shared Items', path: '/my-shared-items', icon: 'share' },
-  { name: 'Recycle Bin', path: '/recycle-bin', icon: 'delete' }
-]
-
-const workflowMenuItems = [
-  { name: 'Approvals', path: '/approvals', icon: 'task_alt' }
+  { name: 'Scan', path: '/scan', icon: 'document_scanner' },
+  { name: 'My Workspace', path: '/my-workspace', icon: 'workspaces' },
+  { name: 'Records Management', path: '/records', icon: 'verified_user' },
+  { name: 'Archive', path: '/archive', icon: 'inventory_2' }
 ]
 
 function isActive(path: string) {
@@ -45,18 +31,6 @@ function isActive(path: string) {
 
 function isAdminActive() {
   return route.path === '/admin' || route.path.startsWith('/admin/') || route.path.startsWith('/users') || route.path.startsWith('/settings')
-}
-
-function toggleSection(section: string) {
-  if (expandedSections.value.has(section)) {
-    expandedSections.value.delete(section)
-  } else {
-    expandedSections.value.add(section)
-  }
-}
-
-function isSectionExpanded(section: string) {
-  return expandedSections.value.has(section)
 }
 
 const sidebarWidth = computed(() => props.open ? 'w-64' : 'w-20')
@@ -123,160 +97,28 @@ const sidebarWidth = computed(() => props.open ? 'w-64' : 'w-20')
 
     <!-- Navigation -->
     <nav class="flex-1 overflow-y-auto overflow-x-hidden py-4 px-2.5 scrollbar-thin">
-      <!-- Main Menu -->
-      <div class="mb-5">
-        <button
-          v-if="open"
-          @click="toggleSection('main')"
-          class="w-full flex items-center gap-2 px-2.5 py-1.5 mb-1.5 group"
+      <div class="space-y-0.5">
+        <router-link
+          v-for="item in menuItems"
+          :key="item.path"
+          :to="item.path"
+          class="menu-item flex items-center gap-3 px-3 py-2 text-[13px] rounded-lg transition-all duration-200 group relative overflow-hidden"
+          :class="[
+            isActive(item.path)
+              ? 'menu-item-active'
+              : 'menu-item-inactive',
+            { 'justify-center': !open }
+          ]"
+          :title="!open ? item.name : ''"
         >
-          <div class="w-1.5 h-1.5 rounded-full bg-teal shadow-sm shadow-teal/50"></div>
-          <span class="text-[10px] font-bold text-zinc-300 uppercase tracking-widest group-hover:text-teal transition-colors">Main</span>
-          <div class="flex-1 h-px bg-gradient-to-r from-zinc-700/30 to-transparent ml-1"></div>
           <span
-            class="material-symbols-outlined text-xs text-zinc-400 group-hover:text-teal transition-all duration-200"
-            :class="{ '-rotate-90': !isSectionExpanded('main') }"
+            class="material-symbols-outlined text-xl transition-all duration-200 relative z-10"
+            :class="isActive(item.path) ? 'text-teal' : 'text-zinc-300 group-hover:text-teal'"
           >
-            expand_more
+            {{ item.icon }}
           </span>
-        </button>
-
-        <transition
-          enter-active-class="transition-all duration-200 ease-out"
-          enter-from-class="opacity-0"
-          enter-to-class="opacity-100"
-          leave-active-class="transition-all duration-150 ease-in"
-          leave-from-class="opacity-100"
-          leave-to-class="opacity-0"
-        >
-          <div v-show="!open || isSectionExpanded('main')" class="space-y-0.5">
-            <router-link
-              v-for="item in mainMenuItems"
-              :key="item.path"
-              :to="item.path"
-              class="menu-item flex items-center gap-3 px-3 py-2 text-[13px] rounded-lg transition-all duration-200 group relative overflow-hidden"
-              :class="[
-                isActive(item.path)
-                  ? 'menu-item-active'
-                  : 'menu-item-inactive',
-                { 'justify-center': !open }
-              ]"
-              :title="!open ? item.name : ''"
-            >
-              <span
-                class="material-symbols-outlined text-xl transition-all duration-200 relative z-10"
-                :class="isActive(item.path) ? 'text-teal' : 'text-zinc-300 group-hover:text-teal'"
-              >
-                {{ item.icon }}
-              </span>
-              <span v-if="open" class="truncate relative z-10">{{ item.name }}</span>
-            </router-link>
-          </div>
-        </transition>
-      </div>
-
-      <!-- My Files Menu -->
-      <div class="mb-5">
-        <button
-          v-if="open"
-          @click="toggleSection('myfiles')"
-          class="w-full flex items-center gap-2 px-2.5 py-1.5 mb-1.5 group"
-        >
-          <div class="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-sm shadow-cyan-400/50"></div>
-          <span class="text-[10px] font-bold text-zinc-300 uppercase tracking-widest group-hover:text-teal transition-colors">My Files</span>
-          <div class="flex-1 h-px bg-gradient-to-r from-zinc-700/30 to-transparent ml-1"></div>
-          <span
-            class="material-symbols-outlined text-xs text-zinc-400 group-hover:text-teal transition-all duration-200"
-            :class="{ '-rotate-90': !isSectionExpanded('myfiles') }"
-          >
-            expand_more
-          </span>
-        </button>
-
-        <transition
-          enter-active-class="transition-all duration-200 ease-out"
-          enter-from-class="opacity-0"
-          enter-to-class="opacity-100"
-          leave-active-class="transition-all duration-150 ease-in"
-          leave-from-class="opacity-100"
-          leave-to-class="opacity-0"
-        >
-          <div v-show="!open || isSectionExpanded('myfiles')" class="space-y-0.5">
-            <router-link
-              v-for="item in myFilesMenuItems"
-              :key="item.path"
-              :to="item.path"
-              class="menu-item flex items-center gap-3 px-3 py-2 text-[13px] rounded-lg transition-all duration-200 group relative overflow-hidden"
-              :class="[
-                isActive(item.path)
-                  ? 'menu-item-active'
-                  : 'menu-item-inactive',
-                { 'justify-center': !open }
-              ]"
-              :title="!open ? item.name : ''"
-            >
-              <span
-                class="material-symbols-outlined text-xl transition-all duration-200 relative z-10"
-                :class="isActive(item.path) ? 'text-teal' : 'text-zinc-300 group-hover:text-teal'"
-              >
-                {{ item.icon }}
-              </span>
-              <span v-if="open" class="truncate relative z-10">{{ item.name }}</span>
-            </router-link>
-          </div>
-        </transition>
-      </div>
-
-      <!-- Workflow Menu -->
-      <div class="mb-5">
-        <button
-          v-if="open"
-          @click="toggleSection('workflow')"
-          class="w-full flex items-center gap-2 px-2.5 py-1.5 mb-1.5 group"
-        >
-          <div class="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400/50"></div>
-          <span class="text-[10px] font-bold text-zinc-300 uppercase tracking-widest group-hover:text-teal transition-colors">Workflow</span>
-          <div class="flex-1 h-px bg-gradient-to-r from-zinc-700/30 to-transparent ml-1"></div>
-          <span
-            class="material-symbols-outlined text-xs text-zinc-400 group-hover:text-teal transition-all duration-200"
-            :class="{ '-rotate-90': !isSectionExpanded('workflow') }"
-          >
-            expand_more
-          </span>
-        </button>
-
-        <transition
-          enter-active-class="transition-all duration-200 ease-out"
-          enter-from-class="opacity-0"
-          enter-to-class="opacity-100"
-          leave-active-class="transition-all duration-150 ease-in"
-          leave-from-class="opacity-100"
-          leave-to-class="opacity-0"
-        >
-          <div v-show="!open || isSectionExpanded('workflow')" class="space-y-0.5">
-            <router-link
-              v-for="item in workflowMenuItems"
-              :key="item.path"
-              :to="item.path"
-              class="menu-item flex items-center gap-3 px-3 py-2 text-[13px] rounded-lg transition-all duration-200 group relative overflow-hidden"
-              :class="[
-                isActive(item.path)
-                  ? 'menu-item-active'
-                  : 'menu-item-inactive',
-                { 'justify-center': !open }
-              ]"
-              :title="!open ? item.name : ''"
-            >
-              <span
-                class="material-symbols-outlined text-xl transition-all duration-200 relative z-10"
-                :class="isActive(item.path) ? 'text-teal' : 'text-zinc-300 group-hover:text-teal'"
-              >
-                {{ item.icon }}
-              </span>
-              <span v-if="open" class="truncate relative z-10">{{ item.name }}</span>
-            </router-link>
-          </div>
-        </transition>
+          <span v-if="open" class="truncate relative z-10">{{ item.name }}</span>
+        </router-link>
       </div>
     </nav>
 

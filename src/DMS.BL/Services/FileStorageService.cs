@@ -9,11 +9,24 @@ public class FileStorageService : IFileStorageService
 {
     private readonly string _basePath;
     private readonly ILogger<FileStorageService> _logger;
+    private readonly bool _encryptionEnabled;
+    private readonly byte[]? _encryptionKey;
 
     public FileStorageService(IConfiguration configuration, ILogger<FileStorageService> logger)
     {
         _logger = logger;
         _basePath = configuration["Storage:BasePath"] ?? Path.Combine(Directory.GetCurrentDirectory(), "Storage");
+
+        // AES-256 encryption at rest (NCA ECC requirement)
+        _encryptionEnabled = bool.TryParse(configuration["Storage:EncryptionEnabled"], out var enc) && enc;
+        var keyString = configuration["Storage:EncryptionKey"];
+        if (_encryptionEnabled && !string.IsNullOrEmpty(keyString))
+        {
+            using var sha256 = SHA256.Create();
+            _encryptionKey = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(keyString));
+            _logger.LogInformation("File encryption at rest is ENABLED (AES-256)");
+        }
+
         _logger.LogInformation("FileStorageService initialized with base path: {BasePath}", _basePath);
 
         if (!Directory.Exists(_basePath))
@@ -21,6 +34,52 @@ public class FileStorageService : IFileStorageService
             Directory.CreateDirectory(_basePath);
             _logger.LogInformation("Created storage directory: {BasePath}", _basePath);
         }
+    }
+
+    /// <summary>
+    /// Whether encryption at rest is enabled and configured.
+    /// </summary>
+    public bool IsEncryptionEnabled => _encryptionEnabled && _encryptionKey != null;
+
+    private async Task EncryptToStreamAsync(Stream source, Stream destination)
+    {
+        if (_encryptionKey == null) throw new InvalidOperationException("Encryption key not configured");
+
+        using var aes = Aes.Create();
+        aes.Key = _encryptionKey;
+        aes.GenerateIV();
+        aes.Mode = CipherMode.CBC;
+        aes.Padding = PaddingMode.PKCS7;
+
+        // Write IV as first 16 bytes
+        await destination.WriteAsync(aes.IV);
+
+        using var encryptor = aes.CreateEncryptor();
+        using var cryptoStream = new CryptoStream(destination, encryptor, CryptoStreamMode.Write, leaveOpen: true);
+        await source.CopyToAsync(cryptoStream);
+        await cryptoStream.FlushFinalBlockAsync();
+    }
+
+    private async Task<MemoryStream> DecryptFromStreamAsync(Stream source)
+    {
+        if (_encryptionKey == null) throw new InvalidOperationException("Encryption key not configured");
+
+        // Read IV from first 16 bytes
+        var iv = new byte[16];
+        await source.ReadExactlyAsync(iv);
+
+        using var aes = Aes.Create();
+        aes.Key = _encryptionKey;
+        aes.IV = iv;
+        aes.Mode = CipherMode.CBC;
+        aes.Padding = PaddingMode.PKCS7;
+
+        var result = new MemoryStream();
+        using var decryptor = aes.CreateDecryptor();
+        using var cryptoStream = new CryptoStream(source, decryptor, CryptoStreamMode.Read, leaveOpen: true);
+        await cryptoStream.CopyToAsync(result);
+        result.Position = 0;
+        return result;
     }
 
     /// <summary>
@@ -84,9 +143,17 @@ public class FileStorageService : IFileStorageService
 
         using (var fs = new FileStream(absolutePath, FileMode.Create, FileAccess.Write, FileShare.None))
         {
-            await sourceStream.CopyToAsync(fs);
+            if (IsEncryptionEnabled)
+            {
+                await EncryptToStreamAsync(sourceStream, fs);
+                _logger.LogInformation("File encrypted and saved, bytes written: {Bytes}", fs.Length);
+            }
+            else
+            {
+                await sourceStream.CopyToAsync(fs);
+                _logger.LogInformation("File saved successfully, bytes written: {Bytes}", fs.Length);
+            }
             await fs.FlushAsync();
-            _logger.LogInformation("File saved successfully, bytes written: {Bytes}", fs.Length);
         }
 
         // Dispose memory stream if we created one
@@ -155,10 +222,20 @@ public class FileStorageService : IFileStorageService
             "Saving file with hash. RelativePath: {RelativePath}, Size: {Size}, Hash: {Hash}",
             relativePath, fileSize, hash);
 
-        // Save to file
+        // Save to file (with optional encryption)
+        var isEncrypted = false;
         using (var fs = new FileStream(absolutePath, FileMode.Create, FileAccess.Write, FileShare.None))
         {
-            await sourceStream.CopyToAsync(fs);
+            if (IsEncryptionEnabled)
+            {
+                await EncryptToStreamAsync(sourceStream, fs);
+                isEncrypted = true;
+                _logger.LogInformation("File encrypted with AES-256 before saving");
+            }
+            else
+            {
+                await sourceStream.CopyToAsync(fs);
+            }
             await fs.FlushAsync();
         }
 
@@ -168,23 +245,27 @@ public class FileStorageService : IFileStorageService
             await tempMemoryStream.DisposeAsync();
         }
 
-        // Verify file was created and hash matches
+        // Verify file was created
         if (File.Exists(absolutePath))
         {
-            using var verifyStream = new FileStream(absolutePath, FileMode.Open, FileAccess.Read);
-            var verifyHash = await ComputeHashAsync(verifyStream);
-
-            if (verifyHash != hash)
+            if (!isEncrypted)
             {
-                _logger.LogError(
-                    "File integrity verification failed after save. Expected: {Expected}, Got: {Got}",
-                    hash, verifyHash);
-                throw new IOException("File integrity verification failed after save");
+                // Only verify plaintext hash for unencrypted files
+                using var verifyStream = new FileStream(absolutePath, FileMode.Open, FileAccess.Read);
+                var verifyHash = await ComputeHashAsync(verifyStream);
+
+                if (verifyHash != hash)
+                {
+                    _logger.LogError(
+                        "File integrity verification failed after save. Expected: {Expected}, Got: {Got}",
+                        hash, verifyHash);
+                    throw new IOException("File integrity verification failed after save");
+                }
             }
 
             _logger.LogInformation(
-                "File saved and verified: {AbsolutePath}, Size: {Size}, Hash: {Hash}",
-                absolutePath, fileSize, hash);
+                "File saved and verified: {AbsolutePath}, Size: {Size}, Hash: {Hash}, Encrypted: {Encrypted}",
+                absolutePath, fileSize, hash, isEncrypted);
         }
         else
         {
@@ -198,7 +279,8 @@ public class FileStorageService : IFileStorageService
             IntegrityHash = hash,
             HashAlgorithm = "SHA256",
             Size = fileSize,
-            StoredAt = DateTime.Now
+            StoredAt = DateTime.Now,
+            IsEncrypted = isEncrypted
         };
     }
 
@@ -262,6 +344,27 @@ public class FileStorageService : IFileStorageService
 
         _logger.LogInformation("File read successfully: {AbsolutePath}, Size: {Size} bytes", absolutePath, memoryStream.Length);
         return memoryStream;
+    }
+
+    public async Task<Stream?> GetFileAsync(string storagePath, bool isEncrypted)
+    {
+        if (!isEncrypted || !IsEncryptionEnabled)
+            return await GetFileAsync(storagePath);
+
+        if (string.IsNullOrEmpty(storagePath))
+            return null;
+
+        var absolutePath = Path.IsPathRooted(storagePath) ? storagePath : Path.Combine(_basePath, storagePath);
+        if (!File.Exists(absolutePath))
+        {
+            _logger.LogError("Encrypted file not found: {AbsolutePath}", absolutePath);
+            return null;
+        }
+
+        using var fs = new FileStream(absolutePath, FileMode.Open, FileAccess.Read);
+        var decrypted = await DecryptFromStreamAsync(fs);
+        _logger.LogInformation("File decrypted and read: {AbsolutePath}, DecryptedSize: {Size}", absolutePath, decrypted.Length);
+        return decrypted;
     }
 
     public Task<bool> DeleteFileAsync(string storagePath)

@@ -7,6 +7,9 @@ public interface IClassificationRepository
     Task<Classification?> GetByIdAsync(Guid id);
     Task<IEnumerable<Classification>> GetAllAsync(string? language = null);
     Task<IEnumerable<Classification>> SearchAsync(string? name, string? language = null);
+    Task<Classification?> GetByCodeAsync(string code);
+    Task<IEnumerable<Classification>> GetChildrenAsync(Guid? parentId);
+    Task<IEnumerable<Classification>> GetTreeAsync(string? language = null);
     Task<Guid> CreateAsync(Classification entity);
     Task<bool> UpdateAsync(Classification entity);
     Task<bool> DeleteAsync(Guid id);

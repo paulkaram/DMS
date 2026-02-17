@@ -67,18 +67,7 @@ public class EffectivePermissionConfiguration : IEntityTypeConfiguration<Effecti
     }
 }
 
-public class PermissionAuditLogConfiguration : IEntityTypeConfiguration<PermissionAuditLog>
-{
-    public void Configure(EntityTypeBuilder<PermissionAuditLog> builder)
-    {
-        builder.ToTable("PermissionAuditLogs");
-        builder.HasKey(e => e.Id);
-
-        // Enum conversions
-        builder.Property(e => e.NodeType).HasConversion<int>();
-        builder.Property(e => e.PrincipalType).HasConversion<int>();
-    }
-}
+// PermissionAuditLogConfiguration moved to AuditDbContext (separate audit database)
 
 public class PermissionDelegationConfiguration : IEntityTypeConfiguration<PermissionDelegation>
 {

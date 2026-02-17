@@ -35,6 +35,9 @@ public class DocumentDto
     public string? PrivacyLevelName { get; set; }
     public string? PrivacyLevelColor { get; set; }
     public int? PrivacyLevelValue { get; set; }
+    public string State { get; set; } = "Draft";
+    public bool IsEncrypted { get; set; }
+    public bool? IsPdfACompliant { get; set; }
 }
 
 public class DocumentShortcutDto
@@ -147,6 +150,12 @@ public enum CheckInType
     /// Overwrite the current version (no new version created).
     /// </summary>
     Overwrite = 2
+}
+
+public class TransitionStateDto
+{
+    public string TargetState { get; set; } = string.Empty;
+    public string? Reason { get; set; }
 }
 
 public class MoveDocumentDto

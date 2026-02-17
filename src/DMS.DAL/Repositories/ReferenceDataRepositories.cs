@@ -53,6 +53,39 @@ public class ClassificationRepository : IClassificationRepository
             .ToListAsync();
     }
 
+    public async Task<Classification?> GetByCodeAsync(string code)
+    {
+        return await _context.Classifications
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Code == code && c.IsActive);
+    }
+
+    public async Task<IEnumerable<Classification>> GetChildrenAsync(Guid? parentId)
+    {
+        return await _context.Classifications
+            .AsNoTracking()
+            .Where(c => c.IsActive && c.ParentId == parentId)
+            .OrderBy(c => c.SortOrder)
+            .ThenBy(c => c.Name)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Classification>> GetTreeAsync(string? language = null)
+    {
+        var query = _context.Classifications
+            .AsNoTracking()
+            .Where(c => c.IsActive);
+
+        if (!string.IsNullOrEmpty(language))
+            query = query.Where(c => c.Language == language || c.Language == null);
+
+        return await query
+            .OrderBy(c => c.Level)
+            .ThenBy(c => c.SortOrder)
+            .ThenBy(c => c.Name)
+            .ToListAsync();
+    }
+
     public async Task<Guid> CreateAsync(Classification entity)
     {
         entity.Id = Guid.NewGuid();

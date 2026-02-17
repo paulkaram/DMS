@@ -53,6 +53,11 @@ public class ClassificationDto
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
+    public Guid? ParentId { get; set; }
+    public int Level { get; set; }
+    public string? Code { get; set; }
+    public string? FullPath { get; set; }
+    public List<ClassificationDto>? Children { get; set; }
 }
 
 public class ImportanceDto

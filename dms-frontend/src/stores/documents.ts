@@ -17,27 +17,40 @@ export const useDocumentsStore = defineStore('documents', () => {
   const isLoadingSubFolders = ref(false)
   const error = ref<string | null>(null)
 
-  async function loadCabinets() {
-    isLoading.value = true
-    error.value = null
-    try {
-      const response = await cabinetsApi.getAll()
-      cabinets.value = response.data
-      loadedCabinetIds.value.clear()
+  // Cached promise — kept after resolution so subsequent calls reuse it (no extra API hit).
+  // Only cleared on force=true refresh.
+  let cabinetsPromise: Promise<void> | null = null
 
-      // Build tree nodes from cabinets
-      treeNodes.value = cabinets.value.map(cab => ({
-        id: cab.id,
-        name: cab.name,
-        type: 'cabinet' as const,
-        children: [],
-        isExpanded: false
-      }))
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Failed to load cabinets'
-    } finally {
-      isLoading.value = false
-    }
+  async function loadCabinets(force = false) {
+    if (force) cabinetsPromise = null
+    if (cabinetsPromise) return cabinetsPromise
+
+    cabinetsPromise = (async () => {
+      isLoading.value = true
+      error.value = null
+      try {
+        const response = await cabinetsApi.getAll()
+        cabinets.value = response.data
+        loadedCabinetIds.value.clear()
+
+        // Build tree nodes from cabinets
+        treeNodes.value = cabinets.value.map(cab => ({
+          id: cab.id,
+          name: cab.name,
+          type: 'cabinet' as const,
+          children: [],
+          isExpanded: false
+        }))
+      } catch (err: any) {
+        error.value = err.response?.data?.message || 'Failed to load cabinets'
+        // Clear promise on failure so next call can retry
+        cabinetsPromise = null
+      } finally {
+        isLoading.value = false
+      }
+    })()
+
+    return cabinetsPromise
   }
 
   async function loadFolderTree(cabinetId: string) {

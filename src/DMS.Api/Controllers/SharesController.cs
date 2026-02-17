@@ -58,4 +58,43 @@ public class SharesController : BaseApiController
         if (!result) return NotFound();
         return Ok();
     }
+
+    [HttpPost("{id}/verify-otp")]
+    public async Task<IActionResult> VerifyOtp(Guid id, [FromBody] VerifyOtpRequest request)
+    {
+        var result = await _shareService.VerifyOtpAsync(id, request.OtpCode, GetCurrentUserId());
+        return result.Success ? Ok(result.Message) : BadRequest(result.Errors);
+    }
+
+    [HttpPost("{id}/resend-otp")]
+    public async Task<IActionResult> ResendOtp(Guid id)
+    {
+        var result = await _shareService.ResendOtpAsync(id, GetCurrentUserId());
+        return result.Success ? Ok(result.Message) : BadRequest(result.Errors);
+    }
+
+    // Link sharing endpoints
+
+    [HttpPost("link")]
+    public async Task<IActionResult> CreateLinkShare([FromBody] CreateLinkShareRequest request)
+    {
+        var result = await _shareService.CreateLinkShareAsync(GetCurrentUserId(), request);
+        return result.Success ? Ok(result.Data) : BadRequest(result.Errors);
+    }
+
+    [HttpGet("link/{documentId:guid}")]
+    public async Task<IActionResult> GetLinkShare(Guid documentId)
+    {
+        var result = await _shareService.GetLinkShareAsync(documentId);
+        return result.Success ? Ok(result.Data) : NotFound(result.Errors);
+    }
+
+    [HttpGet("resolve/{token}")]
+    public async Task<IActionResult> ResolveShareToken(string token)
+    {
+        var result = await _shareService.ValidateShareTokenAsync(token);
+        if (!result.Success) return NotFound(result.Errors);
+
+        return Ok(new { documentId = result.Data!.DocumentId, permissionLevel = result.Data.PermissionLevel });
+    }
 }

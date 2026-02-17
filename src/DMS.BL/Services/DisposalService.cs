@@ -14,6 +14,7 @@ public class DisposalService : IDisposalService
     private readonly IDocumentRepository _documentRepository;
     private readonly IDocumentVersionRepository _versionRepository;
     private readonly IDisposalCertificateRepository _certificateRepository;
+    private readonly IDisposalRequestRepository _requestRepository;
     private readonly ILegalHoldService _legalHoldService;
     private readonly IFileStorageService _fileStorageService;
     private readonly IIntegrityService _integrityService;
@@ -24,6 +25,7 @@ public class DisposalService : IDisposalService
         IDocumentRepository documentRepository,
         IDocumentVersionRepository versionRepository,
         IDisposalCertificateRepository certificateRepository,
+        IDisposalRequestRepository requestRepository,
         ILegalHoldService legalHoldService,
         IFileStorageService fileStorageService,
         IIntegrityService integrityService,
@@ -33,6 +35,7 @@ public class DisposalService : IDisposalService
         _documentRepository = documentRepository;
         _versionRepository = versionRepository;
         _certificateRepository = certificateRepository;
+        _requestRepository = requestRepository;
         _legalHoldService = legalHoldService;
         _fileStorageService = fileStorageService;
         _integrityService = integrityService;
@@ -306,6 +309,226 @@ public class DisposalService : IDisposalService
 
         result.CompletedAt = DateTime.Now;
         return result;
+    }
+
+    // --- Batch Disposal with Multi-Level Approval ---
+
+    public async Task<ServiceResult<DisposalRequestDetailDto>> InitiateBatchDisposalAsync(InitiateBatchDisposalDto dto, Guid userId)
+    {
+        if (dto.DocumentIds.Count == 0)
+            return ServiceResult<DisposalRequestDetailDto>.Fail("At least one document is required");
+
+        // Validate all documents exist and are not on legal hold
+        foreach (var docId in dto.DocumentIds)
+        {
+            var doc = await _documentRepository.GetByIdAsync(docId);
+            if (doc == null)
+                return ServiceResult<DisposalRequestDetailDto>.Fail($"Document {docId} not found");
+            if (await _legalHoldService.IsDocumentOnHoldAsync(docId))
+                return ServiceResult<DisposalRequestDetailDto>.Fail($"Document '{doc.Name}' is under legal hold");
+        }
+
+        var request = new DAL.Entities.DisposalRequest
+        {
+            RequestNumber = await _requestRepository.GenerateRequestNumberAsync(),
+            Status = DAL.Entities.DisposalRequestStatus.PendingApproval,
+            BatchReference = dto.BatchReference,
+            DisposalMethod = dto.DisposalMethod,
+            Reason = dto.Reason,
+            LegalBasis = dto.LegalBasis,
+            RequiredApprovalLevels = 1, // Default, can be overridden
+            CurrentApprovalLevel = 0,
+            RequestedBy = userId,
+            RequestedAt = DateTime.Now,
+            CreatedBy = userId
+        };
+
+        var requestId = await _requestRepository.CreateAsync(request);
+        await _requestRepository.AddDocumentsAsync(requestId, dto.DocumentIds);
+
+        await _activityLogService.LogActivityAsync(
+            "DisposalBatchInitiated", "DisposalRequest", requestId, request.RequestNumber,
+            $"Batch disposal initiated for {dto.DocumentIds.Count} documents", userId, null, null);
+
+        return await GetDisposalRequestAsync(requestId);
+    }
+
+    public async Task<ServiceResult<DisposalRequestDetailDto>> GetDisposalRequestAsync(Guid requestId)
+    {
+        var request = await _requestRepository.GetByIdAsync(requestId);
+        if (request == null)
+            return ServiceResult<DisposalRequestDetailDto>.Fail("Disposal request not found");
+
+        var documents = await _requestRepository.GetDocumentsAsync(requestId);
+        var approvals = await _requestRepository.GetApprovalsAsync(requestId);
+
+        // Enrich document names
+        foreach (var doc in documents)
+        {
+            var document = await _documentRepository.GetByIdAsync(doc.DocumentId);
+            doc.DocumentName = document?.Name;
+        }
+
+        var detail = new DisposalRequestDetailDto
+        {
+            Id = request.Id,
+            RequestNumber = request.RequestNumber,
+            Status = request.Status.ToString(),
+            BatchReference = request.BatchReference,
+            DisposalMethod = request.DisposalMethod,
+            Reason = request.Reason,
+            LegalBasis = request.LegalBasis,
+            RequiredApprovalLevels = request.RequiredApprovalLevels,
+            CurrentApprovalLevel = request.CurrentApprovalLevel,
+            RequestedBy = request.RequestedBy,
+            RequestedAt = request.RequestedAt,
+            ExecutedAt = request.ExecutedAt,
+            Documents = documents.Select(d => new DisposalRequestDocumentDto
+            {
+                Id = d.Id,
+                DocumentId = d.DocumentId,
+                DocumentName = d.DocumentName,
+                Status = d.Status.ToString(),
+                CertificateId = d.CertificateId,
+                ErrorMessage = d.ErrorMessage
+            }).ToList(),
+            Approvals = approvals.Select(a => new DisposalApprovalDto
+            {
+                Id = a.Id,
+                ApprovalLevel = a.ApprovalLevel,
+                ApproverId = a.ApproverId,
+                Decision = a.Decision.ToString(),
+                Comments = a.Comments,
+                DecisionAt = a.DecisionAt
+            }).ToList()
+        };
+
+        return ServiceResult<DisposalRequestDetailDto>.Ok(detail);
+    }
+
+    public async Task<ServiceResult<PagedResultDto<DisposalRequestDto>>> GetDisposalRequestsAsync(string? status, int page, int pageSize)
+    {
+        DAL.Entities.DisposalRequestStatus? statusFilter = null;
+        if (!string.IsNullOrEmpty(status) && Enum.TryParse<DAL.Entities.DisposalRequestStatus>(status, true, out var parsed))
+            statusFilter = parsed;
+
+        var (items, totalCount) = await _requestRepository.GetPaginatedAsync(statusFilter, page, pageSize);
+        var dtos = items.Select(r => new DisposalRequestDto
+        {
+            Id = r.Id,
+            Status = r.Status.ToString(),
+            DisposalMethod = r.DisposalMethod,
+            Reason = r.Reason,
+            LegalBasis = r.LegalBasis,
+            RequestedBy = r.RequestedBy,
+            RequestedAt = r.RequestedAt
+        }).ToList();
+
+        return ServiceResult<PagedResultDto<DisposalRequestDto>>.Ok(new PagedResultDto<DisposalRequestDto>
+        {
+            Items = dtos,
+            TotalCount = totalCount,
+            PageNumber = page,
+            PageSize = pageSize
+        });
+    }
+
+    public async Task<ServiceResult> SubmitDisposalApprovalAsync(Guid requestId, SubmitDisposalApprovalDto dto, Guid userId)
+    {
+        var request = await _requestRepository.GetByIdAsync(requestId);
+        if (request == null)
+            return ServiceResult.Fail("Disposal request not found");
+
+        if (request.Status != DAL.Entities.DisposalRequestStatus.PendingApproval &&
+            request.Status != DAL.Entities.DisposalRequestStatus.PartiallyApproved)
+            return ServiceResult.Fail($"Request is not pending approval (current status: {request.Status})");
+
+        if (!Enum.TryParse<DAL.Entities.DisposalApprovalDecision>(dto.Decision, true, out var decision))
+            return ServiceResult.Fail("Invalid decision. Use: Approved, Rejected, or ReturnedForReview");
+
+        var nextLevel = request.CurrentApprovalLevel + 1;
+
+        await _requestRepository.AddApprovalAsync(new DAL.Entities.DisposalApproval
+        {
+            DisposalRequestId = requestId,
+            ApprovalLevel = nextLevel,
+            ApproverId = userId,
+            Decision = decision,
+            Comments = dto.Comments,
+            DecisionAt = DateTime.Now
+        });
+
+        if (decision == DAL.Entities.DisposalApprovalDecision.Rejected)
+        {
+            request.Status = DAL.Entities.DisposalRequestStatus.Rejected;
+        }
+        else if (decision == DAL.Entities.DisposalApprovalDecision.Approved)
+        {
+            request.CurrentApprovalLevel = nextLevel;
+            request.Status = nextLevel >= request.RequiredApprovalLevels
+                ? DAL.Entities.DisposalRequestStatus.Approved
+                : DAL.Entities.DisposalRequestStatus.PartiallyApproved;
+        }
+
+        request.ModifiedBy = userId;
+        await _requestRepository.UpdateAsync(request);
+
+        await _activityLogService.LogActivityAsync(
+            "DisposalApproval", "DisposalRequest", requestId, request.RequestNumber,
+            $"Level {nextLevel} {decision} by user", userId, null, null);
+
+        return ServiceResult.Ok($"Disposal {decision.ToString().ToLower()} at level {nextLevel}");
+    }
+
+    public async Task<ServiceResult<DisposalBatchResult>> ExecuteBatchDisposalAsync(Guid requestId, Guid userId)
+    {
+        var request = await _requestRepository.GetByIdAsync(requestId);
+        if (request == null)
+            return ServiceResult<DisposalBatchResult>.Fail("Disposal request not found");
+
+        if (request.Status != DAL.Entities.DisposalRequestStatus.Approved)
+            return ServiceResult<DisposalBatchResult>.Fail("Request must be fully approved before execution");
+
+        var documents = await _requestRepository.GetDocumentsAsync(requestId);
+        var result = new DisposalBatchResult { StartedAt = DateTime.Now, TotalPending = documents.Count };
+
+        foreach (var requestDoc in documents)
+        {
+            try
+            {
+                var certResult = await ExecuteDisposalAsync(requestDoc.DocumentId, userId, request.DisposalMethod);
+                if (certResult.Success)
+                {
+                    await _requestRepository.UpdateDocumentStatusAsync(
+                        requestDoc.Id, DAL.Entities.DisposalRequestDocumentStatus.Disposed, certResult.Data!.Id);
+                    result.DisposedCount++;
+                }
+                else
+                {
+                    await _requestRepository.UpdateDocumentStatusAsync(
+                        requestDoc.Id, DAL.Entities.DisposalRequestDocumentStatus.Error, error: certResult.Errors?.FirstOrDefault());
+                    result.ErrorCount++;
+                    result.Errors.Add($"{requestDoc.DocumentId}: {certResult.Errors?.FirstOrDefault()}");
+                }
+                result.ProcessedCount++;
+            }
+            catch (Exception ex)
+            {
+                await _requestRepository.UpdateDocumentStatusAsync(
+                    requestDoc.Id, DAL.Entities.DisposalRequestDocumentStatus.Error, error: ex.Message);
+                result.ErrorCount++;
+                result.Errors.Add($"{requestDoc.DocumentId}: {ex.Message}");
+                _logger.LogError(ex, "Error disposing document {DocumentId}", requestDoc.DocumentId);
+            }
+        }
+
+        request.Status = DAL.Entities.DisposalRequestStatus.Executed;
+        request.ExecutedAt = DateTime.Now;
+        request.ExecutedBy = userId;
+        await _requestRepository.UpdateAsync(request);
+
+        result.CompletedAt = DateTime.Now;
+        return ServiceResult<DisposalBatchResult>.Ok(result, $"Batch disposal completed: {result.DisposedCount} disposed, {result.ErrorCount} errors");
     }
 
     private static DisposalCertificateDto MapCertificateToDto(DisposalCertificate cert)

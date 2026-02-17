@@ -204,6 +204,54 @@ function clearFilters() {
   selectedAction.value = 'All'
   selectedNodeType.value = 'All'
 }
+
+// Export to CSV
+const isExporting = ref(false)
+
+async function exportToCsv() {
+  isExporting.value = true
+  try {
+    const response = await activityLogsApi.exportCsv(1, 10000)
+    const allLogs = response.data.items as ActivityLog[]
+
+    // Build CSV
+    const headers = ['Date', 'Action', 'Node Type', 'Node Name', 'User', 'Details', 'IP Address', 'User Agent']
+    const rows = allLogs.map(log => [
+      new Date(log.createdAt).toISOString(),
+      log.action || '',
+      log.nodeType || '',
+      (log.nodeName || '').replace(/,/g, ';'),
+      log.userName || '',
+      (log.details || '').replace(/,/g, ';').replace(/\n/g, ' '),
+      log.ipAddress || '',
+      (log.userAgent || '').replace(/,/g, ';')
+    ])
+
+    const csv = [headers.join(','), ...rows.map(r => r.map(c => `"${c}"`).join(','))].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = window.document.createElement('a')
+    link.href = url
+    link.download = `audit-trail-${new Date().toISOString().slice(0, 10)}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+  } catch (err) {
+    console.error('Export failed', err)
+  } finally {
+    isExporting.value = false
+  }
+}
+
+// Parse user agent into a short browser label
+function parseUserAgent(ua: string): string {
+  if (!ua) return ''
+  if (ua.includes('Edg/')) return 'Edge'
+  if (ua.includes('Chrome/')) return 'Chrome'
+  if (ua.includes('Firefox/')) return 'Firefox'
+  if (ua.includes('Safari/') && !ua.includes('Chrome')) return 'Safari'
+  if (ua.includes('MSIE') || ua.includes('Trident/')) return 'IE'
+  return ua.slice(0, 30)
+}
 </script>
 
 <template>
@@ -225,6 +273,15 @@ function clearFilters() {
             class="w-64 pl-10 pr-4 py-2 bg-white dark:bg-surface-dark border border-zinc-200 dark:border-border-dark rounded-lg text-zinc-900 dark:text-white placeholder-zinc-400 text-sm focus:ring-2 focus:ring-teal/50 focus:border-teal outline-none"
           />
         </div>
+        <button
+          @click="exportToCsv"
+          :disabled="isExporting"
+          class="flex items-center gap-2 px-4 py-2 bg-teal hover:bg-teal/90 text-white rounded-lg font-medium text-sm transition-colors disabled:opacity-50"
+        >
+          <span v-if="isExporting" class="material-symbols-outlined text-lg animate-spin">refresh</span>
+          <span v-else class="material-symbols-outlined text-lg">download</span>
+          {{ isExporting ? 'Exporting...' : 'Export CSV' }}
+        </button>
         <button
           @click="loadActivities"
           class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-surface-dark hover:bg-zinc-50 dark:hover:bg-border-dark text-zinc-700 dark:text-zinc-300 rounded-lg font-medium text-sm transition-colors border border-zinc-200 dark:border-border-dark"
@@ -472,13 +529,22 @@ function clearFilters() {
               </p>
             </div>
 
-            <!-- Time -->
+            <!-- Time + Client Info -->
             <div class="text-right flex-shrink-0">
               <div class="text-sm font-medium text-zinc-600 dark:text-zinc-300" :title="formatFullDate(activity.createdAt)">
                 {{ formatDate(activity.createdAt) }}
               </div>
-              <div v-if="activity.ipAddress" class="text-xs text-zinc-400 dark:text-zinc-500 mt-1">
-                {{ activity.ipAddress }}
+              <div v-if="activity.ipAddress || activity.userAgent" class="flex items-center justify-end gap-2 mt-1">
+                <span v-if="activity.ipAddress" class="text-[10px] text-zinc-400 dark:text-zinc-500 font-mono">
+                  {{ activity.ipAddress }}
+                </span>
+                <span
+                  v-if="activity.userAgent"
+                  class="text-[10px] text-zinc-400 dark:text-zinc-500 px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-700/50 rounded"
+                  :title="activity.userAgent"
+                >
+                  {{ parseUserAgent(activity.userAgent) }}
+                </span>
               </div>
             </div>
           </div>

@@ -26,6 +26,28 @@ public class DocumentTypeDistributionDto
     public string Color { get; set; } = string.Empty;
 }
 
+public class AccessReviewEntryDto
+{
+    public Guid UserId { get; set; }
+    public string UserName { get; set; } = string.Empty;
+    public string? Email { get; set; }
+    public string PermissionLevel { get; set; } = string.Empty;
+    public string PermissionSource { get; set; } = string.Empty;
+    public Guid? SourceNodeId { get; set; }
+    public string? SourceNodeName { get; set; }
+    public DateTime? LastAccessDate { get; set; }
+}
+
+public class AccessReviewReportDto
+{
+    public Guid NodeId { get; set; }
+    public string NodeName { get; set; } = string.Empty;
+    public string NodeType { get; set; } = string.Empty;
+    public int TotalUsersWithAccess { get; set; }
+    public DateTime GeneratedAt { get; set; } = DateTime.Now;
+    public List<AccessReviewEntryDto> Entries { get; set; } = new();
+}
+
 public class RecentActivityDto
 {
     public string Id { get; set; } = string.Empty;

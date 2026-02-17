@@ -15,7 +15,7 @@ const isActive = () => props.field === props.activeField
 
 <template>
   <th
-    class="px-5 py-4 cursor-pointer hover:text-teal transition-all select-none group"
+    class="px-4 py-2.5 cursor-pointer hover:text-teal transition-all select-none group"
     :class="isActive() ? 'text-teal' : 'text-zinc-300'"
     @click="emit('sort', field)"
   >

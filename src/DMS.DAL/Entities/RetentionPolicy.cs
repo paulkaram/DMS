@@ -61,6 +61,26 @@ public class RetentionPolicy : IAuditable, ISoftDeletable
     /// </summary>
     public bool IsLegalHold { get; set; } = false;
 
+    /// <summary>
+    /// Retention calculation basis: CreationDate, EventBased, DeclaredRecord.
+    /// </summary>
+    public string RetentionBasis { get; set; } = "CreationDate";
+
+    /// <summary>
+    /// Whether retention countdown pauses during legal holds.
+    /// </summary>
+    public bool SuspendDuringLegalHold { get; set; } = true;
+
+    /// <summary>
+    /// Whether to recalculate retention when classification changes.
+    /// </summary>
+    public bool RecalculateOnClassificationChange { get; set; } = true;
+
+    /// <summary>
+    /// Number of approval levels required for disposal (1-3).
+    /// </summary>
+    public int DisposalApprovalLevels { get; set; } = 1;
+
     public bool IsActive { get; set; } = true;
     public Guid? CreatedBy { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.Now;
@@ -111,6 +131,27 @@ public class DocumentRetention
     /// User who approved the action
     /// </summary>
     public Guid? ApprovedBy { get; set; }
+
+    /// <summary>
+    /// Days retention was suspended (due to legal hold).
+    /// Added to expiration date when hold is released.
+    /// </summary>
+    public int SuspendedDays { get; set; }
+
+    /// <summary>
+    /// When retention was suspended (null = not suspended).
+    /// </summary>
+    public DateTime? SuspendedAt { get; set; }
+
+    /// <summary>
+    /// The trigger event that started the retention countdown (for event-based).
+    /// </summary>
+    public Guid? TriggerEventId { get; set; }
+
+    /// <summary>
+    /// Original expiration date before any suspension adjustments.
+    /// </summary>
+    public DateTime? OriginalExpirationDate { get; set; }
 
     public string? Notes { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.Now;

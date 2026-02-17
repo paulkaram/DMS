@@ -75,7 +75,19 @@ defineExpose({ clearSelection, selectedFolders })
     </div>
 
     <!-- Grid View -->
-    <div v-else-if="viewMode === 'grid'" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+    <div v-else-if="viewMode === 'grid'">
+      <!-- Select All Bar -->
+      <div v-if="selectable" class="flex items-center gap-3 mb-3 px-1">
+        <UiCheckbox
+          v-model="isAllSelected"
+          :indeterminate="isSomeSelected"
+          size="sm"
+        />
+        <span class="text-xs text-zinc-500 dark:text-zinc-400 select-none">
+          {{ selectedFolders.size > 0 ? `${selectedFolders.size} of ${folders.length} selected` : 'Select all' }}
+        </span>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
       <div
         v-for="folder in folders"
         :key="folder.id"
@@ -131,6 +143,7 @@ defineExpose({ clearSelection, selectedFolders })
             {{ folder.description }}
           </p>
         </div>
+      </div>
       </div>
     </div>
 

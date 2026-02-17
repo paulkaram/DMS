@@ -338,26 +338,46 @@ watch(
 )
 
 onMounted(async () => {
+  // Detect deep-link params early so the loading overlay shows immediately
+  const cabinetId = route.query.cabinet as string | undefined
+  const folderId = route.query.folder as string | undefined
+  const hasDeepLink = !!(cabinetId || folderId)
+
+  if (hasDeepLink) isRestoringFromUrl.value = true
+
   await Promise.all([
     store.loadCabinets(),
     loadReferenceData()
   ])
 
   // Handle deep-link query params (?cabinet=...&folder=...)
-  const cabinetId = route.query.cabinet as string | undefined
-  const folderId = route.query.folder as string | undefined
-
   if (folderId) {
-    isRestoringFromUrl.value = true
     try {
-      const folderRes = await foldersApi.getById(folderId)
-      const folder = folderRes.data as Folder
-      const cabinet = store.cabinets.find(c => c.id === folder.cabinetId)
+      // If cabinetId is in URL, use it directly; otherwise fetch the folder to find it
+      let resolvedCabinetId = cabinetId
+      let folder: Folder | null = null
+
+      if (!resolvedCabinetId) {
+        const folderRes = await foldersApi.getById(folderId)
+        folder = folderRes.data as Folder
+        resolvedCabinetId = folder.cabinetId
+      }
+
+      const cabinet = store.cabinets.find(c => c.id === resolvedCabinetId)
       if (cabinet) {
         store.selectCabinet(cabinet)
-        await store.loadFolderTree(cabinet.id)
+        // Load tree, subfolders, and (if needed) folder details in parallel
+        const [, subFoldersRes, folderRes] = await Promise.all([
+          store.loadFolderTree(cabinet.id),
+          foldersApi.getByParent(cabinet.id, folderId),
+          !folder ? foldersApi.getById(folderId) : Promise.resolve(null)
+        ])
+        if (!folder) folder = folderRes!.data as Folder
+
         await store.selectFolder(folder)
-        await store.loadSubFolders(cabinet.id, folder.id)
+        // Apply subfolders from the parallel fetch
+        const sfData = subFoldersRes.data
+        store.subFolders = Array.isArray(sfData) ? sfData : sfData.items ?? []
       }
     } catch {
       // Folder not found or no access — stay on default view
@@ -365,13 +385,17 @@ onMounted(async () => {
       isRestoringFromUrl.value = false
     }
   } else if (cabinetId) {
-    isRestoringFromUrl.value = true
     try {
       const cabinet = store.cabinets.find(c => c.id === cabinetId)
       if (cabinet) {
         store.selectCabinet(cabinet)
-        await store.loadFolderTree(cabinet.id)
-        await store.loadSubFolders(cabinet.id)
+        // Load tree and root subfolders in parallel
+        const [, subFoldersRes] = await Promise.all([
+          store.loadFolderTree(cabinet.id),
+          foldersApi.getByParent(cabinet.id)
+        ])
+        const sfData = subFoldersRes.data
+        store.subFolders = Array.isArray(sfData) ? sfData : sfData.items ?? []
       }
     } finally {
       isRestoringFromUrl.value = false
@@ -512,7 +536,7 @@ async function handleDelete() {
   try {
     if (deleteTarget.value.type === 'cabinet') {
       await cabinetsApi.delete(deleteTarget.value.id)
-      await store.loadCabinets()
+      await store.loadCabinets(true)
       if (store.currentCabinet?.id === deleteTarget.value.id) {
         store.currentCabinet = null
         store.currentFolder = null
@@ -640,7 +664,6 @@ const getActionCode = (menuId: string, isCabinet: boolean): string | null => {
     'add-filing-plan': 'folder.filingplan.add',
     'settings': `${prefix}.settings`,
     'content-types': 'folder.contenttype.manage',
-    'share': 'folder.share',
     'permissions': `${prefix}.permissions`,
     'delete': `${prefix}.delete`,
     'manage-workflow': `${prefix}.settings`,
@@ -767,16 +790,10 @@ const contextMenuItems = computed<MenuItem[]>(() => {
     }
   }
 
-  // Share and permissions
-  const sharePermAvailable = (!isCabinet && canPerform('share', canRead)) || canPerform('permissions', canAdmin)
-  if (sharePermAvailable) {
+  // Permissions
+  if (canPerform('permissions', canAdmin)) {
     if (items.length > 0) items.push({ id: 'divider5', label: '', divider: true })
-    if (!isCabinet && canPerform('share', canRead)) {
-      items.push({ id: 'share', label: 'Share', icon: 'share' })
-    }
-    if (canPerform('permissions', canAdmin)) {
-      items.push({ id: 'permissions', label: 'Manage permissions', icon: 'permission' })
-    }
+    items.push({ id: 'permissions', label: 'Manage permissions', icon: 'permission' })
   }
 
   // Delete action
@@ -890,9 +907,6 @@ async function handleContextMenuSelect(actionId: string) {
       break
     case 'manage-workflow':
       openWorkflowModal(node.id, node.name, isCabinet)
-      break
-    case 'share':
-      router.push(`/my-shared-items`)
       break
     case 'permissions':
       permissionModalTarget.value = {
@@ -1822,8 +1836,12 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
 
       <!-- Content Area -->
       <div class="flex-1 overflow-y-auto p-6">
+        <!-- Loading overlay during deep-link URL restoration (prevents "dancing") -->
+        <div v-if="isRestoringFromUrl" class="flex flex-col items-center justify-center h-full">
+          <DmsLoader size="md" text="Loading..." />
+        </div>
         <!-- Empty state when nothing selected -->
-        <div v-if="!store.currentCabinet && !store.currentFolder" class="flex flex-col items-center justify-center h-full text-zinc-500">
+        <div v-else-if="!store.currentCabinet && !store.currentFolder" class="flex flex-col items-center justify-center h-full text-zinc-500">
           <span class="material-symbols-outlined text-7xl text-zinc-300 mb-4">folder_open</span>
           <p class="text-lg font-medium text-zinc-700 dark:text-zinc-300">Select a cabinet or folder to view contents</p>
           <p class="text-sm text-zinc-400 mt-1">Or create a new cabinet to get started</p>
@@ -1985,6 +2003,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
 
     <!-- Single Document Move Modal -->
     <MoveDocumentsModal
+      v-if="showMoveModal"
       v-model="showMoveModal"
       :document-count="1"
       @confirm="handleSingleDocumentMove"
@@ -1992,6 +2011,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
 
     <!-- Bulk Move Modal -->
     <MoveDocumentsModal
+      v-if="showBulkMoveModal"
       v-model="showBulkMoveModal"
       :document-count="selectedDocumentIds.length"
       @confirm="handleBulkMove"
@@ -2019,7 +2039,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
       :document-id="passwordDocument.id"
       :document-name="passwordDocument.name"
       @close="showPasswordDialog = false; passwordDocument = null"
-      @updated="showPasswordDialog = false; passwordDocument = null"
+      @updated="(has: boolean) => { const doc = store.documents.find(d => d.id === passwordDocument?.id); if (doc) doc.hasPassword = has; showPasswordDialog = false; passwordDocument = null }"
     />
 
     <!-- Password Validation Dialog (for gating secured content) -->
@@ -2032,7 +2052,7 @@ async function handleTemplateApplied(result: ApplyTemplateResult) {
         leave-from-class="opacity-100"
         leave-to-class="opacity-0"
       >
-        <div v-if="showPasswordValidation" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-8" @click.self="closePasswordValidation">
+        <div v-if="showPasswordValidation" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-8">
           <Transition
             enter-active-class="duration-200 ease-out"
             enter-from-class="opacity-0 scale-95 translate-y-4"
