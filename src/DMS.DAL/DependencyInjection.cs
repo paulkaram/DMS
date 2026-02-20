@@ -130,6 +130,9 @@ public static class DependencyInjection
         // Privacy Levels
         services.AddScoped<IPrivacyLevelRepository, PrivacyLevelRepository>();
 
+        // Background Job Execution Tracking
+        services.AddScoped<IBackgroundJobRepository, BackgroundJobRepository>();
+
         return services;
     }
 }

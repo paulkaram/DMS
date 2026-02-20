@@ -43,6 +43,11 @@ public class ContentTypeDefinition : IAuditable, ISoftDeletable
     /// </summary>
     public bool IsSystemDefault { get; set; } = false;
 
+    /// <summary>
+    /// Default classification auto-applied to documents uploaded with this content type.
+    /// </summary>
+    public Guid? DefaultClassificationId { get; set; }
+
     public bool IsActive { get; set; } = true;
     public int SortOrder { get; set; } = 0;
     public Guid? CreatedBy { get; set; }
@@ -51,6 +56,7 @@ public class ContentTypeDefinition : IAuditable, ISoftDeletable
     public DateTime? ModifiedAt { get; set; }
 
     // Navigation
+    public Classification? DefaultClassification { get; set; }
     public List<ContentTypeField>? Fields { get; set; }
 }
 

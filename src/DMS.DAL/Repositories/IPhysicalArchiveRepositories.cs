@@ -10,6 +10,10 @@ public interface IPhysicalLocationRepository
     Task<Guid> CreateAsync(PhysicalLocation location);
     Task UpdateAsync(PhysicalLocation location);
     Task DeleteAsync(Guid id);
+    Task<int> GetItemCountAsync(Guid locationId);
+    Task<List<Guid>> GetAllDescendantIdsAsync(Guid locationId);
+    Task<int> GetItemCountForLocationsAsync(IEnumerable<Guid> locationIds);
+    Task<int> GetChildCapacitySumAsync(Guid parentId, Guid? excludeId = null);
 }
 
 public interface IPhysicalItemRepository

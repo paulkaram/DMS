@@ -15,6 +15,11 @@ public class ContentTypeDefinitionConfiguration : IEntityTypeConfiguration<Conte
         builder.HasMany(e => e.Fields)
             .WithOne(e => e.ContentType)
             .HasForeignKey(e => e.ContentTypeId);
+
+        builder.HasOne(e => e.DefaultClassification)
+            .WithMany()
+            .HasForeignKey(e => e.DefaultClassificationId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }
 

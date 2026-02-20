@@ -299,6 +299,18 @@ export interface Classification {
   id: string
   name: string
   description?: string
+  parentId?: string
+  level: number
+  code?: string
+  fullPath?: string
+  confidentialityLevel?: string
+  defaultRetentionPolicyId?: string
+  defaultPrivacyLevelId?: string
+  requiresDisposalApproval: boolean
+  sortOrder: number
+  isActive: boolean
+  language?: string
+  children?: Classification[]
 }
 
 export interface Importance {
@@ -771,6 +783,7 @@ export interface ContentTypeDefinition {
   allowOnDocuments: boolean
   isRequired: boolean
   isSystemDefault: boolean // If true, this is the fallback content type when no specific type is assigned
+  defaultClassificationId?: string
   isActive: boolean
   sortOrder: number
   createdAt: string
@@ -2148,4 +2161,70 @@ export interface PreservationFormat {
   isApprovedForPreservation: boolean
   migrationTargetFormat?: string
   notes?: string
+}
+
+// =============================================
+// Retention Dashboard Types
+// =============================================
+export interface RetentionDashboard {
+  totalDocumentsUnderRetention: number
+  activeRetentions: number
+  pendingReview: number
+  expiringSoon30: number
+  expiringSoon7: number
+  onHold: number
+  archived: number
+  disposed: number
+  awaitingTrigger: number
+  recentActions: RetentionAction[]
+  retentionsByPolicy: RetentionPolicySummary[]
+  backgroundJobs: BackgroundJob[]
+  upcomingExpirations: UpcomingExpiration[]
+  expirationTimeline: ExpirationTimeline[]
+}
+
+export interface RetentionAction {
+  documentId: string
+  documentName: string
+  policyName: string
+  action: string
+  timestamp: string
+  isSystemAction: boolean
+  notes?: string
+}
+
+export interface RetentionPolicySummary {
+  policyId: string
+  policyName: string
+  expirationAction: string
+  totalDocuments: number
+  activeCount: number
+  expiredCount: number
+  onHoldCount: number
+}
+
+export interface BackgroundJob {
+  id: string
+  jobName: string
+  status: string
+  startedAt: string
+  completedAt?: string
+  itemsProcessed: number
+  itemsFailed: number
+  durationMs?: number
+  errorMessage?: string
+}
+
+export interface UpcomingExpiration {
+  documentId: string
+  documentName: string
+  policyName: string
+  expirationDate: string
+  daysRemaining: number
+  status: string
+}
+
+export interface ExpirationTimeline {
+  date: string
+  count: number
 }

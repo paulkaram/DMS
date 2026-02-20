@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { contentTypeDefinitionsApi } from '@/api/client'
-import type { ContentTypeDefinition, ContentTypeField } from '@/types'
+import { contentTypeDefinitionsApi, referenceDataApi } from '@/api/client'
+import type { ContentTypeDefinition, ContentTypeField, Classification } from '@/types'
 import AdminBreadcrumb from '@/components/admin/AdminBreadcrumb.vue'
 
 // Import modern UI components
@@ -16,6 +16,7 @@ const router = useRouter()
 
 const contentType = ref<ContentTypeDefinition | null>(null)
 const fields = ref<ContentTypeField[]>([])
+const classifications = ref<Classification[]>([])
 const isLoading = ref(false)
 const isSaving = ref(false)
 const showSettings = ref(true)
@@ -107,6 +108,23 @@ const allFieldTypes = fieldCategories.flatMap(cat => cat.fields)
 const contentTypeId = computed(() => route.params.id as string)
 const isNewContentType = computed(() => contentTypeId.value === 'new')
 
+function flattenClassifications(nodes: Classification[], prefix = ''): { value: string; label: string }[] {
+  const result: { value: string; label: string }[] = []
+  for (const node of nodes) {
+    const label = prefix ? `${prefix} > ${node.name}` : node.name
+    result.push({ value: node.id, label })
+    if (node.children?.length) {
+      result.push(...flattenClassifications(node.children, label))
+    }
+  }
+  return result
+}
+
+const classificationOptions = computed(() => [
+  { value: '', label: '-- None --' },
+  ...flattenClassifications(classifications.value)
+])
+
 const categoryOptions = [
   { value: '', label: '-- Select Category --' },
   { value: 'General', label: 'General' },
@@ -126,7 +144,15 @@ const colorPresets = [
   '#F59E0B', '#84CC16', '#22C55E', '#64748B'
 ]
 
+async function loadClassifications() {
+  try {
+    const response = await referenceDataApi.getClassificationTree()
+    classifications.value = response.data.data ?? response.data ?? []
+  } catch {}
+}
+
 onMounted(async () => {
+  await loadClassifications()
   if (!isNewContentType.value) {
     await loadContentType()
   } else {
@@ -140,6 +166,8 @@ onMounted(async () => {
       allowOnFolders: true,
       allowOnDocuments: true,
       isRequired: false,
+      isSystemDefault: false,
+      defaultClassificationId: undefined,
       isActive: true,
       sortOrder: 0,
       createdAt: new Date().toISOString(),
@@ -175,6 +203,7 @@ async function saveContentType() {
         allowOnFolders: contentType.value.allowOnFolders,
         allowOnDocuments: contentType.value.allowOnDocuments,
         isRequired: contentType.value.isRequired,
+        defaultClassificationId: contentType.value.defaultClassificationId || undefined,
         sortOrder: contentType.value.sortOrder
       })
       router.replace(`/admin/content-type-builder/${response.data}`)
@@ -189,6 +218,7 @@ async function saveContentType() {
         allowOnDocuments: contentType.value.allowOnDocuments,
         isRequired: contentType.value.isRequired,
         isSystemDefault: contentType.value.isSystemDefault,
+        defaultClassificationId: contentType.value.defaultClassificationId || undefined,
         isActive: contentType.value.isActive,
         sortOrder: contentType.value.sortOrder
       })
@@ -661,6 +691,20 @@ function getFieldColor(fieldType: string): string {
                     <span class="text-sm text-gray-600 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">Documents</span>
                   </label>
                 </div>
+              </div>
+
+              <!-- Divider -->
+              <div class="w-px h-16 bg-gray-200 dark:bg-border-dark self-center"></div>
+
+              <!-- Default Classification -->
+              <div class="w-52">
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wide">Default Classification</label>
+                <UiSelect
+                  v-model="contentType.defaultClassificationId"
+                  :options="classificationOptions"
+                  placeholder="None"
+                  size="md"
+                />
               </div>
             </div>
           </div>

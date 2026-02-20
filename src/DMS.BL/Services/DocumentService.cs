@@ -22,6 +22,8 @@ public class DocumentService : IDocumentService
     private readonly IDocumentShortcutRepository _shortcutRepository;
     private readonly IApprovalService _approvalService;
     private readonly IDocumentStateService _documentStateService;
+    private readonly IClassificationRepository _classificationRepository;
+    private readonly IRetentionEngineService _retentionEngineService;
     private readonly IStorageProvider? _wormProvider;
 
     // JSON options for consistent serialization with camelCase
@@ -46,6 +48,8 @@ public class DocumentService : IDocumentService
         IDocumentShortcutRepository shortcutRepository,
         IApprovalService approvalService,
         IDocumentStateService documentStateService,
+        IClassificationRepository classificationRepository,
+        IRetentionEngineService retentionEngineService,
         IStorageProvider? wormProvider = null)
     {
         _documentRepository = documentRepository;
@@ -62,6 +66,8 @@ public class DocumentService : IDocumentService
         _shortcutRepository = shortcutRepository;
         _approvalService = approvalService;
         _documentStateService = documentStateService;
+        _classificationRepository = classificationRepository;
+        _retentionEngineService = retentionEngineService;
         _wormProvider = wormProvider;
     }
 
@@ -179,6 +185,30 @@ public class DocumentService : IDocumentService
         var validatedContentType = validationResult.ValidatedMimeType ?? contentType;
 
         var extension = Path.GetExtension(fileName);
+
+        // Auto-apply classification from content type if not explicitly set
+        var classificationId = dto.ClassificationId;
+        if (!classificationId.HasValue && dto.ContentTypeId.HasValue)
+        {
+            var ct = await _contentTypeRepository.GetByIdAsync(dto.ContentTypeId.Value);
+            if (ct?.DefaultClassificationId.HasValue == true)
+                classificationId = ct.DefaultClassificationId;
+        }
+
+        // Cascade governance defaults from classification
+        Guid? retentionPolicyId = null;
+        Guid? privacyLevelId = dto.PrivacyLevelId;
+        if (classificationId.HasValue)
+        {
+            var classification = await _classificationRepository.GetByIdAsync(classificationId.Value);
+            if (classification != null)
+            {
+                if (!privacyLevelId.HasValue && classification.DefaultPrivacyLevelId.HasValue)
+                    privacyLevelId = classification.DefaultPrivacyLevelId;
+                retentionPolicyId = classification.DefaultRetentionPolicyId;
+            }
+        }
+
         var document = new Document
         {
             FolderId = dto.FolderId,
@@ -190,11 +220,13 @@ public class DocumentService : IDocumentService
             CurrentVersion = 1,
             CurrentMajorVersion = 1,
             CurrentMinorVersion = 0,
-            ClassificationId = dto.ClassificationId,
+            ClassificationId = classificationId,
             ImportanceId = dto.ImportanceId,
             DocumentTypeId = dto.DocumentTypeId,
+            ContentTypeId = dto.ContentTypeId,
             ExpiryDate = dto.ExpiryDate,
-            PrivacyLevelId = dto.PrivacyLevelId,
+            PrivacyLevelId = privacyLevelId,
+            RetentionPolicyId = retentionPolicyId,
             CreatedBy = userId,
             IsActive = true,
             IsOriginalRecord = true,
@@ -260,6 +292,12 @@ public class DocumentService : IDocumentService
 
         // Auto-trigger workflow if one is configured for this folder
         await _approvalService.TryAutoTriggerWorkflowAsync(id, dto.FolderId, userId);
+
+        // Auto-apply retention from classification hierarchy
+        if (classificationId.HasValue || dto.FolderId != Guid.Empty)
+        {
+            await _retentionEngineService.AutoApplyRetentionAsync(id, classificationId, dto.FolderId);
+        }
 
         return ServiceResult<DocumentDto>.Ok(MapToDto(document), "Document created successfully");
     }
@@ -713,6 +751,7 @@ public class DocumentService : IDocumentService
         }
 
         // Apply metadata changes from working copy
+        var originalClassificationId = document.ClassificationId;
         if (!string.IsNullOrEmpty(workingCopy.DraftName))
             document.Name = workingCopy.DraftName;
         if (workingCopy.DraftDescription != null)
@@ -727,6 +766,17 @@ public class DocumentService : IDocumentService
             document.ExpiryDate = workingCopy.DraftExpiryDate;
         if (workingCopy.DraftPrivacyLevelChanged)
             document.PrivacyLevelId = workingCopy.DraftPrivacyLevelId;
+
+        // Cascade governance from new classification (if classification changed)
+        if (workingCopy.DraftClassificationId.HasValue)
+        {
+            var newClassification = await _classificationRepository.GetByIdAsync(workingCopy.DraftClassificationId.Value);
+            if (newClassification != null)
+            {
+                if (!workingCopy.DraftPrivacyLevelChanged && newClassification.DefaultPrivacyLevelId.HasValue)
+                    document.PrivacyLevelId = newClassification.DefaultPrivacyLevelId;
+            }
+        }
 
         // Apply content type metadata changes from working copy
         if (!string.IsNullOrEmpty(workingCopy.DraftMetadataJson))
@@ -787,6 +837,12 @@ public class DocumentService : IDocumentService
         }
 
         await _documentRepository.UpdateAsync(document);
+
+        // Recalculate retention when classification changed during check-in
+        if (workingCopy.DraftClassificationId.HasValue && workingCopy.DraftClassificationId != originalClassificationId)
+        {
+            await _retentionEngineService.RecalculateOnClassificationChangeAsync(id, workingCopy.DraftClassificationId, userId);
+        }
 
         await _activityLogService.LogActivityAsync(
             ActivityActions.CheckedIn, "Document", id, document.Name,

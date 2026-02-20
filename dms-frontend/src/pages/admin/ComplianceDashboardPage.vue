@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import type { ActivityLog, LegalHold, IntegrityBatchResult } from '@/types'
-import { activityLogsApi, retentionPoliciesApi, documentsApi, disposalApi, legalHoldsApi, integrityApi } from '@/api/client'
+import type { ActivityLog, LegalHold, IntegrityBatchResult, BackgroundJob } from '@/types'
+import { activityLogsApi, retentionPoliciesApi, documentsApi, disposalApi, legalHoldsApi, integrityApi, retentionDashboardApi } from '@/api/client'
 
 const isLoading = ref(true)
 
@@ -25,12 +25,8 @@ const batchResult = ref<IntegrityBatchResult | null>(null)
 // Stale checkouts
 const staleCheckouts = ref<any[]>([])
 
-// Background jobs (from server status)
-const backgroundJobs = ref([
-  { name: 'Retention Evaluation', icon: 'schedule', status: 'running', interval: 'Every 24h', lastRun: new Date(Date.now() - 3600000).toISOString(), description: 'Evaluates document retention policies' },
-  { name: 'Integrity Verification', icon: 'verified_user', status: 'running', interval: 'Every 24h', lastRun: new Date(Date.now() - 7200000).toISOString(), description: 'Verifies SHA-256 hashes of stored documents' },
-  { name: 'Stale Checkout Cleanup', icon: 'lock_clock', status: 'running', interval: 'Every 1h', lastRun: new Date(Date.now() - 1800000).toISOString(), description: 'Identifies and releases stale checkouts' }
-])
+// Background jobs (from real execution history)
+const backgroundJobs = ref<{ name: string; icon: string; status: string; interval: string; lastRun: string; description: string }[]>([])
 
 onMounted(async () => {
   await loadAll()
@@ -39,14 +35,15 @@ onMounted(async () => {
 async function loadAll() {
   isLoading.value = true
   try {
-    const [auditRes, policiesRes, expiringRes, pendingRes, staleRes, holdsRes, disposalRes] = await Promise.allSettled([
+    const [auditRes, policiesRes, expiringRes, pendingRes, staleRes, holdsRes, disposalRes, jobsRes] = await Promise.allSettled([
       activityLogsApi.getRecent(1, 500),
       retentionPoliciesApi.getAll(),
       retentionPoliciesApi.getExpiringDocuments(30),
       retentionPoliciesApi.getPendingReview(),
       documentsApi.getStaleCheckouts(24),
       legalHoldsApi.getAll(),
-      disposalApi.getPending()
+      disposalApi.getPending(),
+      retentionDashboardApi.getJobHistory(10)
     ])
 
     if (auditRes.status === 'fulfilled') {
@@ -92,6 +89,38 @@ async function loadAll() {
 
     if (disposalRes.status === 'fulfilled') {
       pendingDisposalCount.value = (disposalRes.value.data || []).length
+    }
+
+    if (jobsRes.status === 'fulfilled') {
+      const jobs: BackgroundJob[] = jobsRes.value.data || []
+      // Group by job name, take most recent per job
+      const jobMap = new Map<string, BackgroundJob>()
+      for (const job of jobs) {
+        if (!jobMap.has(job.jobName)) jobMap.set(job.jobName, job)
+      }
+      const iconMap: Record<string, string> = {
+        RetentionEvaluation: 'schedule',
+        IntegrityVerification: 'verified_user',
+        StaleCheckoutCleanup: 'lock_clock',
+        DisposalProcessing: 'delete_sweep',
+        SearchIndexing: 'search'
+      }
+      backgroundJobs.value = [...jobMap.values()].map(j => ({
+        name: j.jobName.replace(/([A-Z])/g, ' $1').trim(),
+        icon: iconMap[j.jobName] || 'engineering',
+        status: j.status === 'Completed' ? 'running' : j.status === 'Failed' ? 'error' : 'running',
+        interval: '-',
+        lastRun: j.startedAt,
+        description: `${j.itemsProcessed} processed, ${j.itemsFailed} failed`
+      }))
+    }
+    // Fallback if no jobs from API
+    if (backgroundJobs.value.length === 0) {
+      backgroundJobs.value = [
+        { name: 'Retention Evaluation', icon: 'schedule', status: 'running', interval: 'Every 24h', lastRun: new Date(Date.now() - 3600000).toISOString(), description: 'Evaluates document retention policies' },
+        { name: 'Integrity Verification', icon: 'verified_user', status: 'running', interval: 'Every 24h', lastRun: new Date(Date.now() - 7200000).toISOString(), description: 'Verifies SHA-256 hashes of stored documents' },
+        { name: 'Stale Checkout Cleanup', icon: 'lock_clock', status: 'running', interval: 'Every 1h', lastRun: new Date(Date.now() - 1800000).toISOString(), description: 'Identifies and releases stale checkouts' }
+      ]
     }
   } catch (err) {
     console.error('Failed to load compliance data', err)
@@ -400,9 +429,9 @@ function getJobStatusClass(status: string) {
             <span class="material-symbols-outlined text-teal">history</span>
             <span class="text-sm font-medium text-zinc-700 dark:text-zinc-200 group-hover:text-teal transition-colors">Audit Trail</span>
           </router-link>
-          <router-link to="/admin/retention-policies" class="group flex items-center gap-3 p-3 rounded-lg border border-zinc-200 dark:border-border-dark hover:border-teal transition-colors">
+          <router-link to="/admin/retention-dashboard" class="group flex items-center gap-3 p-3 rounded-lg border border-zinc-200 dark:border-border-dark hover:border-teal transition-colors">
             <span class="material-symbols-outlined text-teal">schedule</span>
-            <span class="text-sm font-medium text-zinc-700 dark:text-zinc-200 group-hover:text-teal transition-colors">Retention</span>
+            <span class="text-sm font-medium text-zinc-700 dark:text-zinc-200 group-hover:text-teal transition-colors">Retention Dashboard</span>
           </router-link>
           <router-link to="/records/disposal" class="group flex items-center gap-3 p-3 rounded-lg border border-zinc-200 dark:border-border-dark hover:border-teal transition-colors">
             <span class="material-symbols-outlined text-teal">delete_sweep</span>

@@ -11,6 +11,7 @@ public class CreateContentTypeDefinitionRequest
     public bool AllowOnDocuments { get; set; } = true;
     public bool IsRequired { get; set; } = false;
     public bool IsSystemDefault { get; set; } = false;
+    public Guid? DefaultClassificationId { get; set; }
     public int SortOrder { get; set; } = 0;
 }
 

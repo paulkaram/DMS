@@ -204,6 +204,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/admin/classifications',
+      name: 'admin-classifications',
+      component: () => import('@/pages/admin/ClassificationsPage.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/admin/users',
       name: 'admin-users',
       component: () => import('@/pages/admin/UsersPage.vue'),
@@ -328,6 +334,12 @@ const router = createRouter({
       path: '/records/disposal',
       name: 'records-disposal',
       component: () => import('@/pages/admin/DisposalManagementPage.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/admin/retention-dashboard',
+      name: 'admin-retention-dashboard',
+      component: () => import('@/pages/admin/RetentionDashboardPage.vue'),
       meta: { requiresAuth: true }
     },
     {

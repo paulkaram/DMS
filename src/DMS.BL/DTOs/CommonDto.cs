@@ -57,6 +57,13 @@ public class ClassificationDto
     public int Level { get; set; }
     public string? Code { get; set; }
     public string? FullPath { get; set; }
+    public string? ConfidentialityLevel { get; set; }
+    public Guid? DefaultRetentionPolicyId { get; set; }
+    public Guid? DefaultPrivacyLevelId { get; set; }
+    public bool RequiresDisposalApproval { get; set; } = true;
+    public int SortOrder { get; set; }
+    public bool IsActive { get; set; } = true;
+    public string? Language { get; set; }
     public List<ClassificationDto>? Children { get; set; }
 }
 

@@ -50,6 +50,7 @@ public class ContentTypeDefinitionsController : BaseApiController
             AllowOnDocuments = request.AllowOnDocuments,
             IsRequired = request.IsRequired,
             IsSystemDefault = request.IsSystemDefault,
+            DefaultClassificationId = request.DefaultClassificationId,
             SortOrder = request.SortOrder,
             CreatedBy = GetCurrentUserId()
         };
@@ -82,6 +83,7 @@ public class ContentTypeDefinitionsController : BaseApiController
         contentType.AllowOnDocuments = request.AllowOnDocuments;
         contentType.IsRequired = request.IsRequired;
         contentType.IsSystemDefault = request.IsSystemDefault;
+        contentType.DefaultClassificationId = request.DefaultClassificationId;
         contentType.IsActive = request.IsActive;
         contentType.SortOrder = request.SortOrder;
         contentType.ModifiedBy = GetCurrentUserId();

@@ -41,6 +41,7 @@ const adminSections = [
     icon: 'dataset',
     color: 'purple',
     items: [
+      { name: 'Classifications', path: '/admin/classifications', icon: 'category', description: 'Document classification hierarchy and governance' },
       { name: 'Purpose', path: '/admin/purpose', icon: 'flag', description: 'Document purpose classifications' },
       { name: 'Lookup', path: '/admin/lookups', icon: 'list', description: 'Lookup tables and dropdown values' },
       { name: 'Permission Levels', path: '/admin/permission-levels', icon: 'admin_panel_settings', description: 'Access level definitions' }

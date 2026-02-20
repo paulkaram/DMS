@@ -44,6 +44,21 @@ public class PhysicalLocationService : IPhysicalLocationService
         if (!Enum.TryParse<LocationType>(dto.LocationType, true, out var locType))
             return ServiceResult<PhysicalLocationDto>.Fail("Invalid location type");
 
+        // Validate child capacity doesn't exceed parent's capacity
+        PhysicalLocation? parent = null;
+        if (dto.ParentId.HasValue)
+        {
+            parent = await _repo.GetByIdAsync(dto.ParentId.Value);
+            if (parent?.Capacity != null && dto.Capacity.HasValue)
+            {
+                var siblingCapacitySum = await _repo.GetChildCapacitySumAsync(dto.ParentId.Value);
+                var remaining = parent.Capacity.Value - siblingCapacitySum;
+                if (dto.Capacity.Value > remaining)
+                    return ServiceResult<PhysicalLocationDto>.Fail(
+                        $"Cannot allocate capacity {dto.Capacity.Value:N0} — parent \"{parent.Name}\" has {remaining:N0} remaining ({siblingCapacitySum:N0} of {parent.Capacity.Value:N0} already allocated)");
+            }
+        }
+
         var entity = new PhysicalLocation
         {
             ParentId = dto.ParentId,
@@ -60,11 +75,15 @@ public class PhysicalLocationService : IPhysicalLocationService
         };
 
         // Build path
-        if (dto.ParentId.HasValue)
+        if (parent != null)
         {
-            var parent = await _repo.GetByIdAsync(dto.ParentId.Value);
-            entity.Path = parent != null ? $"{parent.Path}/{dto.Code}" : dto.Code;
-            entity.Level = parent != null ? parent.Level + 1 : 0;
+            entity.Path = $"{parent.Path}/{dto.Code}";
+            entity.Level = parent.Level + 1;
+        }
+        else if (dto.ParentId.HasValue)
+        {
+            entity.Path = dto.Code;
+            entity.Level = 0;
         }
         else
         {
@@ -84,15 +103,42 @@ public class PhysicalLocationService : IPhysicalLocationService
         var entity = await _repo.GetByIdAsync(id);
         if (entity == null) return ServiceResult<PhysicalLocationDto>.Fail("Location not found");
 
+        // Resolve new parent (may be different from current)
+        var newParentId = dto.ParentId;
+        PhysicalLocation? newParent = newParentId.HasValue ? await _repo.GetByIdAsync(newParentId.Value) : null;
+
+        // Validate capacity against the NEW parent
+        if (newParentId.HasValue && dto.Capacity.HasValue && newParent?.Capacity != null)
+        {
+            var siblingCapacitySum = await _repo.GetChildCapacitySumAsync(newParentId.Value, id);
+            var remaining = newParent.Capacity.Value - siblingCapacitySum;
+            if (dto.Capacity.Value > remaining)
+                return ServiceResult<PhysicalLocationDto>.Fail(
+                    $"Cannot set capacity to {dto.Capacity.Value:N0} — parent \"{newParent.Name}\" has {remaining:N0} remaining ({siblingCapacitySum:N0} of {newParent.Capacity.Value:N0} allocated to siblings)");
+        }
+
         entity.Name = dto.Name;
         entity.NameAr = dto.NameAr;
         entity.Code = dto.Code;
+        entity.ParentId = newParentId;
         entity.Capacity = dto.Capacity;
         entity.EnvironmentalConditions = dto.EnvironmentalConditions;
         entity.Coordinates = dto.Coordinates;
         entity.SecurityLevel = dto.SecurityLevel;
         entity.SortOrder = dto.SortOrder;
         entity.ModifiedBy = userId;
+
+        // Rebuild path and level based on new parent
+        if (newParent != null)
+        {
+            entity.Path = $"{newParent.Path}/{dto.Code}";
+            entity.Level = newParent.Level + 1;
+        }
+        else
+        {
+            entity.Path = dto.Code;
+            entity.Level = 0;
+        }
 
         await _repo.UpdateAsync(entity);
         return ServiceResult<PhysicalLocationDto>.Ok(MapToDto(entity));
@@ -129,13 +175,59 @@ public class PhysicalLocationService : IPhysicalLocationService
 public class PhysicalItemService : IPhysicalItemService
 {
     private readonly IPhysicalItemRepository _repo;
+    private readonly IPhysicalLocationRepository _locationRepo;
     private readonly IActivityLogService _activityLog;
-    private static int _barcodeCounter;
 
-    public PhysicalItemService(IPhysicalItemRepository repo, IActivityLogService activityLog)
+    public PhysicalItemService(IPhysicalItemRepository repo, IPhysicalLocationRepository locationRepo, IActivityLogService activityLog)
     {
         _repo = repo;
+        _locationRepo = locationRepo;
         _activityLog = activityLog;
+    }
+
+    private async Task<string?> ValidateCapacityAsync(Guid locationId)
+    {
+        // Walk up the ancestor chain, checking capacity at each level
+        var currentId = (Guid?)locationId;
+        while (currentId.HasValue)
+        {
+            var location = await _locationRepo.GetByIdAsync(currentId.Value);
+            if (location == null) return currentId == locationId ? "Target location not found" : null;
+
+            if (location.Capacity.HasValue)
+            {
+                // Count items at this location + all descendants
+                var descendantIds = await _locationRepo.GetAllDescendantIdsAsync(currentId.Value);
+                var allIds = new List<Guid> { currentId.Value };
+                allIds.AddRange(descendantIds);
+                var count = await _locationRepo.GetItemCountForLocationsAsync(allIds);
+
+                if (count >= location.Capacity.Value)
+                    return $"Location \"{location.Name}\" is at full capacity ({count:N0}/{location.Capacity.Value:N0})";
+            }
+
+            currentId = location.ParentId;
+        }
+        return null;
+    }
+
+    private async Task RefreshLocationCountAsync(Guid locationId)
+    {
+        // Refresh this location and all ancestors with recursive descendant counts
+        var currentId = (Guid?)locationId;
+        while (currentId.HasValue)
+        {
+            var location = await _locationRepo.GetByIdAsync(currentId.Value);
+            if (location == null) break;
+
+            var descendantIds = await _locationRepo.GetAllDescendantIdsAsync(currentId.Value);
+            var allIds = new List<Guid> { currentId.Value };
+            allIds.AddRange(descendantIds);
+            location.CurrentCount = await _locationRepo.GetItemCountForLocationsAsync(allIds);
+            await _locationRepo.UpdateAsync(location);
+
+            currentId = location.ParentId;
+        }
     }
 
     public async Task<ServiceResult<PhysicalItemDto>> GetByIdAsync(Guid id)
@@ -176,6 +268,13 @@ public class PhysicalItemService : IPhysicalItemService
         if (!Enum.TryParse<ItemCondition>(dto.Condition, true, out var condition))
             condition = ItemCondition.Good;
 
+        // Validate capacity at target location
+        if (dto.LocationId.HasValue)
+        {
+            var capacityError = await ValidateCapacityAsync(dto.LocationId.Value);
+            if (capacityError != null) return ServiceResult<PhysicalItemDto>.Fail(capacityError);
+        }
+
         var barcode = GenerateBarcode();
 
         var entity = new PhysicalItem
@@ -201,6 +300,10 @@ public class PhysicalItemService : IPhysicalItemService
         var id = await _repo.CreateAsync(entity);
         entity.Id = id;
 
+        // Refresh location count
+        if (dto.LocationId.HasValue)
+            await RefreshLocationCountAsync(dto.LocationId.Value);
+
         await _activityLog.LogActivityAsync("Created", "PhysicalItem", id, dto.Title, null, userId, null, null);
         return ServiceResult<PhysicalItemDto>.Ok(MapToDto(entity), "Physical item created");
     }
@@ -209,6 +312,16 @@ public class PhysicalItemService : IPhysicalItemService
     {
         var entity = await _repo.GetByIdAsync(id);
         if (entity == null) return ServiceResult<PhysicalItemDto>.Fail("Physical item not found");
+
+        var oldLocationId = entity.LocationId;
+        var locationChanged = oldLocationId != dto.LocationId;
+
+        // Validate capacity at new location if changed
+        if (locationChanged && dto.LocationId.HasValue)
+        {
+            var capacityError = await ValidateCapacityAsync(dto.LocationId.Value);
+            if (capacityError != null) return ServiceResult<PhysicalItemDto>.Fail(capacityError);
+        }
 
         entity.Title = dto.Title;
         entity.TitleAr = dto.TitleAr;
@@ -225,6 +338,14 @@ public class PhysicalItemService : IPhysicalItemService
         entity.ModifiedBy = userId;
 
         await _repo.UpdateAsync(entity);
+
+        // Refresh counts for both old and new locations
+        if (locationChanged)
+        {
+            if (oldLocationId.HasValue) await RefreshLocationCountAsync(oldLocationId.Value);
+            if (dto.LocationId.HasValue) await RefreshLocationCountAsync(dto.LocationId.Value);
+        }
+
         return ServiceResult<PhysicalItemDto>.Ok(MapToDto(entity));
     }
 
@@ -237,7 +358,13 @@ public class PhysicalItemService : IPhysicalItemService
         if (entity.IsOnLegalHold)
             return ServiceResult.Fail("Cannot delete an item under legal hold");
 
+        var locationId = entity.LocationId;
         await _repo.DeleteAsync(id);
+
+        // Refresh location count
+        if (locationId.HasValue)
+            await RefreshLocationCountAsync(locationId.Value);
+
         return ServiceResult.Ok("Physical item deleted");
     }
 
@@ -246,9 +373,18 @@ public class PhysicalItemService : IPhysicalItemService
         var entity = await _repo.GetByIdAsync(id);
         if (entity == null) return ServiceResult.Fail("Physical item not found");
 
+        // Validate capacity at destination
+        var capacityError = await ValidateCapacityAsync(dto.NewLocationId);
+        if (capacityError != null) return ServiceResult.Fail(capacityError);
+
+        var oldLocationId = entity.LocationId;
         entity.LocationId = dto.NewLocationId;
         entity.ModifiedBy = userId;
         await _repo.UpdateAsync(entity);
+
+        // Refresh counts for both locations
+        if (oldLocationId.HasValue) await RefreshLocationCountAsync(oldLocationId.Value);
+        await RefreshLocationCountAsync(dto.NewLocationId);
 
         await _activityLog.LogActivityAsync("Moved", "PhysicalItem", id, entity.Title,
             $"Moved to location {dto.NewLocationId}", userId, null, null);
@@ -271,8 +407,8 @@ public class PhysicalItemService : IPhysicalItemService
 
     private static string GenerateBarcode()
     {
-        var counter = Interlocked.Increment(ref _barcodeCounter);
-        return $"PHY-{DateTime.Now:yyyyMMdd}-{counter:D6}";
+        var segment = Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
+        return $"PHY-{DateTime.Now:yyyyMMdd}-{segment}";
     }
 
     private static PhysicalItemDto MapToDto(PhysicalItem e) => new()

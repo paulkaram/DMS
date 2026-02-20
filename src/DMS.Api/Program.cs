@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using DMS.Api.BackgroundJobs;
 using DMS.Api.Middleware;
 using DMS.Api.Validation;
@@ -5,6 +6,7 @@ using DMS.BL;
 using DMS.DAL;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
@@ -95,6 +97,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddControllers(options =>
     {
         options.Filters.Add<ValidationFilter>();
+        options.Conventions.Add(new RouteTokenTransformerConvention(new SlugifyParameterTransformer()));
     })
     .AddJsonOptions(options =>
     {
@@ -209,4 +212,20 @@ catch (Exception ex)
 finally
 {
     Log.CloseAndFlush();
+}
+
+/// <summary>
+/// Transforms PascalCase controller names to kebab-case routes.
+/// e.g. PhysicalLocationsController → physical-locations
+/// </summary>
+public partial class SlugifyParameterTransformer : IOutboundParameterTransformer
+{
+    public string? TransformOutbound(object? value)
+    {
+        if (value is not string s || string.IsNullOrEmpty(s)) return null;
+        return KebabRegex().Replace(s, "$1-$2").ToLowerInvariant();
+    }
+
+    [GeneratedRegex("([a-z])([A-Z])")]
+    private static partial Regex KebabRegex();
 }

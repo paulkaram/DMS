@@ -47,6 +47,49 @@ public class PhysicalLocationRepository : IPhysicalLocationRepository
             await _context.SaveChangesAsync();
         }
     }
+
+    public async Task<int> GetItemCountAsync(Guid locationId)
+    {
+        return await _context.PhysicalItems.CountAsync(i => i.LocationId == locationId && i.IsActive);
+    }
+
+    public async Task<List<Guid>> GetAllDescendantIdsAsync(Guid locationId)
+    {
+        var all = await _context.PhysicalLocations
+            .Where(l => l.IsActive)
+            .Select(l => new { l.Id, l.ParentId })
+            .ToListAsync();
+
+        var result = new List<Guid>();
+        var queue = new Queue<Guid>();
+        queue.Enqueue(locationId);
+
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            foreach (var child in all.Where(l => l.ParentId == current))
+            {
+                result.Add(child.Id);
+                queue.Enqueue(child.Id);
+            }
+        }
+
+        return result;
+    }
+
+    public async Task<int> GetItemCountForLocationsAsync(IEnumerable<Guid> locationIds)
+    {
+        var ids = locationIds.ToList();
+        return await _context.PhysicalItems.CountAsync(i => i.LocationId.HasValue && ids.Contains(i.LocationId.Value) && i.IsActive);
+    }
+
+    public async Task<int> GetChildCapacitySumAsync(Guid parentId, Guid? excludeId = null)
+    {
+        var q = _context.PhysicalLocations.Where(l => l.ParentId == parentId && l.IsActive);
+        if (excludeId.HasValue)
+            q = q.Where(l => l.Id != excludeId.Value);
+        return await q.SumAsync(l => l.Capacity ?? 0);
+    }
 }
 
 public class PhysicalItemRepository : IPhysicalItemRepository

@@ -68,6 +68,14 @@ public class ReferenceDataService : IReferenceDataService
 
     public async Task<ServiceResult<ClassificationDto>> CreateClassificationAsync(ClassificationDto dto)
     {
+        // Check for duplicate code
+        if (!string.IsNullOrWhiteSpace(dto.Code))
+        {
+            var existing = await _classificationRepo.GetByCodeAsync(dto.Code);
+            if (existing != null)
+                return ServiceResult<ClassificationDto>.Fail($"A classification with code '{dto.Code}' already exists.");
+        }
+
         // Build FullPath from parent chain
         string? fullPath = dto.Name;
         if (dto.ParentId.HasValue)
@@ -87,6 +95,12 @@ public class ReferenceDataService : IReferenceDataService
             Level = dto.Level,
             Code = dto.Code,
             FullPath = fullPath,
+            Language = dto.Language,
+            ConfidentialityLevel = dto.ConfidentialityLevel,
+            DefaultRetentionPolicyId = dto.DefaultRetentionPolicyId,
+            DefaultPrivacyLevelId = dto.DefaultPrivacyLevelId,
+            RequiresDisposalApproval = dto.RequiresDisposalApproval,
+            SortOrder = dto.SortOrder,
             IsActive = true
         };
         var id = await _classificationRepo.CreateAsync(entity);
@@ -100,9 +114,24 @@ public class ReferenceDataService : IReferenceDataService
         var entity = await _classificationRepo.GetByIdAsync(id);
         if (entity == null) return ServiceResult<ClassificationDto>.Fail("Not found");
 
+        // Check for duplicate code (exclude self)
+        if (!string.IsNullOrWhiteSpace(dto.Code))
+        {
+            var existing = await _classificationRepo.GetByCodeAsync(dto.Code);
+            if (existing != null && existing.Id != id)
+                return ServiceResult<ClassificationDto>.Fail($"A classification with code '{dto.Code}' already exists.");
+        }
+
         entity.Name = dto.Name;
         entity.Description = dto.Description;
         entity.Code = dto.Code;
+        entity.Language = dto.Language;
+        entity.ConfidentialityLevel = dto.ConfidentialityLevel;
+        entity.DefaultRetentionPolicyId = dto.DefaultRetentionPolicyId;
+        entity.DefaultPrivacyLevelId = dto.DefaultPrivacyLevelId;
+        entity.RequiresDisposalApproval = dto.RequiresDisposalApproval;
+        entity.SortOrder = dto.SortOrder;
+        entity.IsActive = dto.IsActive;
 
         // Recalculate FullPath if parent or name changed
         if (entity.ParentId.HasValue)
@@ -130,7 +159,14 @@ public class ReferenceDataService : IReferenceDataService
         ParentId = x.ParentId,
         Level = x.Level,
         Code = x.Code,
-        FullPath = x.FullPath
+        FullPath = x.FullPath,
+        ConfidentialityLevel = x.ConfidentialityLevel,
+        DefaultRetentionPolicyId = x.DefaultRetentionPolicyId,
+        DefaultPrivacyLevelId = x.DefaultPrivacyLevelId,
+        RequiresDisposalApproval = x.RequiresDisposalApproval,
+        SortOrder = x.SortOrder,
+        IsActive = x.IsActive,
+        Language = x.Language
     };
 
     public async Task<ServiceResult> DeleteClassificationAsync(Guid id)

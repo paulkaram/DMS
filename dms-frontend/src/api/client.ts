@@ -383,11 +383,13 @@ export const referenceDataApi = {
   // Classifications
   getClassifications: (language?: string) =>
     apiClient.get('/classifications', { params: { language } }),
+  getClassificationTree: (language?: string) =>
+    apiClient.get('/classifications/tree', { params: { language } }),
   getClassification: (id: string) =>
     apiClient.get(`/classifications/${id}`),
-  createClassification: (data: { name: string; description?: string; language?: string }) =>
+  createClassification: (data: { name: string; description?: string; parentId?: string; code?: string; language?: string; confidentialityLevel?: string; defaultRetentionPolicyId?: string; defaultPrivacyLevelId?: string; requiresDisposalApproval?: boolean; sortOrder?: number }) =>
     apiClient.post('/classifications', data),
-  updateClassification: (id: string, data: { name: string; description?: string; language?: string; isActive: boolean }) =>
+  updateClassification: (id: string, data: { name: string; description?: string; code?: string; language?: string; confidentialityLevel?: string; defaultRetentionPolicyId?: string; defaultPrivacyLevelId?: string; requiresDisposalApproval?: boolean; sortOrder?: number; isActive?: boolean }) =>
     apiClient.put(`/classifications/${id}`, data),
   deleteClassification: (id: string) =>
     apiClient.delete(`/classifications/${id}`),
@@ -595,9 +597,9 @@ export const contentTypeDefinitionsApi = {
     apiClient.get('/content-type-definitions', { params: { includeInactive } }),
   getById: (id: string) =>
     apiClient.get(`/content-type-definitions/${id}`),
-  create: (data: { name: string; description?: string; icon?: string; color?: string; category?: string; allowOnFolders: boolean; allowOnDocuments: boolean; isRequired: boolean; isSystemDefault?: boolean; sortOrder?: number }) =>
+  create: (data: { name: string; description?: string; icon?: string; color?: string; category?: string; allowOnFolders: boolean; allowOnDocuments: boolean; isRequired: boolean; isSystemDefault?: boolean; defaultClassificationId?: string; sortOrder?: number }) =>
     apiClient.post('/content-type-definitions', data),
-  update: (id: string, data: { name: string; description?: string; icon?: string; color?: string; category?: string; allowOnFolders: boolean; allowOnDocuments: boolean; isRequired: boolean; isSystemDefault?: boolean; isActive: boolean; sortOrder?: number }) =>
+  update: (id: string, data: { name: string; description?: string; icon?: string; color?: string; category?: string; allowOnFolders: boolean; allowOnDocuments: boolean; isRequired: boolean; isSystemDefault?: boolean; defaultClassificationId?: string; isActive: boolean; sortOrder?: number }) =>
     apiClient.put(`/content-type-definitions/${id}`, data),
   delete: (id: string) =>
     apiClient.delete(`/content-type-definitions/${id}`),
@@ -1417,4 +1419,16 @@ export const preservationApi = {
     apiClient.get('/preservation/summary'),
   getApprovedFormats: () =>
     apiClient.get('/preservation/formats')
+}
+
+// =============================================
+// Retention Dashboard API
+// =============================================
+export const retentionDashboardApi = {
+  getDashboard: () =>
+    apiClient.get('/retention-dashboard'),
+  getRecentActions: (take = 20) =>
+    apiClient.get('/retention-dashboard/actions', { params: { take } }),
+  getJobHistory: (take = 10) =>
+    apiClient.get('/retention-dashboard/jobs', { params: { take } })
 }

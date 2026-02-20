@@ -90,6 +90,7 @@ public class CreateDocumentDto
     public Guid? ClassificationId { get; set; }
     public Guid? ImportanceId { get; set; }
     public Guid? DocumentTypeId { get; set; }
+    public Guid? ContentTypeId { get; set; }
     public DateTime? ExpiryDate { get; set; }
     public Guid? PrivacyLevelId { get; set; }
 }

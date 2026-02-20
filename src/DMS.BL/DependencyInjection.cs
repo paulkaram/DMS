@@ -118,6 +118,9 @@ public static class DependencyInjection
         // System Health & Monitoring
         services.AddScoped<ISystemHealthService, SystemHealthService>();
 
+        // Retention Governance Dashboard
+        services.AddScoped<IRetentionDashboardService, RetentionDashboardService>();
+
         return services;
     }
 }

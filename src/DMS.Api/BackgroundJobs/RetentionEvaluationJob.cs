@@ -1,3 +1,5 @@
+using DMS.BL.DTOs;
+using DMS.BL.Interfaces;
 using DMS.DAL.Repositories;
 
 namespace DMS.Api.BackgroundJobs;
@@ -5,6 +7,8 @@ namespace DMS.Api.BackgroundJobs;
 /// <summary>
 /// Daily job that evaluates retention policies and transitions expired documents.
 /// - Moves expired Active retentions to PendingReview (if RequiresApproval) or executes action directly
+/// - Transitions document lifecycle state via IDocumentStateService
+/// - Creates DisposalRequests for approval workflows
 /// - Sends notifications for documents approaching expiration
 /// </summary>
 public class RetentionEvaluationJob : RecurringJobService
@@ -24,6 +28,8 @@ public class RetentionEvaluationJob : RecurringJobService
     {
         var retentionRepo = services.GetRequiredService<IRetentionPolicyRepository>();
         var documentRepo = services.GetRequiredService<IDocumentRepository>();
+        var documentStateService = services.GetRequiredService<IDocumentStateService>();
+        var disposalService = services.GetRequiredService<IDisposalService>();
         var logger = services.GetRequiredService<ILogger<RetentionEvaluationJob>>();
 
         // 1. Find expired document retentions that are still Active
@@ -50,6 +56,7 @@ public class RetentionEvaluationJob : RecurringJobService
                         retention.Status = "OnHold";
                         retention.Notes = (retention.Notes ?? "") + $" | Auto-held: document on legal hold at {DateTime.Now:yyyy-MM-dd}";
                         await retentionRepo.UpdateDocumentRetentionAsync(retention);
+                        ItemsProcessed++;
                     }
                     continue;
                 }
@@ -60,29 +67,82 @@ public class RetentionEvaluationJob : RecurringJobService
 
                 if (policy.RequiresApproval)
                 {
-                    // Move to PendingReview — requires human approval
+                    // Move retention to PendingReview — requires human approval
                     retention.Status = "PendingReview";
                     retention.Notes = (retention.Notes ?? "") + $" | Auto-flagged for review at {DateTime.Now:yyyy-MM-dd}";
                     await retentionRepo.UpdateDocumentRetentionAsync(retention);
-                    logger.LogInformation("Document {DocId} retention moved to PendingReview", retention.DocumentId);
+
+                    // Transition document state to PendingDisposal
+                    await documentStateService.InitiatePendingDisposalAsync(
+                        retention.DocumentId,
+                        Guid.Empty, // System action
+                        $"Retention policy '{policy.Name}' expired — pending approval");
+
+                    // Create a disposal request with the policy's approval levels
+                    await disposalService.InitiateBatchDisposalAsync(
+                        new InitiateBatchDisposalDto
+                        {
+                            DocumentIds = new List<Guid> { retention.DocumentId },
+                            DisposalMethod = policy.ExpirationAction == "Delete" ? "HardDelete" : "Archive",
+                            Reason = $"Retention policy '{policy.Name}' expired on {retention.ExpirationDate:yyyy-MM-dd}",
+                            BatchReference = $"RET-AUTO-{DateTime.Now:yyyyMMdd}"
+                        },
+                        Guid.Empty); // System action
+
+                    logger.LogInformation("Document {DocId} retention moved to PendingReview with disposal request", retention.DocumentId);
+                    ItemsProcessed++;
                 }
                 else
                 {
-                    // Execute action directly based on policy
-                    retention.Status = policy.ExpirationAction switch
+                    // Execute action directly based on policy ExpirationAction
+                    switch (policy.ExpirationAction)
                     {
-                        "Archive" => "Archived",
-                        "Delete" => "Deleted",
-                        _ => "PendingReview"
-                    };
-                    retention.ActionDate = DateTime.Now;
-                    retention.Notes = (retention.Notes ?? "") + $" | Auto-{retention.Status.ToLower()} at {DateTime.Now:yyyy-MM-dd}";
-                    await retentionRepo.UpdateDocumentRetentionAsync(retention);
-                    logger.LogInformation("Document {DocId} retention auto-actioned to {Status}", retention.DocumentId, retention.Status);
+                        case "Archive":
+                            retention.Status = "Archived";
+                            retention.ActionDate = DateTime.Now;
+                            retention.Notes = (retention.Notes ?? "") + $" | Auto-archived at {DateTime.Now:yyyy-MM-dd}";
+                            await retentionRepo.UpdateDocumentRetentionAsync(retention);
+
+                            // Transition document state to Archived
+                            await documentStateService.TransitionAsync(
+                                retention.DocumentId,
+                                new StateTransitionRequestDto { TargetState = "Archived", Reason = $"Retention policy '{policy.Name}' expired — auto-archived" },
+                                Guid.Empty);
+
+                            logger.LogInformation("Document {DocId} auto-archived by retention policy", retention.DocumentId);
+                            break;
+
+                        case "Delete":
+                            retention.Status = "Deleted";
+                            retention.ActionDate = DateTime.Now;
+                            retention.Notes = (retention.Notes ?? "") + $" | Auto-deleted at {DateTime.Now:yyyy-MM-dd}";
+                            await retentionRepo.UpdateDocumentRetentionAsync(retention);
+
+                            // Transition to PendingDisposal then auto-execute
+                            await documentStateService.InitiatePendingDisposalAsync(
+                                retention.DocumentId,
+                                Guid.Empty,
+                                $"Retention policy '{policy.Name}' expired — auto-delete");
+
+                            await disposalService.ExecuteDisposalAsync(retention.DocumentId, Guid.Empty, "HardDelete");
+
+                            logger.LogInformation("Document {DocId} auto-deleted by retention policy", retention.DocumentId);
+                            break;
+
+                        default: // "Review", "Notify", or unknown
+                            retention.Status = "PendingReview";
+                            retention.Notes = (retention.Notes ?? "") + $" | Auto-flagged for review at {DateTime.Now:yyyy-MM-dd}";
+                            await retentionRepo.UpdateDocumentRetentionAsync(retention);
+                            logger.LogInformation("Document {DocId} retention moved to PendingReview", retention.DocumentId);
+                            break;
+                    }
+
+                    ItemsProcessed++;
                 }
             }
             catch (Exception ex)
             {
+                ItemsFailed++;
                 logger.LogError(ex, "Error processing retention for document {DocId}", retention.DocumentId);
             }
         }
@@ -106,7 +166,10 @@ public class RetentionEvaluationJob : RecurringJobService
             }
 
             if (needsNotification.Count > 0)
+            {
+                ItemsProcessed += needsNotification.Count;
                 logger.LogInformation("Sent {Count} retention notifications for policy '{Policy}'", needsNotification.Count, policy.Name);
+            }
         }
     }
 }
